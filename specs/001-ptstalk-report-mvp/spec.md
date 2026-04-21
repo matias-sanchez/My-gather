@@ -280,11 +280,16 @@ matching their respective golden files.
 - **FR-019**: If the input path does not exist, is unreadable, or is a
   non-directory, the tool MUST exit with a distinct non-zero exit code
   and a one-line error; no report file MUST be written in that case.
-- **FR-020**: If the input directory is recognised but contains no
-  source files the tool knows how to parse, the tool MUST exit with a
-  distinct non-zero exit code identifying the directory as "not
-  recognised as a pt-stalk output directory"; no report file MUST be
-  written in that case.
+- **FR-020**: If the input directory is recognised as a pt-stalk
+  collection (contains at least one timestamped pt-stalk file OR a
+  `pt-summary.out` / `pt-mysql-summary.out` file) but contains none of
+  the seven source files this feature parses, the tool MUST still
+  render a report — every section shows its "data not available"
+  banner — and MUST exit 0. The "not recognised at all" case (no
+  timestamped files AND no summary file) is covered by FR-019 /
+  exit code 4, where no report is written. This requirement
+  preserves Principle III (graceful degradation) and matches the
+  "empty-but-valid collection" edge case.
 - **FR-021**: For every source-file format the tool supports, at least
   one real-world fixture MUST be committed under `testdata/` and a
   round-trip golden test MUST assert that parsing and rendering produce
@@ -458,6 +463,21 @@ matching their respective golden files.
   declared upper bound) to completion on a standard support engineer
   laptop without exceeding 2 GB of resident memory and without being
   killed by the OS out-of-memory handler.
+- **SC-009**: Every rendered named subview in the report (OS-Usage
+  subviews, Variables, every Database-Usage subview, and the Parser
+  Diagnostics panel) MUST be reachable in a single click from the
+  navigation index, with the target subview scrolled into view. An
+  automated test asserts that every `NavEntry.ID` in `Report.Navigation`
+  has a matching anchor target in the rendered HTML and that the
+  count of nav entries equals the count of unique section/subview
+  anchor targets.
+- **SC-010**: After a viewer collapses any section or subview and
+  reloads the same report file (no other changes, same browser
+  profile, JavaScript and localStorage both enabled), the collapsed
+  state of every collapsed element MUST be restored. A browser-less
+  unit test against `render/assets/app.js` asserts the load/save
+  round-trip using an in-memory localStorage stub and the
+  `Report.ReportID` keying scheme.
 
 ## Assumptions
 

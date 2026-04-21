@@ -356,6 +356,24 @@ C. **Variable-set drift across samples** (the C++ silently treats a
    slot is stored as `NaN`, not 0, and the renderer draws a
    discontinuity gap at that point.
 
+D. **Snapshot-boundary reset** (the C++ has no concept of multiple
+   snapshots — it runs over one file at a time). When the same
+   `-mysqladmin` collector is present across more than one snapshot
+   in the same Collection (spec FR-018, FR-030), each file is a
+   fresh `mysqladmin extended-status` invocation whose counters
+   carry their own initial tally — cross-snapshot deltas would be
+   meaningless (counters may have been reset, time gap is arbitrary).
+   The Go parser therefore resets its `previous` map at each snapshot
+   boundary, stores `NaN` in the post-boundary first slot (distinct
+   from the "missing variable" NaN of improvement C), and emits an
+   `Info`-severity diagnostic per boundary. The
+   `MysqladminData.SnapshotBoundaries []int` field records the
+   sample indexes where these boundaries sit, so the renderer can
+   draw a visible vertical boundary marker and so aggregates can
+   skip the NaN slots deterministically. This is the mechanism that
+   makes FR-018's "concatenate samples on a single shared time axis"
+   behave correctly for counter variables.
+
 **Correctness anchor** (replaces the previously-planned parity test):
 
 The worked example at lines 146–177 of
