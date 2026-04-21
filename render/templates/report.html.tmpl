@@ -31,9 +31,22 @@
   captured. Responsible sharing is the reader's responsibility.
 </p>
 
-<div class="layout">
+<div class="layout" id="app-layout">
+  <button class="nav-expand-btn" type="button"
+          aria-label="Expand navigation panel"
+          title="Show navigation (⌘/Ctrl+\)"
+          hidden>
+    <span aria-hidden="true">▶</span>
+  </button>
   <nav class="index" aria-label="Report navigation">
-    <h2>Contents</h2>
+    <div class="nav-header">
+      <h2>Contents</h2>
+      <button class="nav-collapse-btn" type="button"
+              aria-label="Collapse navigation panel"
+              title="Collapse navigation (⌘/Ctrl+\)">
+        <span aria-hidden="true">◀</span>
+      </button>
+    </div>
     {{- /* NavGroups is the deterministic Level-1 + nested Level-2 shape
            computed by render.go. Each group renders as a native
            <details> so its collapsed/expanded state persists via the

@@ -106,6 +106,49 @@
     return String(s).replace(/"/g, '\\"');
   }
 
+  // --- Chart registry + resize handling ---------------------------
+
+  // Every uPlot instance registers itself here so layout changes
+  // (nav collapse/expand, window resize) can recompute width and call
+  // chart.setSize.
+  var CHARTS = [];
+  function registerChart(plot, containerEl, options) {
+    CHARTS.push({ plot: plot, el: containerEl, opts: options });
+  }
+  function unregisterChart(plot) {
+    for (var i = CHARTS.length - 1; i >= 0; i--) {
+      if (CHARTS[i].plot === plot) CHARTS.splice(i, 1);
+    }
+  }
+  function resizeAllCharts() {
+    for (var i = 0; i < CHARTS.length; i++) {
+      var entry = CHARTS[i];
+      if (!entry.plot || !entry.el || !entry.el.isConnected) continue;
+      var w = measureChartWidth(entry.el);
+      var h = entry.opts && entry.opts.height ? entry.opts.height : 240;
+      try { entry.plot.setSize({ width: w, height: h }); } catch (_) {}
+    }
+  }
+  // Debounced window resize listener.
+  var _resizeTimer = null;
+  window.addEventListener("resize", function () {
+    if (_resizeTimer) clearTimeout(_resizeTimer);
+    _resizeTimer = setTimeout(resizeAllCharts, 80);
+  });
+
+  // Observe the main content column; when its width changes for any
+  // reason (nav toggle, details open/close, external CSS), re-fit.
+  function observeContentColumn() {
+    if (typeof ResizeObserver !== "function") return;
+    var main = document.querySelector("main.content");
+    if (!main) return;
+    var obs = new ResizeObserver(function () {
+      if (_resizeTimer) clearTimeout(_resizeTimer);
+      _resizeTimer = setTimeout(resizeAllCharts, 60);
+    });
+    obs.observe(main);
+  }
+
   // --- 3. Chart palette + helpers --------------------------------
 
   var SERIES_COLORS = [
@@ -153,8 +196,15 @@
   }
 
   function measureChartWidth(el) {
-    var rect = el.getBoundingClientRect();
-    return Math.max(320, Math.floor(rect.width - 2));
+    // Use the container's width minus a small padding; fall back to
+    // parent width if the container itself hasn't been laid out yet
+    // (e.g., because the parent <details> is still animating open).
+    var w = el.clientWidth || (el.parentNode && el.parentNode.clientWidth) || 0;
+    if (!w) {
+      var rect = el.getBoundingClientRect();
+      w = Math.floor(rect.width);
+    }
+    return Math.max(320, Math.floor(w - 2));
   }
 
   // Build a clickable legend rendered OUTSIDE uPlot (uPlot's default
@@ -236,6 +286,7 @@
     var values = [data.timestamps.slice()].concat(data.series.map(function (s) { return s.values; }));
     var opts = basePlotOpts(width, 260, series, unit);
     var plot = new uPlot(opts, values, el);
+    registerChart(plot, el, opts);
     mountLegend(el, series, plot);
   }
 
@@ -281,7 +332,7 @@
     var plot = null, legendEl = null;
 
     function draw() {
-      if (plot) { plot.destroy(); plot = null; }
+      if (plot) { unregisterChart(plot); plot.destroy(); plot = null; }
       if (legendEl && legendEl.parentNode) { legendEl.parentNode.removeChild(legendEl); legendEl = null; }
       var labels = currentView === "util" ? utilLabels : aquLabels;
       var rows   = currentView === "util" ? utilSeries : aquSeries;
@@ -296,8 +347,10 @@
         };
       }));
       var values = [data.timestamps.slice()].concat(rows);
-      var opts = basePlotOpts(width, 260, series, unit);
+      var w = measureChartWidth(el);
+      var opts = basePlotOpts(w, 260, series, unit);
       plot = new uPlot(opts, values, el);
+      registerChart(plot, el, opts);
       mountLegend(el, series, plot);
       legendEl = el.nextSibling;
     }
@@ -476,7 +529,7 @@
     // Chart.
     var chart = null;
     function drawChart() {
-      if (chart) { chart.destroy(); chart = null; }
+      if (chart) { unregisterChart(chart); chart.destroy(); chart = null; }
       var picks = Array.from(selected);
       if (picks.length === 0) picks = defaults.slice();
       picks.sort();
@@ -497,6 +550,7 @@
       var width = measureChartWidth(el);
       var opts = basePlotOpts(width, 300, series, "counter delta / sample");
       chart = new uPlot(opts, values, el);
+      registerChart(chart, el, opts);
       // legend pills under the chart (replacing prior ones).
       var prev = el.nextSibling;
       if (prev && prev.classList && prev.classList.contains("series-legend")) prev.remove();
@@ -511,6 +565,55 @@
   }
 
   // --- 5. Nav-rail collapse + scroll-spy --------------------------
+
+  function initNavCollapse() {
+    var layout = document.getElementById("app-layout");
+    var collapseBtn = document.querySelector("nav.index .nav-collapse-btn");
+    var expandBtn = document.querySelector(".nav-expand-btn");
+    if (!layout) return;
+    var key = "mygather:" + REPORT_ID + ":nav:collapsed";
+
+    function apply(collapsed) {
+      if (collapsed) {
+        layout.classList.add("nav-hidden");
+        if (expandBtn) expandBtn.hidden = false;
+      } else {
+        layout.classList.remove("nav-hidden");
+        if (expandBtn) expandBtn.hidden = true;
+      }
+      // Re-fit charts to the new content-column width. Wait one frame
+      // so the CSS transition has updated layout before we measure.
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(resizeAllCharts);
+      });
+    }
+
+    var saved = storageGet(key);
+    if (saved === "true") apply(true);
+
+    if (collapseBtn) {
+      collapseBtn.addEventListener("click", function () {
+        storageSet(key, "true");
+        apply(true);
+      });
+    }
+    if (expandBtn) {
+      expandBtn.addEventListener("click", function () {
+        storageSet(key, "false");
+        apply(false);
+      });
+    }
+
+    // Keyboard shortcut: Cmd/Ctrl + \
+    document.addEventListener("keydown", function (e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "\\") {
+        e.preventDefault();
+        var isCollapsed = layout.classList.contains("nav-hidden");
+        storageSet(key, isCollapsed ? "false" : "true");
+        apply(!isCollapsed);
+      }
+    });
+  }
 
   function initNavGroups() {
     // The nav groups use a separate localStorage namespace so their
@@ -609,7 +712,14 @@
     initVariablesSearch();
     initCharts();
     initNavGroups();
+    initNavCollapse();
     initNavScrollSpy();
     initPrintHook();
+    observeContentColumn();
+    // Also re-fit on any <details> toggle (open/close affects
+    // content-column scrollbar which affects chart width).
+    document.addEventListener("toggle", function () {
+      window.requestAnimationFrame(resizeAllCharts);
+    }, true);
   }
 })();
