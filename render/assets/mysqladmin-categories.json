@@ -1,0 +1,216 @@
+{
+  "_source": "MySQL 8.0 Reference Manual — Server Status Variable Reference (dev.mysql.com/doc/refman/8.0/en/server-status-variable-reference.html), curated 2026-04-21",
+  "_note": "Categories are flat (one primary category per variable). The 'matchers' arrays use prefix patterns (case-insensitive) so new variables added by Percona / MariaDB / future MySQL versions automatically slot into the right category without an explicit JSON entry. Explicit 'members' override matchers when present.",
+  "categories": [
+    {
+      "key": "buffer-pool",
+      "label": "Buffer Pool",
+      "description": "InnoDB buffer pool sizing, residency, eviction and dirty-page health.",
+      "matchers": ["innodb_buffer_pool_"],
+      "exclude_matchers": ["innodb_buffer_pool_read", "innodb_buffer_pool_write"]
+    },
+    {
+      "key": "innodb-reads",
+      "label": "InnoDB Reads",
+      "description": "Logical and physical InnoDB reads — buffer-pool hits, disk reads, row-fetches.",
+      "matchers": ["innodb_buffer_pool_read", "innodb_data_read", "innodb_pages_read", "innodb_rows_read"]
+    },
+    {
+      "key": "innodb-writes",
+      "label": "InnoDB Writes",
+      "description": "InnoDB write activity — buffer-pool dirty writes, data file writes, row mutations.",
+      "matchers": ["innodb_buffer_pool_write", "innodb_data_writ", "innodb_pages_written", "innodb_pages_created"],
+      "members": [
+        "Innodb_rows_inserted",
+        "Innodb_rows_updated",
+        "Innodb_rows_deleted",
+        "Innodb_dblwr_pages_written",
+        "Innodb_dblwr_writes"
+      ]
+    },
+    {
+      "key": "redo-log",
+      "label": "Redo Log",
+      "description": "Redo log writes, fsyncs, capacity and LSN advancement.",
+      "matchers": ["innodb_os_log_", "innodb_log_", "innodb_redo_log"]
+    },
+    {
+      "key": "pending-io",
+      "label": "Pending I/O",
+      "description": "I/O the OS hasn't acknowledged yet — saturation indicator.",
+      "matchers": ["innodb_data_pending_", "innodb_os_log_pending_"],
+      "members": ["Innodb_buffer_pool_pages_flushed", "Innodb_buffer_pool_wait_free"]
+    },
+    {
+      "key": "innodb-locks",
+      "label": "InnoDB Locks",
+      "description": "Row-level lock waits and contention.",
+      "matchers": ["innodb_row_lock_"]
+    },
+    {
+      "key": "throughput",
+      "label": "Throughput / QPS",
+      "description": "Top-line query rate and slow-query count.",
+      "members": [
+        "Questions",
+        "Queries",
+        "Slow_queries",
+        "Com_stmt_execute",
+        "Com_admin_commands"
+      ]
+    },
+    {
+      "key": "com-dml",
+      "label": "Com_* DML",
+      "description": "Data manipulation Com_ statement counters.",
+      "members": [
+        "Com_select",
+        "Com_insert",
+        "Com_insert_select",
+        "Com_update",
+        "Com_update_multi",
+        "Com_delete",
+        "Com_delete_multi",
+        "Com_replace",
+        "Com_replace_select",
+        "Com_truncate",
+        "Com_call_procedure"
+      ]
+    },
+    {
+      "key": "com-tx",
+      "label": "Com_* Transactions",
+      "description": "Transaction control Com_ counters.",
+      "members": [
+        "Com_begin",
+        "Com_commit",
+        "Com_rollback",
+        "Com_savepoint",
+        "Com_release_savepoint",
+        "Com_rollback_to_savepoint",
+        "Com_xa_start",
+        "Com_xa_end",
+        "Com_xa_prepare",
+        "Com_xa_commit",
+        "Com_xa_rollback",
+        "Com_xa_recover"
+      ]
+    },
+    {
+      "key": "com-ddl",
+      "label": "Com_* DDL",
+      "description": "Schema-change Com_ counters (CREATE / ALTER / DROP).",
+      "matchers": ["com_create_", "com_drop_", "com_alter_", "com_rename_"]
+    },
+    {
+      "key": "com-prep",
+      "label": "Com_* Prepared",
+      "description": "Prepared-statement Com_ counters.",
+      "matchers": ["com_stmt_"]
+    },
+    {
+      "key": "handlers",
+      "label": "Handlers",
+      "description": "Storage-engine row operations as seen by the SQL layer.",
+      "matchers": ["handler_"]
+    },
+    {
+      "key": "table-cache",
+      "label": "Table Cache",
+      "description": "Table-open-cache hits, misses and overflows.",
+      "members": [
+        "Table_open_cache_hits",
+        "Table_open_cache_misses",
+        "Table_open_cache_overflows",
+        "Opened_tables",
+        "Opened_table_definitions",
+        "Opened_files"
+      ]
+    },
+    {
+      "key": "open-tables",
+      "label": "Open Tables",
+      "description": "Currently-open file/table/definition counts.",
+      "members": [
+        "Open_files",
+        "Open_streams",
+        "Open_tables",
+        "Open_table_definitions"
+      ]
+    },
+    {
+      "key": "tmp-tables",
+      "label": "Tmp Tables",
+      "description": "On-disk vs in-memory temporary-table creation.",
+      "matchers": ["created_tmp_"]
+    },
+    {
+      "key": "sort",
+      "label": "Sort",
+      "description": "Sort operations — merge passes, ranges, rows and scans.",
+      "matchers": ["sort_"]
+    },
+    {
+      "key": "select",
+      "label": "Select Patterns",
+      "description": "Optimizer access-path counts: full joins, scans, ranges.",
+      "matchers": ["select_"]
+    },
+    {
+      "key": "threads",
+      "label": "Threads",
+      "description": "Connection-thread cache, active threads, slow launches.",
+      "matchers": ["threads_"],
+      "members": ["Slow_launch_threads"]
+    },
+    {
+      "key": "network",
+      "label": "Network / Connections",
+      "description": "Bytes in/out, connection counts, accept errors.",
+      "members": [
+        "Bytes_received",
+        "Bytes_sent",
+        "Connections",
+        "Max_used_connections",
+        "Aborted_clients",
+        "Aborted_connects",
+        "Locked_connects"
+      ],
+      "matchers": ["connection_errors_"]
+    },
+    {
+      "key": "binlog",
+      "label": "Binary Log",
+      "description": "Binary-log cache use and statement-cache statistics.",
+      "matchers": ["binlog_"],
+      "members": [
+        "Com_show_binlog_events",
+        "Com_show_binlogs"
+      ]
+    },
+    {
+      "key": "replication",
+      "label": "Replication",
+      "description": "Replica/source/semi-sync replication counters.",
+      "matchers": ["slave_", "replica_", "rpl_semi_sync_"]
+    },
+    {
+      "key": "myisam",
+      "label": "MyISAM Keys",
+      "description": "MyISAM key-cache statistics.",
+      "matchers": ["key_"]
+    },
+    {
+      "key": "ssl",
+      "label": "SSL / TLS",
+      "description": "TLS handshake and session-cache stats.",
+      "matchers": ["ssl_", "current_tls_"]
+    },
+    {
+      "key": "perfschema",
+      "label": "Performance Schema",
+      "description": "Performance-schema instrumentation overhead and lost-event counts.",
+      "matchers": ["performance_schema_"]
+    }
+  ]
+}

@@ -750,17 +750,45 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   background: var(--bg-elev-2);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 3px 12px;
+  padding: 3px 10px 3px 12px;
   font: inherit;
   font-size: 12px;
   color: var(--fg-muted);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 .ma-chips .ma-chip:hover { color: var(--fg); border-color: var(--border-strong); }
 .ma-chips .ma-chip.active {
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
   color: var(--fg);
+}
+.ma-chips .ma-chip .ct {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  background: var(--bg);
+  padding: 0 5px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+}
+.ma-chips .ma-chip.active .ct { color: var(--fg); background: rgba(0, 0, 0, 0.25); }
+.ma-chips .ma-chip.flash {
+  background: color-mix(in srgb, var(--ok) 30%, var(--bg-elev-2));
+  border-color: var(--ok);
+  color: var(--fg);
+}
+.ma-chip-sep {
+  display: inline-block;
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 2px;
+  align-self: center;
 }
 .ma-search {
   display: flex;

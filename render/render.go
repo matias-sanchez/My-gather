@@ -33,6 +33,77 @@ var embeddedAppCSS string
 //go:embed assets/mysql-defaults.json
 var embeddedMySQLDefaultsJSON []byte
 
+//go:embed assets/mysqladmin-categories.json
+var embeddedMysqladminCategoriesJSON []byte
+
+type mysqladminCategoryDef struct {
+	Key             string   `json:"key"`
+	Label           string   `json:"label"`
+	Description     string   `json:"description"`
+	Matchers        []string `json:"matchers"`
+	ExcludeMatchers []string `json:"exclude_matchers"`
+	Members         []string `json:"members"`
+}
+
+var (
+	mysqladminCategories     []mysqladminCategoryDef
+	mysqladminCategoriesOnce bool
+)
+
+func loadMysqladminCategories() []mysqladminCategoryDef {
+	if mysqladminCategoriesOnce {
+		return mysqladminCategories
+	}
+	mysqladminCategoriesOnce = true
+	var v struct {
+		Categories []mysqladminCategoryDef `json:"categories"`
+	}
+	if err := json.Unmarshal(embeddedMysqladminCategoriesJSON, &v); err == nil {
+		mysqladminCategories = v.Categories
+	}
+	return mysqladminCategories
+}
+
+// classifyMysqladminCategory returns the slugs of every category that
+// claims `name`. Matching is case-insensitive on prefixes. Explicit
+// `members` take precedence; `exclude_matchers` carve out a subset of
+// a broader matcher (e.g., buffer-pool excludes the read/write
+// subviews so they live in InnoDB Reads / Writes instead).
+func classifyMysqladminCategory(cats []mysqladminCategoryDef, name string) []string {
+	lower := strings.ToLower(name)
+	var hits []string
+	for _, c := range cats {
+		// Members list — highest priority.
+		matched := false
+		for _, m := range c.Members {
+			if strings.EqualFold(m, name) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			for _, mp := range c.Matchers {
+				if strings.HasPrefix(lower, strings.ToLower(mp)) {
+					matched = true
+					break
+				}
+			}
+			if matched {
+				for _, ex := range c.ExcludeMatchers {
+					if strings.HasPrefix(lower, strings.ToLower(ex)) {
+						matched = false
+						break
+					}
+				}
+			}
+		}
+		if matched {
+			hits = append(hits, c.Key)
+		}
+	}
+	return hits
+}
+
 // mysqlDefaults is the parsed default-values map, populated on first use.
 var (
 	mysqlDefaults     map[string]string
@@ -584,7 +655,7 @@ func mysqladminChartPayload(d *model.MysqladminData) map[string]any {
 	for i, t := range d.Timestamps {
 		timestamps[i] = float64(t.Unix())
 	}
-	// app.js reads { variables, timestamps, deltas, isCounter, snapshotBoundaries, defaultVisible }.
+	// app.js reads { variables, timestamps, deltas, isCounter, snapshotBoundaries, defaultVisible, categories, categoryMap }.
 	// Replace NaN values with null for JSON encoding (math.NaN is not a
 	// valid JSON number).
 	deltas := map[string]any{}
@@ -602,6 +673,38 @@ func mysqladminChartPayload(d *model.MysqladminData) map[string]any {
 	// Default visible: pick up to 5 well-known high-signal counters if
 	// they exist; otherwise first 5 counter variables alphabetically.
 	defaults := pickDefaultCounters(d)
+
+	// Resolve per-variable category memberships once at render time so
+	// the JS doesn't have to evaluate matchers in the browser.
+	cats := loadMysqladminCategories()
+	categoryMap := map[string][]string{}
+	categoryCounts := map[string]int{}
+	for _, name := range d.VariableNames {
+		hits := classifyMysqladminCategory(cats, name)
+		if len(hits) > 0 {
+			categoryMap[name] = hits
+			for _, h := range hits {
+				categoryCounts[h]++
+			}
+		}
+	}
+	// Emit category metadata in declared order plus a count of matched
+	// variables for each.
+	type catView struct {
+		Key         string `json:"key"`
+		Label       string `json:"label"`
+		Description string `json:"description"`
+		Count       int    `json:"count"`
+	}
+	categoryViews := make([]catView, 0, len(cats))
+	for _, c := range cats {
+		categoryViews = append(categoryViews, catView{
+			Key:         c.Key,
+			Label:       c.Label,
+			Description: c.Description,
+			Count:       categoryCounts[c.Key],
+		})
+	}
 	return map[string]any{
 		"variables":          d.VariableNames,
 		"timestamps":         timestamps,
@@ -609,6 +712,8 @@ func mysqladminChartPayload(d *model.MysqladminData) map[string]any {
 		"isCounter":          d.IsCounter,
 		"snapshotBoundaries": d.SnapshotBoundaries,
 		"defaultVisible":     defaults,
+		"categories":         categoryViews,
+		"categoryMap":        categoryMap,
 	}
 }
 

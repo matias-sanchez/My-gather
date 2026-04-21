@@ -544,27 +544,57 @@
     var panel = document.createElement("div");
     panel.className = "ma-panel";
 
-    var chipsRow = document.createElement("div");
-    chipsRow.className = "ma-chips";
-    var chipDefs = [
-      { k: "all",      label: "All" },
+    // Built-in (always-present) chips.
+    var builtinChips = [
+      { k: "all",      label: "All",      filter: null },
+      { k: "selected", label: "Selected", filter: function (name) { return selected.has(name); } },
       { k: "counters", label: "Counters", filter: function (name) { return data.isCounter[name]; } },
       { k: "gauges",   label: "Gauges",   filter: function (name) { return !data.isCounter[name]; } },
-      { k: "com",      label: "Com_*",    filter: function (name) { return /^Com_/.test(name); } },
-      { k: "innodb",   label: "Innodb_*", filter: function (name) { return /^Innodb_/.test(name); } },
-      { k: "handler",  label: "Handler_*",filter: function (name) { return /^Handler_/.test(name); } },
-      { k: "bytes",    label: "Bytes_*",  filter: function (name) { return /^Bytes_/.test(name); } },
-      { k: "selected", label: "Selected", filter: null /* computed at runtime */ },
     ];
+    // Category chips driven by the embedded metadata. Each chip has
+    // both a filter (narrow the list) and an "Add" action (select
+    // every variable in the group).
+    var categoryDefs = Array.isArray(data.categories) ? data.categories : [];
+    var catFilterByKey = {};
+    function buildCategoryFilter(key) {
+      return function (name) {
+        var hits = (data.categoryMap && data.categoryMap[name]) || [];
+        for (var i = 0; i < hits.length; i++) if (hits[i] === key) return true;
+        return false;
+      };
+    }
+    categoryDefs.forEach(function (c) { catFilterByKey[c.key] = buildCategoryFilter(c.key); });
+
+    var chipsRow = document.createElement("div");
+    chipsRow.className = "ma-chips";
+
     var chipButtons = {};
-    chipDefs.forEach(function (def) {
+
+    function makeChip(def) {
       var b = document.createElement("button");
       b.type = "button";
       b.className = "ma-chip";
       b.setAttribute("data-k", def.k);
-      b.textContent = def.label;
+      b.title = def.title || "Click to filter · Shift/Cmd+Click to add the whole group to selection";
+      b.innerHTML = '<span class="lbl">' + escapeHTML(def.label) + '</span>' +
+        (def.count != null ? ' <span class="ct">' + def.count + '</span>' : '');
       if (def.k === "all") b.classList.add("active");
-      b.addEventListener("click", function () {
+      b.addEventListener("click", function (ev) {
+        var additive = ev.shiftKey || ev.metaKey || ev.ctrlKey;
+        if (additive && def.filter) {
+          // Group-add: select every variable matching this filter.
+          data.variables.forEach(function (n) {
+            if (def.filter(n)) selected.add(n);
+          });
+          persistSelection();
+          redrawList();
+          scheduleRedraw();
+          // Visual flash on the chip as feedback.
+          b.classList.add("flash");
+          setTimeout(function () { b.classList.remove("flash"); }, 250);
+          return;
+        }
+        // Filter-only path.
         Object.keys(chipButtons).forEach(function (k) { chipButtons[k].classList.remove("active"); });
         b.classList.add("active");
         state.category = def.k;
@@ -572,7 +602,26 @@
       });
       chipsRow.appendChild(b);
       chipButtons[def.k] = b;
+    }
+
+    builtinChips.forEach(makeChip);
+
+    // Visual divider between built-in and category chips.
+    var sep = document.createElement("span");
+    sep.className = "ma-chip-sep";
+    chipsRow.appendChild(sep);
+
+    categoryDefs.forEach(function (c) {
+      if (!c || c.count === 0) return; // skip categories with no observed variables
+      makeChip({
+        k: "cat:" + c.key,
+        label: c.label,
+        count: c.count,
+        filter: catFilterByKey[c.key],
+        title: (c.description || c.label) + " — Click to filter, Shift/Cmd+Click to add group to chart",
+      });
     });
+
     panel.appendChild(chipsRow);
 
     // Search row.
@@ -621,12 +670,16 @@
     var _throttle = null;
 
     function categoryFilter(name) {
-      var def = null;
-      for (var i = 0; i < chipDefs.length; i++) if (chipDefs[i].k === state.category) { def = chipDefs[i]; break; }
-      if (!def) return true;
-      if (def.k === "selected") return selected.has(name);
-      if (!def.filter) return true;
-      return def.filter(name);
+      if (!state.category || state.category === "all") return true;
+      if (state.category === "selected") return selected.has(name);
+      if (state.category === "counters") return !!data.isCounter[name];
+      if (state.category === "gauges")   return !data.isCounter[name];
+      if (state.category.indexOf("cat:") === 0) {
+        var key = state.category.slice(4);
+        var fn = catFilterByKey[key];
+        return fn ? fn(name) : false;
+      }
+      return true;
     }
 
     function redrawList() {
