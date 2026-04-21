@@ -192,7 +192,9 @@
     return {
       width: width,
       height: height,
-      padding: [12, 12, 12, 56],
+      // Larger left padding so wide y-axis tick labels (e.g.
+      // "2,000,000,000") fit without overlapping the rotated label.
+      padding: [12, 12, 12, 16],
       scales: { x: { time: true }, y: { auto: true } },
       axes: [
         {
@@ -207,9 +209,11 @@
           grid:  { stroke: cssVar("--border", "#262d38"), width: 1 },
           ticks: { stroke: cssVar("--fg-dim", "#6e7a8a"), width: 1, size: 6 },
           font:  '11px ui-monospace, Menlo, monospace',
-          size:  56,
-          label: unit ? unit : undefined,
-          labelFont: '11px ui-monospace, Menlo, monospace',
+          size:  88,                  // wider gutter for big tick labels
+          values: (u, splits) => splits.map(formatYTick),
+          // No rotated `label` — it overlapped tick labels and was
+          // illegible. Per-chart unit is shown via the chart-summary
+          // strip and the toolbar label instead.
         },
       ],
       cursor: {
@@ -309,6 +313,20 @@
     function pad(n) { return n < 10 ? "0" + n : "" + n; }
     return d.toLocaleDateString() + " " +
            pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+  }
+
+  // Compact y-axis tick formatter: 1.2K / 3.4M / 1.2B / 4.5T.
+  function formatYTick(v) {
+    if (v == null) return "";
+    var n = Number(v);
+    if (!isFinite(n)) return "";
+    var abs = Math.abs(n);
+    if (abs >= 1e12) return (n / 1e12).toFixed(abs >= 10e12 ? 0 : 1).replace(/\.0$/, "") + "T";
+    if (abs >= 1e9)  return (n / 1e9 ).toFixed(abs >= 10e9  ? 0 : 1).replace(/\.0$/, "") + "B";
+    if (abs >= 1e6)  return (n / 1e6 ).toFixed(abs >= 10e6  ? 0 : 1).replace(/\.0$/, "") + "M";
+    if (abs >= 1e3)  return (n / 1e3 ).toFixed(abs >= 10e3  ? 0 : 1).replace(/\.0$/, "") + "K";
+    if (Math.abs(n - Math.round(n)) < 1e-9) return String(Math.round(n));
+    return n.toFixed(2);
   }
 
   function formatTooltipValue(v) {
@@ -633,18 +651,74 @@
     var viewBag = makeChipRow("View");
     builtinChips.forEach(function (def) { makeChip(viewBag, def, "builtin"); });
 
-    var totalCategorised = 0;
-    categoryDefs.forEach(function (c) { if (c && c.count) totalCategorised += c.count; });
-    var catBag = makeChipRow("Categories");
+    // CATEGORIES row → dropdown + two action buttons.
+    var catRow = document.createElement("div");
+    catRow.className = "ma-chip-row";
+    var catLabel = document.createElement("span");
+    catLabel.className = "ma-chip-row-label";
+    catLabel.textContent = "Categories";
+    var catActions = document.createElement("div");
+    catActions.className = "ma-cat-actions";
+
+    var catSelect = document.createElement("select");
+    catSelect.className = "ma-cat-select";
+    catSelect.title = "Pick a category to load its variables on the chart";
+    var optHead = document.createElement("option");
+    optHead.value = "";
+    optHead.textContent = "— pick a category —";
+    catSelect.appendChild(optHead);
     categoryDefs.forEach(function (c) {
       if (!c || c.count === 0) return;
-      makeChip(catBag, {
-        k: "cat:" + c.key,
-        label: c.label,
-        count: c.count,
-        filter: catFilterByKey[c.key],
-        title: (c.description || c.label) + " — Click to load on chart, Shift/Cmd+Click to add to current selection",
-      }, "category");
+      var o = document.createElement("option");
+      o.value = c.key;
+      o.textContent = c.label + " (" + c.count + ")";
+      o.title = c.description || c.label;
+      catSelect.appendChild(o);
+    });
+
+    var btnLoad = document.createElement("button");
+    btnLoad.type = "button";
+    btnLoad.className = "ma-action ma-cat-load";
+    btnLoad.textContent = "Load on chart";
+    btnLoad.title = "Replace chart selection with this category's variables";
+    var btnAdd = document.createElement("button");
+    btnAdd.type = "button";
+    btnAdd.className = "ma-action ma-cat-add";
+    btnAdd.textContent = "+ Add to chart";
+    btnAdd.title = "Add this category's variables to the existing chart selection";
+
+    catActions.appendChild(catSelect);
+    catActions.appendChild(btnLoad);
+    catActions.appendChild(btnAdd);
+    catRow.appendChild(catLabel);
+    catRow.appendChild(catActions);
+    panel.appendChild(catRow);
+
+    function applyCategory(replace) {
+      var key = catSelect.value;
+      if (!key) return;
+      var fn = catFilterByKey[key];
+      if (!fn) return;
+      if (replace) selected.clear();
+      data.variables.forEach(function (n) {
+        if (fn(n)) selected.add(n);
+      });
+      persistSelection();
+      // Filter the list to show the chosen category for context.
+      Object.keys(chipButtons).forEach(function (k) { chipButtons[k].classList.remove("active"); });
+      state.category = "cat:" + key;
+      // Synthesize a fake "Selected"-button highlight so user sees the
+      // count update.
+      if (chipButtons["selected"]) chipButtons["selected"].classList.add("active");
+      redrawList();
+      scheduleRedraw();
+    }
+    btnLoad.addEventListener("click", function () { applyCategory(true); });
+    btnAdd.addEventListener("click", function () { applyCategory(false); });
+    catSelect.addEventListener("change", function () {
+      // Picking a category from the dropdown both filters AND loads it
+      // on the chart. Most natural single-action.
+      applyCategory(true);
     });
 
     // Search row.
@@ -768,11 +842,23 @@
     var chart = null;
     function drawChart() {
       if (chart) { unregisterChart(chart); chart.destroy(); chart = null; }
+      // Strip prior legend regardless of selection state.
+      var prev = el.nextSibling;
+      if (prev && prev.classList && prev.classList.contains("series-legend")) prev.remove();
+
       var picks = Array.from(selected);
-      if (picks.length === 0) picks = defaults.slice();
+      // Empty selection ⇒ empty chart (FIX: previously fell back to
+      // defaults which made "Clear" feel broken).
       picks.sort();
+
+      // Drop the first sample (column 0). pt-mext stores the initial
+      // raw tally there for counters; that single huge spike crushed
+      // the y-axis. Real per-sample deltas start at index 1.
+      var tStart = data.timestamps.length > 1 ? 1 : 0;
+      var truncatedTimestamps = data.timestamps.slice(tStart);
+
       var series = [{ label: "time" }];
-      var values = [data.timestamps.slice()];
+      var values = [truncatedTimestamps];
       picks.forEach(function (name, i) {
         var deltaArr = data.deltas[name];
         if (!deltaArr) return;
@@ -783,15 +869,13 @@
           points: { show: false },
           value: (u, v) => v == null ? "–" : v.toLocaleString(),
         });
-        values.push(deltaArr);
+        values.push(deltaArr.slice(tStart));
       });
       var width = measureChartWidth(el);
-      var opts = basePlotOpts(width, 300, series, "counter delta / sample");
+      // No rotated y-axis label — the chart's heading carries the unit.
+      var opts = basePlotOpts(width, 300, series, "");
       chart = new uPlot(opts, values, el);
       registerChart(chart, el, opts);
-      // legend pills under the chart (replacing prior ones).
-      var prev = el.nextSibling;
-      if (prev && prev.classList && prev.classList.contains("series-legend")) prev.remove();
       mountLegend(el, series, chart);
     }
     function scheduleRedraw() {
