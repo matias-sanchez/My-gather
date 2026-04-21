@@ -458,10 +458,12 @@ Diagnostics panel, which is closed. Works without JavaScript because
   file-URL in modern browsers, which is the scope we want.
 - **Per-report key via `ReportID`** avoids cross-report state
   collisions when a user opens two reports side by side. A hash of
-  the canonicalised `Collection` (timestamps + filenames, excluding
-  the non-deterministic `GeneratedAt`) gives a stable ID across
-  re-renders of the same input — so reopening a regenerated report
-  retains the viewer's collapse choices.
+  the canonicalised `Collection` (hostname + snapshot timestamps +
+  filenames + file content, **excluding `RootPath` and `GeneratedAt`**)
+  gives a stable ID across re-renders of the same input — so
+  reopening a regenerated report retains the viewer's collapse
+  choices, and moving the pt-stalk dump to a different path on the
+  engineer's laptop does NOT reset state (F21 resolution).
 - **Parser Diagnostics collapsed by default** follows Principle XI
   ("prioritise signal over clutter"): most reports have zero or one
   diagnostics; showing an empty expanded panel adds noise for no
@@ -479,9 +481,9 @@ Diagnostics panel, which is closed. Works without JavaScript because
   one per named subview (Level=2). IDs are ordinal
   (`sec-os`, `sub-os-iostat`, `sec-variables`, etc.) — deterministic.
 - `Report.ReportID` uses SHA-256 of the canonicalised Collection
-  (excluding `GeneratedAt`) truncated to 12 hex chars — collision
-  probability is negligible for the volumes a single engineer
-  handles and is small enough to read.
+  (excluding `RootPath` and `GeneratedAt`, per F21) truncated to 12
+  hex chars — collision probability is negligible for the volumes a
+  single engineer handles and is small enough to read.
 - `render/assets/app.js` is extended (not a new file) with the
   collapse-persistence module. Bundle stays under ~4 KB target.
 - The mysqladmin toggle UI state (from R4) uses the same

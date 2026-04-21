@@ -94,14 +94,14 @@ All tasks write paths relative to the repository root
 ### Tests for User Story 1 ⚠️ (Write first; implementation makes them pass)
 
 - [ ] T023 [P] [US1] `render/render_test.go::TestRenderEmptyReport`: render a Collection with zero Snapshots (or with Snapshots whose `SourceFiles` is empty); assert every section emits its "data not available" banner.
-- [ ] T024 [P] [US1] `render/render_test.go::TestDeterminism`: render twice against the same Collection with the same `RenderOptions.GeneratedAt`; assert `bytes.Equal` on outputs (spec SC-003).
-- [ ] T025 [P] [US1] `render/render_test.go::TestGeneratedAtIsOnlyDiff`: render twice with different `GeneratedAt` values; assert the diff consists of exactly one line (the `Report generated at` line) (spec FR-006).
+- [ ] T024 [US1] `render/render_test.go::TestDeterminism`: render twice against the same Collection with the same `RenderOptions.GeneratedAt`; assert `bytes.Equal` on outputs (spec SC-003). **Sequential with T023** (same file).
+- [ ] T025 [US1] `render/render_test.go::TestGeneratedAtIsOnlyDiff`: render twice with different `GeneratedAt` values; assert the diff consists of exactly one line (the `Report generated at` line) (spec FR-006). **Sequential with T023/T024** (same file).
 - [ ] T026 [P] [US1] `parse/parse_test.go::TestNotAPtStalkDir`: run `Discover` against an empty tempdir; assert `errors.Is(err, parse.ErrNotAPtStalkDir)`.
-- [ ] T027 [P] [US1] `parse/parse_test.go::TestEmptyButValid`: run `Discover` against a dir containing one timestamped placeholder file with an unsupported suffix (e.g., `-hostname` only) OR a bare `pt-summary.out`; assert `err == nil` and `Collection.Snapshots` is non-empty and every `SourceFile` entry is absent (per FR-020).
-- [ ] T028 [P] [US1] `parse/parse_test.go::TestSizeBoundTotalExceeded`: run `Discover` against a fixture whose total size exceeds `DiscoverOptions.MaxCollectionBytes`; assert `errors.As(err, &parse.SizeError{})` with `Kind == SizeErrorTotal`.
-- [ ] T029 [P] [US1] `parse/parse_test.go::TestSizeBoundFileExceeded`: same as T028 but with a single oversized file; assert `Kind == SizeErrorFile`.
+- [ ] T027 [US1] `parse/parse_test.go::TestEmptyButValid`: run `Discover` against a dir containing one timestamped placeholder file with an unsupported suffix (e.g., `-hostname` only) OR a bare `pt-summary.out`; assert `err == nil` and `Collection.Snapshots` is non-empty and every `SourceFile` entry is absent (per FR-020). **Sequential with T026** (same file).
+- [ ] T028 [US1] `parse/parse_test.go::TestSizeBoundTotalExceeded`: run `Discover` against a fixture whose total size exceeds `DiscoverOptions.MaxCollectionBytes`; assert `errors.As(err, &parse.SizeError{})` with `Kind == SizeErrorTotal`. **Sequential with T026/T027** (same file).
+- [ ] T029 [US1] `parse/parse_test.go::TestSizeBoundFileExceeded`: same as T028 but with a single oversized file; assert `Kind == SizeErrorFile`. **Sequential with T026-T028** (same file).
 - [ ] T030 [P] [US1] `cmd/my-gather/main_test.go::TestOutputInsideInputRejected`: invoke the CLI with `-o <somewhere-inside-input-dir>`; assert exit code 7 and the report file was NOT written (spec FR-029).
-- [ ] T031 [P] [US1] `cmd/my-gather/main_test.go::TestOverwriteGuard`: invoke twice without `--overwrite`; assert exit code 6 on the second call.
+- [ ] T031 [US1] `cmd/my-gather/main_test.go::TestOverwriteGuard`: invoke twice without `--overwrite`; assert exit code 6 on the second call. **Sequential with T030** (same file).
 - [ ] T032 [P] [US1] `tests/integration/e2e_test.go::TestE2EExample2`: run the compiled binary against `testdata/example2/`; assert exit 0, output file exists, contains the three section headers, and contains the verbatim banner text.
 - [ ] T033 [P] [US1] `tests/integration/offline_test.go::TestOfflineRender`: open the rendered HTML with a headless-browser–free check — walk the raw HTML and assert no `http://`, `https://`, or `//` (protocol-relative) URLs appear in `<script src>`, `<link href>`, or `<img src>` attributes; assert all `<script>` and `<style>` tags are inline or embed-sourced (spec FR-004, SC-002).
 - [ ] T034 [P] [US1] `render/app_test.go::TestCollapsePersistenceRoundTrip`: run the collapse-persistence logic from `render/assets/app.js` under a lightweight JS test harness (or port to a Go-testable form); stub `localStorage`; assert save→load round-trip keyed by `Report.ReportID` (spec SC-010).
@@ -133,7 +133,7 @@ All tasks write paths relative to the repository root
 - [ ] T044 [P] [US2] `parse/top_test.go::TestTopGolden`: parse `-top` fixture; compare against golden. Also assert `Top3ByAverage` is correctly computed via **average CPUPercent normalised over total samples** (absent in a sample = contributes 0) — F7 resolution, aligning with spec FR-010 "aggregate".
 - [ ] T045 [P] [US2] `parse/vmstat_test.go::TestVmstatGolden`: parse `-vmstat` fixture; compare against golden. Assert the declared `Series` order is present (runqueue, blocked, free_kb, buff_kb, cache_kb, swap_in, swap_out, io_in, io_out, cpu_user, cpu_sys, cpu_idle, cpu_iowait).
 - [ ] T046 [P] [US2] `render/os_test.go::TestOSGoldenHTML`: render a Collection with only OS parsers wired; compare the OS section's rendered HTML against `testdata/golden/example2.os.html`.
-- [ ] T047 [P] [US2] `parse/iostat_test.go::TestIostatPartialRecovery`: truncate the fixture mid-sample; assert parser returns usable data + `Diagnostic(Severity=Warning)` with `Location` pointing at the truncation (Principle III, FR-008).
+- [ ] T047 [US2] `parse/iostat_test.go::TestIostatPartialRecovery`: truncate the fixture mid-sample; assert parser returns usable data + `Diagnostic(Severity=Warning)` with `Location` pointing at the truncation (Principle III, FR-008). **Sequential with T043** (same file).
 
 ### Implementation for User Story 2
 
@@ -183,9 +183,9 @@ All tasks write paths relative to the repository root
 
 - [ ] T063 [P] [US4] `parse/innodbstatus_test.go::TestInnoDBStatusGolden`: parse `-innodbstatus1` fixture; extract SemaphoreCount, PendingReads/Writes, AHI activity, HLL; compare against golden.
 - [ ] T064 [P] [US4] `parse/mysqladmin_test.go::TestMysqladminGolden`: parse `-mysqladmin` fixture; compare against golden; assert counter vs gauge classification matches the declared allowlist; assert `SnapshotBoundaries` is populated correctly when parsing a concatenated multi-snapshot input.
-- [ ] T065 [P] [US4] `parse/mysqladmin_test.go::TestPtMextFixture`: parse `testdata/pt-mext/input.txt` with the Go mysqladmin parser; format aggregates (total/min/max/avg) for each counter; assert structural equivalence against `testdata/pt-mext/expected.txt` (F10 resolution — structural comparison, not byte-for-byte, so whitespace normalisation is allowed).
-- [ ] T066 [P] [US4] `parse/mysqladmin_test.go::TestSnapshotBoundaryReset`: parse two concatenated snapshots; assert post-boundary first-slot delta is `math.NaN()` for every counter (FR-030); assert one `Diagnostic(Severity=Info)` per boundary.
-- [ ] T067 [P] [US4] `parse/mysqladmin_test.go::TestVariableDrift`: parse a fixture where a counter appears in snapshot 1 but not snapshot 2; assert `NaN` in the drift slot + one `Diagnostic(Severity=Warning)` (research R8 improvement C).
+- [ ] T065 [US4] `parse/mysqladmin_test.go::TestPtMextFixture`: parse `testdata/pt-mext/input.txt` with the Go mysqladmin parser; format aggregates (total/min/max/avg) for each counter; assert structural equivalence against `testdata/pt-mext/expected.txt` (F10 resolution — structural comparison, not byte-for-byte, so whitespace normalisation is allowed). **Sequential with T064** (same file).
+- [ ] T066 [US4] `parse/mysqladmin_test.go::TestSnapshotBoundaryReset`: parse two concatenated snapshots; assert post-boundary first-slot delta is `math.NaN()` for every counter (FR-030); assert one `Diagnostic(Severity=Info)` per boundary. **Sequential with T064/T065** (same file).
+- [ ] T067 [US4] `parse/mysqladmin_test.go::TestVariableDrift`: parse a fixture where a counter appears in snapshot 1 but not snapshot 2; assert `NaN` in the drift slot + one `Diagnostic(Severity=Warning)` (research R8 improvement C). **Sequential with T064-T066** (same file).
 - [ ] T068 [P] [US4] `parse/processlist_test.go::TestProcesslistGolden`: parse `-processlist` fixture; compare against golden; assert `Other`-bucketing for unknown/empty states (FR-017).
 - [ ] T069 [P] [US4] `render/db_test.go::TestDBGoldenHTML`: render DB section; compare against golden HTML.
 - [ ] T070 [P] [US4] `render/db_test.go::TestMysqladminToggleMarkup`: assert the rendered DB section has a `<select multiple>` (or equivalent multi-select) whose options match `MysqladminData.VariableNames`; assert each chart series `<canvas>` element has the matching `data-variable-name` attribute.
@@ -218,6 +218,14 @@ All tasks write paths relative to the repository root
 - [ ] T085 Run the `quickstart.md` flow end-to-end manually and record any friction in a new `specs/001-ptstalk-report-mvp/retrospective.md`; feed fixes back as follow-up tasks if needed.
 - [ ] T086 Confirm `--out <nonexistent-dir>/...` behaviour in `cmd/my-gather/main_test.go::TestOutputParentMissing` — assert clean error and exit code 3 (or a new code if the team prefers) rather than auto-mkdir (F8 resolution).
 - [ ] T087 Review `spec.md` once after tasks complete, remove any remaining `StateSample` references (F5 sweep), fix the `SuffixInnodbStatus` → value mismatch notes (F16), and correct the constitution's `references/examples/` path (F12) via a small PATCH-level constitution amendment.
+- [ ] T088 [P] `cmd/my-gather/main_test.go::TestOutputFileSingletonNoSideCar` (F27 — FR-002 gap): after a successful run, assert the output path's parent directory contains exactly one new file matching the `-o` path (no `.tmp`, no `.bak`, no `.part`, no lock files). Walk the parent dir with `os.ReadDir` before and after; diff.
+- [ ] T089 [P] `parse/partial_recovery_test.go::TestPartialRecoveryAllParsers` (F28 — FR-008 gap): parametrised test that iterates over the six collectors lacking a partial-recovery test (top, vmstat, variables, innodbstatus, mysqladmin, processlist); for each, copy its fixture to a tempfile, truncate to 50% of its original length, parse, assert result status is `ParsePartial` with ≥1 `Diagnostic(Severity=Warning)` whose `Location` field is non-empty. Closes Principle III coverage gap.
+- [ ] T090 [P] `parse/version_test.go::TestDetectFormat` (F29 — FR-024 gap): feed `parse.DetectFormat` a representative V1 header byte sequence and a V2 header byte sequence for each of the seven supported suffixes (14 subtests); assert the correct `model.FormatVersion` enum is returned. Exercises per-file version detection (research R2) that the golden tests don't.
+- [ ] T091 `cmd/my-gather/main_test.go::TestStderrSilentOnSuccess` (F30 — FR-027 gap, 1 of 3): successful run against a clean fixture; assert stderr is empty. **Sequential with T030/T031/T088** (same file).
+- [ ] T092 `cmd/my-gather/main_test.go::TestStderrWarningMirrored` (F30 — FR-027 gap, 2 of 3): run against a fixture with a deliberately truncated source file; assert stderr contains a line matching `^\[warning\]\s+\S+:\s+.+$` per the contracts/cli.md format, with the warning count equal to the emitted `Diagnostic(Severity=Warning)` count. **Sequential with T091** (same file).
+- [ ] T093 `cmd/my-gather/main_test.go::TestStderrVerboseProgress` (F30 — FR-027 gap, 3 of 3): run with `-v`; assert stderr contains `[parse] …`, `[render] writing …`, and `[done] … bytes written in …s` lines in that order. Assert `SeverityInfo` diagnostics do NOT appear on stderr (F13 behavior). **Sequential with T092** (same file).
+- [ ] T094 [P] `tests/integration/degraded_test.go::TestOneMissingCollector` (F31 — SC-004 gap): parametrised test iterating over the seven supported suffixes. For each: copy `testdata/example2/` to a tempdir, delete the one matching file from both snapshots, run the CLI, assert exit 0 and the output HTML contains the other six sections' data AND a "data not available" banner naming the missing file. Seven subtests, one task.
+- [ ] T095 [P] `cmd/my-gather/main_test.go` addendum — not a new test file; extends `TestVersionOutput` (satisfies F36): invoke `--version` with `ldflags` injecting a fixed semver + commit + build date; assert the five-line format from `contracts/cli.md`. May be folded into T092/T093's file; if so, remove the `[P]` marker — annotator note only.
 
 ---
 
@@ -235,7 +243,8 @@ All tasks write paths relative to the repository root
 
 - Tests in the phase are written first; implementation makes them pass.
 - Per-collector parsers (`parse/*.go`) are parallel to each other ([P]) because each touches its own file. They are NOT parallel with the `parse.Discover` wiring task in the same phase (T051, T060, T074), which integrates them.
-- Per-section render tasks are serial within a story because they share `render/templates/` and `render/assets/app.js`.
+- Per-section render tasks are serial within a story because they share `render/templates/report.html.tmpl`, `render/templates/<section>.html.tmpl`, `render/assets/app.js`, and `render/assets/app.css`.
+- **The `parse.Discover` wiring tasks T051, T060, and T074 all modify `parse/parse.go`.** They therefore serialise across user stories: merging US2 then US3 then US4 into the shared branch requires sequential edits to this file. This is documented as a known cross-story serial point (F32 resolution) — it does not break story-level independent *testability*, but does mean three parallel developers can't commit these specific tasks without rebase-resolving `parse/parse.go`.
 - Goldens are regenerated with `go test ./... -update` as a human-reviewed step — never silently (FR-021).
 
 ### Parallel Opportunities
@@ -281,14 +290,14 @@ Task: "Write render/nav_test.go::TestNavCoverage"
 
 ### Incremental delivery after MVP
 
-1. + US2 (12 tasks, T043–T055) → OS Usage section live. Principle III, XI strengthened.
+1. + US2 (13 tasks, T043–T055) → OS Usage section live. Principle III, XI strengthened.
 2. + US3 (7 tasks, T056–T062) → Variables section live.
 3. + US4 (15 tasks, T063–T077) → Database Usage section live.
-4. + Polish (10 tasks, T078–T087) → performance guarantees, a11y, docs.
+4. + Polish (18 tasks, T078–T095) → performance guarantees, a11y, docs, coverage gaps from analyze pass 3 (F27–F32, F36).
 
 ### Solo-developer strategy (current context)
 
-Serial execution by user-story priority: T001 → T087. Treat each `[P]`-marked group as "tasks you can draft in one sitting" rather than tasks to run in separate worktrees.
+Serial execution by user-story priority: T001 → T095 (95 tasks total). Treat each `[P]`-marked group as "tasks you can draft in one sitting" rather than tasks to run in separate worktrees.
 
 ---
 
