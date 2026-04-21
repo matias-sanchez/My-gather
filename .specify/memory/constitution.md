@@ -1,50 +1,229 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+==================
+Version change: (uninitialized template) → 1.0.0
+Bump rationale: Initial ratification of the My-gather project constitution.
+  Prior file contained only placeholder tokens; this is the first concrete
+  adoption, so MAJOR=1, MINOR=0, PATCH=0.
+
+Modified principles:
+  - [PRINCIPLE_1_NAME] → I. Single Static Binary
+  - [PRINCIPLE_2_NAME] → II. Read-Only Inputs
+  - [PRINCIPLE_3_NAME] → III. Graceful Degradation (NON-NEGOTIABLE)
+  - [PRINCIPLE_4_NAME] → IV. Deterministic Output
+  - [PRINCIPLE_5_NAME] → V. Self-Contained HTML Reports
+Added principles (beyond the 5-slot template):
+  - VI. Library-First Architecture
+  - VII. Typed Errors
+  - VIII. Reference Fixtures & Golden Tests
+  - IX. Zero Network at Runtime
+  - X. Minimal Dependencies
+  - XI. Reports Optimized for Humans Under Pressure
+  - XII. Pinned Go Version
+
+Added sections:
+  - Distribution & Platform Support (replaces [SECTION_2_NAME])
+  - Development Workflow & Quality Gates (replaces [SECTION_3_NAME])
+
+Removed sections: none.
+
+Templates requiring updates:
+  - .specify/templates/plan-template.md         ✅ compatible (generic
+      "Constitution Check" gate; no principle names hard-coded)
+  - .specify/templates/spec-template.md         ✅ compatible (no
+      constitution references; no change required)
+  - .specify/templates/tasks-template.md        ✅ compatible (no
+      constitution references; no change required)
+  - .specify/templates/checklist-template.md    ✅ compatible (no
+      constitution references; no change required)
+  - .claude/skills/speckit-*/                   ✅ compatible (command
+      prompts reference the constitution file path, not principle names)
+  - README.md                                   ⚠ pending (no README
+      present in repo; create when project documentation is added and
+      link to this constitution)
+
+Deferred items / follow-up TODOs: none.
+-->
+
+# My-gather Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Single Static Binary
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+My-gather MUST ship as one statically-linked executable with no runtime
+dependencies. A support engineer MUST be able to `scp` the binary to an
+arbitrary customer jump host and run it with no installer, no interpreter,
+and no libc version negotiation. Release artifacts MUST cover, at minimum,
+`linux/amd64`, `linux/arm64`, `darwin/amd64`, and `darwin/arm64`, built via
+`CGO_ENABLED=0` cross-compilation. Any change that would reintroduce dynamic
+linkage or a runtime install step is forbidden without a constitution
+amendment.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Read-Only Inputs
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+My-gather MUST NOT modify, move, rename, delete, or otherwise alter any
+file or directory under the pt-stalk output tree it is pointed at. All
+parsers MUST open inputs read-only. Any code path that could write inside
+the input tree (including tempfile placement, lock files, or cache
+writes) is prohibited; temporary artifacts MUST live under `os.TempDir()`
+or an explicit `-out` path chosen by the user.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Graceful Degradation (NON-NEGOTIABLE)
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Real-world pt-stalk collections are routinely incomplete, truncated, or
+corrupt. My-gather MUST produce a useful report from whatever input is
+present and MUST clearly mark what is missing or unparseable in the
+rendered output. The tool MUST NOT `panic` on malformed inputs and MUST
+NOT silently drop data. Parser failures MUST be captured as structured
+diagnostics attached to the report, not propagated as fatal errors; only
+structural preconditions (e.g., target path does not exist, user lacks
+read permission) justify early termination.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Deterministic Output
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Given the same input directory and the same binary, My-gather MUST produce
+byte-identical HTML output on every run, modulo timestamps explicitly
+rendered from input data. Sources of non-determinism that would leak into
+output — map iteration order, goroutine scheduling, unstable sort, locale-
+dependent or default floating-point formatting, randomised IDs — MUST be
+eliminated at the boundary (sorted keys, stable orderings, fixed-precision
+number formatting, deterministic ID generation). Golden tests enforce this
+invariant.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. Self-Contained HTML Reports
+
+The generated report MUST be a single `.html` file with all CSS, JavaScript,
+fonts, images, and underlying data embedded inline. Chart libraries and any
+other client-side assets MUST be bundled into the binary via `//go:embed`
+and inlined at generation time. Reports MUST NOT fetch from CDNs, external
+fonts services, analytics endpoints, or any remote resource at view-time;
+they MUST render fully on an air-gapped laptop with no network.
+
+### VI. Library-First Architecture
+
+The CLI (`package main`) MUST be a thin wrapper over independently
+importable packages: `parse/` for pt-stalk file parsers, `model/` for the
+typed in-memory representation, and `render/` for HTML generation. Each
+package MUST be usable by third-party Go code without depending on `main`,
+without reading CLI flags, and without writing to stdout/stderr except via
+caller-supplied interfaces. Every exported identifier MUST carry a godoc
+comment describing its contract, and that contract MUST be treated as
+stable under the project's versioning policy.
+
+### VII. Typed Errors
+
+Conditions that a caller needs to branch on MUST be expressed as sentinel
+errors or typed error structs — e.g., `var ErrNotAPtStalkDir = errors.New(...)`
+or `type ParseError struct { File string; Line int; Err error }` — so
+callers can use `errors.Is` and `errors.As`. Using `fmt.Errorf` (without
+`%w` wrapping) to signal a branchable condition is prohibited. Error
+messages intended only for human display MAY use `fmt.Errorf` but MUST
+still wrap underlying typed errors with `%w` when one exists.
+
+### VIII. Reference Fixtures & Golden Tests
+
+For every pt-stalk collector file format My-gather supports, there MUST be
+at least one fixture under `testdata/` drawn from real samples in
+`references/examples/`, and a round-trip test that parses the fixture and
+compares rendered output against a committed `.golden` file. Adding a new
+collector parser without a fixture and golden test is forbidden. Golden
+files MUST be regenerated only through an explicit, reviewed step (e.g.,
+`go test -update`), never silently.
+
+### IX. Zero Network at Runtime
+
+My-gather MUST NOT perform any network I/O during normal operation: no
+telemetry, no crash reporting, no update checks, no DNS lookups, no
+outbound HTTP. Network code paths (e.g., `net/http` client usage) are
+prohibited in the shipped binary except behind build tags used exclusively
+for development tooling that is NOT compiled into release artifacts.
+
+### X. Minimal Dependencies
+
+The standard library is the default. Third-party modules MUST be justified
+in the relevant plan document, with a stated reason why the stdlib is
+inadequate. Framework-scale imports for problems the stdlib handles
+directly (flag parsing, HTML templating, JSON encoding, time handling, HTTP
+serving for local preview) are prohibited. Transitive dependency growth is
+a review concern: each new direct dependency MUST list its transitive
+footprint in the plan.
+
+### XI. Reports Optimized for Humans Under Pressure
+
+Reports MUST prioritise the 80% signal a support engineer needs during an
+incident: what triggered the collection, what the system looked like at
+trigger time, and what changed across samples. Exhaustive metric dumps
+MUST be relegated to collapsible or secondary sections and MUST NOT crowd
+out the primary narrative. Any new top-level report section MUST justify
+its placement against this principle.
+
+### XII. Pinned Go Version
+
+My-gather MUST target the current Go stable release. The required version
+MUST be pinned in `go.mod` via the `go` directive and enforced in CI. Build
+tags that diverge runtime behaviour between platforms are prohibited
+except where genuinely unavoidable (e.g., path separator handling, which
+MUST go through `path/filepath`). Upgrading the Go version MUST be
+performed as an explicit, reviewed change, not as an incidental side effect
+of another commit.
+
+## Distribution & Platform Support
+
+Release artifacts MUST be produced reproducibly from tagged commits and
+MUST cover `linux/amd64`, `linux/arm64`, `darwin/amd64`, and `darwin/arm64`
+at minimum. Binaries MUST be built with `CGO_ENABLED=0` and stripped of
+host-specific paths so that two builders producing the same tag obtain
+byte-identical binaries (subject to Go toolchain determinism guarantees).
+Shipped binaries MUST print a version string that includes the Go version,
+the git commit, and the build date, sourced via `-ldflags` at link time.
+
+## Development Workflow & Quality Gates
+
+The following gates MUST pass before any change is merged:
+
+1. `go vet ./...` and `go test ./...` succeed on all supported platforms
+   exercised in CI.
+2. Every new or modified parser ships with its fixture and golden file
+   (Principle VIII).
+3. Determinism check: a test re-runs report generation twice on the same
+   fixture set and asserts byte-identical output (Principle IV).
+4. No new direct dependency is added without a justification entry in the
+   corresponding `plan.md` (Principle X).
+5. Exported identifiers added or changed have godoc comments describing
+   their contract (Principle VI).
+6. No build introduces a CGO requirement, a network call at runtime, or a
+   write under the input tree (Principles I, IX, II).
+
+Reviewers MUST reject changes that violate any Core Principle unless the
+change is accompanied by a constitution amendment adopted under the
+Governance section below.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes other ad-hoc practices and conventions in the
+My-gather project. Amendments MUST be proposed as a pull request that:
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+- Modifies `.specify/memory/constitution.md` with the new text.
+- Updates the `Version`, `Ratified`, and `Last Amended` line per the
+  versioning policy.
+- Includes a Sync Impact Report (as an HTML comment at the top of this
+  file) describing the delta and any template or documentation updates
+  propagated alongside the amendment.
+
+Versioning policy for this constitution follows semantic versioning:
+
+- **MAJOR**: A Core Principle is removed, redefined in a backward-
+  incompatible way, or a governance rule is materially weakened.
+- **MINOR**: A new principle or section is added, or existing guidance is
+  materially expanded.
+- **PATCH**: Wording clarifications, typo fixes, or non-semantic
+  refinements that do not change the set of forbidden/required behaviours.
+
+Compliance MUST be verified at every `/speckit.plan` and `/speckit.analyze`
+invocation via the Constitution Check gate. Runtime development guidance
+— build commands, test commands, repository layout — lives in `README.md`
+and feature-local `plan.md` / `quickstart.md` files and MUST defer to this
+constitution when conflicts arise.
+
+**Version**: 1.0.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-21
