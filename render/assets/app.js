@@ -651,7 +651,9 @@
     var viewBag = makeChipRow("View");
     builtinChips.forEach(function (def) { makeChip(viewBag, def, "builtin"); });
 
-    // CATEGORIES row → dropdown + two action buttons.
+    // CATEGORIES row → custom button-dropdown + two action buttons.
+    // Native <select> with appearance:none collapsed in some browsers,
+    // hiding the label text. Custom popup gives us full control.
     var catRow = document.createElement("div");
     catRow.className = "ma-chip-row";
     var catLabel = document.createElement("span");
@@ -660,34 +662,99 @@
     var catActions = document.createElement("div");
     catActions.className = "ma-cat-actions";
 
-    var catSelect = document.createElement("select");
-    catSelect.className = "ma-cat-select";
-    catSelect.title = "Pick a category to load its variables on the chart";
-    var optHead = document.createElement("option");
-    optHead.value = "";
-    optHead.textContent = "— pick a category —";
-    catSelect.appendChild(optHead);
+    // Wrapper around the toggle button + popup so the popup positions
+    // relative to the button.
+    var catDD = document.createElement("div");
+    catDD.className = "ma-cat-dd";
+
+    var catToggle = document.createElement("button");
+    catToggle.type = "button";
+    catToggle.className = "ma-cat-dd-toggle";
+    catToggle.setAttribute("aria-haspopup", "listbox");
+    catToggle.setAttribute("aria-expanded", "false");
+    catToggle.title = "Pick a category to load its variables on the chart";
+
+    var catCurrentKey = "";
+    function setCatLabel(key) {
+      var lbl = "— pick a category —";
+      if (key) {
+        for (var i = 0; i < categoryDefs.length; i++) {
+          if (categoryDefs[i].key === key) {
+            lbl = categoryDefs[i].label + " (" + categoryDefs[i].count + ")";
+            break;
+          }
+        }
+      }
+      catToggle.innerHTML =
+        '<span class="ma-cat-dd-text">' + escapeHTML(lbl) + '</span>' +
+        '<span class="ma-cat-dd-chev" aria-hidden="true">▾</span>';
+    }
+    setCatLabel("");
+
+    var catPopup = document.createElement("ul");
+    catPopup.className = "ma-cat-dd-popup";
+    catPopup.setAttribute("role", "listbox");
+    catPopup.hidden = true;
     categoryDefs.forEach(function (c) {
       if (!c || c.count === 0) return;
-      var o = document.createElement("option");
-      o.value = c.key;
-      o.textContent = c.label + " (" + c.count + ")";
-      o.title = c.description || c.label;
-      catSelect.appendChild(o);
+      var li = document.createElement("li");
+      li.className = "ma-cat-dd-opt";
+      li.setAttribute("role", "option");
+      li.setAttribute("data-key", c.key);
+      li.title = c.description || c.label;
+      li.innerHTML =
+        '<span class="opt-lbl">' + escapeHTML(c.label) + '</span>' +
+        '<span class="opt-ct">' + c.count + '</span>';
+      li.addEventListener("click", function () {
+        catCurrentKey = c.key;
+        setCatLabel(c.key);
+        closeCatPopup();
+        applyCategory(true);
+      });
+      catPopup.appendChild(li);
     });
+
+    function openCatPopup() {
+      catPopup.hidden = false;
+      catToggle.setAttribute("aria-expanded", "true");
+      catToggle.classList.add("open");
+      // Close on outside click.
+      setTimeout(function () {
+        document.addEventListener("click", outsideClickClose, true);
+      }, 0);
+    }
+    function closeCatPopup() {
+      catPopup.hidden = true;
+      catToggle.setAttribute("aria-expanded", "false");
+      catToggle.classList.remove("open");
+      document.removeEventListener("click", outsideClickClose, true);
+    }
+    function outsideClickClose(ev) {
+      if (catDD.contains(ev.target)) return;
+      closeCatPopup();
+    }
+    catToggle.addEventListener("click", function () {
+      if (catPopup.hidden) openCatPopup(); else closeCatPopup();
+    });
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape" && !catPopup.hidden) closeCatPopup();
+    });
+
+    catDD.appendChild(catToggle);
+    catDD.appendChild(catPopup);
 
     var btnLoad = document.createElement("button");
     btnLoad.type = "button";
     btnLoad.className = "ma-action ma-cat-load";
     btnLoad.textContent = "Load on chart";
-    btnLoad.title = "Replace chart selection with this category's variables";
+    btnLoad.title = "Replace chart selection with the picked category";
     var btnAdd = document.createElement("button");
     btnAdd.type = "button";
     btnAdd.className = "ma-action ma-cat-add";
     btnAdd.textContent = "+ Add to chart";
-    btnAdd.title = "Add this category's variables to the existing chart selection";
+    btnAdd.title = "Add the picked category to the existing chart selection";
 
-    catActions.appendChild(catSelect);
+    catActions.appendChild(catDD);
     catActions.appendChild(btnLoad);
     catActions.appendChild(btnAdd);
     catRow.appendChild(catLabel);
@@ -695,9 +762,8 @@
     panel.appendChild(catRow);
 
     function applyCategory(replace) {
-      var key = catSelect.value;
-      if (!key) return;
-      var fn = catFilterByKey[key];
+      if (!catCurrentKey) return;
+      var fn = catFilterByKey[catCurrentKey];
       if (!fn) return;
       if (replace) selected.clear();
       data.variables.forEach(function (n) {
@@ -706,20 +772,13 @@
       persistSelection();
       // Filter the list to show the chosen category for context.
       Object.keys(chipButtons).forEach(function (k) { chipButtons[k].classList.remove("active"); });
-      state.category = "cat:" + key;
-      // Synthesize a fake "Selected"-button highlight so user sees the
-      // count update.
+      state.category = "cat:" + catCurrentKey;
       if (chipButtons["selected"]) chipButtons["selected"].classList.add("active");
       redrawList();
       scheduleRedraw();
     }
     btnLoad.addEventListener("click", function () { applyCategory(true); });
     btnAdd.addEventListener("click", function () { applyCategory(false); });
-    catSelect.addEventListener("change", function () {
-      // Picking a category from the dropdown both filters AND loads it
-      // on the chart. Most natural single-action.
-      applyCategory(true);
-    });
 
     // Search row.
     var searchRow = document.createElement("div");
