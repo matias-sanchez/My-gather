@@ -544,16 +544,16 @@
     var panel = document.createElement("div");
     panel.className = "ma-panel";
 
-    // Built-in (always-present) chips.
+    // Built-in chips (filter the list only; they don't touch the chart).
     var builtinChips = [
       { k: "all",      label: "All",      filter: null },
       { k: "selected", label: "Selected", filter: function (name) { return selected.has(name); } },
       { k: "counters", label: "Counters", filter: function (name) { return data.isCounter[name]; } },
       { k: "gauges",   label: "Gauges",   filter: function (name) { return !data.isCounter[name]; } },
     ];
-    // Category chips driven by the embedded metadata. Each chip has
-    // both a filter (narrow the list) and an "Add" action (select
-    // every variable in the group).
+    // Category chips driven by the embedded metadata. Plain click
+    // REPLACES the chart selection with the category's variables;
+    // Shift/Cmd-click ADDS to the existing chart selection.
     var categoryDefs = Array.isArray(data.categories) ? data.categories : [];
     var catFilterByKey = {};
     function buildCategoryFilter(key) {
@@ -565,64 +565,87 @@
     }
     categoryDefs.forEach(function (c) { catFilterByKey[c.key] = buildCategoryFilter(c.key); });
 
-    var chipsRow = document.createElement("div");
-    chipsRow.className = "ma-chips";
-
+    // Two-row layout. Each row has a small label and a wrapping chip group.
     var chipButtons = {};
 
-    function makeChip(def) {
+    function makeChip(parent, def, kind) {
       var b = document.createElement("button");
       b.type = "button";
-      b.className = "ma-chip";
+      b.className = "ma-chip ma-chip-" + kind;
       b.setAttribute("data-k", def.k);
-      b.title = def.title || "Click to filter · Shift/Cmd+Click to add the whole group to selection";
+      b.title = def.title || (kind === "category"
+        ? "Click to load this group on the chart · Shift/Cmd+Click to add to current selection"
+        : "Click to filter the list");
       b.innerHTML = '<span class="lbl">' + escapeHTML(def.label) + '</span>' +
         (def.count != null ? ' <span class="ct">' + def.count + '</span>' : '');
       if (def.k === "all") b.classList.add("active");
       b.addEventListener("click", function (ev) {
         var additive = ev.shiftKey || ev.metaKey || ev.ctrlKey;
-        if (additive && def.filter) {
-          // Group-add: select every variable matching this filter.
-          data.variables.forEach(function (n) {
-            if (def.filter(n)) selected.add(n);
-          });
+        if (kind === "category" && def.filter) {
+          if (additive) {
+            // Add-to-selection (preserve existing).
+            data.variables.forEach(function (n) {
+              if (def.filter(n)) selected.add(n);
+            });
+          } else {
+            // Replace selection with this category's members so the
+            // chart immediately shows the picked group.
+            selected.clear();
+            data.variables.forEach(function (n) {
+              if (def.filter(n)) selected.add(n);
+            });
+          }
           persistSelection();
+          // Filter list to this category as well, for context.
+          Object.keys(chipButtons).forEach(function (k) { chipButtons[k].classList.remove("active"); });
+          b.classList.add("active");
+          state.category = def.k;
           redrawList();
           scheduleRedraw();
-          // Visual flash on the chip as feedback.
           b.classList.add("flash");
           setTimeout(function () { b.classList.remove("flash"); }, 250);
           return;
         }
-        // Filter-only path.
+        // Built-in chips: filter-only (chart untouched).
         Object.keys(chipButtons).forEach(function (k) { chipButtons[k].classList.remove("active"); });
         b.classList.add("active");
         state.category = def.k;
         redrawList();
       });
-      chipsRow.appendChild(b);
+      parent.appendChild(b);
       chipButtons[def.k] = b;
     }
 
-    builtinChips.forEach(makeChip);
+    function makeChipRow(labelText) {
+      var row = document.createElement("div");
+      row.className = "ma-chip-row";
+      var lbl = document.createElement("span");
+      lbl.className = "ma-chip-row-label";
+      lbl.textContent = labelText;
+      var bag = document.createElement("div");
+      bag.className = "ma-chip-bag";
+      row.appendChild(lbl);
+      row.appendChild(bag);
+      panel.appendChild(row);
+      return bag;
+    }
 
-    // Visual divider between built-in and category chips.
-    var sep = document.createElement("span");
-    sep.className = "ma-chip-sep";
-    chipsRow.appendChild(sep);
+    var viewBag = makeChipRow("View");
+    builtinChips.forEach(function (def) { makeChip(viewBag, def, "builtin"); });
 
+    var totalCategorised = 0;
+    categoryDefs.forEach(function (c) { if (c && c.count) totalCategorised += c.count; });
+    var catBag = makeChipRow("Categories");
     categoryDefs.forEach(function (c) {
-      if (!c || c.count === 0) return; // skip categories with no observed variables
-      makeChip({
+      if (!c || c.count === 0) return;
+      makeChip(catBag, {
         k: "cat:" + c.key,
         label: c.label,
         count: c.count,
         filter: catFilterByKey[c.key],
-        title: (c.description || c.label) + " — Click to filter, Shift/Cmd+Click to add group to chart",
-      });
+        title: (c.description || c.label) + " — Click to load on chart, Shift/Cmd+Click to add to current selection",
+      }, "category");
     });
-
-    panel.appendChild(chipsRow);
 
     // Search row.
     var searchRow = document.createElement("div");
