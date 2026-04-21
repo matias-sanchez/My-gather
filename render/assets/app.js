@@ -79,23 +79,42 @@
         if (!table) return;
         var rows = table.tBodies[0] ? table.tBodies[0].rows : [];
         var countEl = input.parentNode.querySelector(".count");
+        var chips = input.parentNode.querySelectorAll(
+          '.var-chip[data-snapshot="' + cssEscape(snapshot) + '"]'
+        );
+        var state = { needle: "", statusFilter: "all" };
+
         function update() {
-          var needle = input.value.trim().toLowerCase();
-          var shown = 0;
+          var needle = state.needle;
+          var sf = state.statusFilter;
+          var shown = 0, modified = 0;
           for (var r = 0; r < rows.length; r++) {
-            var name = rows[r].getAttribute("data-variable-name") || "";
-            var hit = needle === "" || name.toLowerCase().indexOf(needle) !== -1;
-            rows[r].hidden = !hit;
+            var row = rows[r];
+            var name = row.getAttribute("data-variable-name") || "";
+            var status = row.getAttribute("data-status") || "unknown";
+            if (status === "modified") modified++;
+            var nameHit = needle === "" || name.toLowerCase().indexOf(needle) !== -1;
+            var statusHit = sf === "all" || sf === status;
+            var hit = nameHit && statusHit;
+            row.hidden = !hit;
             if (hit) shown++;
           }
           if (countEl) {
-            countEl.textContent =
-              needle === ""
-                ? rows.length + " variables"
-                : shown + " of " + rows.length + " match";
+            countEl.textContent = shown + " of " + rows.length + " shown · " + modified + " modified";
           }
         }
-        input.addEventListener("input", update);
+
+        input.addEventListener("input", function () {
+          state.needle = input.value.trim().toLowerCase();
+          update();
+        });
+        chips.forEach(function (c) {
+          c.addEventListener("click", function () {
+            state.statusFilter = c.getAttribute("data-filter") || "all";
+            chips.forEach(function (x) { x.classList.toggle("active", x === c); });
+            update();
+          });
+        });
         update();
       })(inputs[i]);
     }

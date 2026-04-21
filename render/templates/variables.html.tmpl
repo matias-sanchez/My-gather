@@ -7,18 +7,29 @@
 <details id="{{.DetailsID}}" class="subview" open>
   <summary><span>{{.Title}}</span><span class="badge">{{.Badge}}</span></summary>
   <div class="body">
-    {{- if .Data }}
+    {{- if .Entries }}
     <div class="search-row">
       <input type="search" class="variables-search"
              data-snapshot="{{.DetailsID}}"
              placeholder="Filter by name…" autocomplete="off" spellcheck="false">
-      <span class="count">{{.Count}} variables</span>
+      <div class="var-chips" role="tablist" aria-label="Variable filters">
+        <button class="var-chip active" data-filter="all"      data-snapshot="{{.DetailsID}}">All ({{.Count}})</button>
+        <button class="var-chip"        data-filter="modified" data-snapshot="{{.DetailsID}}">Modified ({{.ModifiedCount}})</button>
+        <button class="var-chip"        data-filter="default"  data-snapshot="{{.DetailsID}}">Default</button>
+        <button class="var-chip"        data-filter="unknown"  data-snapshot="{{.DetailsID}}">Unknown</button>
+      </div>
+      <span class="count">{{.Count}} variables · {{.ModifiedCount}} modified</span>
     </div>
     <table class="variables-table" data-snapshot="{{.DetailsID}}">
-      <thead><tr><th>Variable</th><th>Value</th></tr></thead>
+      <thead><tr><th style="width:32px;"></th><th>Variable</th><th>Value</th><th style="width:120px;"></th></tr></thead>
       <tbody>
-      {{- range .Data.Entries }}
-        <tr data-variable-name="{{.Name}}"><td class="mono">{{.Name}}</td><td class="mono">{{.Value}}</td></tr>
+      {{- range .Entries }}
+        <tr data-variable-name="{{.Name}}" data-status="{{.Status}}">
+          <td class="status-dot"><span class="dot status-{{.Status}}" title="{{if eq .Status "modified"}}Non-default{{else if eq .Status "default"}}At default{{else}}Default unknown{{end}}"></span></td>
+          <td class="mono">{{.Name}}</td>
+          <td class="mono">{{.Value}}</td>
+          <td class="status-label mono">{{if eq .Status "modified"}}modified{{else if eq .Status "default"}}default{{else}}–{{end}}</td>
+        </tr>
       {{- end }}
       </tbody>
     </table>

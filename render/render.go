@@ -9,6 +9,7 @@ import (
 	"io"
 	"math"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/matias-sanchez/My-gather/model"
@@ -28,6 +29,31 @@ var embeddedAppJS string
 
 //go:embed assets/app.css
 var embeddedAppCSS string
+
+//go:embed assets/mysql-defaults.json
+var embeddedMySQLDefaultsJSON []byte
+
+// mysqlDefaults is the parsed default-values map, populated on first use.
+var (
+	mysqlDefaults     map[string]string
+	mysqlDefaultsOnce bool
+)
+
+func loadMySQLDefaults() map[string]string {
+	if mysqlDefaultsOnce {
+		return mysqlDefaults
+	}
+	mysqlDefaultsOnce = true
+	var v struct {
+		Defaults map[string]string `json:"defaults"`
+	}
+	if err := json.Unmarshal(embeddedMySQLDefaultsJSON, &v); err == nil {
+		mysqlDefaults = v.Defaults
+	} else {
+		mysqlDefaults = map[string]string{}
+	}
+	return mysqlDefaults
+}
 
 // RenderOptions controls optional aspects of rendering. The zero value
 // is valid and uses the current UTC time and empty Version/GitCommit.
@@ -346,11 +372,18 @@ type reportView struct {
 }
 
 type variableSnapshotView struct {
-	DetailsID string
-	Title     string
-	Badge     string
-	Count     int
-	Data      *model.VariablesData
+	DetailsID    string
+	Title        string
+	Badge        string
+	Count        int
+	ModifiedCount int
+	Entries      []variableRowView
+}
+
+type variableRowView struct {
+	Name   string
+	Value  string
+	Status string // "default" | "modified" | "unknown"
 }
 
 type innoDBSnapshotView struct {
@@ -442,16 +475,28 @@ func buildView(r *model.Report, c *model.Collection) *reportView {
 	v.OSBadge = fmt.Sprintf("%d / 3 subviews", presentOS)
 
 	if r.VariablesSection != nil {
+		defaults := loadMySQLDefaults()
 		haveAny := false
 		for i, sv := range r.VariablesSection.PerSnapshot {
 			vv := variableSnapshotView{
 				DetailsID: variablesSnapshotID(i),
 				Title:     fmt.Sprintf("Snapshot %s", sv.SnapshotPrefix),
 				Badge:     fmt.Sprintf("snap #%d", i+1),
-				Data:      sv.Data,
 			}
 			if sv.Data != nil {
 				vv.Count = len(sv.Data.Entries)
+				vv.Entries = make([]variableRowView, 0, len(sv.Data.Entries))
+				for _, e := range sv.Data.Entries {
+					st := classifyVariable(defaults, e.Name, e.Value)
+					if st == "modified" {
+						vv.ModifiedCount++
+					}
+					vv.Entries = append(vv.Entries, variableRowView{
+						Name:   e.Name,
+						Value:  e.Value,
+						Status: st,
+					})
+				}
 				haveAny = true
 			}
 			v.VariableSnapshots = append(v.VariableSnapshots, vv)
@@ -829,6 +874,62 @@ func maxInt(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// classifyVariable compares a captured variable value against the
+// documented compiled-in default. Returns:
+//   - "default"  — value matches the documented default
+//   - "modified" — value differs from the documented default
+//   - "unknown"  — no default is documented for this variable
+//
+// Matching is tolerant: whitespace-trimmed, case-insensitive, and
+// comma-separated values (e.g. sql_mode, tls_version) compared as
+// sets so member order does not flag a default as modified.
+func classifyVariable(defaults map[string]string, name, observed string) string {
+	def, ok := defaults[name]
+	if !ok {
+		return "unknown"
+	}
+	if normalisedEqual(def, observed) {
+		return "default"
+	}
+	if commaSetsEqual(def, observed) {
+		return "default"
+	}
+	return "modified"
+}
+
+func normalisedEqual(a, b string) bool {
+	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
+}
+
+func commaSetsEqual(a, b string) bool {
+	if !strings.Contains(a, ",") && !strings.Contains(b, ",") {
+		return false
+	}
+	split := func(s string) []string {
+		parts := strings.Split(s, ",")
+		out := make([]string, 0, len(parts))
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p == "" {
+				continue
+			}
+			out = append(out, strings.ToLower(p))
+		}
+		sort.Strings(out)
+		return out
+	}
+	xs, ys := split(a), split(b)
+	if len(xs) != len(ys) {
+		return false
+	}
+	for i := range xs {
+		if xs[i] != ys[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func flattenDiagnostics(c *model.Collection) []diagnosticView {
