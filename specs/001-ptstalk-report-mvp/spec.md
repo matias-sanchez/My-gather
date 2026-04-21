@@ -346,6 +346,53 @@ matching their respective golden files.
   this is the correctness anchor. Restricted to counter variables, as
   the C++ reference does not distinguish gauges.
 
+- **FR-029**: The tool MUST reject output paths (`--out`) that resolve
+  to a path inside the input directory tree. Resolution uses absolute
+  paths with symlinks expanded. When violated, the tool MUST exit with
+  a distinct non-zero code (exit code 7) and a one-line error on
+  stderr naming both the input path and the offending output path; no
+  report file MUST be written. This prevents the tool from ever
+  writing into the pt-stalk collection it is analysing, regardless of
+  user invocation style (`my-gather .` from inside the dump, `-o`
+  pointing inside, or CWD-relative defaults that happen to land
+  there). This requirement ensures Principle II (Read-Only Inputs)
+  holds even under accidental CLI usage.
+
+- **FR-030**: When a `-mysqladmin` source file exists in more than one
+  snapshot within the same collection (see FR-018), the parser MUST
+  reset its per-variable `previous` map at each snapshot boundary —
+  each `-mysqladmin` file is a fresh invocation whose first sample
+  carries its own initial tally, and cross-snapshot deltas are
+  meaningless (counters may have been reset, and the time gap between
+  snapshots is arbitrary). The first sample of each snapshot after the
+  first MUST be stored with `NaN` in the delta slot (not a spurious
+  large delta) and MUST trigger a `Diagnostic(Severity=Info)` noting
+  the boundary. The renderer MUST draw a visible boundary marker at
+  each snapshot-boundary timestamp so viewers understand the
+  discontinuity.
+
+- **FR-031**: The rendered report MUST include a navigation index
+  listing every top-level section (OS Usage, Variables, Database
+  Usage) and every named subview within each section (e.g., "Disk
+  utilization", "Top CPU processes", "vmstat saturation", "Counter
+  deltas", "InnoDB status", "Thread states", "Parser Diagnostics").
+  The index MUST be visible alongside the content as the viewer
+  scrolls (e.g., sticky header, left rail, or equivalent) and MUST
+  allow click-to-jump to any listed entry. The index MUST operate
+  entirely on the embedded document (no network, no fetch) and MUST
+  render correctly when JavaScript is disabled by degrading to a
+  plain anchor list at the top of the document.
+
+- **FR-032**: Every top-level section and every named subview MUST be
+  collapsible and expandable by the viewer. Collapse / expand state
+  MUST persist across page reloads of the same report file via
+  `localStorage` under a key that is stable per-report (e.g., a hash
+  of the embedded data payload or the report's generation timestamp).
+  Default first-load state: all sections expanded. Parser Diagnostics
+  panel: default collapsed, per Principle XI ("prioritise signal over
+  clutter"). When JavaScript is disabled, all sections MUST be
+  rendered expanded — collapse is progressive enhancement only.
+
 ### Key Entities
 
 - **Collection**: A pt-stalk output directory. Attributes: root path,
@@ -367,8 +414,11 @@ matching their respective golden files.
 - **VariableEntry**: One global variable and its value from the
   `-variables` file. Attributes: name, value, scope (global only is
   retained).
-- **ThreadState**: One processlist thread snapshot. Attributes:
-  timestamp, state label, count.
+- **ThreadStateSample**: One `-processlist` sample (one snapshot in
+  time). Attributes: timestamp, plus a per-state count bucket (e.g.,
+  `{"Sending data": 4, "Sleep": 12, "Other": 1}`). The renderer draws
+  a single stacked time-series from the ordered sequence of these
+  samples.
 - **Diagnostic**: A parser-level warning or error. Attributes: source
   file, location (byte offset or line), severity, human-readable
   message.

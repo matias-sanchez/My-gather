@@ -201,12 +201,18 @@ Discovery precedence inside `parse.Discover`:
    `^\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}-[a-z0-9_-]+$`.
 2. Group them by timestamp prefix → set of Snapshots.
 3. If zero snapshots were found AND neither `pt-summary.out` nor
-   `pt-mysql-summary.out` is present, return `ErrNotAPtStalkDir`.
-4. If snapshots exist but none contain any of the seven supported
-   collectors (`-iostat`, `-top`, `-variables`, `-vmstat`,
-   `-innodbstatus1`, `-mysqladmin`, `-processlist`), return
-   `ErrNotAPtStalkDir` with an "empty-but-valid-looking"
-   wrapper — the UI distinguishes these per spec Edge Cases.
+   `pt-mysql-summary.out` is present, return `ErrNotAPtStalkDir`. The
+   CLI maps this to exit code 4 and writes nothing.
+4. **Otherwise** (snapshots exist OR a summary file is present), the
+   directory is recognised as pt-stalk even if none of the seven
+   supported collectors are among the timestamped files. `Discover`
+   returns a populated `Collection` anyway (possibly with no typed
+   payload for any SourceFile). The renderer then emits a report in
+   which every section shows its "data not available" banner, and the
+   tool exits 0. This matches spec Edge Cases ("empty-but-valid
+   collection" vs "not a pt-stalk dir at all"). No wrapper error;
+   distinction between the two cases is made by whether Discover
+   returns an error at all, not by error typing.
 
 **Rationale**: The presence of any timestamped collector file is a
 near-zero-false-positive indicator. `pt-summary.out` fallback catches
@@ -406,6 +412,85 @@ with that future in mind (pure function, no rendering coupling).
 
 ---
 
+## R9. Navigation index and collapsible sections
+
+**Decision**: Navigation index is a plain `<nav>` element rendered
+server-side (in Go) from a deterministic `Report.Navigation []NavEntry`
+list, with CSS `position: sticky` for on-scroll visibility. Collapse /
+expand is driven by native HTML `<details>` / `<summary>` elements
+wrapping each section and subview; a small JavaScript module persists
+their `open` state to `localStorage` under a per-report key
+(`Report.ReportID` — a deterministic hash of the embedded data).
+Default first-load state: all `<details>` `open` except the Parser
+Diagnostics panel, which is closed. Works without JavaScript because
+`<details>` / `<summary>` are native HTML controls.
+
+**Rationale**:
+
+- **`<details>` is the right primitive**. Native browser support
+  everywhere we care about, keyboard-accessible by default, screen-
+  reader semantic, zero CSS-only alternatives approach this on cost.
+- **`position: sticky` for the nav rail** keeps us out of JavaScript
+  for the scroll-following behaviour. Progressive enhancement only
+  adds the state-persistence layer.
+- **localStorage, not cookies, not sessionStorage**. Cookies would
+  violate "self-contained" (they'd travel with the file to other
+  viewers). `sessionStorage` doesn't persist across reloads. Local-
+  storage is per-origin; for a `file://` report it's partitioned per-
+  file-URL in modern browsers, which is the scope we want.
+- **Per-report key via `ReportID`** avoids cross-report state
+  collisions when a user opens two reports side by side. A hash of
+  the canonicalised `Collection` (timestamps + filenames, excluding
+  the non-deterministic `GeneratedAt`) gives a stable ID across
+  re-renders of the same input — so reopening a regenerated report
+  retains the viewer's collapse choices.
+- **Parser Diagnostics collapsed by default** follows Principle XI
+  ("prioritise signal over clutter"): most reports have zero or one
+  diagnostics; showing an empty expanded panel adds noise for no
+  signal.
+- **Graceful degradation** (Principle III spirit): with JS disabled
+  the `<details>` elements open/close, just without persisted state.
+  Nav rail degrades to an anchor list at the top of the document via
+  a simple `<noscript>` fallback CSS rule.
+
+**Implementation notes**:
+
+- `render.Render` populates `Report.Navigation` in a fixed order
+  derived from section iteration (OS → Variables → DB → Parser
+  Diagnostics), with one NavEntry per top-level section (Level=1) and
+  one per named subview (Level=2). IDs are ordinal
+  (`sec-os`, `sub-os-iostat`, `sec-variables`, etc.) — deterministic.
+- `Report.ReportID` uses SHA-256 of the canonicalised Collection
+  (excluding `GeneratedAt`) truncated to 12 hex chars — collision
+  probability is negligible for the volumes a single engineer
+  handles and is small enough to read.
+- `render/assets/app.js` is extended (not a new file) with the
+  collapse-persistence module. Bundle stays under ~4 KB target.
+- The mysqladmin toggle UI state (from R4) uses the same
+  `ReportID`-prefixed localStorage convention so state is consistent
+  across features.
+
+**Alternatives considered**:
+
+- **Client-side-rendered nav via JS** — rejected. Requires JS to see
+  the index at all; fails progressive-enhancement goals and adds a
+  first-paint flash.
+- **Accordion library** (e.g., a small third-party a11y-accordion) —
+  rejected. `<details>` + CSS does the job natively; Principle X
+  (minimal deps) disfavours adding a JS library for a native element.
+- **Checkbox-hack CSS-only collapse** — rejected. `<details>` is a
+  superior native primitive since Edge adopted it (2017+).
+- **Cookies for state persistence** — rejected; would leak with the
+  file.
+- **URL-hash-encoded state** — rejected; pollutes the URL and
+  interferes with anchor-link jumping from the nav index.
+- **Always-expanded, no collapse** — rejected by FR-032.
+- **Per-report-ID via timestamp only** — rejected; `GeneratedAt`
+  changes every render, so collapse state would reset on every
+  regeneration.
+
+---
+
 ## Summary of decisions
 
 | ID | Decision |
@@ -418,5 +503,6 @@ with that future in mind (pure function, no rendering coupling).
 | R6 | Anonymise fixtures via deterministic `scripts/anonymise-fixtures.sh`. |
 | R7 | Stdlib-only forbidden-import linter as a `go test` check. |
 | R8 | Port pt-mext delta algorithm to native Go; commit the C++ file's worked example as a golden fixture; add counter/gauge classification, float64 aggregates, drift diagnostics. No parity test, no C++ toolchain requirement. |
+| R9 | Navigation = `<nav>` + `position:sticky`; collapse = native `<details>`/`<summary>`; localStorage keyed by deterministic `Report.ReportID`; works (degraded) without JS. |
 
 All Phase 0 items resolved. Phase 1 artifacts proceed below.

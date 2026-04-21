@@ -43,6 +43,7 @@ an explicit flag.
 | `4` | Input directory is not recognised as a pt-stalk output directory (no timestamped collectors and no `pt-summary.out`). | One line. |
 | `5` | Input size bound exceeded (> 1 GB total or > 200 MB for any single source file). | One line naming the violated bound and the offending path. |
 | `6` | Output path already exists and `--overwrite` was not set. | One line naming the output path. |
+| `7` | Output path resolves to a location inside the input directory tree (would violate read-only-inputs principle). | One line naming both the input path and the offending output path. |
 | `70` | Internal error. Should not occur in normal operation. Indicates a bug. | One line with error type + message. |
 
 No other exit codes are used. In particular, parse failures on
@@ -131,10 +132,26 @@ EXIT CODES
   4  input is not a pt-stalk directory
   5  input exceeds supported size bounds (1 GB total / 200 MB per file)
   6  output path exists (use --overwrite to replace)
+  7  output path resolves inside input directory (refusing to write)
   70 internal error (please report)
 ```
 
 Help output goes to stdout, never stderr.
+
+## Output-path safety
+
+Before calling into `parse.Discover`, `cmd/my-gather` MUST:
+
+1. Resolve `<input-dir>` to an absolute path with symlinks expanded
+   (`filepath.EvalSymlinks` after `filepath.Abs`).
+2. Resolve `--out` to an absolute path with symlinks expanded on the
+   parent directory (the output file itself does not exist yet).
+3. Reject (exit code 7) if the resolved output path begins with the
+   resolved input path, or equals it.
+
+This check is what enforces spec FR-029 and closes the Principle II
+foot-gun where a naive `-o ./report.html` from inside the input tree
+would land a write inside the pt-stalk dump.
 
 ## Backwards-compatibility policy
 

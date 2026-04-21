@@ -48,6 +48,9 @@ type DBSection        struct { /* ... */ }
 type SnapshotVariables struct { /* ... */ }
 type SnapshotInnoDB   struct { /* ... */ }
 
+// Navigation (FR-031)
+type NavEntry struct { /* ... */ }  // see data-model.md
+
 // Enums
 type Suffix        string
 type FormatVersion int
@@ -295,18 +298,25 @@ No other package imports `cmd/my-gather`.
 
 ## Stability statement
 
-In v1:
+All three packages (`model`, `parse`, `render`) are exported because
+Constitution Principle VI requires library-first architecture, and they
+ship with godoc so a future maintainer (or the `cmd/my-gather` binary
+itself) can consume them. They are **not advertised, promoted, or
+stabilised** for third-party consumers in v1 (spec Clarifications Q5).
 
-- `model` — exported identifiers are **stable within v1**; additions
-  are allowed (new suffixes, new fields with zero values). Removals
-  or renamings require a major bump.
-- `parse` — `Discover`, `DiscoverOptions`, `ErrNotAPtStalkDir`,
-  `SizeError`, `PathError`, `ParseError` are stable within v1.
-- `render` — `Render` and `RenderOptions` are stable within v1.
-- `parse` internal per-collector functions are **not** exported and
-  are free to change without version bumps.
+In practice, within v1:
 
-The packages are importable per Principle VI, but this repository does
-not actively solicit third-party use in v1 (spec Q5 clarification).
-Consumers relying on these contracts accept the v1 stability
-statement above.
+- The **internal** stability of these packages — the shape that
+  `cmd/my-gather` depends on — is maintained across patch releases;
+  breaking changes are coordinated with the CLI.
+- **No backwards-compatibility guarantee is offered to third-party
+  importers.** Types, function signatures, error constants, and
+  struct fields may change between v1.x releases without a major
+  version bump. Third-party code that imports these packages in v1
+  does so knowing a v1.minor release may require code changes.
+- `parse` per-collector functions remain unexported; exported surface
+  is limited to `Discover`, `DiscoverOptions`, `DiagnosticSink`,
+  `ErrNotAPtStalkDir`, `SizeError`, `PathError`, `ParseError`, and the
+  default-bound constants.
+- A public stability guarantee, if ever offered, is a separate
+  future feature requiring its own schema review (Q5 clarification).

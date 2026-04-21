@@ -273,11 +273,12 @@ side-by-side per-snapshot table of these scalars.
 
 ```go
 type MysqladminData struct {
-    VariableNames []string         // sorted alphabetically
-    SampleCount   int
-    Timestamps    []time.Time      // length SampleCount, sorted ascending
-    Deltas        map[string][]float64  // key: variable name; value: length SampleCount (first slot is 0 by convention)
-    IsCounter     map[string]bool  // per-variable: true if raw values are monotonic counters
+    VariableNames    []string          // sorted alphabetically
+    SampleCount      int
+    Timestamps       []time.Time       // length SampleCount, sorted ascending
+    Deltas           map[string][]float64  // key: variable name; value: length SampleCount
+    IsCounter        map[string]bool   // per-variable: true if raw values are monotonic counters
+    SnapshotBoundaries []int           // sample indexes at which a new snapshot's first sample sits
 }
 ```
 
@@ -293,21 +294,36 @@ Invariants:
   that slot and emits a `Diagnostic(Severity=Warning)` (research R8
   improvement C).
 - `VariableNames` and `IsCounter` keys are identical as a set.
+- `SnapshotBoundaries` lists the sample indexes at which a new
+  `-mysqladmin` file's first sample sits (always includes `0` for the
+  very first sample). For every boundary index `b > 0`, counters
+  MUST have `Deltas[v][b] == NaN` — the `previous` map is reset at
+  each boundary, the first post-boundary sample carries its own
+  initial tally, and the "delta" slot is explicitly undefined because
+  cross-snapshot counter deltas are meaningless (counters may have
+  been reset; time gap is arbitrary). An `Info` diagnostic is
+  emitted per boundary (spec FR-030). The renderer draws a vertical
+  boundary marker at each corresponding timestamp.
+- Aggregate stats (total, min, max, avg) skip any sample whose slot
+  in `Deltas` is `NaN`, which includes both pre-first-sample slots
+  and all post-boundary "first slots".
 
 Rationale for pre-computed deltas: see research R4.
 Normative algorithm reference: see research R8 and spec FR-028 —
 parity with `_references/pt-mext/pt-mext-improved.cpp` for counter
 variables is a correctness invariant.
+Snapshot-boundary handling is spec FR-030 (F4 remediation of the
+2026-04-21 analyze pass).
 
 ### `ProcesslistData`
 
 ```go
 type ProcesslistData struct {
-    StateSamples []StateSample
+    ThreadStateSamples []ThreadStateSample
     States       []string  // sorted alphabetically; "Other" always last if present
 }
 
-type StateSample struct {
+type ThreadStateSample struct {
     Timestamp   time.Time
     StateCounts map[string]int  // keyed by state label; missing states = 0
 }
@@ -368,6 +384,29 @@ type Report struct {
     OSSection        *OSSection
     VariablesSection *VariablesSection
     DBSection        *DBSection
+
+    // Navigation is computed from the rendered sections at render
+    // time; it is not input to Render but exposed in the model so
+    // render/templates/report.html.tmpl can iterate it deterministically
+    // without re-walking the section tree. See FR-031.
+    Navigation []NavEntry
+
+    // ReportID is a stable-per-report identifier used as the prefix
+    // for localStorage keys in the collapse/expand feature (FR-032).
+    // Computed as a short hash over a canonicalisation of Collection
+    // (excluding GeneratedAt), so re-rendering the same input
+    // produces the same ReportID. Deterministic (Principle IV).
+    ReportID string
+}
+
+// NavEntry describes one entry in the report's navigation index
+// (FR-031). Entries are flat (one level of nesting: section → subview)
+// in v1; the rendered UI renders them as a two-level tree.
+type NavEntry struct {
+    ID       string  // anchor target; stable across re-renders of same input
+    Title    string  // human-readable label
+    Level    int     // 1 = top-level section, 2 = subview within a section
+    ParentID string  // "" for Level==1
 }
 ```
 
@@ -449,7 +488,7 @@ iterate a Go map in rendering order. Specifically:
   name (not the map key order) for labelling.
 - `MysqladminData.Deltas` / `.IsCounter` — keyed lookup only;
   iteration goes through the sorted `VariableNames` slice.
-- `StateSample.StateCounts` — iteration goes through the sorted
+- `ThreadStateSample.StateCounts` — iteration goes through the sorted
   `ProcesslistData.States` slice.
 - `VariablesData.Entries` — already a sorted slice.
 
@@ -474,7 +513,9 @@ Report
 ├── Collection (by pointer)
 ├── OSSection        (view over all snapshots' iostat/top/vmstat)
 ├── VariablesSection (per-snapshot)
-└── DBSection        (per-snapshot for InnoDB scalars; merged for others)
+├── DBSection        (per-snapshot for InnoDB scalars; merged for others)
+├── Navigation       (flat list of NavEntry — FR-031)
+└── ReportID         (stable-per-report hash — FR-032)
 ```
 
 All types are pointer-free at leaf level (values in slices and maps),

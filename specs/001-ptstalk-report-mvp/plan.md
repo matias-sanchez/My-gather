@@ -172,8 +172,9 @@ render/
 │   └── db.html.tmpl
 └── assets/
     ├── chart.min.js        # Vendored chart library (decision in research.md)
-    ├── app.js              # Small glue script: toggle UI for mysqladmin, search box
-    └── app.css
+    ├── app.js              # Small glue script: mysqladmin toggle UI, variables
+    │                       # search box, and collapse-state persistence (FR-032)
+    └── app.css             # Including sticky nav rail styles (FR-031)
 
 testdata/
 ├── example1/               # Anonymised subset of _references/examples/example1
@@ -245,6 +246,13 @@ resolved there:
    file's tail worked example is promoted to a committed golden
    fixture under `testdata/pt-mext/`. No parity test, no C++
    toolchain requirement.
+9. **Navigation index and collapsible sections** → `<nav>` rendered
+   server-side from a deterministic `Report.Navigation`, `position:
+   sticky` for on-scroll visibility, native `<details>`/`<summary>`
+   for collapse, `localStorage` keyed by `Report.ReportID` (a
+   deterministic hash of the canonicalised Collection) for persisting
+   open/closed state across reloads. Degrades gracefully without
+   JavaScript.
 
 Output: `research.md` with all open questions resolved.
 
