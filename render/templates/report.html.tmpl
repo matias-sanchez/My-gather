@@ -1,0 +1,116 @@
+{{- /* report.html.tmpl — top-level page frame.
+       Determinism note: no Date/random in any template block; all
+       dynamic values come from the model. */ -}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{.Title}}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="my-gather {{.Version}}">
+  <meta name="referrer" content="no-referrer">
+  <style>{{.EmbeddedCSS}}</style>
+  <script type="application/json" id="report-data">{{.DataPayload}}</script>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>pt-stalk diagnostic report <span class="sub">{{.Title}}</span></h1>
+  <div class="meta">
+    <span><span class="k">host</span> <span class="v">{{if .Hostname}}{{.Hostname}}{{else}}<em>(unknown)</em>{{end}}</span></span>
+    <span><span class="k">snapshots</span> <span class="v">{{.SnapshotCount}}</span></span>
+    <span><span class="k">generated</span> <span class="v">{{.GeneratedAtDisplay}}</span></span>
+    <span><span class="k">my-gather</span> <span class="v">{{.Version}}{{if .GitCommit}} · {{.GitCommit}}{{end}}</span></span>
+  </div>
+</header>
+
+<p class="verbatim-banner">
+  <strong>Verbatim passthrough:</strong>
+  This report is derived verbatim from a pt-stalk collection.
+  Hostnames, IP addresses, query text, and MySQL variables appear as
+  captured. Responsible sharing is the reader's responsibility.
+</p>
+
+<div class="layout">
+  <nav class="index" aria-label="Report navigation">
+    <h2>Contents</h2>
+    <ul>
+      {{- /* Walk the pre-computed NavEntry list. It's already in
+             deterministic order (Level 1 first, then Level 2 children
+             interleaved immediately after their parent). */ -}}
+      {{range .Navigation}}
+        {{if eq .Level 1}}
+      <li class="level-1"><a href="#{{.ID}}">{{.Title}}</a></li>
+        {{else}}
+      <li class="level-2"><a href="#{{.ID}}">{{.Title}}</a></li>
+        {{end}}
+      {{end}}
+    </ul>
+  </nav>
+
+  <main class="content">
+
+    {{/* OS Usage section */}}
+    <details id="sec-os" class="section" open>
+      <summary>
+        <span>OS Usage</span>
+        <span class="badge">{{.OSBadge}}</span>
+      </summary>
+      <div class="body">
+        {{template "os" .}}
+      </div>
+    </details>
+
+    {{/* Variables section */}}
+    <details id="sec-variables" class="section" open>
+      <summary>
+        <span>Variables</span>
+        <span class="badge">{{.VariablesBadge}}</span>
+      </summary>
+      <div class="body">
+        {{template "variables" .}}
+      </div>
+    </details>
+
+    {{/* Database Usage section */}}
+    <details id="sec-db" class="section" open>
+      <summary>
+        <span>Database Usage</span>
+        <span class="badge">{{.DBBadge}}</span>
+      </summary>
+      <div class="body">
+        {{template "db" .}}
+      </div>
+    </details>
+
+    {{/* Parser Diagnostics — collapsed by default per Principle XI. */}}
+    <details id="sec-diagnostics" class="diagnostics">
+      <summary>
+        <span>Parser Diagnostics</span>
+        <span class="badge">{{.DiagnosticsBadge}}</span>
+      </summary>
+      <div class="body">
+        {{- if .Diagnostics }}
+        <ul>
+          {{- range .Diagnostics }}
+          <li>
+            <span class="sev {{.SeverityClass}}">{{.SeverityLabel}}</span>
+            <span class="loc">{{if .SourceFileDisplay}}{{.SourceFileDisplay}}{{end}}{{if .Location}} · {{.Location}}{{end}}</span>
+            <span class="msg">{{.Message}}</span>
+          </li>
+          {{- end }}
+        </ul>
+        {{- else }}
+        <p class="banner" style="margin:12px 14px;">No parser diagnostics — the collection parsed without warnings or errors.</p>
+        {{- end }}
+      </div>
+    </details>
+
+  </main>
+</div>
+
+<script>{{.EmbeddedChartJS}}</script>
+<script>{{.EmbeddedAppJS}}</script>
+
+</body>
+</html>

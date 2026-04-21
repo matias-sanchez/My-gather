@@ -1,0 +1,35 @@
+{{- /* variables.html.tmpl — one <details> per snapshot, each with a
+       search input and a table. */ -}}
+{{ define "variables" }}
+
+{{- if .HasVariables }}
+  {{- range .VariableSnapshots }}
+<details id="{{.DetailsID}}" class="subview" open>
+  <summary><span>{{.Title}}</span><span class="badge">{{.Badge}}</span></summary>
+  <div class="body">
+    {{- if .Data }}
+    <div class="search-row">
+      <input type="search" class="variables-search"
+             data-snapshot="{{.DetailsID}}"
+             placeholder="Filter by name…" autocomplete="off" spellcheck="false">
+      <span class="count">{{.Count}} variables</span>
+    </div>
+    <table class="variables-table" data-snapshot="{{.DetailsID}}">
+      <thead><tr><th>Variable</th><th>Value</th></tr></thead>
+      <tbody>
+      {{- range .Data.Entries }}
+        <tr data-variable-name="{{.Name}}"><td class="mono">{{.Name}}</td><td class="mono">{{.Value}}</td></tr>
+      {{- end }}
+      </tbody>
+    </table>
+    {{- else }}
+    <p class="banner missing">Data not available — <code>-variables</code> was missing or unparseable for this snapshot.</p>
+    {{- end }}
+  </div>
+</details>
+  {{- end }}
+{{- else }}
+<p class="banner missing">Data not available — no <code>-variables</code> files were present in any snapshot of this collection.</p>
+{{- end }}
+
+{{ end }}

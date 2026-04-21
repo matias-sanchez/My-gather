@@ -1,0 +1,82 @@
+{{- /* db.html.tmpl — Database Usage section body.
+       Four subviews: InnoDB status (per-snapshot scalars), mysqladmin
+       interactive deltas chart, processlist thread-state chart, and
+       the aggregated missing-files banner. */ -}}
+{{ define "db" }}
+
+<details id="sub-db-innodb" class="subview" open>
+  <summary><span>InnoDB status</span><span class="badge">-innodbstatus1</span></summary>
+  <div class="body">
+    {{- if .HasInnoDB }}
+      {{- range .InnoDBSnapshots }}
+    <div class="snapshot-group">
+      <h4>{{.Title}}</h4>
+      {{- if .Data }}
+      <div class="callouts">
+        <div class="callout">
+          <p class="k">Semaphores</p>
+          <p class="v">{{.Data.SemaphoreCount}}</p>
+          <p class="sub">waiting / reserved</p>
+        </div>
+        <div class="callout">
+          <p class="k">Pending I/O</p>
+          <p class="v">{{.PendingTotal}}</p>
+          <p class="sub">reads {{.Data.PendingReads}} · writes {{.Data.PendingWrites}}</p>
+        </div>
+        <div class="callout">
+          <p class="k">AHI</p>
+          <p class="v">{{.AHISearchRate}}</p>
+          <p class="sub">searches/sec · hash tbl {{.Data.AHIActivity.HashTableSize}}</p>
+        </div>
+        <div class="callout">
+          <p class="k">History list</p>
+          <p class="v">{{.Data.HistoryListLength}}</p>
+          <p class="sub">HLL (undo depth)</p>
+        </div>
+      </div>
+      {{- else }}
+      <p class="banner missing">Data not available for this snapshot.</p>
+      {{- end }}
+    </div>
+      {{- end }}
+    {{- else }}
+    <p class="banner missing">Data not available — no <code>-innodbstatus1</code> files were present in this collection.</p>
+    {{- end }}
+  </div>
+</details>
+
+<details id="sub-db-mysqladmin" class="subview" open>
+  <summary><span>Counter deltas</span><span class="badge">-mysqladmin</span></summary>
+  <div class="body">
+    {{- if .HasMysqladmin }}
+    <div class="chart-toolbar">
+      <label for="{{.MysqladminSelectID}}">Series:</label>
+      <select id="{{.MysqladminSelectID}}" multiple size="6">
+        {{- range .MysqladminVariables }}
+        <option value="{{.}}">{{.}}</option>
+        {{- end }}
+      </select>
+    </div>
+    <div class="chart" id="chart-mysqladmin" data-chart="mysqladmin" data-select="{{.MysqladminSelectID}}"
+         aria-label="Per-sample counter deltas from mysqladmin extended-status"></div>
+    <noscript><p class="banner">Interactive chart requires JavaScript. Raw mysqladmin data is embedded in the page.</p></noscript>
+    {{- else }}
+    <p class="banner missing">Data not available — no <code>-mysqladmin</code> files were present in this collection.</p>
+    {{- end }}
+  </div>
+</details>
+
+<details id="sub-db-processlist" class="subview" open>
+  <summary><span>Thread states</span><span class="badge">-processlist</span></summary>
+  <div class="body">
+    {{- if .HasProcesslist }}
+    <div class="chart" id="chart-processlist" data-chart="processlist"
+         aria-label="Count of threads per state over time"></div>
+    <noscript><p class="banner">Chart requires JavaScript. Raw processlist data is embedded in the page.</p></noscript>
+    {{- else }}
+    <p class="banner missing">Data not available — no <code>-processlist</code> files were present in this collection.</p>
+    {{- end }}
+  </div>
+</details>
+
+{{ end }}

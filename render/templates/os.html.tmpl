@@ -1,0 +1,40 @@
+{{- /* os.html.tmpl — OS Usage section body. Three subviews. */ -}}
+{{ define "os" }}
+
+<details id="sub-os-iostat" class="subview" open>
+  <summary><span>Disk utilization</span><span class="badge">-iostat</span></summary>
+  <div class="body">
+    {{- if .HasIostat }}
+    <div class="chart" id="chart-iostat" data-chart="iostat" aria-label="Per-device iostat utilization over time"></div>
+    <noscript><p class="banner">Chart requires JavaScript. Raw iostat data is embedded in the page.</p></noscript>
+    {{- else }}
+    <p class="banner missing">Data not available — <code>-iostat</code> was missing or unparseable in this collection.</p>
+    {{- end }}
+  </div>
+</details>
+
+<details id="sub-os-top" class="subview" open>
+  <summary><span>Top CPU processes</span><span class="badge">-top</span></summary>
+  <div class="body">
+    {{- if .HasTop }}
+    <div class="chart" id="chart-top" data-chart="top" aria-label="Top 3 CPU-consuming processes over time"></div>
+    <noscript><p class="banner">Chart requires JavaScript. Raw top data is embedded in the page.</p></noscript>
+    {{- else }}
+    <p class="banner missing">Data not available — <code>-top</code> was missing or unparseable in this collection.</p>
+    {{- end }}
+  </div>
+</details>
+
+<details id="sub-os-vmstat" class="subview" open>
+  <summary><span>vmstat saturation</span><span class="badge">-vmstat</span></summary>
+  <div class="body">
+    {{- if .HasVmstat }}
+    <div class="chart" id="chart-vmstat" data-chart="vmstat" aria-label="System resource saturation over time"></div>
+    <noscript><p class="banner">Chart requires JavaScript. Raw vmstat data is embedded in the page.</p></noscript>
+    {{- else }}
+    <p class="banner missing">Data not available — <code>-vmstat</code> was missing or unparseable in this collection.</p>
+    {{- end }}
+  </div>
+</details>
+
+{{ end }}

@@ -1,0 +1,5242 @@
+TS 1776790333.008962516 2026-04-21 16:52:13
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2992
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2991677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest5 WHERE id BETWEEN 22955 AND 23054
+      Time_ms: 162
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest3 WHERE id BETWEEN 318895 AND 318994
+      Time_ms: 162
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest5 WHERE id BETWEEN 964455 AND 964554
+      Time_ms: 194
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest1 WHERE id BETWEEN 73764 AND 73863 ORDER BY c
+      Time_ms: 197
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest9 WHERE id BETWEEN 74088 AND 74187 ORDER BY c
+      Time_ms: 193
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest4 WHERE id BETWEEN 938394 AND 938493 ORDER BY c
+      Time_ms: 193
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id BETWEEN 436395 AND 436494 ORDER BY c
+      Time_ms: 197
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest3 WHERE id=798486
+      Time_ms: 162
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: DELETE FROM sbtest2 WHERE id=3473
+      Time_ms: 198
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest6 SET k=k+1 WHERE id=31731
+      Time_ms: 162
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 197
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1687
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1688
+         User: unauthenticated user
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790334.008794036 2026-04-21 16:52:14
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2993
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2992677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest4 WHERE id BETWEEN 430328 AND 430427 ORDER BY c
+      Time_ms: 89
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id=660617
+      Time_ms: 89
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id=353069
+      Time_ms: 89
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id=845570
+      Time_ms: 89
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest6 WHERE id BETWEEN 574146 AND 574245 ORDER BY c
+      Time_ms: 89
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id=913761
+      Time_ms: 89
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest5 WHERE id=87334
+      Time_ms: 89
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest6 WHERE id=885404
+      Time_ms: 89
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id=106060
+      Time_ms: 89
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id BETWEEN 579687 AND 579786
+      Time_ms: 89
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 196
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1706
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: SELECT SQL_NO_CACHE * FROM INFORMATION_SCHEMA.INNODB_TRX ORDER BY trx_id
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1707
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790335.008804182 2026-04-21 16:52:15
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2994
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2993677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id BETWEEN 413260 AND 413359 ORDER BY c
+      Time_ms: 109
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id BETWEEN 643732 AND 643831
+      Time_ms: 109
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 109
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest4 WHERE id BETWEEN 219813 AND 219912 ORDER BY c
+      Time_ms: 109
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest1 SET c='85237179102-32904811493-91079798920-81252549635-39371220051-90734312019-90328912088-38796265371-70685695282-01672392456' WHERE id=22468
+      Time_ms: 109
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest9 SET k=k+1 WHERE id=801912
+      Time_ms: 109
+    Rows_sent: 0
+Rows_examined: 1
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest2 SET k=k+1 WHERE id=132010
+      Time_ms: 109
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest9 WHERE id BETWEEN 318967 AND 319066 ORDER BY c
+      Time_ms: 109
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest7 SET k=k+1 WHERE id=778025
+      Time_ms: 109
+    Rows_sent: 0
+Rows_examined: 1
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id BETWEEN 164316 AND 164415 ORDER BY c
+      Time_ms: 109
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 194
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1721
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1722
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 15. row ***************************
+           Id: 1723
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790336.008537783 2026-04-21 16:52:16
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2995
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2994676
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest7 WHERE id BETWEEN 334680 AND 334779
+      Time_ms: 146
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id=521747
+      Time_ms: 146
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id BETWEEN 767826 AND 767925 ORDER BY c
+      Time_ms: 146
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id=923146
+      Time_ms: 146
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest7 SET k=k+1 WHERE id=90863
+      Time_ms: 146
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id=890663
+      Time_ms: 146
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest2 WHERE id BETWEEN 9480 AND 9579
+      Time_ms: 146
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: DELETE FROM sbtest6 WHERE id=148942
+      Time_ms: 146
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest2 SET k=k+1 WHERE id=264571
+      Time_ms: 146
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest4 WHERE id BETWEEN 502125 AND 502224
+      Time_ms: 146
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 192
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1738
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790337.008878119 2026-04-21 16:52:17
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2996
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2995678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id=93849
+      Time_ms: 85
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: update
+         Info: INSERT INTO sbtest1 (id, k, c, pad) VALUES (56411, 466057, '15752127459-47243500781-90660245182-97378330053-48535878020-79821144351-77794153592-84893659277-76777931808-28371798272', '34878320320-77611450337-65223972784-65018887282-25618402852')
+      Time_ms: 85
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest4 SET k=k+1 WHERE id=615745
+      Time_ms: 85
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: executing
+         Info: SELECT c FROM sbtest8 WHERE id BETWEEN 709081 AND 709180
+      Time_ms: 85
+    Rows_sent: 72
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest6 WHERE id=629479
+      Time_ms: 85
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest6 WHERE id BETWEEN 802018 AND 802117
+      Time_ms: 85
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id=879451
+      Time_ms: 85
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest7 WHERE id BETWEEN 724981 AND 725080
+      Time_ms: 85
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest8 WHERE id BETWEEN 252000 AND 252099 ORDER BY c
+      Time_ms: 85
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest5 WHERE id=538269
+      Time_ms: 85
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 192
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1755
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1756
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 15. row ***************************
+           Id: 1757
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 16. row ***************************
+           Id: 1758
+         User: unauthenticated user
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790338.009001915 2026-04-21 16:52:18
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2997
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2996677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id=964579
+      Time_ms: 37
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id=273249
+      Time_ms: 37
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest5 WHERE id=5354
+      Time_ms: 37
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id=163924
+      Time_ms: 36
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest1 WHERE id BETWEEN 42702 AND 42801
+      Time_ms: 37
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest3 WHERE id BETWEEN 144402 AND 144501 ORDER BY c
+      Time_ms: 37
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: update
+         Info: INSERT INTO sbtest5 (id, k, c, pad) VALUES (667265, 800918, '18801396458-99635889851-92627093687-29812710842-98095379227-11720807189-76859064499-38940406513-71397354333-97930255434', '25752850612-37128534021-12670861267-31344363063-23547492054')
+      Time_ms: 37
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest4 WHERE id=618973
+      Time_ms: 37
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id=399591
+      Time_ms: 37
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id=570118
+      Time_ms: 37
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 190
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1772
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1773
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790339.008598134 2026-04-21 16:52:19
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2998
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2997677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id BETWEEN 533944 AND 534043 ORDER BY c
+      Time_ms: 515
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest4 SET k=k+1 WHERE id=594545
+      Time_ms: 515
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id=370581
+      Time_ms: 515
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id BETWEEN 535877 AND 535976 ORDER BY c
+      Time_ms: 515
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id=830003
+      Time_ms: 515
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest10 SET k=k+1 WHERE id=592363
+      Time_ms: 515
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest4 WHERE id BETWEEN 943206 AND 943305 ORDER BY c
+      Time_ms: 515
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id=259725
+      Time_ms: 515
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: DELETE FROM sbtest10 WHERE id=685458
+      Time_ms: 515
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest8 WHERE id BETWEEN 601228 AND 601327 ORDER BY c
+      Time_ms: 515
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 188
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1789
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: closing tables
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 52
+Rows_examined: 52
+*************************** 14. row ***************************
+           Id: 1790
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 15. row ***************************
+           Id: 1791
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790340.008883681 2026-04-21 16:52:20
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2999
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2998677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest5 SET k=k+1 WHERE id=896793
+      Time_ms: 36
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest8 SET k=k+1 WHERE id=110631
+      Time_ms: 36
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest10 WHERE id BETWEEN 232584 AND 232683 ORDER BY c
+      Time_ms: 36
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest2 SET k=k+1 WHERE id=758098
+      Time_ms: 36
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest8 SET k=k+1 WHERE id=68737
+      Time_ms: 36
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest4 SET k=k+1 WHERE id=177607
+      Time_ms: 36
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest4 WHERE id BETWEEN 836132 AND 836231 ORDER BY c
+      Time_ms: 36
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 36
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id BETWEEN 202072 AND 202171 ORDER BY c
+      Time_ms: 36
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id=737429
+      Time_ms: 36
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 187
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1806
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790341.008966025 2026-04-21 16:52:21
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3000
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2999677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest3 WHERE id BETWEEN 574112 AND 574211
+      Time_ms: 10
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest3 WHERE id BETWEEN 485372 AND 485471
+      Time_ms: 10
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id BETWEEN 219101 AND 219200
+      Time_ms: 10
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest7 WHERE id=984669
+      Time_ms: 10
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest2 WHERE id BETWEEN 614077 AND 614176
+      Time_ms: 10
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id BETWEEN 87848 AND 87947
+      Time_ms: 10
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest6 WHERE id=428723
+      Time_ms: 10
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest6 WHERE id BETWEEN 57192 AND 57291
+      Time_ms: 10
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id BETWEEN 205194 AND 205293
+      Time_ms: 10
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 100
+Rows_examined: 100
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 185
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1823
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790342.008607844 2026-04-21 16:52:22
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3001
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3000677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest7 WHERE id=748879
+      Time_ms: 486
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest9 WHERE id BETWEEN 148039 AND 148138
+      Time_ms: 485
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest1 WHERE id BETWEEN 546538 AND 546637 ORDER BY c
+      Time_ms: 486
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id=870409
+      Time_ms: 485
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id BETWEEN 588841 AND 588940 ORDER BY c
+      Time_ms: 486
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest10 SET k=k+1 WHERE id=677779
+      Time_ms: 486
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: update
+         Info: INSERT INTO sbtest5 (id, k, c, pad) VALUES (725652, 44635, '33259713956-33378969291-46943423479-64226127453-31610735994-02191353719-99433262788-98322703072-04960943442-01968104457', '53651704933-00658493724-47193711183-56906210081-69505283293')
+      Time_ms: 486
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id BETWEEN 819456 AND 819555 ORDER BY c
+      Time_ms: 486
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest10 SET k=k+1 WHERE id=897352
+      Time_ms: 485
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id BETWEEN 916960 AND 917059 ORDER BY c
+      Time_ms: 486
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 183
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1840
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1841
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790343.009574459 2026-04-21 16:52:23
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3002
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3001678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id=824393
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id=857818
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 0
+        State: updating
+         Info: UPDATE sbtest9 SET k=k+1 WHERE id=651769
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest4 WHERE id=749306
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id=83345
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id BETWEEN 796569 AND 796668 ORDER BY c
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 0
+        State: update
+         Info: INSERT INTO sbtest9 (id, k, c, pad) VALUES (556351, 617472, '52276939568-10624596197-46777579244-94774484818-95481133600-97046258714-64310863418-44480283234-52865288885-47784317140', '37161522714-23624835469-98186905548-64567362432-49993382226')
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 0
+        State: updating
+         Info: UPDATE sbtest7 SET k=k+1 WHERE id=360357
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id=36480
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 0
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 183
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1857
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1858
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790344.009241985 2026-04-21 16:52:24
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3003
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3002678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest3 SET k=k+1 WHERE id=953451
+      Time_ms: 275
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest8 SET k=k+1 WHERE id=415656
+      Time_ms: 275
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest3 WHERE id BETWEEN 868288 AND 868387
+      Time_ms: 275
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest7 WHERE id BETWEEN 103821 AND 103920 ORDER BY c
+      Time_ms: 275
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest2 SET k=k+1 WHERE id=320636
+      Time_ms: 275
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest9 SET k=k+1 WHERE id=623459
+      Time_ms: 275
+    Rows_sent: 0
+Rows_examined: 1
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest1 SET k=k+1 WHERE id=970535
+      Time_ms: 275
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest3 WHERE id BETWEEN 202545 AND 202644
+      Time_ms: 275
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest6 WHERE id=803696
+      Time_ms: 254
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest9 WHERE id BETWEEN 627832 AND 627931
+      Time_ms: 275
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 182
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1874
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 51
+Rows_examined: 51
+*************************** 14. row ***************************
+           Id: 1875
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 15. row ***************************
+           Id: 1876
+         User: unauthenticated user
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790345.009576096 2026-04-21 16:52:25
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3004
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3003678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest7 WHERE id BETWEEN 506509 AND 506608
+      Time_ms: 34
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id=543129
+      Time_ms: 34
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest3 WHERE id=597409
+      Time_ms: 34
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest9 SET k=k+1 WHERE id=128880
+      Time_ms: 34
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest2 SET c='55385430410-43322383349-20015405598-43868885894-64635315495-07041156467-54225489312-12669647296-44992639257-89970804235' WHERE id=924426
+      Time_ms: 34
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest1 SET k=k+1 WHERE id=903794
+      Time_ms: 34
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id=585703
+      Time_ms: 34
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id=940308
+      Time_ms: 34
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest3 WHERE id=230289
+      Time_ms: 33
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id=744759
+      Time_ms: 34
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 180
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1891
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1892
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 15. row ***************************
+           Id: 1893
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 16. row ***************************
+           Id: 1894
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: select @@version_comment limit 1
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790346.008659714 2026-04-21 16:52:26
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3005
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3004677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest4 WHERE id BETWEEN 383226 AND 383325 ORDER BY c
+      Time_ms: 388
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest5 WHERE id=882433
+      Time_ms: 399
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest8 SET c='38460825842-56249733715-91622078997-43923806103-87544983568-09048097050-08091478915-16389891441-30234318449-34259106472' WHERE id=244978
+      Time_ms: 399
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest8 WHERE id BETWEEN 856272 AND 856371 ORDER BY c
+      Time_ms: 388
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest8 SET k=k+1 WHERE id=44969
+      Time_ms: 400
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id=2818
+      Time_ms: 388
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest3 WHERE id BETWEEN 462473 AND 462572 ORDER BY c
+      Time_ms: 400
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: DELETE FROM sbtest2 WHERE id=702345
+      Time_ms: 399
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: DELETE FROM sbtest4 WHERE id=813241
+      Time_ms: 400
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id BETWEEN 514443 AND 514542 ORDER BY c
+      Time_ms: 388
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 177
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1907
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 1
+        State: Opening tables
+         Info: SELECT SQL_NO_CACHE
+            r.trx_id AS waiting_trx_id,
+            r.trx_mysql_thread_id AS waiting_thread,
+            TIMESTAMPDIFF(SECOND, r.trx_wait_started, CURRENT_TIMESTAMP) AS wait_time,
+            r.trx_query AS waiting_query,
+            CONCAT('`', l.OBJECT_SCHEMA, '`.`', l.OBJECT_NAME, '`') AS waiting_table_lock,
+            b.trx_id AS blocking_trx_id, b.trx_mysql_thread_id AS blocking_thread,
+            SUBSTRING(p.host, 1, INSTR(p.host, ':') - 1) AS blocking_host,
+            SUBSTRING(p.host, INSTR(p.host, ':') +1) AS blocking_port,
+            IF(p.command = "Sleep", p.time, 0) AS idle_in_trx,
+            b.trx_query AS blocking_query
+         FROM performance_schema.data_lock_waits AS w
+         INNER JOIN INFORMATION_SCHEMA.INNODB_TRX AS b ON b.trx_id = w.BLOCKING_ENGINE_TRANSACTION_ID
+         INNER JOIN INFORMATION_SCHEMA.INNODB_TRX AS r ON r.trx_id = w.REQUESTING_ENGINE_TRANSACTION_ID
+         INNER JOIN performance_schema.data_locks AS l ON w.REQUESTING_ENGINE_LOCK_ID = l.ENGINE_LOCK_ID
+         LEFT JOIN INFORMATION_SCHEMA.PROCESSLIST AS p ON p.id = b.trx_mysql_thread_id
+         ORDER BY wait_time DESC
+      Time_ms: 399
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1908
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 54
+Rows_examined: 54
+*************************** 15. row ***************************
+           Id: 1909
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 16. row ***************************
+           Id: 1910
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: SELECT SQL_NO_CACHE * FROM INFORMATION_SCHEMA.INNODB_TRX ORDER BY trx_id
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 17. row ***************************
+           Id: 1911
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Sending to client
+         Info: select @@version_comment limit 1
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+TS 1776790347.009313297 2026-04-21 16:52:27
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3006
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3005678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 0
+        State: executing
+         Info: SELECT c FROM sbtest5 WHERE id=178677
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 0
+        State: executing
+         Info: SELECT c FROM sbtest8 WHERE id BETWEEN 774242 AND 774341 ORDER BY c
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 0
+        State: Opening tables
+         Info: SELECT c FROM sbtest7 WHERE id=791673
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id BETWEEN 444328 AND 444427
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 0
+        State: Opening tables
+         Info: DELETE FROM sbtest4 WHERE id=705318
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 0
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest5 WHERE id=710704
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 0
+        State: closing tables
+         Info: SELECT c FROM sbtest10 WHERE id BETWEEN 500087 AND 500186
+      Time_ms: 0
+    Rows_sent: 100
+Rows_examined: 100
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 177
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1923
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1924
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 15. row ***************************
+           Id: 1925
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790348.008759106 2026-04-21 16:52:28
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3007
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3006677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest4 SET k=k+1 WHERE id=76631
+      Time_ms: 72
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id=607572
+      Time_ms: 72
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: update
+         Info: INSERT INTO sbtest2 (id, k, c, pad) VALUES (219880, 819222, '75217178587-83338509088-88539557348-22373828037-83737821725-61527689680-74342343692-70513308611-08201206776-66135861894', '07193902068-57308913961-15824488144-47375984933-34132917162')
+      Time_ms: 72
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest6 WHERE id BETWEEN 391296 AND 391395
+      Time_ms: 72
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id=995072
+      Time_ms: 72
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest1 WHERE id BETWEEN 213315 AND 213414
+      Time_ms: 72
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest4 WHERE id BETWEEN 845473 AND 845572
+      Time_ms: 72
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id BETWEEN 535633 AND 535732 ORDER BY c
+      Time_ms: 72
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest4 WHERE id BETWEEN 662379 AND 662478
+      Time_ms: 72
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest9 WHERE id BETWEEN 157384 AND 157483
+      Time_ms: 72
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 173
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1940
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: executing
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1941
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 15. row ***************************
+           Id: 1942
+         User: unauthenticated user
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: Receiving from client
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790349.009302270 2026-04-21 16:52:29
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3008
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3007678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id=995207
+      Time_ms: 64
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id=123730
+      Time_ms: 64
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id=979641
+      Time_ms: 64
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest4 WHERE id=746519
+      Time_ms: 64
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest5 WHERE id=839128
+      Time_ms: 64
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest4 WHERE id BETWEEN 202471 AND 202570
+      Time_ms: 64
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id=998443
+      Time_ms: 64
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id=933981
+      Time_ms: 64
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest5 WHERE id=470556
+      Time_ms: 64
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest6 WHERE id=207987
+      Time_ms: 64
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 173
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1957
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1958
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 15. row ***************************
+           Id: 1959
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 16. row ***************************
+           Id: 1960
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790350.008816742 2026-04-21 16:52:30
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3009
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3008677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: update
+         Info: INSERT INTO sbtest4 (id, k, c, pad) VALUES (109934, 238933, '60616713460-36430791638-12076117340-43624234037-67913528963-08152764460-44801436864-13261799170-00020848061-68839195904', '47252191097-03363692931-86485229098-49632899270-57091331824')
+      Time_ms: 56
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id=944571
+      Time_ms: 55
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id BETWEEN 198895 AND 198994 ORDER BY c
+      Time_ms: 55
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest10 WHERE id BETWEEN 250861 AND 250960
+      Time_ms: 55
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest9 WHERE id BETWEEN 8963 AND 9062 ORDER BY c
+      Time_ms: 55
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id=764248
+      Time_ms: 55
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest2 WHERE id BETWEEN 726358 AND 726457
+      Time_ms: 55
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest9 SET k=k+1 WHERE id=168318
+      Time_ms: 55
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 56
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest2 SET k=k+1 WHERE id=377026
+      Time_ms: 56
+    Rows_sent: 0
+Rows_examined: 1
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 170
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1974
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: executing
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 28
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1975
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 15. row ***************************
+           Id: 1976
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: Sending to client
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 16. row ***************************
+           Id: 1977
+         User: unauthenticated user
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790351.009049062 2026-04-21 16:52:31
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3010
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3009678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 0
+        State: Opening tables
+         Info: DELETE FROM sbtest4 WHERE id=256209
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest6 WHERE id=593954
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 0
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest5 WHERE id BETWEEN 367638 AND 367737
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 0
+        State: executing
+         Info: SELECT c FROM sbtest4 WHERE id BETWEEN 717932 AND 718031 ORDER BY c
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 0
+        State: Sending to client
+         Info: DELETE FROM sbtest7 WHERE id=736552
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 1
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 0
+        State: System lock
+         Info: SELECT c FROM sbtest4 WHERE id=112339
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 0
+        State: Sending to client
+         Info: SELECT c FROM sbtest4 WHERE id=630216
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 170
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 1991
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 1992
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 15. row ***************************
+           Id: 1993
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+TS 1776790352.008973736 2026-04-21 16:52:32
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3011
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3010677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: DELETE FROM sbtest3 WHERE id=384396
+      Time_ms: 20
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest4 WHERE id BETWEEN 204437 AND 204536
+      Time_ms: 20
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest7 WHERE id BETWEEN 774824 AND 774923
+      Time_ms: 20
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id BETWEEN 439156 AND 439255
+      Time_ms: 20
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest4 WHERE id BETWEEN 279911 AND 280010
+      Time_ms: 20
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest4 WHERE id=69638
+      Time_ms: 20
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest6 WHERE id BETWEEN 858360 AND 858459 ORDER BY c
+      Time_ms: 20
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest6 WHERE id BETWEEN 281167 AND 281266 ORDER BY c
+      Time_ms: 20
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest3 WHERE id=21698
+      Time_ms: 20
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: DELETE FROM sbtest4 WHERE id=326262
+      Time_ms: 20
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 168
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 2008
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 2009
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 15. row ***************************
+           Id: 2010
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790353.008860859 2026-04-21 16:52:33
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3012
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3011677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: DELETE FROM sbtest6 WHERE id=342406
+      Time_ms: 24
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: DELETE FROM sbtest2 WHERE id=311550
+      Time_ms: 24
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest10 WHERE id BETWEEN 611160 AND 611259 ORDER BY c
+      Time_ms: 24
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest4 WHERE id BETWEEN 776096 AND 776195 ORDER BY c
+      Time_ms: 24
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 24
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id=886030
+      Time_ms: 24
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest6 WHERE id BETWEEN 647964 AND 648063 ORDER BY c
+      Time_ms: 24
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id=649909
+      Time_ms: 24
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: DELETE FROM sbtest7 WHERE id=260342
+      Time_ms: 24
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id BETWEEN 91608 AND 91707 ORDER BY c
+      Time_ms: 24
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 166
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 2025
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790354.008861005 2026-04-21 16:52:34
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3013
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3012679
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id=51959
+      Time_ms: 47
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 47
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 47
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 47
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id=607709
+      Time_ms: 47
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest4 WHERE id BETWEEN 215907 AND 216006
+      Time_ms: 47
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: DELETE FROM sbtest3 WHERE id=781873
+      Time_ms: 47
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 47
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id=21231
+      Time_ms: 47
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id=388218
+      Time_ms: 47
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 166
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 2045
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 2046
+         User: unauthenticated user
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790355.009118676 2026-04-21 16:52:35
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3014
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3013677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest1 WHERE id BETWEEN 872002 AND 872101 ORDER BY c
+      Time_ms: 25
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id=526465
+      Time_ms: 25
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest5 WHERE id=143988
+      Time_ms: 25
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest7 WHERE id=815969
+      Time_ms: 25
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id BETWEEN 714149 AND 714248
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest4 WHERE id=225389
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id=983336
+      Time_ms: 25
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest3 WHERE id=332075
+      Time_ms: 25
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest8 WHERE id BETWEEN 806414 AND 806513 ORDER BY c
+      Time_ms: 25
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: DELETE FROM sbtest7 WHERE id=562179
+      Time_ms: 25
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 164
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 2059
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 2060
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790356.009081280 2026-04-21 16:52:36
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3015
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3014678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 1
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 0
+        State: executing
+         Info: SELECT DISTINCT c FROM sbtest7 WHERE id BETWEEN 647258 AND 647357 ORDER BY c
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 0
+        State: executing
+         Info: SELECT DISTINCT c FROM sbtest3 WHERE id BETWEEN 730579 AND 730678 ORDER BY c
+      Time_ms: 0
+    Rows_sent: 6
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 0
+        State: Sending to client
+         Info: DELETE FROM sbtest3 WHERE id=962942
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 1
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 0
+        State: executing
+         Info: SELECT DISTINCT c FROM sbtest9 WHERE id BETWEEN 502417 AND 502516 ORDER BY c
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest3 WHERE id BETWEEN 530637 AND 530736 ORDER BY c
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 0
+        State: Opening tables
+         Info: UPDATE sbtest3 SET c='76252904968-56975076537-51379961478-86173468370-92247449907-81674233879-50122061233-91926979166-77642829972-68857993021' WHERE id=161691
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 162
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 2076
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790357.009161881 2026-04-21 16:52:37
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3016
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3015678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 0
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id BETWEEN 944135 AND 944234 ORDER BY c
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 0
+        State: update
+         Info: INSERT INTO sbtest2 (id, k, c, pad) VALUES (960018, 203522, '95811780630-90633054322-16259515442-88167255755-42434775249-74482906274-54972636848-14256683063-07894747303-29710006121', '19460929622-50866100036-80166900360-41596337651-28163752351')
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 0
+        State: executing
+         Info: SELECT DISTINCT c FROM sbtest3 WHERE id BETWEEN 563460 AND 563559 ORDER BY c
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Query
+         Time: 0
+        State: freeing items
+         Info: BEGIN
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 0
+        State: Opening tables
+         Info: SELECT c FROM sbtest6 WHERE id=382122
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest5 WHERE id=736760
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 0
+        State: executing
+         Info: SELECT c FROM sbtest6 WHERE id BETWEEN 242482 AND 242581 ORDER BY c
+      Time_ms: 1
+    Rows_sent: 26
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 0
+        State: preparing
+         Info: SELECT c FROM sbtest10 WHERE id=782518
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 0
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 161
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 2093
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790358.008665650 2026-04-21 16:52:38
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3017
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3016677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest5 WHERE id=860408
+      Time_ms: 127
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id=951923
+      Time_ms: 127
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id=77276
+      Time_ms: 127
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id=248879
+      Time_ms: 127
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id=916531
+      Time_ms: 127
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id=354252
+      Time_ms: 127
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest4 WHERE id=207658
+      Time_ms: 127
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id=853076
+      Time_ms: 127
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id=412010
+      Time_ms: 127
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest7 WHERE id=770380
+      Time_ms: 127
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 159
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 2110
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: executing
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 2111
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 15. row ***************************
+           Id: 2112
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790359.009026550 2026-04-21 16:52:39
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3018
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3017678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 152
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest6 SET k=k+1 WHERE id=716035
+      Time_ms: 151
+    Rows_sent: 0
+Rows_examined: 1
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest9 SET c='36183153044-13082978439-00789405654-17273365168-01404169559-38056480153-60494252880-45818855491-27979708490-81466153419' WHERE id=340563
+      Time_ms: 151
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id=949841
+      Time_ms: 151
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 152
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id=121173
+      Time_ms: 151
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 151
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id=530355
+      Time_ms: 151
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest3 WHERE id=467617
+      Time_ms: 151
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest8 WHERE id BETWEEN 357917 AND 358016
+      Time_ms: 151
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 158
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 2127
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 53
+Rows_examined: 53
+*************************** 14. row ***************************
+           Id: 2129
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 15. row ***************************
+           Id: 2130
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790360.009130138 2026-04-21 16:52:40
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3019
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3018677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest4 SET k=k+1 WHERE id=893651
+      Time_ms: 70
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: UPDATE sbtest9 SET k=k+1 WHERE id=997259
+      Time_ms: 71
+    Rows_sent: 0
+Rows_examined: 1
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest4 WHERE id=422812
+      Time_ms: 71
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest7 WHERE id=335387
+      Time_ms: 67
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest9 WHERE id BETWEEN 803346 AND 803445
+      Time_ms: 71
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest2 WHERE id BETWEEN 886753 AND 886852 ORDER BY c
+      Time_ms: 71
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest10 WHERE id BETWEEN 50820 AND 50919
+      Time_ms: 71
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT c FROM sbtest1 WHERE id=760478
+      Time_ms: 68
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 1
+        State: statistics
+         Info: SELECT SUM(k) FROM sbtest7 WHERE id BETWEEN 83497 AND 83596
+      Time_ms: 70
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 1
+        State: updating
+         Info: DELETE FROM sbtest2 WHERE id=362205
+      Time_ms: 68
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 156
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 2144
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 14. row ***************************
+           Id: 2145
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 15. row ***************************
+           Id: 2146
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790361.009277257 2026-04-21 16:52:41
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3020
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3019679
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 0
+        State: closing tables
+         Info: SELECT c FROM sbtest3 WHERE id=287568
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 0
+        State: updating
+         Info: UPDATE sbtest10 SET k=k+1 WHERE id=869117
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 1
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT c FROM sbtest4 WHERE id BETWEEN 905211 AND 905310 ORDER BY c
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 0
+        State: Sending to client
+         Info: SELECT c FROM sbtest1 WHERE id=560094
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 0
+        State: Sending to client
+         Info: SELECT DISTINCT c FROM sbtest10 WHERE id BETWEEN 498443 AND 498542 ORDER BY c
+      Time_ms: 0
+    Rows_sent: 100
+Rows_examined: 200
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 0
+        State: Sending to client
+         Info: UPDATE sbtest9 SET k=k+1 WHERE id=698706
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 1
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 0
+        State: waiting for handler commit
+         Info: SELECT c FROM sbtest5 WHERE id=759129
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 12. row ***************************
+           Id: 1685
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 156
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 13. row ***************************
+           Id: 2161
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776790362.009596483 2026-04-21 16:52:42
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 3021
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 3020679
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1108
+         User: sysbench
+         Host: _gateway:50928
+           db: test
+      Command: Execute
+         Time: 0
+        State: updating
+         Info: UPDATE sbtest8 SET k=k+1 WHERE id=231798
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 1
+*************************** 3. row ***************************
+           Id: 1109
+         User: sysbench
+         Host: _gateway:50920
+           db: test
+      Command: Execute
+         Time: 0
+        State: closing tables
+         Info: SELECT c FROM sbtest3 WHERE id=547996
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 4. row ***************************
+           Id: 1110
+         User: sysbench
+         Host: _gateway:50934
+           db: test
+      Command: Execute
+         Time: 0
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 1
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1111
+         User: sysbench
+         Host: _gateway:50902
+           db: test
+      Command: Execute
+         Time: 0
+        State: waiting for handler commit
+         Info: COMMIT
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 1112
+         User: sysbench
+         Host: _gateway:50918
+           db: test
+      Command: Execute
+         Time: 0
+        State: statistics
+         Info: SELECT DISTINCT c FROM sbtest10 WHERE id BETWEEN 210590 AND 210689 ORDER BY c
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 7. row ***************************
+           Id: 1113
+         User: sysbench
+         Host: _gateway:50936
+           db: test
+      Command: Execute
+         Time: 0
+        State: preparing
+         Info: SELECT c FROM sbtest2 WHERE id=955060
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 8. row ***************************
+           Id: 1114
+         User: sysbench
+         Host: _gateway:50954
+           db: test
+      Command: Execute
+         Time: 0
+        State: Sending to client
+         Info: SELECT c FROM sbtest2 WHERE id=259093
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 9. row ***************************
+           Id: 1115
+         User: sysbench
+         Host: _gateway:50948
+           db: test
+      Command: Execute
+         Time: 0
+        State: update
+         Info: INSERT INTO sbtest2 (id, k, c, pad) VALUES (366025, 522669, '64065240348-31067296831-93189091987-96062262445-46251361736-74015809223-71608944677-93070437701-22002724472-75927729795', '17054064291-19426864470-38675181133-22218284496-23119065154')
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 10. row ***************************
+           Id: 1116
+         User: sysbench
+         Host: _gateway:50900
+           db: test
+      Command: Execute
+         Time: 0
+        State: waiting for handler commit
+         Info: SELECT c FROM sbtest8 WHERE id=371361
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 11. row ***************************
+           Id: 1117
+         User: sysbench
+         Host: _gateway:50966
+           db: test
+      Command: Execute
+         Time: 0
+        State: preparing
+         Info: SELECT c FROM sbtest4 WHERE id=442494
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 12. row ***************************
+           Id: 2178
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: SELECT SQL_NO_CACHE * FROM INFORMATION_SCHEMA.INNODB_TRX ORDER BY trx_id
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 13. row ***************************
+           Id: 2179
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0

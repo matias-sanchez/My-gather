@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "001-*"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          check-latest: false
+      - name: go vet
+        run: go vet ./...
+      - name: go test
+        env:
+          CGO_ENABLED: "0"
+        run: go test ./...
+
+  determinism:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Build
+        env:
+          CGO_ENABLED: "0"
+        run: go build -trimpath -o bin/my-gather ./cmd/my-gather
+      - name: Determinism round-trip
+        run: |
+          set -euo pipefail
+          if [ -d testdata/example2 ]; then
+            ./bin/my-gather testdata/example2 -o /tmp/a.html --overwrite
+            ./bin/my-gather testdata/example2 -o /tmp/b.html --overwrite
+            # Report generated at line is the only legal diff.
+            diff_lines=$(diff /tmp/a.html /tmp/b.html | grep -cE '^[<>]' || true)
+            echo "diff lines: $diff_lines"
+            # Expect exactly two lines (one '<' and one '>') -- the GeneratedAt swap.
+            if [ "$diff_lines" -gt 2 ]; then
+              echo "DETERMINISM FAILURE: more than one line of diff" >&2
+              diff /tmp/a.html /tmp/b.html | head -50 >&2
+              exit 1
+            fi
+          else
+            echo "SKIP: testdata/example2 not yet committed."
+          fi
+
+  cross-compile:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - linux/amd64
+          - linux/arm64
+          - darwin/amd64
+          - darwin/arm64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Cross-compile ${{ matrix.target }}
+        env:
+          CGO_ENABLED: "0"
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          os="${TARGET%%/*}"
+          arch="${TARGET##*/}"
+          out="/tmp/my-gather-${os}-${arch}"
+          GOOS="$os" GOARCH="$arch" \
+            go build -trimpath -o "$out" ./cmd/my-gather
+          ls -lh "$out"
+          file "$out" || true

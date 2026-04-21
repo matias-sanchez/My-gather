@@ -1,0 +1,32 @@
++----------------------+----------+
+| Variable_name        | Value    |
++----------------------+----------+
+| Aborted_clients      | 2589     |
+| Aborted_connects     | 251      |
+| Access_denied_errors | 121      |
+| Acl_column_grants    | 0        |
+| Acl_database_grants  | 6        |
+| Acl_function_grants  | 0        |
++----------------------+----------+
+
++----------------------+----------+
+| Variable_name        | Value    |
++----------------------+----------+
+| Aborted_clients      | 2592     |
+| Aborted_connects     | 254      |
+| Access_denied_errors | 200      |
+| Acl_column_grants    | 6        |
+| Acl_database_grants  | 89       |
+| Acl_function_grants  | 0        |
++----------------------+----------+
+
++----------------------+----------+
+| Variable_name        | Value    |
++----------------------+----------+
+| Aborted_clients      | 2599     |
+| Aborted_connects     | 451      |
+| Access_denied_errors | 500      |
+| Acl_column_grants    | 22       |
+| Acl_database_grants  | 96       |
+| Acl_function_grants  | 0        |
++----------------------+----------+

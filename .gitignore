@@ -1,1 +1,11 @@
 .DS_Store
+
+# Go build artefacts
+bin/
+dist/
+*.test
+*.out
+
+# IDE
+.vscode/
+.idea/

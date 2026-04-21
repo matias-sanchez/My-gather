@@ -1,0 +1,149 @@
+*************************** 1. row ***************************
+  Type: InnoDB
+  Name: 
+Status: 
+=====================================
+2026-04-21 16:51:42 139787482629888 INNODB MONITOR OUTPUT
+=====================================
+Per second averages calculated from the last 26 seconds
+-----------------
+BACKGROUND THREAD
+-----------------
+srv_master_thread loops: 204 srv_active, 0 srv_shutdown, 2747 srv_idle
+srv_master_thread log flush and writes: 0
+----------
+SEMAPHORES
+----------
+OS WAIT ARRAY INFO: reservation count 157492
+--Thread 139788369176320 has waited at buf0buf.cc line 3207 for 0 seconds the semaphore:
+Mutex at 0x7f23342f75d0, Mutex BUF_POOL_LRU_LIST created buf0buf.cc:1316, locked by nobody
+
+--Thread 139788372342528 has waited at buf0buf.cc line 4968 for 0 seconds the semaphore:
+Mutex at 0x7f23342f75d0, Mutex BUF_POOL_LRU_LIST created buf0buf.cc:1316, locked by nobody
+
+OS WAIT ARRAY INFO: signal count 48755
+RW-shared spins 0, rounds 0, OS waits 0
+RW-excl spins 0, rounds 0, OS waits 0
+RW-sx spins 0, rounds 0, OS waits 0
+Spin rounds per wait: 0.00 RW-shared, 0.00 RW-excl, 0.00 RW-sx
+------------
+TRANSACTIONS
+------------
+Trx id counter 68799
+Purge done for trx's n:o < 68747 undo n:o < 0 state: running
+History list length 133
+LIST OF TRANSACTIONS FOR EACH SESSION:
+---TRANSACTION 421264246275736, not started
+0 lock struct(s), heap size 1128, 0 row lock(s)
+---TRANSACTION 421264246266408, not started
+0 lock struct(s), heap size 1128, 0 row lock(s)
+---TRANSACTION 421264246265560, not started
+0 lock struct(s), heap size 1128, 0 row lock(s)
+---TRANSACTION 68798, ACTIVE 0 sec starting index read
+mysql tables in use 1, locked 1
+1 lock struct(s), heap size 1128, 0 row lock(s)
+MySQL thread id 1116, OS thread handle 139788241831680, query id 590416 _gateway 172.31.10.1 sysbench updating
+UPDATE sbtest9 SET k=k+1 WHERE id=351342
+Trx read view will not see trx with id >= 68779, sees < 68773
+---TRANSACTION 68797, ACTIVE 0 sec starting index read
+mysql tables in use 1, locked 1
+1 lock struct(s), heap size 1128, 0 row lock(s)
+MySQL thread id 1113, OS thread handle 139788101261056, query id 590412 _gateway 172.31.10.1 sysbench updating
+UPDATE sbtest1 SET k=k+1 WHERE id=888074
+Trx read view will not see trx with id >= 68793, sees < 68781
+--------
+FILE I/O
+--------
+I/O thread 0 state: waiting for completed aio requests (insert buffer thread)
+I/O thread 1 state: waiting for completed aio requests (read thread)
+I/O thread 2 state: waiting for completed aio requests (read thread)
+I/O thread 3 state: waiting for completed aio requests (read thread)
+I/O thread 4 state: waiting for completed aio requests (read thread)
+I/O thread 5 state: waiting for completed aio requests (write thread)
+I/O thread 6 state: waiting for completed aio requests (write thread)
+I/O thread 7 state: waiting for completed aio requests (write thread)
+I/O thread 8 state: waiting for completed aio requests (write thread)
+Pending normal aio reads: [0, 0, 0, 0] , aio writes: [0, 0, 0, 0] ,
+ ibuf aio reads:
+Pending flushes (fsync) log: 0; buffer pool: 0
+703048 OS file reads, 2364329 OS file writes, 521987 OS fsyncs
+5606.78 reads/s, 16385 avg bytes/read, 3593.36 writes/s, 2378.20 fsyncs/s
+-------------------------------------
+INSERT BUFFER AND ADAPTIVE HASH INDEX
+-------------------------------------
+Ibuf: size 22, free list len 23, seg size 46, 20194 merges
+merged operations:
+ insert 8626, delete mark 18376, delete 4852
+discarded operations:
+ insert 0, delete mark 0, delete 0
+Hash table size 138401, node heap has 29 buffer(s)
+Hash table size 138401, node heap has 0 buffer(s)
+Hash table size 138401, node heap has 73 buffer(s)
+Hash table size 138401, node heap has 24 buffer(s)
+Hash table size 138401, node heap has 27 buffer(s)
+Hash table size 138401, node heap has 30 buffer(s)
+Hash table size 138401, node heap has 25 buffer(s)
+Hash table size 138401, node heap has 51 buffer(s)
+2.73 hash searches/s, 11292.91 non-hash searches/s
+---
+LOG
+---
+Log sequence number          3016146630
+Log buffer assigned up to    3016146630
+Log buffer completed up to   3016146630
+Log written up to            3016119518
+Log flushed up to            3016119518
+Added dirty pages up to      3016146630
+Pages flushed up to          2993387919
+Last checkpoint at           2991045688
+Log minimum file id is       901
+Log maximum file id is       921
+Modified age no less than    22527693
+Checkpoint age               25100942
+Max checkpoint age           87417344
+1900405 log i/o's done, 1265.93 log i/o's/second
+----------------------
+BUFFER POOL AND MEMORY
+----------------------
+Total large memory allocated 0
+Dictionary memory allocated 678583
+Buffer pool size   32764
+Buffer pool size, bytes 536805376
+Free buffers       338
+Database pages     32167
+Old database pages 11854
+Modified db pages  8524
+Pending reads      1
+Pending writes: LRU 6, flush list 6, single page 0
+Pages made young 45722, not young 1751354
+398.24 youngs/s, 15060.92 non-youngs/s
+Pages read 697071, created 154393, written 355042
+5609.28 reads/s, 40.96 creates/s, 1831.13 writes/s
+Buffer pool hit rate 907 / 1000, young-making rate 6 / 1000 not 251 / 1000
+Pages read ahead 0.00/s, evicted without access 0.00/s, Random read ahead 0.00/s
+LRU len: 32167, unzip_LRU len: 0
+I/O sum[363319]:cur[152], unzip sum[0]:cur[0]
+--------------
+ROW OPERATIONS
+--------------
+0 queries inside InnoDB, 0 queries in queue
+10 read views open inside InnoDB
+2 RW transactions active inside InnoDB
+---OLDEST VIEW---
+Read view low limit trx n:o 68779
+Trx read view will not see trx with id >= 68779, sees < 68773
+Read view individually stored trx ids:
+Read view trx id 68773
+Read view trx id 68775
+Read view trx id 68776
+Read view trx id 68777
+-----------------
+Process ID=5555, Main thread ID=139788149577472 , state=sleeping
+Number of rows inserted 10027047, updated 58226, deleted 29111, read 12024794
+283.18 inserts/s, 562.67 updates/s, 281.34 deletes/s, 116199.53 reads/s
+Number of system rows inserted 1204, updated 490, deleted 945, read 8084
+5.23 inserts/s, 0.12 updates/s, 5.81 deletes/s, 6.96 reads/s
+----------------------------
+END OF INNODB MONITOR OUTPUT
+============================
+

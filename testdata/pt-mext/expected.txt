@@ -1,0 +1,6 @@
+Aborted_clients         2589    3       7                | total: 10 min: 3 max: 7 avg: 3
+Aborted_connects        251     3       197              | total: 200 min: 3 max: 197 avg: 66
+Access_denied_errors    121     79      300              | total: 379 min: 79 max: 300 avg: 126
+Acl_column_grants       0       6       16               | total: 22 min: 6 max: 16 avg: 7
+Acl_database_grants     6       83      7                | total: 90 min: 7 max: 83 avg: 30
+Acl_function_grants     0       0       0                | total: 0 min: 0 max: 0 avg: 0
