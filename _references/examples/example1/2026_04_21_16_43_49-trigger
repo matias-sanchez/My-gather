@@ -1,0 +1,2 @@
+2026_04_21_16_43_49 Not stalking; collect triggered immediately
+2026_04_21_16_43_49 pt-stalk ran with --function=status --variable=Threads_running --threshold=25 --match= --cycles=0 --interval=1 --iterations=2 --run-time=30 --sleep=30 --dest=/tmp/pt/collected/node0/ --prefix= --notify-by-email= --log=/var/log/pt-stalk.log --pid=/var/run/pt-stalk.pid --plugin=

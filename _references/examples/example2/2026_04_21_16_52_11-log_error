@@ -1,0 +1,10 @@
+2026-04-21T16:02:21.044888Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-04-21T16:02:21.164653Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2026-04-21T16:02:21.326834Z 0 [Warning] [MY-013829] [Server] Missing data directory for ICU regular expressions: /usr/lib64/mysql/private/.
+2026-04-21T16:02:21.327967Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2026-04-21T16:02:21.327991Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2026-04-21T16:02:21.330310Z 0 [Warning] [MY-000067] [Server] unknown variable 'loose-mysql_native_password=ON'.
+2026-04-21T16:02:21.342106Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060, socket: /var/lib/mysql/mysqlx.sock
+2026-04-21T16:02:21.342170Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.0.42-33'  socket: '/var/lib/mysql/mysql.sock'  port: 3306  Percona Server (GPL), Release 33, Revision 9dc49998.
+2026-04-21T16:47:47.525273Z 1094 [Warning] [MY-013360] [Server] Plugin mysql_native_password reported: ''mysql_native_password' is deprecated and will be removed in a future release. Please use caching_sha2_password instead'
+2026-04-21T16:48:43.470228Z 0 [Warning] [MY-013865] [InnoDB] Redo log writer is waiting for a new redo log file. Consider increasing innodb_redo_log_capacity.

@@ -1,0 +1,270 @@
+TS 1776790303.009325313 2026-04-21 16:51:43
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924595528 1208145436  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      35268  197129372   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924595528 1208145436  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790304.008711008 2026-04-21 16:51:44
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924597068 1208143896  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      37292  197127348   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924597068 1208143896  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790305.008582787 2026-04-21 16:51:45
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924597212 1208143752  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      39220  197125420   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924597212 1208143752  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790306.009043416 2026-04-21 16:51:46
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924597544 1208143420  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      41248  197123392   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924597544 1208143420  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790307.008741865 2026-04-21 16:51:47
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924596516 1208144448  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      43212  197121428   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924596516 1208144448  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790308.009174174 2026-04-21 16:51:48
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924596792 1208144172  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      45176  197119464   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924596792 1208144172  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790309.008965856 2026-04-21 16:51:49
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924597332 1208143632  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      47164  197117476   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924597332 1208143632  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790310.009161651 2026-04-21 16:51:50
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924602156 1208138808  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      49136  197115504   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924602156 1208138808  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790311.009116146 2026-04-21 16:51:51
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924603244 1208137720  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      51148  197113492   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924603244 1208137720  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790312.009189528 2026-04-21 16:51:52
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924603568 1208137396  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      53112  197111528   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924603568 1208137396  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790313.009133339 2026-04-21 16:51:53
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924604504 1208136460  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      55096  197109544   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924604504 1208136460  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790314.009495904 2026-04-21 16:51:54
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924603408 1208137556  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      57100  197107540   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924603408 1208137556  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790315.009264491 2026-04-21 16:51:55
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924602308 1208138656  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      59112  197105528   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924602308 1208138656  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790316.009331242 2026-04-21 16:51:56
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924604388 1208136576  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      61036  197103604   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924604388 1208136576  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790317.009278281 2026-04-21 16:51:57
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924609060 1208131904  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      63052  197101588   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924609060 1208131904  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790318.009575229 2026-04-21 16:51:58
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924611292 1208129672  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      65004  197099636   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924611292 1208129672  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790319.009310901 2026-04-21 16:51:59
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924611188 1208129776  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      66964  197097676   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924611188 1208129776  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790320.009084255 2026-04-21 16:52:00
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924611628 1208129336  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      68948  197095692   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924611628 1208129336  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790321.009052488 2026-04-21 16:52:01
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924611888 1208129076  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      70916  197093724   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924611888 1208129076  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790322.009021631 2026-04-21 16:52:02
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924609984 1208130980  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      72932  197091708   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924609984 1208130980  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790323.009187312 2026-04-21 16:52:03
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924611020 1208129944  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      74948  197089692   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924611020 1208129944  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790324.008966285 2026-04-21 16:52:04
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924615560 1208125404  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      76932  197087708   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924615560 1208125404  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790325.009100088 2026-04-21 16:52:05
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924617212 1208123752  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      78940  197085700   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924617212 1208123752  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790326.009175255 2026-04-21 16:52:06
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924617816 1208123148  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      80948  197083692   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924617816 1208123148  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790327.009227872 2026-04-21 16:52:07
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924618148 1208122816  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      82964  197081676   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924618148 1208122816  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790328.008973319 2026-04-21 16:52:08
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924618324 1208122640  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      84884  197079756   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924618324 1208122640  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790329.008979921 2026-04-21 16:52:09
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924617436 1208123528  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      86908  197077732   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924617436 1208123528  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790330.008983553 2026-04-21 16:52:10
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924618236 1208122728  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      88864  197075776   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924618236 1208122728  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790331.009215691 2026-04-21 16:52:11
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924623140 1208117824  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      90880  197073760   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924623140 1208117824  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock
+TS 1776790332.009088559 2026-04-21 16:52:12
+Filesystem              1K-blocks       Used  Available Use% Mounted on
+overlay                3300421268 1924624624 1208116340  62% /
+tmpfs                       65536          0      65536   0% /dev
+shm                         65536          0      65536   0% /dev/shm
+tmpfs                   197164640       8220  197156420   1% /run
+tmpfs                   197164640      93008  197071632   1% /tmp
+/dev/mapper/home_crypt 3300421268 1924624624 1208116340  62% /nfs
+tmpfs                   197164640          0  197164640   0% /run/lock

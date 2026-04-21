@@ -1,0 +1,1731 @@
+TS 1776789831.008861390 2026-04-21 16:43:51
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2490
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2489676
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 607
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 578
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 579
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789832.009049604 2026-04-21 16:43:52
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2491
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2490677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 607
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 595
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 596
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 597
+         User: unauthenticated user
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: Sending to client
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 6. row ***************************
+           Id: 598
+         User: unauthenticated user
+         Host: connecting host
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789833.009140764 2026-04-21 16:43:53
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2492
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2491677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 605
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 612
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 613
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: checking permissions
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789834.008702970 2026-04-21 16:43:54
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2493
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2492679
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 605
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 632
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: SELECT SQL_NO_CACHE
+            CONCAT('thread ', b.trx_mysql_thread_id, ' from ', p.host) AS who_blocks,
+            MAX(IF(p.command = "Sleep", p.time, 0)) AS idle_in_trx,
+            MAX(TIMESTAMPDIFF(SECOND, r.trx_wait_started, CURRENT_TIMESTAMP)) AS max_wait_time,
+            COUNT(*) AS num_waiters
+         FROM performance_schema.data_lock_waits AS w
+         INNER JOIN INFORMATION_SCHEMA.INNODB_TRX AS b ON b.trx_id = w.BLOCKING_ENGINE_TRANSACTION_ID
+         INNER JOIN INFORMATION_SCHEMA.INNODB_TRX AS r ON r.trx_id = w.REQUESTING_ENGINE_TRANSACTION_ID
+         LEFT JOIN INFORMATION_SCHEMA.PROCESSLIST AS p ON p.id = b.trx_mysql_thread_id
+         GROUP BY who_blocks ORDER BY num_waiters DESC
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 633
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789835.009885861 2026-04-21 16:43:55
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2494
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2493678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 602
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 646
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 647
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 648
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+TS 1776789836.008826649 2026-04-21 16:43:56
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2495
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2494677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 600
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 663
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: query end
+         Info: SELECT SQL_NO_CACHE * FROM INFORMATION_SCHEMA.INNODB_TRX ORDER BY trx_id
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 664
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: executing
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 34
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 665
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789837.008642271 2026-04-21 16:43:57
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2496
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2495677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 598
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 680
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 681
+         User: unauthenticated user
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789838.008557195 2026-04-21 16:43:58
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2497
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2496677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 596
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 697
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 42
+Rows_examined: 42
+*************************** 4. row ***************************
+           Id: 698
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 699
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: SELECT SQL_NO_CACHE * FROM INFORMATION_SCHEMA.INNODB_TRX ORDER BY trx_id
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789839.008652242 2026-04-21 16:43:59
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2498
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2497677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 595
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 714
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 43
+Rows_examined: 43
+*************************** 4. row ***************************
+           Id: 716
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 717
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+TS 1776789840.008997353 2026-04-21 16:44:00
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2499
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2498677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 594
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 731
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 732
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 733
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: executing
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789841.009209653 2026-04-21 16:44:01
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2500
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2499677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 592
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 748
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: executing
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 10
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 749
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 750
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+TS 1776789842.009013591 2026-04-21 16:44:02
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2501
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2500677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 590
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 765
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 42
+Rows_examined: 42
+*************************** 4. row ***************************
+           Id: 766
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 767
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789843.009127871 2026-04-21 16:44:03
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2502
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2501677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 588
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 782
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: preparing
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 783
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 784
+         User: unauthenticated user
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: Receiving from client
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789844.009118502 2026-04-21 16:44:04
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2503
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2502677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 586
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 799
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 800
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 801
+         User: unauthenticated user
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789845.009246443 2026-04-21 16:44:05
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2504
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2503677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 584
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 816
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: System lock
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 817
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789846.008466689 2026-04-21 16:44:06
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2505
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2504676
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 582
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 833
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: NULL
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 41
+Rows_examined: 41
+*************************** 4. row ***************************
+           Id: 834
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789847.008567942 2026-04-21 16:44:07
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2506
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2505677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 582
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 850
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 851
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Sending to client
+         Info: select @@version_comment limit 1
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+TS 1776789848.008998982 2026-04-21 16:44:08
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2507
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2506677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 580
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 867
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 868
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: checking permissions
+         Info: select @@version_comment limit 1
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 869
+         User: unauthenticated user
+         Host: connecting host
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789849.008793946 2026-04-21 16:44:09
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2508
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2507678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 579
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 885
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 42
+Rows_examined: 42
+*************************** 4. row ***************************
+           Id: 886
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789850.009047889 2026-04-21 16:44:10
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2509
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2508677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 577
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 901
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 902
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 903
+         User: unauthenticated user
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: Receiving from client
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789851.008793151 2026-04-21 16:44:11
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2510
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2509677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 574
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 918
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 919
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 920
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: NULL
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 6. row ***************************
+           Id: 921
+         User: unauthenticated user
+         Host: localhost
+           db: NULL
+      Command: Connect
+         Time: 0
+        State: login
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789852.009224828 2026-04-21 16:44:12
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2511
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2510678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 573
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 935
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 41
+Rows_examined: 41
+*************************** 4. row ***************************
+           Id: 936
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 937
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789853.008928366 2026-04-21 16:44:13
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2512
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2511677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 570
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 952
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 953
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: executing
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 954
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: preparing
+         Info: SELECT SQL_NO_CACHE * FROM INFORMATION_SCHEMA.INNODB_TRX ORDER BY trx_id
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789854.008593875 2026-04-21 16:44:14
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2513
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2512677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 569
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 969
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 970
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Opening tables
+         Info: select @@version_comment limit 1
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789855.009221061 2026-04-21 16:44:15
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2514
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2513678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 568
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 986
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: Sending to client
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 41
+Rows_examined: 41
+*************************** 4. row ***************************
+           Id: 987
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789856.008449761 2026-04-21 16:44:16
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2515
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2514677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 565
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 1003
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1004
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: preparing
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1005
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+TS 1776789857.008543462 2026-04-21 16:44:17
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2516
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2515677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 563
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 1020
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: executing
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1021
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1022
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: freeing items
+         Info: select @@version_comment limit 1
+      Time_ms: 0
+    Rows_sent: 1
+Rows_examined: 1
+*************************** 6. row ***************************
+           Id: 1023
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789858.008667229 2026-04-21 16:44:18
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2517
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2516677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 562
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 1037
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: SELECT * FROM performance_schema.threads
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1038
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789859.009041469 2026-04-21 16:44:19
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2518
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2517678
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 576
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 1
+        State: 
+         Info: NULL
+      Time_ms: 561
+    Rows_sent: 543
+Rows_examined: 543
+*************************** 3. row ***************************
+           Id: 1054
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1055
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 5. row ***************************
+           Id: 1056
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+TS 1776789860.009323180 2026-04-21 16:44:20
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2519
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2518677
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 1071
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 1072
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: starting
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 4. row ***************************
+           Id: 1073
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Sleep
+         Time: 0
+        State: 
+         Info: NULL
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0

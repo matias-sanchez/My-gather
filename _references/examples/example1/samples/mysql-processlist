@@ -1,0 +1,24 @@
+*************************** 1. row ***************************
+           Id: 6
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 2411
+        State: Waiting on empty queue
+         Info: NULL
+      Time_ms: 2410829
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 16
+         User: root
+         Host: localhost
+           db: NULL
+      Command: Query
+         Time: 0
+        State: init
+         Info: SHOW FULL PROCESSLIST
+      Time_ms: 0
+    Rows_sent: 0
+Rows_examined: 0

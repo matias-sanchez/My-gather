@@ -1,0 +1,360 @@
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+
+
+SHOW SLAVE STATUS\G
+
+
+SELECT * FROM performance_schema.replication_connection_configuration JOIN performance_schema.replication_applier_configuration USING(channel_name)\G
+
+
+SELECT * FROM performance_schema.replication_connection_status\G
+
+
+SELECT * FROM performance_schema.replication_applier_status JOIN performance_schema.replication_applier_status_by_coordinator USING(channel_name)\G
+

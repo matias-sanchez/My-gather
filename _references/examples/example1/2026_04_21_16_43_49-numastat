@@ -1,0 +1,450 @@
+TS 1776789831.008861390 2026-04-21 16:43:51
+node0
+numa_hit 15047350058
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245027
+local_node 15043793360
+other_node 3430113
+node1
+numa_hit 8745721043
+numa_miss 34
+numa_foreign 0
+interleave_hit 8224827
+local_node 8740436082
+other_node 5164867
+TS 1776789832.009049604 2026-04-21 16:43:52
+node0
+numa_hit 15047368165
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245038
+local_node 15043811464
+other_node 3430116
+node1
+numa_hit 8745728769
+numa_miss 34
+numa_foreign 0
+interleave_hit 8224838
+local_node 8740443800
+other_node 5164875
+TS 1776789833.009140764 2026-04-21 16:43:53
+node0
+numa_hit 15047394983
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245049
+local_node 15043838279
+other_node 3430119
+node1
+numa_hit 8745742716
+numa_miss 34
+numa_foreign 0
+interleave_hit 8224853
+local_node 8740457735
+other_node 5164887
+TS 1776789834.008702970 2026-04-21 16:43:54
+node0
+numa_hit 15047418101
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245065
+local_node 15043861394
+other_node 3430122
+node1
+numa_hit 8745754502
+numa_miss 34
+numa_foreign 0
+interleave_hit 8224864
+local_node 8740469513
+other_node 5164895
+TS 1776789835.009885861 2026-04-21 16:43:55
+node0
+numa_hit 15047449170
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245076
+local_node 15043892460
+other_node 3430125
+node1
+numa_hit 8745762210
+numa_miss 34
+numa_foreign 0
+interleave_hit 8224875
+local_node 8740477213
+other_node 5164903
+TS 1776789836.008826649 2026-04-21 16:43:56
+node0
+numa_hit 15047467313
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245087
+local_node 15043910600
+other_node 3430128
+node1
+numa_hit 8745766994
+numa_miss 34
+numa_foreign 0
+interleave_hit 8224886
+local_node 8740481989
+other_node 5164911
+TS 1776789837.008642271 2026-04-21 16:43:57
+node0
+numa_hit 15047506131
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245098
+local_node 15043949415
+other_node 3430131
+node1
+numa_hit 8745776163
+numa_miss 34
+numa_foreign 0
+interleave_hit 8224897
+local_node 8740491150
+other_node 5164919
+TS 1776789838.008557195 2026-04-21 16:43:58
+node0
+numa_hit 15047530435
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245109
+local_node 15043973716
+other_node 3430134
+node1
+numa_hit 8745781393
+numa_miss 34
+numa_foreign 0
+interleave_hit 8224908
+local_node 8740496372
+other_node 5164927
+TS 1776789839.008652242 2026-04-21 16:43:59
+node0
+numa_hit 15047563186
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245120
+local_node 15044006464
+other_node 3430137
+node1
+numa_hit 8745791397
+numa_miss 34
+numa_foreign 0
+interleave_hit 8224933
+local_node 8740506361
+other_node 5164942
+TS 1776789840.008997353 2026-04-21 16:44:00
+node0
+numa_hit 15047591185
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245154
+local_node 15044034453
+other_node 3430148
+node1
+numa_hit 8745798530
+numa_miss 34
+numa_foreign 0
+interleave_hit 8224951
+local_node 8740513479
+other_node 5164957
+TS 1776789841.009209653 2026-04-21 16:44:01
+node0
+numa_hit 15047615913
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245166
+local_node 15044059177
+other_node 3430151
+node1
+numa_hit 8745804148
+numa_miss 34
+numa_foreign 0
+interleave_hit 8224964
+local_node 8740519087
+other_node 5164967
+TS 1776789842.009013591 2026-04-21 16:44:02
+node0
+numa_hit 15047638765
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245178
+local_node 15044082026
+other_node 3430154
+node1
+numa_hit 8745808503
+numa_miss 34
+numa_foreign 0
+interleave_hit 8224975
+local_node 8740523434
+other_node 5164975
+TS 1776789843.009127871 2026-04-21 16:44:03
+node0
+numa_hit 15047686688
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245189
+local_node 15044129946
+other_node 3430157
+node1
+numa_hit 8745816135
+numa_miss 34
+numa_foreign 0
+interleave_hit 8224991
+local_node 8740531053
+other_node 5164988
+TS 1776789844.009118502 2026-04-21 16:44:04
+node0
+numa_hit 15047710979
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245206
+local_node 15044154234
+other_node 3430160
+node1
+numa_hit 8745825093
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225005
+local_node 8740539927
+other_node 5164999
+TS 1776789845.009246443 2026-04-21 16:44:05
+node0
+numa_hit 15047739759
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245217
+local_node 15044183011
+other_node 3430163
+node1
+numa_hit 8745831692
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225016
+local_node 8740546518
+other_node 5165007
+TS 1776789846.008466689 2026-04-21 16:44:06
+node0
+numa_hit 15047765687
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245228
+local_node 15044208936
+other_node 3430166
+node1
+numa_hit 8745836934
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225027
+local_node 8740551752
+other_node 5165015
+TS 1776789847.008567942 2026-04-21 16:44:07
+node0
+numa_hit 15047804825
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245239
+local_node 15044248071
+other_node 3430169
+node1
+numa_hit 8745844876
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225038
+local_node 8740559686
+other_node 5165023
+TS 1776789848.008998982 2026-04-21 16:44:08
+node0
+numa_hit 15047823622
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245251
+local_node 15044266864
+other_node 3430173
+node1
+numa_hit 8745853481
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225050
+local_node 8740568283
+other_node 5165031
+TS 1776789849.008793946 2026-04-21 16:44:09
+node0
+numa_hit 15047850740
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245262
+local_node 15044293979
+other_node 3430176
+node1
+numa_hit 8745864409
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225084
+local_node 8740579188
+other_node 5165054
+TS 1776789850.009047889 2026-04-21 16:44:10
+node0
+numa_hit 15047875939
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245295
+local_node 15044319168
+other_node 3430186
+node1
+numa_hit 8745871189
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225095
+local_node 8740585960
+other_node 5165062
+TS 1776789851.008793151 2026-04-21 16:44:11
+node0
+numa_hit 15047902930
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245306
+local_node 15044346156
+other_node 3430189
+node1
+numa_hit 8745878297
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225106
+local_node 8740593060
+other_node 5165070
+TS 1776789852.009224828 2026-04-21 16:44:12
+node0
+numa_hit 15047926887
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245317
+local_node 15044370110
+other_node 3430192
+node1
+numa_hit 8745889636
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225117
+local_node 8740604391
+other_node 5165078
+TS 1776789853.008928366 2026-04-21 16:44:13
+node0
+numa_hit 15047957979
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245328
+local_node 15044401199
+other_node 3430195
+node1
+numa_hit 8745899057
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225133
+local_node 8740613799
+other_node 5165091
+TS 1776789854.008593875 2026-04-21 16:44:14
+node0
+numa_hit 15048010147
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245344
+local_node 15044453364
+other_node 3430198
+node1
+numa_hit 8745910119
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225144
+local_node 8740624853
+other_node 5165099
+TS 1776789855.009221061 2026-04-21 16:44:15
+node0
+numa_hit 15048036980
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245355
+local_node 15044480194
+other_node 3430201
+node1
+numa_hit 8745924113
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225155
+local_node 8740638839
+other_node 5165107
+TS 1776789856.008449761 2026-04-21 16:44:16
+node0
+numa_hit 15048056151
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245366
+local_node 15044499363
+other_node 3430204
+node1
+numa_hit 8745929733
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225166
+local_node 8740644451
+other_node 5165115
+TS 1776789857.008543462 2026-04-21 16:44:17
+node0
+numa_hit 15048113429
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245377
+local_node 15044556331
+other_node 3430207
+node1
+numa_hit 8745936975
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225177
+local_node 8740651685
+other_node 5165123
+TS 1776789858.008667229 2026-04-21 16:44:18
+node0
+numa_hit 15048144302
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245388
+local_node 15044587201
+other_node 3430210
+node1
+numa_hit 8745943104
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225188
+local_node 8740657806
+other_node 5165131
+TS 1776789859.009041469 2026-04-21 16:44:19
+node0
+numa_hit 15048165871
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245399
+local_node 15044608765
+other_node 3430215
+node1
+numa_hit 8745952370
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225207
+local_node 8740667058
+other_node 5165145
+TS 1776789860.009323180 2026-04-21 16:44:20
+node0
+numa_hit 15048192894
+numa_miss 0
+numa_foreign 34
+interleave_hit 8245433
+local_node 15044635775
+other_node 3430228
+node1
+numa_hit 8745960623
+numa_miss 34
+numa_foreign 0
+interleave_hit 8225233
+local_node 8740675298
+other_node 5165158

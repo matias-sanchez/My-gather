@@ -1,0 +1,121 @@
+# Percona Toolkit System Summary Report ######################
+        Date | 2026-04-21 16:42:19 UTC (local TZ: UTC +0000)
+    Hostname | node0
+      Uptime | 11 days, 15:27,  0 users,  load average: 4.08, 4.59, 4.87
+    Platform | Linux
+     Release | Rocky Linux release 8.9 (Green Obsidian)
+      Kernel | 5.14.0-503.34.1.el9_5.x86_64
+Architecture | CPU = 64-bit, OS = 64-bit
+   Threading | NPTL 2.28
+     SELinux | No SELinux detected
+ Virtualized | No virtualization detected
+# Processor ##################################################
+  Processors | physical = 2, cores = 24, virtual = 48, hyperthreading = yes
+      Speeds | 1x1199.581, 1x1200.061, 1x1596.258, 1x1685.043, 1x1763.062, 1x1808.842, 1x1991.380, 1x2164.379, 1x2286.107, 1x2540.265, 1x3274.541, 1x3362.770, 1x3444.809, 1x3477.485, 1x3520.832, 1x3521.479, 1x3525.924, 1x3547.775, 1x3555.356, 1x3597.660, 1x3597.953, 1x3599.131, 1x3599.825, 1x3599.877, 1x3599.960, 1x3599.991, 1x3599.999, 2x3600.000, 2x3600.003, 1x3600.014, 1x3600.024, 1x3600.072, 1x3600.077, 1x3600.870, 1x3600.907, 1x3601.188, 10x3700.000
+      Models | 48xIntel(R) Xeon(R) Gold 6136 CPU @ 3.00GHz
+      Caches | 48x25344 KB
+# Memory #####################################################
+         Total | 376.1G
+          Free | 104.5G
+          Used | physical = 40.2G, swap allocated = 0.0, swap used = 0.0, virtual = 40.2G
+        Shared | 733.2M
+       Buffers | 231.3G
+        Caches | 332.6G
+         Dirty | 8532 kB
+       UsedRSS | 502.4M
+    Swappiness | 10
+   DirtyPolicy | 40, 10
+   DirtyStatus | 0, 0
+# Mounted Filesystems ########################################
+  Filesystem              Size Used Type    Opts                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           Mountpoint
+  /dev/mapper/home_crypt  3.1T  62% ext4    rw,relatime,seclabel,stripe=64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 /nfs
+  /dev/mapper/home_crypt  3.1T  62% ext4    rw,relatime,seclabel,stripe=64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 /nfs
+  /dev/mapper/home_crypt  3.1T  62% ext4    rw,relatime,seclabel,stripe=64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 /nfs
+  /dev/mapper/home_crypt  3.1T  62% ext4    rw,relatime,seclabel,stripe=64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 /nfs
+  /dev/mapper/home_crypt  3.1T  62% ext4    rw,relatime,seclabel,stripe=64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 /nfs
+  overlay                 3.1T  62% overlay rw,relatime,seclabel,lowerdir=/home/docker/overlay2/l/2SZ2TNARJPKMEX4T4PEQMLL5D2:/home/docker/overlay2/l/VQ35COVLJZH2HBIZAWQCLQR72Q:/home/docker/overlay2/l/S2T52EJL65NLGBPD5CZONCNTOX:/home/docker/overlay2/l/ZYEBF7UXMYRVWBTGVL3A43WXTK:/home/docker/overlay2/l/CRZLTFIV7L2GPCVP3AJNCDA6IK:/home/docker/overlay2/l/ZWMTM5JQHAS2J7FRSJ4D26PEQB:/home/docker/overlay2/l/OKN2JSQSKUXMMVUFVQKIFDZEBL:/home/docker/overlay2/l/SZJ2L365FQZBFSS3MOH6THKNJK,upperdir=/home/docker/overlay2/bea542cff878ec879036cab248f7bcba16d25e031d67fda5febd92f164eccd06/diff,workdir=/home/docker/overlay2/bea542cff878ec879036cab248f7bcba16d25e031d67fda5febd92f164eccd06/work /
+  shm                      64M   0% tmpfs   rw,nosuid,nodev,noexec,relatime,seclabel,size=65536k,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   /dev/shm
+  tmpfs                    64M   0% tmpfs   rw,nosuid,seclabel,size=65536k,mode=755,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /dev
+  tmpfs                    64M   0% tmpfs   rw,nosuid,nodev,noexec,relatime,seclabel,mode=755,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      /dev
+  tmpfs                    64M   0% tmpfs   rw,nosuid,nodev,noexec,relatime,seclabel,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               /dev
+  tmpfs                    64M   0% tmpfs   rw,nosuid,nodev,noexec,relatime,seclabel,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               /dev
+  tmpfs                   189G   0% tmpfs   rw,nosuid,seclabel,size=65536k,mode=755,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /run/lock
+  tmpfs                   189G   0% tmpfs   rw,nosuid,nodev,noexec,relatime,seclabel,mode=755,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      /run/lock
+  tmpfs                   189G   0% tmpfs   rw,nosuid,nodev,noexec,relatime,seclabel,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               /run/lock
+  tmpfs                   189G   0% tmpfs   rw,nosuid,nodev,noexec,relatime,seclabel,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               /run/lock
+  tmpfs                   189G   1% tmpfs   rw,nosuid,seclabel,size=65536k,mode=755,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /tmp
+  tmpfs                   189G   1% tmpfs   rw,nosuid,nodev,noexec,relatime,seclabel,mode=755,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      /tmp
+  tmpfs                   189G   1% tmpfs   rw,nosuid,nodev,noexec,relatime,seclabel,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               /tmp
+  tmpfs                   189G   1% tmpfs   rw,nosuid,nodev,noexec,relatime,seclabel,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               /tmp
+  tmpfs                   189G   1% tmpfs   rw,nosuid,seclabel,size=65536k,mode=755,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                /run
+  tmpfs                   189G   1% tmpfs   rw,nosuid,nodev,noexec,relatime,seclabel,mode=755,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      /run
+  tmpfs                   189G   1% tmpfs   rw,nosuid,nodev,noexec,relatime,seclabel,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               /run
+  tmpfs                   189G   1% tmpfs   rw,nosuid,nodev,noexec,relatime,seclabel,inode64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               /run
+# Disk Schedulers And Queue Size #############################
+        dm-0 | UNREADABLE
+        dm-1 | UNREADABLE
+        dm-2 | UNREADABLE
+     nvme0n1 | [none] 1023
+         sda | [mq-deadline] 256
+         sdb | [mq-deadline] 64
+# Disk Partitioning ##########################################
+Device       Type      Start        End               Size
+============ ==== ========== ========== ==================
+/dev/nvme0n1 Disk                            1600321314816
+/dev/nvme0n1p1 Part       2048 3125627567                  0
+/dev/sda     Disk                            3599115485184
+/dev/sda1    Part       2048       4095                  0
+/dev/sda2    Part       4096    1232895                  0
+/dev/sda3    Part    1232896    3330047                  0
+/dev/sda4    Part    3330048  100986879                  0
+/dev/sda5    Part  113250304  322961407                  0
+/dev/sda6    Part  322961408 7029522398                  0
+/dev/sdb     Disk                            7681501126656
+/dev/sdb1    Part    3999744 15002931199                  0
+# Kernel Inode State #########################################
+dentry-state | 6424959	6156122	45	0	3089647	0
+     file-nr | 19232	0	9223372036854775807
+    inode-nr | 3264282	3577
+# LVM Volumes ################################################
+Unable to collect information
+# LVM Volume Groups ##########################################
+Unable to collect information
+# RAID Controller ############################################
+  Controller | No RAID controller detected
+# Network Config #############################################
+ FIN Timeout | 60
+  Port Range | 60999
+# Interface Statistics #######################################
+  interface  rx_bytes rx_packets  rx_errors   tx_bytes tx_packets  tx_errors
+  ========= ========= ========== ========== ========== ========== ==========
+  lo            25000        300          0      25000        300          0
+  eth0@if356  300000000      50000          0    2500000      35000          0
+# Network Connections ########################################
+  Connections from remote IP addresses
+    100.30.64.61        3
+  Connections to local IP addresses
+    172.31.10.2         3
+  Connections to top 10 local ports
+    33572               1
+    33578               1
+    33590               1
+  States of connections
+    LISTEN              5
+    TIME_WAIT           3
+# Top Processes ##############################################
+    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+      1 root      20   0   90020   9600   8064 S   0.0   0.0   0:00.31 systemd
+     18 root      20   0   87440  13056  12288 S   0.0   0.0   0:00.18 systemd+
+     54 root      20   0   76652   7296   6528 S   0.0   0.0   0:00.00 sshd
+   2669 daemon    20   0   19092   2688   2688 S   0.0   0.0   0:00.00 sh
+   2670 daemon    20   0 1274048  19852  11136 S   0.0   0.0   0:00.00 percona+
+   5555 mysql     20   0 2801360 438360  39552 S   0.0   0.1   0:08.91 mysqld
+   5620 root      20   0   19336   2688   2688 S   0.0   0.0   0:00.01 bash
+   5971 root      20   0  115044   7680   6912 S   0.0   0.0   0:00.00 sudo
+   5972 root      20   0   18156   3840   2688 S   0.0   0.0   0:00.03 pt-summ+
+# Notable Processes ##########################################
+  PID    OOM    COMMAND
+   54    -17    sshd
+# Memory management ##########################################
+Transparent huge pages are enabled.
+# The End ####################################################

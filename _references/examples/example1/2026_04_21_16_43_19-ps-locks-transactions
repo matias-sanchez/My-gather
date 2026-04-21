@@ -1,0 +1,3948 @@
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786623008496
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: SCHEMA
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: NULL
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786622921408
+            LOCK_TYPE: INTENTION_EXCLUSIVE
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: dd_schema.cc:108
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+*************************** 3. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: data_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488668016
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 4. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: SCHEMA
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: NULL
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488713904
+            LOCK_TYPE: INTENTION_EXCLUSIVE
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: dd_schema.cc:108
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 5. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: check_constraints
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488694720
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 6. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: column_type_elements
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488701744
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 7. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: columns
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488701840
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 8. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: foreign_key_column_usage
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488701936
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 9. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: foreign_keys
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488702032
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 10. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: index_column_usage
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488702128
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 11. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: index_partitions
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488737680
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 12. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: indexes
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488737776
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 13. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: schemata
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488737872
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 14. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: table_partition_values
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488737968
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 15. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: table_partitions
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488738064
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 16. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: tables
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488738160
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 17. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: triggers
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488738256
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 18. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: view_routine_usage
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488738352
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 19. row ***************************
+       processlist_id: 52
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: mysql
+          OBJECT_NAME: view_table_usage
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488738448
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: table.h:3035
+      OWNER_THREAD_ID: 92
+       OWNER_EVENT_ID: 3
+*************************** 20. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: COLUMN STATISTICS
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: column_name
+OBJECT_INSTANCE_BEGIN: 139786622903872
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: STATEMENT
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_base.cc:598
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+*************************** 21. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: COLUMN STATISTICS
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: lock_duration
+OBJECT_INSTANCE_BEGIN: 139786622999216
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: STATEMENT
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_base.cc:598
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+*************************** 22. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: COLUMN STATISTICS
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: lock_status
+OBJECT_INSTANCE_BEGIN: 139786622886016
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: STATEMENT
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_base.cc:598
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+*************************** 23. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: COLUMN STATISTICS
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: lock_type
+OBJECT_INSTANCE_BEGIN: 139786622941696
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: STATEMENT
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_base.cc:598
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+*************************** 24. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: COLUMN STATISTICS
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: object_instance_begin
+OBJECT_INSTANCE_BEGIN: 139786622919472
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: STATEMENT
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_base.cc:598
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+*************************** 25. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: COLUMN STATISTICS
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: object_name
+OBJECT_INSTANCE_BEGIN: 139786622920256
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: STATEMENT
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_base.cc:598
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+*************************** 26. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: COLUMN STATISTICS
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: object_schema
+OBJECT_INSTANCE_BEGIN: 139786622920352
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: STATEMENT
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_base.cc:598
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+*************************** 27. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: COLUMN STATISTICS
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: object_type
+OBJECT_INSTANCE_BEGIN: 139786623838192
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: STATEMENT
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_base.cc:598
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+*************************** 28. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: COLUMN STATISTICS
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: owner_event_id
+OBJECT_INSTANCE_BEGIN: 139786623638512
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: STATEMENT
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_base.cc:598
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+*************************** 29. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: COLUMN STATISTICS
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: owner_thread_id
+OBJECT_INSTANCE_BEGIN: 139786623639296
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: STATEMENT
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_base.cc:598
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+*************************** 30. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: COLUMN STATISTICS
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: source
+OBJECT_INSTANCE_BEGIN: 139786623640080
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: STATEMENT
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_base.cc:598
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+*************************** 31. row ***************************
+       processlist_id: 51
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786622886112
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 91
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 69
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: data_lock_waits
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786489008624
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 109
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 69
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: data_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786489013728
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 109
+       OWNER_EVENT_ID: 3
+*************************** 3. row ***************************
+       processlist_id: 70
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786555785360
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 110
+       OWNER_EVENT_ID: 3
+*************************** 4. row ***************************
+       processlist_id: 70
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786558894528
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 110
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 86
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786489360352
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 126
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 86
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786489188144
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 126
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 103
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786624108288
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 143
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 103
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786624259504
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 143
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 121
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786287387920
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 161
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 121
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786287384576
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 161
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 139
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786623695264
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 179
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 139
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786624261072
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 179
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 155
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786624257152
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 195
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 155
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786624258720
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 195
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 172
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786555785360
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 212
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 172
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786561873488
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 212
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 188
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786624479424
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 228
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 188
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786622914736
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 228
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 206
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786624261072
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 246
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 206
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786623640080
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 246
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 222
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786489187360
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 262
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 222
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488738448
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 262
+       OWNER_EVENT_ID: 3
+*************************** 3. row ***************************
+       processlist_id: 223
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: data_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786563440544
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 263
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 239
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488736416
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 279
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 239
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786489183984
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 279
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 257
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786560605200
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 297
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 257
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786559301264
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 297
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 274
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488812448
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 314
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 274
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786489914960
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 314
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 290
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786561865824
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 330
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 290
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786560605200
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 330
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 308
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786287872912
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 348
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 308
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786287320304
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 348
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 324
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786562005104
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 364
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 324
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786561871840
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 364
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 342
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786624756752
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 382
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 342
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786623008656
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 382
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 358
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786623702384
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 398
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 358
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786622903872
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 398
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 376
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786623702384
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 416
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 376
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786625423440
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 416
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 392
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786623008656
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 432
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 392
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786625389520
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 432
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 409
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786287403760
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 449
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 409
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786287320400
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 449
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 427
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786561203520
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 467
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 427
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786561129872
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 467
+       OWNER_EVENT_ID: 3
+*************************** 3. row ***************************
+       processlist_id: 426
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: data_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786491320144
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 466
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 444
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786287320400
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 484
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 444
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786288221792
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 484
+       OWNER_EVENT_ID: 3
+*************************** 3. row ***************************
+       processlist_id: 443
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: data_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786489011136
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 483
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 461
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786489313264
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 501
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 461
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786490197552
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 501
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 477
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: data_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786563018864
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 517
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 478
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488812448
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 518
+       OWNER_EVENT_ID: 3
+*************************** 3. row ***************************
+       processlist_id: 478
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786488709424
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 518
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 495
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786561945328
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 535
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 495
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786561871840
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 535
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 511
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786561871840
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 551
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 511
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786561974544
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 551
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 529
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786561871840
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 569
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 529
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786561974544
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 569
+       OWNER_EVENT_ID: 3
+*************************** 3. row ***************************
+       processlist_id: 528
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: data_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786624258720
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 568
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+
+
+select t.processlist_id, ml.* from performance_schema.metadata_locks ml join performance_schema.threads t on (ml.owner_thread_id=t.thread_id)\G
+
+*************************** 1. row ***************************
+       processlist_id: 551
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: metadata_locks
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786287338048
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 591
+       OWNER_EVENT_ID: 3
+*************************** 2. row ***************************
+       processlist_id: 551
+          OBJECT_TYPE: TABLE
+        OBJECT_SCHEMA: performance_schema
+          OBJECT_NAME: threads
+          COLUMN_NAME: NULL
+OBJECT_INSTANCE_BEGIN: 139786287338144
+            LOCK_TYPE: SHARED_READ
+        LOCK_DURATION: TRANSACTION
+          LOCK_STATUS: GRANTED
+               SOURCE: sql_parse.cc:6441
+      OWNER_THREAD_ID: 591
+       OWNER_EVENT_ID: 3
+
+select t.processlist_id, th.* from performance_schema.table_handles th left join performance_schema.threads t on (th.owner_thread_id=t.thread_id)\G
+
+
+select t.processlist_id, et.* from performance_schema.events_transactions_current et join performance_schema.threads t using(thread_id)\G
+
+*************************** 1. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 1
+                       EVENT_ID: 23
+                   END_EVENT_ID: 23
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 418885122000
+                      TIMER_END: 418892732000
+                     TIMER_WAIT: 7610000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 2. row ***************************
+                 processlist_id: NULL
+                      THREAD_ID: 39
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246265560
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 346408569000
+                      TIMER_END: 346420461000
+                     TIMER_WAIT: 11892000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+*************************** 3. row ***************************
+                 processlist_id: 8
+                      THREAD_ID: 48
+                       EVENT_ID: 1
+                   END_EVENT_ID: 1
+                     EVENT_NAME: transaction
+                          STATE: COMMITTED
+                         TRX_ID: 421264246266408
+                           GTID: AUTOMATIC
+                  XID_FORMAT_ID: NULL
+                      XID_GTRID: NULL
+                      XID_BQUAL: NULL
+                       XA_STATE: NULL
+                         SOURCE: handler.cc:1375
+                    TIMER_START: 420896577000
+                      TIMER_END: 420912073000
+                     TIMER_WAIT: 15496000
+                    ACCESS_MODE: READ WRITE
+                ISOLATION_LEVEL: REPEATABLE READ
+                     AUTOCOMMIT: YES
+           NUMBER_OF_SAVEPOINTS: 0
+NUMBER_OF_ROLLBACK_TO_SAVEPOINT: 0
+    NUMBER_OF_RELEASE_SAVEPOINT: 0
+          OBJECT_INSTANCE_BEGIN: NULL
+               NESTING_EVENT_ID: NULL
+             NESTING_EVENT_TYPE: NULL
+
+select t.processlist_id, et.* from performance_schema.events_transactions_history_long et join performance_schema.threads t using(thread_id)\G
+

@@ -1,0 +1,24 @@
+Type	Name	Status
+InnoDB	rwlock: dict0dict.cc:2570	waits=77
+InnoDB	rwlock: dict0dict.cc:2570	waits=74
+InnoDB	rwlock: dict0dict.cc:2570	waits=89
+InnoDB	rwlock: dict0dict.cc:2570	waits=76
+InnoDB	rwlock: dict0dict.cc:2570	waits=67
+InnoDB	rwlock: dict0dict.cc:2570	waits=75
+InnoDB	rwlock: dict0dict.cc:2570	waits=76
+InnoDB	rwlock: dict0dict.cc:2570	waits=93
+InnoDB	rwlock: dict0dict.cc:2570	waits=83
+InnoDB	rwlock: dict0dict.cc:2570	waits=91
+InnoDB	rwlock: dict0dict.cc:2570	waits=1
+InnoDB	rwlock: dict0dict.cc:2570	waits=1
+InnoDB	rwlock: dict0dict.cc:2570	waits=1
+InnoDB	rwlock: dict0dict.cc:2570	waits=4
+InnoDB	rwlock: fil0fil.cc:3310	waits=1
+InnoDB	rwlock: fil0fil.cc:3310	waits=1
+InnoDB	rwlock: dict0dict.cc:1032	waits=15
+InnoDB	rwlock: btr0sea.cc:211	waits=5
+InnoDB	rwlock: btr0sea.cc:211	waits=3
+InnoDB	rwlock: btr0sea.cc:211	waits=1
+InnoDB	rwlock: hash0hash.cc:117	waits=2
+InnoDB	rwlock: hash0hash.cc:117	waits=4
+InnoDB	sum rwlock: buf0buf.cc:877	waits=2296

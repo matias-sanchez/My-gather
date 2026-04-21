@@ -1,0 +1,540 @@
+TS 1776790333.008962516 2026-04-21 16:52:13
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790334.008794036 2026-04-21 16:52:14
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790335.008804182 2026-04-21 16:52:15
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790336.008537783 2026-04-21 16:52:16
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790337.008878119 2026-04-21 16:52:17
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790338.009001915 2026-04-21 16:52:18
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790339.008598134 2026-04-21 16:52:19
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790340.008883681 2026-04-21 16:52:20
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790341.008966025 2026-04-21 16:52:21
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0    195 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790342.008607844 2026-04-21 16:52:22
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790343.009574459 2026-04-21 16:52:23
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790344.009241985 2026-04-21 16:52:24
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790345.009576096 2026-04-21 16:52:25
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790346.008659714 2026-04-21 16:52:26
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790347.009313297 2026-04-21 16:52:27
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790348.008759106 2026-04-21 16:52:28
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790349.009302270 2026-04-21 16:52:29
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790350.008816742 2026-04-21 16:52:30
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790351.009049062 2026-04-21 16:52:31
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0    195 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790352.008973736 2026-04-21 16:52:32
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790353.008860859 2026-04-21 16:52:33
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790354.008861005 2026-04-21 16:52:34
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790355.009118676 2026-04-21 16:52:35
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790356.009081280 2026-04-21 16:52:36
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp       20      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0    195 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0    197 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790357.009161881 2026-04-21 16:52:37
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790358.008665650 2026-04-21 16:52:38
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790359.009026550 2026-04-21 16:52:39
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790360.009130138 2026-04-21 16:52:40
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790361.009277257 2026-04-21 16:52:41
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0    195 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp      208      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp       32      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         
+TS 1776790362.009596483 2026-04-21 16:52:42
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      54/sshd             
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      5555/mysqld         
+tcp        0      0 127.0.0.11:40961        0.0.0.0:*               LISTEN      -                   
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50928       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50966       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50934       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50900       ESTABLISHED 5555/mysqld         
+tcp        0    195 172.31.10.2:3306        172.31.10.1:50918       ESTABLISHED 5555/mysqld         
+tcp        0    195 172.31.10.2:3306        172.31.10.1:50948       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50920       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50954       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50936       ESTABLISHED 5555/mysqld         
+tcp        0      0 172.31.10.2:3306        172.31.10.1:50902       ESTABLISHED 5555/mysqld         
+tcp6       0      0 :::22                   :::*                    LISTEN      54/sshd             
+tcp6       0      0 :::33060                :::*                    LISTEN      5555/mysqld         

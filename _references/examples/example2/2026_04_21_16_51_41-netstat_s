@@ -1,0 +1,1710 @@
+TS 1776790303.009325313 2026-04-21 16:51:43
+Ip:
+    Forwarding: 1
+    757639 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    757638 incoming packets delivered
+    664482 requests sent out
+    OutTransmits: 664482
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    757302 segments received
+    1363338 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    4658 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    499451 packet headers predicted
+    1652 acknowledgments not containing data payload received
+    584345 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1290459
+    TCPDelivered: 1290517
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2301998429
+    OutOctets: 1208770244
+    InNoECTPkts: 2226200
+MPTcpExt:
+TS 1776790304.008711008 2026-04-21 16:51:44
+Ip:
+    Forwarding: 1
+    760936 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    760935 incoming packets delivered
+    667472 requests sent out
+    OutTransmits: 667472
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    760599 segments received
+    1369733 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    4711 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    501878 packet headers predicted
+    1672 acknowledgments not containing data payload received
+    587193 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1296747
+    TCPDelivered: 1296805
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2302283321
+    OutOctets: 1214675377
+    InNoECTPkts: 2229497
+MPTcpExt:
+TS 1776790305.008582787 2026-04-21 16:51:45
+Ip:
+    Forwarding: 1
+    762940 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    762939 incoming packets delivered
+    669300 requests sent out
+    OutTransmits: 669300
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    762603 segments received
+    1373635 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    4745 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    503348 packet headers predicted
+    1690 acknowledgments not containing data payload received
+    588917 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1300575
+    TCPDelivered: 1300633
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2302457217
+    OutOctets: 1218277532
+    InNoECTPkts: 2231501
+MPTcpExt:
+TS 1776790306.009043416 2026-04-21 16:51:46
+Ip:
+    Forwarding: 1
+    767351 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    767350 incoming packets delivered
+    673248 requests sent out
+    OutTransmits: 673248
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    767014 segments received
+    1382190 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    4797 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    506596 packet headers predicted
+    1704 acknowledgments not containing data payload received
+    592736 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1309025
+    TCPDelivered: 1309083
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2302838593
+    OutOctets: 1226226118
+    InNoECTPkts: 2235912
+MPTcpExt:
+TS 1776790307.008741865 2026-04-21 16:51:47
+Ip:
+    Forwarding: 1
+    772601 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    772600 incoming packets delivered
+    677956 requests sent out
+    OutTransmits: 677956
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    772264 segments received
+    1392343 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    4858 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    510470 packet headers predicted
+    1720 acknowledgments not containing data payload received
+    597287 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1319046
+    TCPDelivered: 1319104
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2303292293
+    OutOctets: 1235627855
+    InNoECTPkts: 2241162
+MPTcpExt:
+TS 1776790308.009174174 2026-04-21 16:51:48
+Ip:
+    Forwarding: 1
+    775673 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    775672 incoming packets delivered
+    680748 requests sent out
+    OutTransmits: 680748
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    775336 segments received
+    1398275 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    4908 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    512747 packet headers predicted
+    1728 acknowledgments not containing data payload received
+    599956 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1324878
+    TCPDelivered: 1324936
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2303558893
+    OutOctets: 1241070817
+    InNoECTPkts: 2244234
+MPTcpExt:
+TS 1776790309.008965856 2026-04-21 16:51:49
+Ip:
+    Forwarding: 1
+    781318 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    781317 incoming packets delivered
+    685767 requests sent out
+    OutTransmits: 685767
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    780981 segments received
+    1409187 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    4958 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    516906 packet headers predicted
+    1736 acknowledgments not containing data payload received
+    604853 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1335690
+    TCPDelivered: 1335748
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2304047597
+    OutOctets: 1251234036
+    InNoECTPkts: 2249879
+MPTcpExt:
+TS 1776790310.009161651 2026-04-21 16:51:50
+Ip:
+    Forwarding: 1
+    787224 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    787223 incoming packets delivered
+    690959 requests sent out
+    OutTransmits: 690959
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    786887 segments received
+    1420521 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    4988 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    521269 packet headers predicted
+    1746 acknowledgments not containing data payload received
+    609980 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1346974
+    TCPDelivered: 1347032
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2304559399
+    OutOctets: 1261810711
+    InNoECTPkts: 2255785
+MPTcpExt:
+TS 1776790311.009116146 2026-04-21 16:51:51
+Ip:
+    Forwarding: 1
+    791146 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    791145 incoming packets delivered
+    694474 requests sent out
+    OutTransmits: 694474
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    790809 segments received
+    1428016 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5028 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    524184 packet headers predicted
+    1758 acknowledgments not containing data payload received
+    613390 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1354389
+    TCPDelivered: 1354447
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2304898329
+    OutOctets: 1268707364
+    InNoECTPkts: 2259707
+MPTcpExt:
+TS 1776790312.009189528 2026-04-21 16:51:52
+Ip:
+    Forwarding: 1
+    795416 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    795415 incoming packets delivered
+    698263 requests sent out
+    OutTransmits: 698263
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    795079 segments received
+    1436257 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5058 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    527324 packet headers predicted
+    1776 acknowledgments not containing data payload received
+    617083 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1362560
+    TCPDelivered: 1362618
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2305267645
+    OutOctets: 1276392097
+    InNoECTPkts: 2263977
+MPTcpExt:
+TS 1776790313.009133339 2026-04-21 16:51:53
+Ip:
+    Forwarding: 1
+    804926 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    804925 incoming packets delivered
+    706646 requests sent out
+    OutTransmits: 706646
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    804589 segments received
+    1454598 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5118 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    534341 packet headers predicted
+    1778 acknowledgments not containing data payload received
+    625345 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1380791
+    TCPDelivered: 1380849
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2306092069
+    OutOctets: 1293518652
+    InNoECTPkts: 2273487
+MPTcpExt:
+TS 1776790314.009495904 2026-04-21 16:51:54
+Ip:
+    Forwarding: 1
+    809209 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    809208 incoming packets delivered
+    710488 requests sent out
+    OutTransmits: 710488
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    808872 segments received
+    1462834 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5168 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    537500 packet headers predicted
+    1812 acknowledgments not containing data payload received
+    629041 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1388927
+    TCPDelivered: 1388985
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2306462141
+    OutOctets: 1301133161
+    InNoECTPkts: 2277770
+MPTcpExt:
+TS 1776790315.009264491 2026-04-21 16:51:55
+Ip:
+    Forwarding: 1
+    818602 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    818601 incoming packets delivered
+    718750 requests sent out
+    OutTransmits: 718750
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    818265 segments received
+    1480892 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5208 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    544425 packet headers predicted
+    1838 acknowledgments not containing data payload received
+    637181 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1406895
+    TCPDelivered: 1406953
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2307275099
+    OutOctets: 1318005028
+    InNoECTPkts: 2287163
+MPTcpExt:
+TS 1776790316.009331242 2026-04-21 16:51:56
+Ip:
+    Forwarding: 1
+    841475 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    841474 incoming packets delivered
+    738721 requests sent out
+    OutTransmits: 738721
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    841138 segments received
+    1524719 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5248 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    561334 packet headers predicted
+    1838 acknowledgments not containing data payload received
+    657072 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1450642
+    TCPDelivered: 1450700
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2309255933
+    OutOctets: 1359009964
+    InNoECTPkts: 2310036
+MPTcpExt:
+TS 1776790317.009278281 2026-04-21 16:51:57
+Ip:
+    Forwarding: 1
+    845671 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    845670 incoming packets delivered
+    742527 requests sent out
+    OutTransmits: 742527
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    845334 segments received
+    1532883 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5328 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    564434 packet headers predicted
+    1846 acknowledgments not containing data payload received
+    660714 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1458656
+    TCPDelivered: 1458714
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2309619301
+    OutOctets: 1366525235
+    InNoECTPkts: 2314232
+MPTcpExt:
+TS 1776790318.009575229 2026-04-21 16:51:58
+Ip:
+    Forwarding: 1
+    849387 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    849386 incoming packets delivered
+    745845 requests sent out
+    OutTransmits: 745845
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    849050 segments received
+    1540059 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5366 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    567176 packet headers predicted
+    1858 acknowledgments not containing data payload received
+    663934 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1465754
+    TCPDelivered: 1465812
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2309940573
+    OutOctets: 1373185474
+    InNoECTPkts: 2317948
+MPTcpExt:
+TS 1776790319.009310901 2026-04-21 16:51:59
+Ip:
+    Forwarding: 1
+    852395 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    852394 incoming packets delivered
+    748530 requests sent out
+    OutTransmits: 748530
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    852058 segments received
+    1545802 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5386 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    569395 packet headers predicted
+    1886 acknowledgments not containing data payload received
+    666528 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1471447
+    TCPDelivered: 1471505
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2310200809
+    OutOctets: 1378502583
+    InNoECTPkts: 2320956
+MPTcpExt:
+TS 1776790320.009084255 2026-04-21 16:52:00
+Ip:
+    Forwarding: 1
+    858287 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    858286 incoming packets delivered
+    753771 requests sent out
+    OutTransmits: 753771
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    857950 segments received
+    1557169 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5446 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    573749 packet headers predicted
+    1890 acknowledgments not containing data payload received
+    671649 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1482704
+    TCPDelivered: 1482762
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2310710977
+    OutOctets: 1389055751
+    InNoECTPkts: 2326848
+MPTcpExt:
+TS 1776790321.009052488 2026-04-21 16:52:01
+Ip:
+    Forwarding: 1
+    861870 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    861869 incoming packets delivered
+    756997 requests sent out
+    OutTransmits: 756997
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    861533 segments received
+    1564129 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5499 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    576391 packet headers predicted
+    1900 acknowledgments not containing data payload received
+    674754 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1489558
+    TCPDelivered: 1489616
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2311020797
+    OutOctets: 1395495333
+    InNoECTPkts: 2330431
+MPTcpExt:
+TS 1776790322.009021631 2026-04-21 16:52:02
+Ip:
+    Forwarding: 1
+    866428 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    866427 incoming packets delivered
+    761057 requests sent out
+    OutTransmits: 761057
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    866091 segments received
+    1572975 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5538 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    579734 packet headers predicted
+    1922 acknowledgments not containing data payload received
+    678688 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1498319
+    TCPDelivered: 1498377
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2311416549
+    OutOctets: 1403762667
+    InNoECTPkts: 2334989
+MPTcpExt:
+TS 1776790323.009187312 2026-04-21 16:52:03
+Ip:
+    Forwarding: 1
+    871453 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    871452 incoming packets delivered
+    765591 requests sent out
+    OutTransmits: 765591
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    871116 segments received
+    1582699 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5618 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    583455 packet headers predicted
+    1930 acknowledgments not containing data payload received
+    683055 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1507890
+    TCPDelivered: 1507948
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2311850313
+    OutOctets: 1412716755
+    InNoECTPkts: 2340014
+MPTcpExt:
+TS 1776790324.008966285 2026-04-21 16:52:04
+Ip:
+    Forwarding: 1
+    873655 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    873654 incoming packets delivered
+    767605 requests sent out
+    OutTransmits: 767605
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    873318 segments received
+    1586990 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5658 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    585073 packet headers predicted
+    1950 acknowledgments not containing data payload received
+    684950 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1512091
+    TCPDelivered: 1512149
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2312040799
+    OutOctets: 1416667715
+    InNoECTPkts: 2342216
+MPTcpExt:
+TS 1776790325.009100088 2026-04-21 16:52:05
+Ip:
+    Forwarding: 1
+    878104 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    878103 incoming packets delivered
+    771587 requests sent out
+    OutTransmits: 771587
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    877767 segments received
+    1595617 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5718 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    588352 packet headers predicted
+    1962 acknowledgments not containing data payload received
+    688805 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1520608
+    TCPDelivered: 1520666
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2312425709
+    OutOctets: 1424671290
+    InNoECTPkts: 2346665
+MPTcpExt:
+TS 1776790326.009175255 2026-04-21 16:52:06
+Ip:
+    Forwarding: 1
+    888441 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    888440 incoming packets delivered
+    780713 requests sent out
+    OutTransmits: 780713
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    888104 segments received
+    1615495 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5784 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    596001 packet headers predicted
+    1962 acknowledgments not containing data payload received
+    697798 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1540353
+    TCPDelivered: 1540411
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2313321007
+    OutOctets: 1443163676
+    InNoECTPkts: 2357002
+MPTcpExt:
+TS 1776790327.009227872 2026-04-21 16:52:07
+Ip:
+    Forwarding: 1
+    892981 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    892980 incoming packets delivered
+    784786 requests sent out
+    OutTransmits: 784786
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    892644 segments received
+    1624342 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5841 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    599345 packet headers predicted
+    1970 acknowledgments not containing data payload received
+    701737 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1549079
+    TCPDelivered: 1549137
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2313715289
+    OutOctets: 1451382350
+    InNoECTPkts: 2361547
+MPTcpExt:
+TS 1776790328.008973319 2026-04-21 16:52:08
+Ip:
+    Forwarding: 1
+    899512 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    899511 incoming packets delivered
+    790588 requests sent out
+    OutTransmits: 790588
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    899175 segments received
+    1636889 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5901 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    604178 packet headers predicted
+    1978 acknowledgments not containing data payload received
+    707411 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1561508
+    TCPDelivered: 1561566
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2314279527
+    OutOctets: 1463003937
+    InNoECTPkts: 2368073
+MPTcpExt:
+TS 1776790329.008979921 2026-04-21 16:52:09
+Ip:
+    Forwarding: 1
+    926122 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    926121 incoming packets delivered
+    813760 requests sent out
+    OutTransmits: 813760
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    925785 segments received
+    1687827 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5911 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    623838 packet headers predicted
+    1990 acknowledgments not containing data payload received
+    730537 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1612416
+    TCPDelivered: 1612474
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2316584337
+    OutOctets: 1510738507
+    InNoECTPkts: 2394683
+MPTcpExt:
+TS 1776790330.008983553 2026-04-21 16:52:10
+Ip:
+    Forwarding: 1
+    931190 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    931189 incoming packets delivered
+    818300 requests sent out
+    OutTransmits: 818300
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    930853 segments received
+    1697662 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5975 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    627578 packet headers predicted
+    1994 acknowledgments not containing data payload received
+    734938 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1622123
+    TCPDelivered: 1622181
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2317022811
+    OutOctets: 1519859047
+    InNoECTPkts: 2399751
+MPTcpExt:
+TS 1776790331.009215691 2026-04-21 16:52:11
+Ip:
+    Forwarding: 1
+    934921 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    934920 incoming packets delivered
+    821594 requests sent out
+    OutTransmits: 821594
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    934584 segments received
+    1704832 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    5995 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    630325 packet headers predicted
+    2010 acknowledgments not containing data payload received
+    738166 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1629253
+    TCPDelivered: 1629311
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2317345885
+    OutOctets: 1526554876
+    InNoECTPkts: 2403482
+MPTcpExt:
+TS 1776790332.009088559 2026-04-21 16:52:12
+Ip:
+    Forwarding: 1
+    937428 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    937427 incoming packets delivered
+    823851 requests sent out
+    OutTransmits: 823851
+Icmp:
+    0 ICMP messages received
+    0 input ICMP message failed
+    ICMP input histogram:
+    0 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+Tcp:
+    81 active connection openings
+    27 passive connection openings
+    0 failed connection attempts
+    1 connection resets received
+    10 connections established
+    937091 segments received
+    1709663 segments sent out
+    0 segments retransmitted
+    0 bad segments received
+    82 resets sent
+Udp:
+    336 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    336 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+TcpExt:
+    57 TCP sockets finished time wait in fast timer
+    6035 delayed acks sent
+    5 delayed acks further delayed because of locked socket
+    Quick ack mode was activated 8 times
+    632179 packet headers predicted
+    2024 acknowledgments not containing data payload received
+    740336 predicted acknowledgments
+    TCPBacklogCoalesce: 223
+    TCPDSACKOldSent: 8
+    26 connections reset due to unexpected data
+    1 connections reset due to early user close
+    TCPRcvCoalesce: 11619
+    TCPOFOQueue: 440
+    TCPOrigDataSent: 1634014
+    TCPDelivered: 1634072
+    TCPAckCompressed: 14
+IpExt:
+    InOctets: 2317562229
+    OutOctets: 1531004990
+    InNoECTPkts: 2405989
+MPTcpExt:

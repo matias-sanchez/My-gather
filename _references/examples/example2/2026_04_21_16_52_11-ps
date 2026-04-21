@@ -1,0 +1,20 @@
+UID          PID    PPID  C    SZ   RSS PSR STIME TTY          TIME CMD
+root           1       0  0 22505  9600  26 16:00 ?        00:00:00 /usr/lib/systemd/systemd --system --unit=multi-user.target --log-target=console --log-level=debug --show-status=true
+root          18       1  0 21860 13056   0 16:00 ?        00:00:00 /usr/lib/systemd/systemd-journald
+root          54       1  0 19163  7296  24 16:00 ?        00:00:00 /usr/sbin/sshd -D -oCiphers=aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes256-ctr,aes256-cbc,aes128-gcm@openssh.com,aes128-ctr,aes128-cbc -oMACs=hmac-sha2-256-etm@openssh.com,hmac-sha1-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2-256,hmac-sha1,umac-128@openssh.com,hmac-sha2-512 -oGSSAPIKexAlgorithms=gss-curve25519-sha256-,gss-nistp256-sha256-,gss-group14-sha256-,gss-group16-sha512-,gss-gex-sha1-,gss-group14-sha1- -oKexAlgorithms=curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1 -oHostKeyAlgorithms=ecdsa-sha2-nistp256,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521,ecdsa-sha2-nistp521-cert-v01@openssh.com,ssh-ed25519,ssh-ed25519-cert-v01@openssh.com,rsa-sha2-256,rsa-sha2-256-cert-v01@openssh.com,rsa-sha2-512,rsa-sha2-512-cert-v01@openssh.com,ssh-rsa,ssh-rsa-cert-v01@openssh.com -oPubkeyAcceptedKeyTypes=ecdsa-sha2-nistp256,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521,ecdsa-sha2-nistp521-cert-v01@openssh.com,ssh-ed25519,ssh-ed25519-cert-v01@openssh.com,rsa-sha2-256,rsa-sha2-256-cert-v01@openssh.com,rsa-sha2-512,rsa-sha2-512-cert-v01@openssh.com,ssh-rsa,ssh-rsa-cert-v01@openssh.com -oCASignatureAlgorithms=ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,ssh-ed25519,rsa-sha2-256,rsa-sha2-512,ssh-rsa
+daemon      2669       1  0  4773  2688  25 16:01 ?        00:00:00 /bin/sh -c /usr/bin/percona-telemetry-agent >> /var/log/percona/telemetry-agent/telemetry-agent.log 2>> /var/log/percona/telemetry-agent/telemetry-agent-error.log
+daemon      2670    2669  0 318512 19852 10 16:01 ?        00:00:00 /usr/bin/percona-telemetry-agent
+mysql       5555       1 11 1162256 1066260 11 16:02 ?     00:05:29 /usr/sbin/mysqld
+root        5620       0  0  4834  2688  38 16:39 pts/0    00:00:00 bash
+root       13587    5620  0 28761  7680  10 16:51 pts/0    00:00:00 sudo ./pt-stalk --no-stalk --iterations=2 --sleep=30 --dest=/tmp/pt/collected/node0/
+root       13588   13587  0  4478  3456  29 16:51 pts/0    00:00:00 bash ./pt-stalk --no-stalk --iterations=2 --sleep=30 --dest=/tmp/pt/collected/node0/
+root       13962   13588  1  4478  2644   5 16:51 pts/0    00:00:00 bash ./pt-stalk --no-stalk --iterations=2 --sleep=30 --dest=/tmp/pt/collected/node0/
+root       14022   13962  0 14601  3840   6 16:51 pts/0    00:00:00 top -bn30
+root       16030   13588  0  4478  2644  11 16:52 pts/0    00:00:00 bash ./pt-stalk --no-stalk --iterations=2 --sleep=30 --dest=/tmp/pt/collected/node0/
+root       16056   13588  0  7559  2688  30 16:52 pts/0    00:00:00 /usr/bin/coreutils --coreutils-prog-shebang=sleep /bin/sleep 1
+root       16139   13962  0  7559  2688  26 16:52 pts/0    00:00:00 /usr/bin/coreutils --coreutils-prog-shebang=sleep /bin/sleep 1
+root       16146   16030  0  7559  2688   1 16:52 pts/0    00:00:00 /usr/bin/coreutils --coreutils-prog-shebang=tail /bin/tail -f /var/log/mysqld.log
+root       16168   16030  0 11562  8448   0 16:52 pts/0    00:00:00 /bin/mysqladmin ext -i1 -c30
+root       16173   16030  0 12968  3456  44 16:52 pts/0    00:00:00 ps -eaF
+root       16174   16030  0 14046  3840   5 16:52 pts/0    00:00:00 top -bn30
+root       16176   16030  0 12304  3072  12 16:52 pts/0    00:00:00 /sbin/sysctl -a
