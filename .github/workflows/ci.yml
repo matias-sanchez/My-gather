@@ -48,8 +48,8 @@ jobs:
         run: |
           set -euo pipefail
           if [ -d testdata/example2 ]; then
-            ./bin/my-gather testdata/example2 -o /tmp/a.html --overwrite
-            ./bin/my-gather testdata/example2 -o /tmp/b.html --overwrite
+            ./bin/my-gather --out /tmp/a.html --overwrite testdata/example2
+            ./bin/my-gather --out /tmp/b.html --overwrite testdata/example2
             # Report generated at line is the only legal diff.
             diff_lines=$(diff /tmp/a.html /tmp/b.html | grep -cE '^[<>]' || true)
             echo "diff lines: $diff_lines"
