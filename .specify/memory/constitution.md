@@ -1,6 +1,22 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.0.0 → 1.0.1
+Bump rationale: PATCH-level wording fix. Principle VIII referenced the
+  fixture source path as `references/examples/`; the repository actually
+  uses `_references/examples/` (leading underscore marks the directory
+  as non-shipped reference material). No forbidden/required behaviours
+  change — only the path string is corrected. Closes analyze finding
+  F12.
+
+Modified principles:
+  - VIII. Reference Fixtures & Golden Tests → path string corrected
+      from `references/examples/` to `_references/examples/`.
+
+Templates requiring updates: none (no template hard-codes this path).
+
+Prior Sync Impact Report (1.0.0) follows for history:
+----------------------------------------------------
 Version change: (uninitialized template) → 1.0.0
 Bump rationale: Initial ratification of the My-gather project constitution.
   Prior file contained only placeholder tokens; this is the first concrete
@@ -125,7 +141,7 @@ still wrap underlying typed errors with `%w` when one exists.
 
 For every pt-stalk collector file format My-gather supports, there MUST be
 at least one fixture under `testdata/` drawn from real samples in
-`references/examples/`, and a round-trip test that parses the fixture and
+`_references/examples/`, and a round-trip test that parses the fixture and
 compares rendered output against a committed `.golden` file. Adding a new
 collector parser without a fixture and golden test is forbidden. Golden
 files MUST be regenerated only through an explicit, reviewed step (e.g.,
@@ -226,4 +242,4 @@ invocation via the Constitution Check gate. Runtime development guidance
 and feature-local `plan.md` / `quickstart.md` files and MUST defer to this
 constitution when conflicts arise.
 
-**Version**: 1.0.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-21
+**Version**: 1.0.1 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-21

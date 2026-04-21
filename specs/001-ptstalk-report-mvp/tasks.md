@@ -38,8 +38,7 @@ tests/               Integration + cross-cutting tests
 scripts/             Dev-only helpers
 ```
 
-All tasks write paths relative to the repository root
-(`/Users/matias/git/My-gather/My-gather`).
+All tasks write paths relative to the repository root.
 
 ---
 
@@ -64,7 +63,7 @@ All tasks write paths relative to the repository root
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T007 [P] Define the `model` package types in `model/model.go`: `Collection`, `Snapshot`, `SourceFile`, `Sample`, `MetricSeries`, `VariableEntry`, `ThreadStateSample`, `Diagnostic`, `Severity` (enum), `Suffix` (enum + `KnownSuffixes` slice + all seven constants), `FormatVersion` (enum), `ParseStatus` (enum). Every exported identifier has a godoc comment (Principle VI).
+- [ ] T007 [P] Define the `model` package types in `model/model.go`: `Collection`, `Snapshot`, `SourceFile`, `Sample`, `MetricSeries`, `VariableEntry`, `Diagnostic`, `Severity` (enum), `Suffix` (enum + `KnownSuffixes` slice + all seven constants), `FormatVersion` (enum), `ParseStatus` (enum). Every exported identifier has a godoc comment (Principle VI). (`ThreadStateSample` is defined in T008 next to its `ProcesslistData` container.)
 - [ ] T008 [P] Define the per-collector typed payloads in `model/model.go` (continuing T007): `IostatData`, `DeviceSeries`, `TopData`, `ProcessSample`, `ProcessSeries`, `VariablesData`, `VmstatData`, `InnodbStatusData`, `AHIActivity`, `MysqladminData` (including `SnapshotBoundaries []int`), `ProcesslistData`, `ThreadStateSample`. Match `data-model.md` exactly.
 - [ ] T009 [P] Define the section / render types in `model/sections.go`: `OSSection`, `VariablesSection`, `DBSection`, `SnapshotVariables`, `SnapshotInnoDB`, `Report`, `NavEntry`. `Report.Navigation []NavEntry` and `Report.ReportID string` populated per FR-031 / FR-032.
 - [ ] T010 [P] Define `parse/errors.go` with sentinels `ErrNotAPtStalkDir`, and typed `SizeError` (with `SizeErrorKind`, `SizeErrorTotal`, `SizeErrorFile`), `PathError`, `ParseError`. Implement `Error()` / `Unwrap()` per contracts/packages.md.
@@ -217,7 +216,7 @@ All tasks write paths relative to the repository root
 - [ ] T084 Flesh out `README.md` with the content from `quickstart.md` plus: project status badge, the twelve constitution principles as a short bullet list, pointer to `specs/001-ptstalk-report-mvp/`, build/install/run/contribute sections.
 - [ ] T085 Run the `quickstart.md` flow end-to-end manually and record any friction in a new `specs/001-ptstalk-report-mvp/retrospective.md`; feed fixes back as follow-up tasks if needed.
 - [ ] T086 Confirm `--out <nonexistent-dir>/...` behaviour in `cmd/my-gather/main_test.go::TestOutputParentMissing` — assert clean error and exit code 3 (or a new code if the team prefers) rather than auto-mkdir (F8 resolution).
-- [ ] T087 Review `spec.md` once after tasks complete, remove any remaining `StateSample` references (F5 sweep), fix the `SuffixInnodbStatus` → value mismatch notes (F16), and correct the constitution's `references/examples/` path (F12) via a small PATCH-level constitution amendment.
+- [ ] T087 Final consistency sweep across `spec.md`, `data-model.md`, `contracts/packages.md`, and `contracts/cli.md`: confirm every `-<suffix>` name and `Suffix<Name>` constant matches 1:1, no dangling `StateSample` tokens exist (only `ThreadStateSample` is defined), and every path reference uses `_references/examples/` (leading underscore) consistent with constitution v1.0.1. No automatic edits — read-only check that fails the checklist if any drift is detected.
 - [ ] T088 [P] `cmd/my-gather/main_test.go::TestOutputFileSingletonNoSideCar` (F27 — FR-002 gap): after a successful run, assert the output path's parent directory contains exactly one new file matching the `-o` path (no `.tmp`, no `.bak`, no `.part`, no lock files). Walk the parent dir with `os.ReadDir` before and after; diff.
 - [ ] T089 [P] `parse/partial_recovery_test.go::TestPartialRecoveryAllParsers` (F28 — FR-008 gap): parametrised test that iterates over the six collectors lacking a partial-recovery test (top, vmstat, variables, innodbstatus, mysqladmin, processlist); for each, copy its fixture to a tempfile, truncate to 50% of its original length, parse, assert result status is `ParsePartial` with ≥1 `Diagnostic(Severity=Warning)` whose `Location` field is non-empty. Closes Principle III coverage gap.
 - [ ] T090 [P] `parse/version_test.go::TestDetectFormat` (F29 — FR-024 gap): feed `parse.DetectFormat` a representative V1 header byte sequence and a V2 header byte sequence for each of the seven supported suffixes (14 subtests); assert the correct `model.FormatVersion` enum is returned. Exercises per-file version detection (research R2) that the golden tests don't.
@@ -225,7 +224,8 @@ All tasks write paths relative to the repository root
 - [ ] T092 `cmd/my-gather/main_test.go::TestStderrWarningMirrored` (F30 — FR-027 gap, 2 of 3): run against a fixture with a deliberately truncated source file; assert stderr contains a line matching `^\[warning\]\s+\S+:\s+.+$` per the contracts/cli.md format, with the warning count equal to the emitted `Diagnostic(Severity=Warning)` count. **Sequential with T091** (same file).
 - [ ] T093 `cmd/my-gather/main_test.go::TestStderrVerboseProgress` (F30 — FR-027 gap, 3 of 3): run with `-v`; assert stderr contains `[parse] …`, `[render] writing …`, and `[done] … bytes written in …s` lines in that order. Assert `SeverityInfo` diagnostics do NOT appear on stderr (F13 behavior). **Sequential with T092** (same file).
 - [ ] T094 [P] `tests/integration/degraded_test.go::TestOneMissingCollector` (F31 — SC-004 gap): parametrised test iterating over the seven supported suffixes. For each: copy `testdata/example2/` to a tempdir, delete the one matching file from both snapshots, run the CLI, assert exit 0 and the output HTML contains the other six sections' data AND a "data not available" banner naming the missing file. Seven subtests, one task.
-- [ ] T095 [P] `cmd/my-gather/main_test.go` addendum — not a new test file; extends `TestVersionOutput` (satisfies F36): invoke `--version` with `ldflags` injecting a fixed semver + commit + build date; assert the five-line format from `contracts/cli.md`. May be folded into T092/T093's file; if so, remove the `[P]` marker — annotator note only.
+- [ ] T095 `cmd/my-gather/main_test.go::TestVersionOutput` (FR-023 coverage): invoke `--version` with `ldflags` injecting a fixed semver + commit + build date; assert the five-line format from `contracts/cli.md`. **Sequential with T030/T031/T088/T091/T092/T093** (same file).
+- [ ] T096 [P] `render/os_test.go::TestOSSubviewAnchors` (SC-005 coverage): render a report with all three OS parsers wired; assert the HTML contains `id="os-disk-util"`, `id="os-top-cpu"`, and `id="os-vmstat"` anchors, all three nested inside the `id="os-usage"` section element, and all three reachable from an entry in `Report.Navigation`.
 
 ---
 
@@ -309,3 +309,4 @@ Serial execution by user-story priority: T001 → T095 (95 tasks total). Treat e
 - Every `go test ./... -update` run is a reviewed commit: diff the regenerated goldens, eyeball each, then commit.
 - When the implementation phase starts, commit frequently — one task per commit where the scope fits; smaller if the task touches multiple files.
 - Each task description includes the file path(s) it writes so an LLM (or a developer running `/speckit-implement`) can execute it without additional context.
+- **`F##` markers** (e.g. `F7`, `F13`, `F28`) scattered through task descriptions are stable IDs from prior `/speckit-analyze` passes that were folded into the task list. They are informational anchors, not open work items — every `F##` cited has already been addressed by the task that cites it. No external glossary is required; the resolution lives in the task body itself.
