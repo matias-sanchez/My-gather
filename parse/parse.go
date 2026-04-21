@@ -3,6 +3,8 @@ package parse
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -291,13 +293,122 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 		return snapshots[i].Prefix < snapshots[j].Prefix
 	})
 
-	return &model.Collection{
+	// Invoke per-collector parsers for every SourceFile. Each parser is
+	// self-contained and captures its own diagnostics on the SourceFile;
+	// the overall Discover call still returns err==nil.
+	collection := &model.Collection{
 		RootPath:    absRoot,
 		Hostname:    hostname,
 		PtStalkSize: totalBytes,
 		Snapshots:   snapshots,
-		Diagnostics: nil, // populated by per-collector parsers in US2-US4
-	}, nil
+	}
+	runParsers(ctx, collection, opts.Sink)
+	return collection, nil
+}
+
+// runParsers iterates every SourceFile in every Snapshot and invokes
+// its per-collector parser. Invoked from Discover.
+func runParsers(ctx context.Context, c *model.Collection, sink DiagnosticSink) {
+	for _, snap := range c.Snapshots {
+		for _, suffix := range model.KnownSuffixes {
+			sf, ok := snap.SourceFiles[suffix]
+			if !ok {
+				continue
+			}
+			if err := ctx.Err(); err != nil {
+				return
+			}
+			runOneParser(snap, sf, sink)
+		}
+	}
+}
+
+func runOneParser(snap *model.Snapshot, sf *model.SourceFile, sink DiagnosticSink) {
+	file, err := os.Open(sf.Path)
+	if err != nil {
+		diag := model.Diagnostic{
+			SourceFile: sf.Path,
+			Severity:   model.SeverityError,
+			Message:    fmt.Sprintf("open: %v", err),
+		}
+		sf.Diagnostics = append(sf.Diagnostics, diag)
+		if sink != nil {
+			sink.OnDiagnostic(diag)
+		}
+		sf.Status = model.ParseFailed
+		return
+	}
+	defer file.Close()
+
+	// Peek first 8 KiB for version detection.
+	var peek [8 * 1024]byte
+	n, _ := io.ReadFull(file, peek[:])
+	_, _ = file.Seek(0, io.SeekStart)
+	sf.Version = DetectFormat(peek[:n], sf.Suffix)
+	if sf.Version == model.FormatUnknown {
+		diag := model.Diagnostic{
+			SourceFile: sf.Path,
+			Severity:   model.SeverityWarning,
+			Message:    "unsupported pt-stalk format (header did not match FormatV1 or FormatV2)",
+		}
+		sf.Diagnostics = append(sf.Diagnostics, diag)
+		if sink != nil {
+			sink.OnDiagnostic(diag)
+		}
+		sf.Status = model.ParseUnsupported
+		return
+	}
+
+	var (
+		parsed      any
+		diagnostics []model.Diagnostic
+	)
+	switch sf.Suffix {
+	case model.SuffixIostat:
+		parsed, diagnostics = parseIostat(file, snap.Timestamp, sf.Path)
+	case model.SuffixTop:
+		parsed, diagnostics = parseTop(file, snap.Timestamp, sf.Path)
+	case model.SuffixVmstat:
+		parsed, diagnostics = parseVmstat(file, snap.Timestamp, sf.Path)
+	case model.SuffixVariables:
+		parsed, diagnostics = parseVariables(file, sf.Path)
+	case model.SuffixInnodbStatus:
+		parsed, diagnostics = parseInnodbStatus(file, sf.Path)
+	case model.SuffixMysqladmin:
+		parsed, diagnostics = parseMysqladmin(file, snap.Timestamp, sf.Path)
+	case model.SuffixProcesslist:
+		parsed, diagnostics = parseProcesslist(file, sf.Path)
+	default:
+		sf.Status = model.ParseFailed
+		return
+	}
+
+	for _, d := range diagnostics {
+		sf.Diagnostics = append(sf.Diagnostics, d)
+		if sink != nil {
+			sink.OnDiagnostic(d)
+		}
+	}
+
+	switch {
+	case parsed == nil:
+		sf.Status = model.ParseFailed
+	case len(diagnostics) > 0 && anyWarning(diagnostics):
+		sf.Parsed = parsed
+		sf.Status = model.ParsePartial
+	default:
+		sf.Parsed = parsed
+		sf.Status = model.ParseOK
+	}
+}
+
+func anyWarning(ds []model.Diagnostic) bool {
+	for _, d := range ds {
+		if d.Severity >= model.SeverityWarning {
+			return true
+		}
+	}
+	return false
 }
 
 // snapshotFileMatch is an internal record of one timestamped pt-stalk

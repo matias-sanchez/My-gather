@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"math"
 	"sort"
 	"time"
 
@@ -435,11 +436,220 @@ func buildView(r *model.Report, c *model.Collection) *reportView {
 }
 
 func buildChartPayload(r *model.Report) map[string]any {
-	// In the MVP skeleton, parsers don't populate time-series data yet.
-	// Return an empty-but-valid object so app.js' JSON.parse succeeds
-	// and its chart-rendering loop finds no entries. Populated per
-	// collector in US2-US4.
-	return map[string]any{}
+	payload := map[string]any{}
+	if r.OSSection != nil {
+		if r.OSSection.Iostat != nil {
+			payload["iostat"] = iostatChartPayload(r.OSSection.Iostat)
+		}
+		if r.OSSection.Top != nil {
+			payload["top"] = topChartPayload(r.OSSection.Top)
+		}
+		if r.OSSection.Vmstat != nil {
+			payload["vmstat"] = vmstatChartPayload(r.OSSection.Vmstat)
+		}
+	}
+	if r.DBSection != nil {
+		if r.DBSection.Mysqladmin != nil {
+			payload["mysqladmin"] = mysqladminChartPayload(r.DBSection.Mysqladmin)
+		}
+		if r.DBSection.Processlist != nil {
+			payload["processlist"] = processlistChartPayload(r.DBSection.Processlist)
+		}
+	}
+	return payload
+}
+
+func mysqladminChartPayload(d *model.MysqladminData) map[string]any {
+	timestamps := make([]float64, len(d.Timestamps))
+	for i, t := range d.Timestamps {
+		timestamps[i] = float64(t.Unix())
+	}
+	// app.js reads { variables, timestamps, deltas, isCounter, snapshotBoundaries, defaultVisible }.
+	// Replace NaN values with null for JSON encoding (math.NaN is not a
+	// valid JSON number).
+	deltas := map[string]any{}
+	for name, vs := range d.Deltas {
+		cleaned := make([]any, len(vs))
+		for i, v := range vs {
+			if math.IsNaN(v) {
+				cleaned[i] = nil
+			} else {
+				cleaned[i] = v
+			}
+		}
+		deltas[name] = cleaned
+	}
+	// Default visible: pick up to 5 well-known high-signal counters if
+	// they exist; otherwise first 5 counter variables alphabetically.
+	defaults := pickDefaultCounters(d)
+	return map[string]any{
+		"variables":          d.VariableNames,
+		"timestamps":         timestamps,
+		"deltas":             deltas,
+		"isCounter":          d.IsCounter,
+		"snapshotBoundaries": d.SnapshotBoundaries,
+		"defaultVisible":     defaults,
+	}
+}
+
+func pickDefaultCounters(d *model.MysqladminData) []string {
+	preferred := []string{"Com_select", "Com_insert", "Com_update", "Questions", "Bytes_received", "Bytes_sent"}
+	present := map[string]bool{}
+	for _, n := range d.VariableNames {
+		present[n] = true
+	}
+	var out []string
+	for _, p := range preferred {
+		if present[p] && d.IsCounter[p] {
+			out = append(out, p)
+			if len(out) >= 5 {
+				return out
+			}
+		}
+	}
+	// Fallback: first 5 counters alphabetically.
+	for _, n := range d.VariableNames {
+		if len(out) >= 5 {
+			break
+		}
+		if d.IsCounter[n] {
+			already := false
+			for _, x := range out {
+				if x == n {
+					already = true
+					break
+				}
+			}
+			if !already {
+				out = append(out, n)
+			}
+		}
+	}
+	return out
+}
+
+func processlistChartPayload(d *model.ProcesslistData) map[string]any {
+	if len(d.ThreadStateSamples) == 0 {
+		return nil
+	}
+	timestamps := make([]float64, len(d.ThreadStateSamples))
+	for i, s := range d.ThreadStateSamples {
+		timestamps[i] = float64(s.Timestamp.Unix())
+	}
+	var series []map[string]any
+	for _, state := range d.States {
+		vals := make([]float64, len(d.ThreadStateSamples))
+		for i, s := range d.ThreadStateSamples {
+			vals[i] = float64(s.StateCounts[state])
+		}
+		series = append(series, map[string]any{
+			"label":  state,
+			"values": vals,
+		})
+	}
+	return map[string]any{
+		"timestamps": timestamps,
+		"series":     series,
+	}
+}
+
+// chartTimestamps extracts a unified timestamp axis from an arbitrary
+// primary series. Timestamps are rendered as unix seconds (float) for
+// uPlot's time-scale.
+func chartTimestamps(samples []model.Sample) []float64 {
+	out := make([]float64, len(samples))
+	for i, s := range samples {
+		out[i] = float64(s.Timestamp.Unix())
+	}
+	return out
+}
+
+func iostatChartPayload(d *model.IostatData) map[string]any {
+	if len(d.Devices) == 0 {
+		return nil
+	}
+	// Use the first device's timestamps as the x-axis.
+	timestamps := chartTimestamps(d.Devices[0].Utilization.Samples)
+	var series []map[string]any
+	// Emit %util for every device first, then avgqu-sz.
+	for _, dev := range d.Devices {
+		vals := make([]float64, len(dev.Utilization.Samples))
+		for i, s := range dev.Utilization.Samples {
+			vals[i] = s.Measurements["util_percent"]
+		}
+		series = append(series, map[string]any{
+			"label":  dev.Device + " %util",
+			"values": vals,
+		})
+	}
+	for _, dev := range d.Devices {
+		vals := make([]float64, len(dev.AvgQueueSize.Samples))
+		for i, s := range dev.AvgQueueSize.Samples {
+			vals[i] = s.Measurements["avgqu_sz"]
+		}
+		series = append(series, map[string]any{
+			"label":  dev.Device + " aqu-sz",
+			"values": vals,
+		})
+	}
+	return map[string]any{
+		"timestamps": timestamps,
+		"series":     series,
+	}
+}
+
+func topChartPayload(d *model.TopData) map[string]any {
+	if len(d.Top3ByAverage) == 0 {
+		return nil
+	}
+	// Use the first top-3 process's timestamps as the x-axis.
+	timestamps := chartTimestamps(d.Top3ByAverage[0].CPU.Samples)
+	var series []map[string]any
+	for _, ps := range d.Top3ByAverage {
+		vals := make([]float64, len(ps.CPU.Samples))
+		for i, s := range ps.CPU.Samples {
+			vals[i] = s.Measurements["cpu_percent"]
+		}
+		series = append(series, map[string]any{
+			"label":  fmt.Sprintf("%s (pid %d)", truncateCommand(ps.Command), ps.PID),
+			"values": vals,
+		})
+	}
+	return map[string]any{
+		"timestamps": timestamps,
+		"series":     series,
+	}
+}
+
+func vmstatChartPayload(d *model.VmstatData) map[string]any {
+	if len(d.Series) == 0 {
+		return nil
+	}
+	// Use the first series' timestamps.
+	timestamps := chartTimestamps(d.Series[0].Samples)
+	var series []map[string]any
+	for _, s := range d.Series {
+		vals := make([]float64, len(s.Samples))
+		for i, sp := range s.Samples {
+			vals[i] = sp.Measurements[s.Metric]
+		}
+		series = append(series, map[string]any{
+			"label":  s.Metric,
+			"values": vals,
+		})
+	}
+	return map[string]any{
+		"timestamps": timestamps,
+		"series":     series,
+	}
+}
+
+func truncateCommand(s string) string {
+	const max = 20
+	if len(s) <= max {
+		return s
+	}
+	return s[:max-1] + "…"
 }
 
 func flattenDiagnostics(c *model.Collection) []diagnosticView {
