@@ -193,10 +193,111 @@
           labelFont: '11px ui-monospace, Menlo, monospace',
         },
       ],
-      cursor: { drag: { x: true, y: false, uni: 50 } },
+      cursor: {
+        drag:  { x: true, y: false, uni: 50 },
+        focus: { prox: 30 },
+        points: { size: 6, width: 2 },
+      },
       legend: { show: false },
       series: labelSeries,
+      hooks: {
+        init:  [attachTooltip],
+        setCursor: [updateTooltipOnCursor],
+      },
     };
+  }
+
+  // --- Hover tooltip -----------------------------------------------
+
+  // attachTooltip builds one tooltip node per chart and hangs it on
+  // the chart's `over` layer. It persists for the lifetime of the
+  // uPlot instance.
+  function attachTooltip(u) {
+    var tt = document.createElement("div");
+    tt.className = "chart-tooltip";
+    tt.style.display = "none";
+    u.over.appendChild(tt);
+    u.__tooltip = tt;
+
+    u.over.addEventListener("mouseleave", function () {
+      tt.style.display = "none";
+    });
+    u.over.addEventListener("mouseenter", function () {
+      tt.style.display = "block";
+    });
+  }
+
+  // updateTooltipOnCursor runs on every uPlot setCursor, which fires
+  // on mouse-move inside the chart's plotting area.
+  function updateTooltipOnCursor(u) {
+    var tt = u.__tooltip;
+    if (!tt) return;
+    var idx = u.cursor.idx;
+    if (idx == null || u.cursor.left < 0) {
+      tt.style.display = "none";
+      return;
+    }
+    tt.style.display = "block";
+
+    // Build rows: timestamp header + one row per visible series.
+    var x = u.data[0][idx];
+    var tsLabel = formatTooltipTime(x);
+    var rows = ['<div class="tt-ts">' + escapeHTML(tsLabel) + '</div>'];
+    // Sort entries by value descending (most-prominent first) so the
+    // tooltip reads at a glance.
+    var entries = [];
+    for (var i = 1; i < u.series.length; i++) {
+      var s = u.series[i];
+      if (s.show === false) continue;
+      var v = u.data[i][idx];
+      if (v == null || (typeof v === "number" && isNaN(v))) continue;
+      entries.push({ label: s.label, color: s.stroke, value: v });
+    }
+    entries.sort(function (a, b) { return Math.abs(b.value) - Math.abs(a.value); });
+    if (entries.length === 0) {
+      rows.push('<div class="tt-empty">no data at this point</div>');
+    } else {
+      entries.forEach(function (e) {
+        rows.push(
+          '<div class="tt-row">' +
+            '<span class="tt-sw" style="background:' + e.color + '"></span>' +
+            '<span class="tt-label">' + escapeHTML(String(e.label)) + '</span>' +
+            '<span class="tt-value">' + formatTooltipValue(e.value) + '</span>' +
+          '</div>'
+        );
+      });
+    }
+    tt.innerHTML = rows.join("");
+
+    // Position: offset +12 px right/below the cursor; flip to the
+    // left if near the right edge.
+    var left = u.cursor.left + 14;
+    var top  = u.cursor.top  + 14;
+    var rect = tt.getBoundingClientRect();
+    var plotW = u.bbox.width / devicePixelRatio;
+    var plotH = u.bbox.height / devicePixelRatio;
+    if (left + rect.width > plotW) left = u.cursor.left - rect.width - 14;
+    if (top + rect.height > plotH) top = Math.max(0, u.cursor.top - rect.height - 14);
+    if (left < 0) left = 0;
+    if (top < 0) top = 0;
+    tt.style.left = left + "px";
+    tt.style.top = top + "px";
+  }
+
+  function formatTooltipTime(unixSec) {
+    if (unixSec == null) return "";
+    var d = new Date(unixSec * 1000);
+    function pad(n) { return n < 10 ? "0" + n : "" + n; }
+    return d.toLocaleDateString() + " " +
+           pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+  }
+
+  function formatTooltipValue(v) {
+    if (typeof v !== "number") return escapeHTML(String(v));
+    if (!isFinite(v))           return "∞";
+    // Trim to 4 decimals when fractional; otherwise thousands-separated integer.
+    if (Math.abs(v - Math.round(v)) < 1e-9) return Math.round(v).toLocaleString();
+    return v.toLocaleString(undefined, { maximumFractionDigits: 4 });
   }
 
   function measureChartWidth(el) {

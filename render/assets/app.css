@@ -546,6 +546,69 @@ td.num { text-align: right; }
 .uplot { font-family: var(--mono) !important; }
 .uplot .u-title { display: none; }
 .uplot .u-legend { display: none; }
+.uplot .u-over { cursor: crosshair; }
+
+/* Hover tooltip — rendered inside .u-over and position:absolute. */
+.chart-tooltip {
+  position: absolute;
+  z-index: 20;
+  pointer-events: none;
+  min-width: 200px;
+  max-width: 420px;
+  background: rgba(14, 17, 22, 0.96);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+  padding: 6px 8px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg);
+  line-height: 1.45;
+}
+@media (prefers-color-scheme: light) {
+  .chart-tooltip {
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  }
+}
+.chart-tooltip .tt-ts {
+  font-size: 11px;
+  color: var(--fg-muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+}
+.chart-tooltip .tt-row {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  gap: 8px;
+  align-items: baseline;
+  padding: 1px 0;
+  max-width: 100%;
+}
+.chart-tooltip .tt-row .tt-sw {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  align-self: center;
+}
+.chart-tooltip .tt-row .tt-label {
+  color: var(--fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chart-tooltip .tt-row .tt-value {
+  color: var(--fg);
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.chart-tooltip .tt-empty {
+  color: var(--fg-dim);
+  font-style: italic;
+}
 
 /* Clickable pill legend rendered by app.js directly after the chart. */
 .series-legend {
