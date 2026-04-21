@@ -314,25 +314,63 @@
 
   // Build a clickable legend rendered OUTSIDE uPlot (uPlot's default
   // legend is too verbose for 16-series charts).
+  //
+  // Click behaviour:
+  //   - Plain click on a pill  -> SOLO that series (hide everything
+  //     else). Clicking the already-soloed pill while it's the only
+  //     visible one RESTORES all series.
+  //   - Shift / Cmd / Ctrl click -> additive toggle (the old
+  //     behaviour): flip just this pill, leave the others alone.
   function mountLegend(containerEl, series, plot) {
     var legend = document.createElement("div");
     legend.className = "series-legend";
+    var pills = [];
     series.forEach(function (s, i) {
       if (i === 0) return; // time
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "series-pill active";
       btn.setAttribute("data-idx", String(i));
+      btn.title = "Click to solo · Shift/Cmd+Click to toggle";
       btn.innerHTML =
         '<span class="swatch" style="background:' + s.stroke + '"></span>' +
         '<span class="lbl">' + escapeHTML(s.label) + '</span>';
-      btn.addEventListener("click", function () {
+      btn.addEventListener("click", function (ev) {
         var idx = Number(btn.getAttribute("data-idx"));
-        var showing = plot.series[idx].show;
-        plot.setSeries(idx, { show: !showing });
-        btn.classList.toggle("active", !showing);
+        var additive = ev.shiftKey || ev.metaKey || ev.ctrlKey;
+        if (additive) {
+          var showing = plot.series[idx].show;
+          plot.setSeries(idx, { show: !showing });
+          btn.classList.toggle("active", !showing);
+          return;
+        }
+        // Solo path: count currently-visible series.
+        var visibleCount = 0, thisIsVisible = false;
+        for (var k = 1; k < plot.series.length; k++) {
+          if (plot.series[k].show !== false) {
+            visibleCount++;
+            if (k === idx) thisIsVisible = true;
+          }
+        }
+        var isSoloed = visibleCount === 1 && thisIsVisible;
+        if (isSoloed) {
+          // Already soloed — restore all.
+          for (var j = 1; j < plot.series.length; j++) {
+            plot.setSeries(j, { show: true });
+          }
+          pills.forEach(function (p) { p.classList.add("active"); });
+        } else {
+          // Hide all others; show this one.
+          for (var m = 1; m < plot.series.length; m++) {
+            plot.setSeries(m, { show: m === idx });
+          }
+          pills.forEach(function (p) {
+            p.classList.toggle("active", Number(p.getAttribute("data-idx")) === idx);
+          });
+        }
       });
       legend.appendChild(btn);
+      pills.push(btn);
     });
     containerEl.parentNode.insertBefore(legend, containerEl.nextSibling);
   }
