@@ -1,0 +1,59 @@
+My-gather is a Go CLI tool that reads pt-stalk output directories and
+produces self-contained HTML diagnostic reports for MySQL/Percona support
+engineers and DBAs.
+
+Non-negotiable principles:
+
+1. Single static binary. The tool ships as one statically-linked executable
+   with no runtime dependencies. A support engineer must be able to scp it
+   to a customer jump host and run it with no install, no interpreter, no
+   libc version negotiation. Cross-compile for linux/amd64, linux/arm64,
+   darwin/amd64, darwin/arm64 at minimum.
+
+2. Read-only on inputs. Never modify, move, or delete anything under the
+   pt-stalk output directory.
+
+3. Degrade gracefully. Real-world pt-stalk collections are often incomplete,
+   truncated, or have missing files. The tool must produce a useful report
+   from whatever is present and clearly mark what is missing — never panic,
+   never silently drop data. Parser errors are captured in the report, not
+   propagated as fatal.
+
+4. Deterministic output. Same input directory must always produce
+   byte-identical HTML (modulo timestamps explicitly rendered in the report).
+   Map iteration, goroutine ordering, and floating-point formatting must not
+   leak into output.
+
+5. Self-contained HTML. The report is one file with all CSS, JS, fonts, and
+   data embedded. Chart library JS is bundled into the binary via `go:embed`
+   and inlined into the report at generation time. No CDN fetches at
+   view-time — reports must render offline from an air-gapped laptop.
+
+6. Library-first. The CLI (package main) is a thin wrapper around packages
+   that are importable independently: `parse/` for pt-stalk file parsers,
+   `model/` for the typed in-memory representation, `render/` for HTML
+   generation. Every exported function has a stable godoc contract.
+
+7. Typed errors, not strings. Use sentinel errors and typed error structs
+   (`var ErrNotAPtStalkDir = errors.New(...)`, `type ParseError struct{...}`)
+   so callers can `errors.Is` / `errors.As`. No `fmt.Errorf` for conditions
+   a caller needs to branch on.
+
+8. Every parser has a reference fixture. For each pt-stalk collector we
+   support, there must be at least one fixture file under `testdata/` and a
+   round-trip test using `golden` files. Fixture data comes from the real
+   examples under references/examples/.
+
+9. Zero network at runtime. No phoning home, no telemetry, no update checks.
+
+10. Minimal dependencies. Prefer the standard library. Any third-party
+    module must be justified in the plan. No framework imports for problems
+    the stdlib handles (flag parsing, HTML templating, JSON, time).
+
+11. Reports are for humans under pressure. Prioritize the 80% signal — what
+    triggered the collection, what the system looked like at trigger time,
+    what changed — over exhaustive metric dumps.
+
+12. Go version pinned. Target the current Go stable release; pin in go.mod
+    and CI. No build tags that diverge behavior between platforms except
+    where truly necessary (e.g., path separators are handled via filepath).

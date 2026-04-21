@@ -1,0 +1,57 @@
+## Example usage
+
+    # Install: just drop the binary somewhere on PATH
+    $ curl -LO https://.../my-gather-linux-amd64
+    $ chmod +x my-gather-linux-amd64 && mv my-gather-linux-amd64 /usr/local/bin/my-gather
+
+    # Simplest case: point at a pt-stalk output dir, get a report next to it
+    $ my-gather /var/lib/pt-stalk/2026_04_15_140523
+
+    Parsed 47 files (2 skipped, see report). Wrote report to:
+      /var/lib/pt-stalk/2026_04_15_140523/report.html
+
+    # Explicit output path
+    $ my-gather /path/to/collection -o /tmp/case-12345.html
+
+    # Time window within the collection
+    $ my-gather /path/to/collection --from 14:05:30 --to 14:07:00
+
+    # Quiet mode for scripts; exit 0 if report written, 2 if no usable data
+    $ my-gather /path/to/collection -o out.html -q
+
+    # Version and self-check
+    $ my-gather --version
+    my-gather 1.0.0 (commit abc1234, go1.23.4, built 2026-04-21)
+
+## Errors (typed)
+
+Package-level sentinel and typed errors in the `mygather` module:
+
+- `ErrNotAPtStalkDir`       — path exists but has no recognizable pt-stalk files
+- `ErrEmptyCollection`      — pt-stalk files present but all empty/truncated
+- `ErrOutputPathExists`     — --output path exists and --force not given
+- `ErrUnreadableInput`      — permission or IO problem on input
+- `type ParseError struct { File string; Line int; Cause error }` —
+  non-fatal per-file parse failures, collected and rendered in the report's
+  "Missing/unparseable files" section rather than aborting.
+
+Exit codes:
+  0 — report written
+  1 — usage error (bad flags)
+  2 — no usable data in input
+  3 — output could not be written
+  4 — input unreadable
+
+## Verification
+
+- All three example directories under references/examples/ produce a report.
+- Golden-file tests: report HTML is byte-identical across two runs on the
+  same input; tests compare against checked-in `*.golden.html` fixtures.
+- Each parser has round-trip tests against testdata/ fixtures.
+- `go test ./... -race` passes clean.
+- `go vet ./...` and `staticcheck ./...` pass clean.
+- Binary size under 20 MB stripped; cross-compiles cleanly for the four
+  target platforms via `go build` with no CGO.
+- Report opens and renders correctly in Firefox, Chrome, Safari with
+  network disabled in the browser.
+- Total report size for a typical 5-minute pt-stalk collection is under 5 MB.
