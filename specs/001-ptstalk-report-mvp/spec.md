@@ -5,6 +5,17 @@
 **Status**: Draft
 **Input**: User description: "Parse a pt-stalk output directory and emit a minimal self-contained HTML report. Exercises parse/, model/, render/ end-to-end, proves determinism and the embedded-assets pipeline, and gives every subsequent parser a golden-test home to plug into. The report should have 3 sections: OS usage (CPU/DISK/MEMORY), Variables, and Database usage. Source files: -iostat, -top, -variables, -vmstat, -innodbstatus1, -mysqladmin, -processlist."
 
+## Clarifications
+
+### Session 2026-04-21
+
+- Q: Which pt-stalk release formats must the parsers accept? → A: Latest Percona Toolkit `pt-stalk` stable plus one major version back. Each supported version ships its own fixture under `testdata/` and its own golden file, per Principle VIII.
+- Q: What is the upper bound on input size the tool must survive? → A: ≤ 1 GB total collection size; any single source file up to 200 MB. Streaming parsing where cheap, buffered where simpler. Beyond 1 GB is out of scope for the MVP.
+- Q: Does the MVP redact sensitive data (hostnames, IPs, query text, user names) from the rendered HTML? → A: No. The report passes pt-stalk content through verbatim; redaction is the engineer's responsibility before sharing. Documented in the README and in a visible banner on the report.
+- Q: What does the tool write to stderr during a run? → A: Silent on success by default; parser diagnostics are mirrored to stderr as one-line warnings as they are emitted; `-v` / `--verbose` streams per-file progress lines. Structural errors (bad input path, size-bound exceeded) always go to stderr.
+- Q: Does the MVP emit any machine-readable side-car output (JSON, CSV) alongside the HTML? → A: No. HTML is the only CLI output in this feature; no `--json`, no side-car files. The `model/` package remains importable (required by Principle VI) but is not advertised, stabilised, or documented for third-party consumers in v1.
+- Q: What is the normative algorithm for computing `-mysqladmin` deltas between samples? → A: The algorithm is **ported to native Go** inside `parse/mysqladmin.go`. The C++ reference at `_references/pt-mext/pt-mext-improved.cpp` is retained as the *behavioural specification source*: the worked example in its tail comments (input table lines 146–177 → expected output lines 181–189) is committed verbatim as a test fixture and golden file under `testdata/pt-mext/`. The Go implementation MUST reproduce that expected output for counter variables. Non-counter variables (e.g., `Threads_running`, `Uptime`) are classified as gauges and stored as raw values, not deltas — this is a deliberate improvement over the C++ reference, which treats everything as a counter.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - First-look triage report from a pt-stalk collection (Priority: P1)
@@ -209,7 +220,9 @@ matching their respective golden files.
 - **FR-001**: The tool MUST accept exactly one input: a path to a
   directory expected to be a pt-stalk output collection.
 - **FR-002**: The tool MUST accept an output path (flag-based) and MUST
-  write exactly one self-contained HTML file to that path.
+  write exactly one self-contained HTML file to that path. No other
+  output file (JSON side-car, CSV, archive, etc.) MUST be produced by
+  the CLI in this feature.
 - **FR-003**: The tool MUST NOT create, modify, move, rename, or delete
   any file or directory under the input directory.
 - **FR-004**: The generated HTML file MUST be renderable in a modern
@@ -281,6 +294,57 @@ matching their respective golden files.
   normal operation.
 - **FR-023**: The tool MUST report its version on request, including at
   minimum the release version string and the short git commit.
+- **FR-024**: The tool MUST accept pt-stalk output produced by the
+  current Percona Toolkit stable release and by the immediately
+  preceding major version, and MUST commit a distinct fixture and
+  golden file per supported version per collector (per Principle VIII).
+  Output produced by older/forked `pt-stalk` variants MAY be parsed
+  opportunistically but is not a supported guarantee; when a file's
+  format cannot be recognised by any supported parser the tool MUST
+  render the corresponding subview with an "unsupported pt-stalk
+  version" banner naming the file, and MUST NOT abort.
+- **FR-025**: The tool MUST support collections up to 1 GB total size,
+  with any individual source file up to 200 MB, without exhausting
+  memory or running longer than SC-007 allows. If the input directory
+  exceeds these bounds, the tool MUST emit a distinct non-zero exit
+  code with a one-line error identifying the bound exceeded (total
+  size vs. per-file size) and MUST NOT write a partial report.
+- **FR-026**: The tool MUST NOT transform, redact, mask, or obscure the
+  values it reads from pt-stalk files. Hostnames, IP addresses, MySQL
+  user names, query text in `-processlist` / `-innodbstatus1`, variable
+  values, and all other content from the inputs MUST appear in the
+  rendered report exactly as present in the source (after lossy UTF-8
+  decoding, per the Edge Cases). The report MUST include a visible
+  top-of-document banner stating that its content is derived verbatim
+  from the input and that the viewer is responsible for any sharing-
+  time redaction.
+- **FR-027**: On a successful run the tool MUST write nothing to stdout
+  and nothing to stderr except: (a) each parser diagnostic mirrored as a
+  one-line warning at the moment it is recorded, and (b) per-file
+  progress lines when the engineer passes `-v` / `--verbose`. Structural
+  errors (input path missing, not a directory, size bounds exceeded,
+  output path conflict without overwrite flag) MUST always be written
+  to stderr as a single human-readable line, independent of verbosity.
+  No other output surface is allowed.
+- **FR-028**: The `-mysqladmin` parser MUST implement the delta-
+  computation algorithm natively in Go inside `parse/mysqladmin.go`.
+  Specifically: (a) only lines starting with `|` are data rows; (b)
+  rows whose first column is the literal string `Variable_name` mark
+  new-sample boundaries; (c) per-variable, per-sample
+  `delta = current − previous` for counters; (d) the first sample's
+  "delta" is defined as the raw initial tally and is excluded from
+  aggregate statistics; (e) aggregate stats (total, min, max, avg)
+  are computed over samples 2..N only, using `float64` for `avg` so
+  small deltas do not truncate to zero; (f) non-counter variables are
+  classified as gauges and stored as raw values, not deltas; (g)
+  variables appearing in some samples but missing from others emit a
+  `Diagnostic(Severity=Warning)` and store `NaN` in the missing slot.
+  The algorithm MUST reproduce byte-for-byte the expected output
+  shown in the worked example at the tail of
+  `_references/pt-mext/pt-mext-improved.cpp` (lines 181–189) when given
+  the matching input (lines 146–177 of the same file) as a fixture —
+  this is the correctness anchor. Restricted to counter variables, as
+  the C++ reference does not distinguish gauges.
 
 ### Key Entities
 
@@ -340,13 +404,19 @@ matching their respective golden files.
 - **SC-007**: The tool's cold-start run on a 50 MB pt-stalk directory
   completes and writes the HTML file in under 10 seconds on a standard
   support engineer laptop.
+- **SC-008**: The tool processes a 1 GB pt-stalk collection (the
+  declared upper bound) to completion on a standard support engineer
+  laptop without exceeding 2 GB of resident memory and without being
+  killed by the OS out-of-memory handler.
 
 ## Assumptions
 
 - Real-world pt-stalk collections in `_references/examples/example2/`
   are representative of the formats the tool must parse. Fixtures for
   golden tests will be drawn from these (or equivalent anonymised)
-  samples.
+  samples. Supported pt-stalk formats are limited to the current
+  Percona Toolkit stable release and the immediately preceding major
+  version (see FR-024); other forks are best-effort only.
 - The MVP supports only the seven source-file suffixes listed here
   (`-iostat`, `-top`, `-variables`, `-vmstat`, `-innodbstatus1`,
   `-mysqladmin`, `-processlist`). Other pt-stalk collectors (e.g.,
@@ -375,3 +445,31 @@ matching their respective golden files.
   render boundaries.
 - Mobile or tablet viewing of the report is not a goal for this feature;
   layout is targeted at desktop/laptop screens.
+- The supported input-size envelope for this feature is collections up to
+  1 GB total with any individual source file up to 200 MB (see FR-025).
+  Parser implementations may buffer entire files within this envelope
+  where streaming adds complexity without value; anything beyond is a
+  future-feature concern.
+- The tool performs no redaction of sensitive content (hostnames, IPs,
+  MySQL user names, query text) from the rendered report (see FR-026).
+  Redaction is the engineer's responsibility before the report leaves
+  their machine. The rendered HTML carries an explicit banner stating
+  this so viewers downstream of the engineer are not surprised.
+- Machine-readable export (JSON, CSV, etc.) is out of scope for this
+  feature. The `model/` package remains importable per Constitution
+  Principle VI, but is not promoted as a stable third-party API and has
+  no backwards-compatibility guarantee in v1; a JSON export surface, if
+  needed later, will be its own feature with its own schema review.
+- The pt-mext C++ reference implementation
+  (`_references/pt-mext/pt-mext-improved.cpp`) is the source material
+  we studied to derive the `-mysqladmin` delta-computation algorithm
+  (see FR-028). It remains in the repository as historical reference
+  but is **not a runtime or test-time dependency** — no C++ toolchain
+  is required to build, test, or ship My-gather. The worked example
+  in its tail comments is promoted to a committed test fixture under
+  `testdata/pt-mext/` so the algorithm has a permanent correctness
+  anchor that any future maintainer can verify. The C++ tool's known
+  gaps (no counter/gauge classification, integer-only arithmetic, no
+  handling of appearing/disappearing variables across samples) are
+  deliberately addressed by the native Go implementation and
+  documented in research R8.

@@ -1,0 +1,1 @@
+pt-mext-improved-auto='for i in $(ls *-mysqladmin); do ~/Leonardo/SCRIPTS/pt-mext-improved $i > $i.mext; echo $i.mext; done ;'
