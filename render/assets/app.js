@@ -124,7 +124,11 @@
     for (var i = 0; i < CHARTS.length; i++) {
       var entry = CHARTS[i];
       if (!entry.plot || !entry.el || !entry.el.isConnected) continue;
+      // Skip if the container is inside a collapsed <details>, has
+      // display:none, or has been momentarily laid out at 0 width —
+      // setSize with a nonsense width would blank the chart.
       var w = measureChartWidth(entry.el);
+      if (w < 200) continue;
       var h = entry.opts && entry.opts.height ? entry.opts.height : 240;
       try { entry.plot.setSize({ width: w, height: h }); } catch (_) {}
     }
@@ -570,22 +574,20 @@
     var layout = document.getElementById("app-layout");
     var collapseBtn = document.querySelector("nav.index .nav-collapse-btn");
     var expandBtn = document.querySelector(".nav-expand-btn");
-    if (!layout) return;
+    if (!layout || !expandBtn) return;
     var key = "mygather:" + REPORT_ID + ":nav:collapsed";
 
     function apply(collapsed) {
       if (collapsed) {
         layout.classList.add("nav-hidden");
-        if (expandBtn) expandBtn.hidden = false;
+        expandBtn.hidden = false;
       } else {
         layout.classList.remove("nav-hidden");
-        if (expandBtn) expandBtn.hidden = true;
+        expandBtn.hidden = true;
       }
-      // Re-fit charts to the new content-column width. Wait one frame
-      // so the CSS transition has updated layout before we measure.
-      window.requestAnimationFrame(function () {
-        window.requestAnimationFrame(resizeAllCharts);
-      });
+      // Re-fit charts after the grid transition settles (180ms ease +
+      // one extra frame for safety).
+      setTimeout(resizeAllCharts, 220);
     }
 
     var saved = storageGet(key);
@@ -597,12 +599,10 @@
         apply(true);
       });
     }
-    if (expandBtn) {
-      expandBtn.addEventListener("click", function () {
-        storageSet(key, "false");
-        apply(false);
-      });
-    }
+    expandBtn.addEventListener("click", function () {
+      storageSet(key, "false");
+      apply(false);
+    });
 
     // Keyboard shortcut: Cmd/Ctrl + \
     document.addEventListener("keydown", function (e) {
