@@ -5,6 +5,14 @@
   <summary><span>Disk utilization</span><span class="badge">-iostat</span></summary>
   <div class="body">
     {{- if .HasIostat }}
+    {{- with .IostatSummary }}
+    <div class="chart-summary">
+      <span class="stat"><span class="k">peak %util</span> <span class="v">{{.PeakUtil}}</span> <span class="ctx">on {{.PeakDevice}}</span></span>
+      <span class="stat"><span class="k">peak aqu-sz</span> <span class="v">{{.PeakAqusz}}</span> <span class="ctx">on {{.PeakAquszDevice}}</span></span>
+      <span class="stat"><span class="k">devices</span> <span class="v">{{.DeviceCount}}</span></span>
+      <span class="stat"><span class="k">samples</span> <span class="v">{{.SampleCount}}</span></span>
+    </div>
+    {{- end }}
     <div class="chart" id="chart-iostat" data-chart="iostat" aria-label="Per-device iostat utilization over time"></div>
     <noscript><p class="banner">Chart requires JavaScript. Raw iostat data is embedded in the page.</p></noscript>
     {{- else }}
@@ -17,6 +25,14 @@
   <summary><span>Top CPU processes</span><span class="badge">-top</span></summary>
   <div class="body">
     {{- if .HasTop }}
+    {{- with .TopSummary }}
+    <div class="chart-summary">
+      <span class="stat"><span class="k">#1</span> <span class="v">{{.First}}</span> <span class="ctx">avg {{.FirstAvg}}%</span></span>
+      {{- if .Second }}<span class="stat"><span class="k">#2</span> <span class="v">{{.Second}}</span> <span class="ctx">avg {{.SecondAvg}}%</span></span>{{- end }}
+      {{- if .Third }}<span class="stat"><span class="k">#3</span> <span class="v">{{.Third}}</span> <span class="ctx">avg {{.ThirdAvg}}%</span></span>{{- end }}
+      <span class="stat"><span class="k">samples</span> <span class="v">{{.SampleCount}}</span></span>
+    </div>
+    {{- end }}
     <div class="chart" id="chart-top" data-chart="top" aria-label="Top 3 CPU-consuming processes over time"></div>
     <noscript><p class="banner">Chart requires JavaScript. Raw top data is embedded in the page.</p></noscript>
     {{- else }}
@@ -29,6 +45,14 @@
   <summary><span>vmstat saturation</span><span class="badge">-vmstat</span></summary>
   <div class="body">
     {{- if .HasVmstat }}
+    {{- with .VmstatSummary }}
+    <div class="chart-summary">
+      <span class="stat"><span class="k">peak runqueue</span> <span class="v">{{.PeakRunqueue}}</span></span>
+      <span class="stat"><span class="k">peak blocked</span> <span class="v">{{.PeakBlocked}}</span></span>
+      <span class="stat"><span class="k">peak iowait</span> <span class="v">{{.PeakIowait}}%</span></span>
+      <span class="stat"><span class="k">samples</span> <span class="v">{{.SampleCount}}</span></span>
+    </div>
+    {{- end }}
     <div class="chart" id="chart-vmstat" data-chart="vmstat" aria-label="System resource saturation over time"></div>
     <noscript><p class="banner">Chart requires JavaScript. Raw vmstat data is embedded in the page.</p></noscript>
     {{- else }}

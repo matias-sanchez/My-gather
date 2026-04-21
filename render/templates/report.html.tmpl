@@ -34,18 +34,24 @@
 <div class="layout">
   <nav class="index" aria-label="Report navigation">
     <h2>Contents</h2>
-    <ul>
-      {{- /* Walk the pre-computed NavEntry list. It's already in
-             deterministic order (Level 1 first, then Level 2 children
-             interleaved immediately after their parent). */ -}}
-      {{range .Navigation}}
-        {{if eq .Level 1}}
-      <li class="level-1"><a href="#{{.ID}}">{{.Title}}</a></li>
-        {{else}}
-      <li class="level-2"><a href="#{{.ID}}">{{.Title}}</a></li>
+    {{- /* NavGroups is the deterministic Level-1 + nested Level-2 shape
+           computed by render.go. Each group renders as a native
+           <details> so its collapsed/expanded state persists via the
+           same ReportID-keyed localStorage scheme as main content. */ -}}
+    {{range .NavGroups}}
+    <details class="nav-group" id="nav-{{.ID}}" open>
+      <summary>
+        <a class="nav-title" href="#{{.ID}}">{{.Title}}</a>
+      </summary>
+      {{if .Children}}
+      <ul>
+        {{range .Children}}
+        <li><a href="#{{.ID}}">{{.Title}}</a></li>
         {{end}}
+      </ul>
       {{end}}
-    </ul>
+    </details>
+    {{end}}
   </nav>
 
   <main class="content">

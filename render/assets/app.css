@@ -155,25 +155,64 @@ nav.index h2 {
   font-weight: 600;
 }
 nav.index ul { list-style: none; margin: 0; padding: 0; }
-nav.index li.level-1 { margin-top: 14px; }
-nav.index li.level-1:first-child { margin-top: 0; }
-nav.index li.level-1 > a {
+
+details.nav-group { margin-top: 10px; }
+details.nav-group:first-of-type { margin-top: 0; }
+details.nav-group > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px;
   color: var(--fg);
   font-weight: 600;
-  display: block;
-  padding: 4px 8px;
+  user-select: none;
   border-radius: var(--radius-sm);
 }
-nav.index li.level-2 > a {
+details.nav-group > summary::-webkit-details-marker { display: none; }
+details.nav-group > summary::before {
+  content: "▸";
+  color: var(--fg-dim);
+  font-size: 9px;
+  transition: transform 120ms ease;
+  display: inline-block;
+  width: 10px;
+  text-align: center;
+  flex: 0 0 auto;
+}
+details.nav-group[open] > summary::before { transform: rotate(90deg); }
+details.nav-group > summary:hover { background: var(--bg-elev-2); }
+details.nav-group > summary .nav-title {
+  color: inherit;
+  font-weight: inherit;
+  flex: 1 1 auto;
+  padding: 0;
+  border-radius: 0;
+}
+details.nav-group > summary .nav-title:hover { background: transparent; }
+
+details.nav-group > ul {
+  margin: 4px 0 0 0;
+  padding: 0 0 0 18px;
+  border-left: 1px solid var(--border);
+  margin-left: 4px;
+}
+details.nav-group > ul li {
+  margin: 0;
+  padding: 0;
+}
+details.nav-group > ul a {
   color: var(--fg-muted);
   display: block;
-  padding: 3px 8px 3px 20px;
+  padding: 3px 8px;
   border-radius: var(--radius-sm);
   font-size: 12.5px;
 }
 nav.index a:hover {
   background: var(--bg-elev-2);
   text-decoration: none;
+  color: var(--fg);
 }
 nav.index a.active {
   background: var(--accent-soft);
@@ -393,50 +432,226 @@ td.num { text-align: right; }
 
 /* ---------- Charts ---------- */
 
-.chart-toolbar {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-.chart-toolbar select[multiple] {
-  min-height: 72px;
-  min-width: 200px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--fg);
-  font: inherit;
-  font-size: 12.5px;
-  font-family: var(--mono);
-  border-radius: var(--radius-sm);
-  padding: 4px 6px;
-}
-.chart-toolbar label {
-  color: var(--fg-muted);
-  font-size: 12px;
-}
-
 .chart {
-  min-height: 220px;
+  min-height: 240px;
   width: 100%;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 8px;
+  padding: 6px 2px 2px 2px;
+  overflow: hidden;
 }
 
-/* uPlot theming overrides — uPlot ships a minimal default stylesheet;
-   we override to match our palette. */
-.uplot {
-  font-family: var(--mono) !important;
+.chart-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+  padding: 4px 4px 10px;
+  margin: 0 0 8px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 12px;
 }
+.chart-summary .stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--mono);
+}
+.chart-summary .stat .k {
+  color: var(--fg-dim);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.chart-summary .stat .v { color: var(--fg); font-weight: 600; font-size: 13px; }
+.chart-summary .stat .ctx { color: var(--fg-muted); font-size: 11px; }
+
+/* uPlot theming overrides. uPlot's default legend is verbose; we hide
+   it and render our own pill legend underneath. */
+.uplot { font-family: var(--mono) !important; }
 .uplot .u-title { display: none; }
-.uplot .u-axis { color: var(--fg-muted); }
-.uplot .u-legend { color: var(--fg); font-size: 11.5px; }
-.uplot .u-legend tr.u-series { border-bottom: 1px solid var(--border); }
-.uplot .u-legend .u-label { color: var(--fg-muted); }
-.uplot .u-legend .u-value { color: var(--fg); }
+.uplot .u-legend { display: none; }
+
+/* Clickable pill legend rendered by app.js directly after the chart. */
+.series-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  padding: 8px 4px 2px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.series-legend .series-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 6px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--fg-muted);
+  cursor: pointer;
+  font: inherit;
+}
+.series-legend .series-pill:hover { border-color: var(--border-strong); color: var(--fg); }
+.series-legend .series-pill .swatch {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--fg-dim);
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35) inset;
+}
+.series-legend .series-pill.active { color: var(--fg); background: var(--bg-elev); }
+.series-legend .series-pill:not(.active) .swatch { opacity: 0.3; }
+.series-legend .series-pill:not(.active) .lbl { text-decoration: line-through; opacity: 0.55; }
+
+/* Chart view-toggle toolbar (used by iostat for util / aqu-sz). */
+.chart-view-toolbar {
+  display: inline-flex;
+  gap: 4px;
+  margin: 0 0 10px 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px;
+}
+.chart-view-toolbar .view-btn {
+  background: transparent;
+  border: 0;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.chart-view-toolbar .view-btn.active {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+.chart-view-toolbar .view-btn:hover:not(.active) { color: var(--fg); }
+
+/* ---------- Mysqladmin filter panel ---------- */
+
+.ma-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  padding: 10px;
+  margin-bottom: 12px;
+}
+.ma-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.ma-chips .ma-chip {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+.ma-chips .ma-chip:hover { color: var(--fg); border-color: var(--border-strong); }
+.ma-chips .ma-chip.active {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  color: var(--fg);
+}
+.ma-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.ma-search input[type="search"] {
+  flex: 1 1 auto;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 13px;
+}
+.ma-search input[type="search"]:focus { outline: none; border-color: var(--accent); }
+.ma-count {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+.ma-actions { display: flex; gap: 4px; }
+.ma-actions .ma-action {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.ma-actions .ma-action:hover { color: var(--fg); border-color: var(--border-strong); }
+
+.ma-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev-2);
+  padding: 2px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0;
+}
+.ma-list .ma-row {
+  /* checkbox | tag (fixed 22px) | name (flex) */
+  display: grid;
+  grid-template-columns: auto 22px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+}
+.ma-list .ma-row:hover { background: var(--bg); }
+.ma-list .ma-row input[type="checkbox"] { margin: 0; cursor: pointer; }
+.ma-list .ma-row .name {
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ma-list .ma-row .tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 0;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+  text-align: center;
+  width: 18px;
+}
+.ma-list .ma-row.counter .tag {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.ma-list .ma-row.gauge .tag {
+  color: var(--fg-dim);
+  background: color-mix(in srgb, var(--fg-dim) 15%, transparent);
+}
+.ma-empty {
+  padding: 20px 14px;
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: 13px;
+  text-align: center;
+}
 
 /* ---------- Diagnostics panel ---------- */
 
