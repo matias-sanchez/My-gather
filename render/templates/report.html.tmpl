@@ -41,15 +41,17 @@
     {{range .NavGroups}}
     <details class="nav-group" id="nav-{{.ID}}" open>
       <summary>
-        <a class="nav-title" href="#{{.ID}}">{{.Title}}</a>
+        <span class="nav-title">{{.Title}}</span>
       </summary>
-      {{if .Children}}
       <ul>
+        {{/* Self-link: first child row points at the section itself so
+             the group title isn't a dead end. The toggle-button handler
+             in app.js auto-opens the main-content <details> on click. */}}
+        <li class="self"><a href="#{{.ID}}">Jump to section</a></li>
         {{range .Children}}
         <li><a href="#{{.ID}}">{{.Title}}</a></li>
         {{end}}
       </ul>
-      {{end}}
     </details>
     {{end}}
   </nav>

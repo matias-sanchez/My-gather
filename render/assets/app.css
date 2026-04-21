@@ -190,7 +190,15 @@ details.nav-group > summary .nav-title {
   padding: 0;
   border-radius: 0;
 }
-details.nav-group > summary .nav-title:hover { background: transparent; }
+
+/* "Jump to section" helper row inside each nav-group: subtler than
+   regular child links, italicised. */
+details.nav-group > ul li.self a {
+  color: var(--fg-dim);
+  font-size: 11.5px;
+  font-style: italic;
+}
+details.nav-group > ul li.self a:hover { color: var(--fg-muted); }
 
 details.nav-group > ul {
   margin: 4px 0 0 0;
