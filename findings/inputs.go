@@ -49,19 +49,15 @@ func counterTotal(r *model.Report, name string) (float64, bool) {
 	return total, true
 }
 
-// counterRatePerSec divides counterTotal by the capture's wall-clock
-// duration and returns the per-second rate. Skipped the same way as
+// counterRatePerSec divides counterTotal by the capture's observed
+// seconds and returns the per-second rate. Skipped the same way as
 // counterTotal.
 //
-// Known approximation: counterTotal sums (N-1) deltas (the index-0
-// raw tally is excluded), while captureSeconds spans N timestamps
-// (first to last). For a capture with N samples at even step s the
-// true rate is total/((N-1)·s); this function returns total/(N·s
-// minus the final step) ≈ the same value with an error of 1/(N-1).
-// For N=30 that is <3.5 %, acceptable for severity thresholds which
-// use one-order-of-magnitude bands. Rule authors should NOT rely on
-// this function for fine-grained rates — add a per-rule computation
-// if sub-percent accuracy is needed.
+// The denominator comes from captureSeconds, which sums per-snapshot
+// spans only (gaps between distinct pt-stalk snapshots are excluded
+// — see that function's doc). Within a snapshot the denominator is
+// (N-1)·step, which matches counterTotal's (N-1) deltas, so the rate
+// is accurate to the sampling precision.
 func counterRatePerSec(r *model.Report, name string) (float64, bool) {
 	total, ok := counterTotal(r, name)
 	if !ok {
@@ -132,23 +128,47 @@ func gaugeMax(r *model.Report, name string) (float64, bool) {
 	return best, true
 }
 
-// captureSeconds returns the wall-clock seconds spanned by the
-// mysqladmin capture. Returns 0 when there's insufficient data.
+// captureSeconds returns the total observed seconds covered by the
+// mysqladmin capture — i.e. the sum of per-snapshot wall-clock spans
+// only. Gaps BETWEEN snapshots (no collection was happening during
+// those intervals) are excluded, because counter deltas are not
+// observed across a boundary (concatMysqladmin inserts NaN there) and
+// including the gap would artificially inflate the denominator and
+// suppress advisor rates.
+//
+// For a single-snapshot capture this reduces to `last - first`.
+// Returns 0 when there is insufficient data.
 func captureSeconds(r *model.Report) float64 {
 	m := mysqladmin(r)
-	if m == nil {
+	if m == nil || len(m.Timestamps) < 2 {
 		return 0
 	}
-	if len(m.Timestamps) < 2 {
-		return 0
+	ts := m.Timestamps
+	// Derive block boundaries. Each block spans [start, end] where
+	// start is the first sample of a snapshot and end is the last
+	// sample before the next snapshot's start (or the final sample
+	// overall). SnapshotBoundaries is guaranteed to start with 0.
+	boundaries := m.SnapshotBoundaries
+	if len(boundaries) == 0 {
+		boundaries = []int{0}
 	}
-	first := m.Timestamps[0]
-	last := m.Timestamps[len(m.Timestamps)-1]
-	d := last.Sub(first).Seconds()
-	if d <= 0 {
-		return 0
+	var total float64
+	for i, start := range boundaries {
+		var end int
+		if i+1 < len(boundaries) {
+			end = boundaries[i+1] - 1
+		} else {
+			end = len(ts) - 1
+		}
+		if end <= start || start < 0 || end >= len(ts) {
+			continue
+		}
+		d := ts[end].Sub(ts[start]).Seconds()
+		if d > 0 {
+			total += d
+		}
 	}
-	return d
+	return total
 }
 
 // variableFloat resolves a SHOW GLOBAL VARIABLES entry to a float.

@@ -536,15 +536,49 @@
   //     visible one RESTORES all series.
   //   - Shift / Cmd / Ctrl click -> additive toggle (the old
   //     behaviour): flip just this pill, leave the others alone.
-  function mountLegend(containerEl, series, plot) {
+  //
+  // `opts` is optional:
+  //   - opts.initialVisible(idx) -> bool: which pills start active.
+  //     Default: every pill starts active.
+  //   - opts.onVisibilityChange(visibleIdxs): if provided, the legend
+  //     hands over the "what to do when pills toggle" decision to the
+  //     caller — useful for charts whose geometry depends on which
+  //     buckets are visible (e.g. stacked bars, where hiding one
+  //     bucket must recompute cumulative stacks). When omitted the
+  //     legend drives the existing plot via uPlot's setSeries().
+  function mountLegend(containerEl, series, plot, opts) {
+    opts = opts || {};
     var legend = document.createElement("div");
     legend.className = "series-legend";
     var pills = [];
+
+    function pillVisible(btn) { return btn.classList.contains("active"); }
+    function visibleIdxs() {
+      var out = [];
+      pills.forEach(function (p) {
+        if (pillVisible(p)) out.push(Number(p.getAttribute("data-idx")));
+      });
+      return out;
+    }
+    function applyVisibility() {
+      if (typeof opts.onVisibilityChange === "function") {
+        opts.onVisibilityChange(visibleIdxs());
+        return;
+      }
+      // Default path: drive the existing plot via uPlot.
+      pills.forEach(function (p) {
+        var idx = Number(p.getAttribute("data-idx"));
+        plot.setSeries(idx, { show: pillVisible(p) });
+      });
+    }
+
     series.forEach(function (s, i) {
       if (i === 0) return; // time
       var btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "series-pill active";
+      var startsActive = typeof opts.initialVisible === "function"
+        ? !!opts.initialVisible(i) : true;
+      btn.className = "series-pill" + (startsActive ? " active" : "");
       btn.setAttribute("data-idx", String(i));
       btn.title = "Click to show only this series (solo) · Shift/Cmd-click to toggle just this series · Click a soloed pill again to restore all";
       btn.innerHTML =
@@ -554,35 +588,27 @@
         var idx = Number(btn.getAttribute("data-idx"));
         var additive = ev.shiftKey || ev.metaKey || ev.ctrlKey;
         if (additive) {
-          var showing = plot.series[idx].show;
-          plot.setSeries(idx, { show: !showing });
-          btn.classList.toggle("active", !showing);
+          btn.classList.toggle("active");
+          applyVisibility();
           return;
         }
-        // Solo path: count currently-visible series.
+        // Solo path: count currently-active pills.
         var visibleCount = 0, thisIsVisible = false;
-        for (var k = 1; k < plot.series.length; k++) {
-          if (plot.series[k].show !== false) {
+        pills.forEach(function (p) {
+          if (pillVisible(p)) {
             visibleCount++;
-            if (k === idx) thisIsVisible = true;
+            if (Number(p.getAttribute("data-idx")) === idx) thisIsVisible = true;
           }
-        }
+        });
         var isSoloed = visibleCount === 1 && thisIsVisible;
         if (isSoloed) {
-          // Already soloed — restore all.
-          for (var j = 1; j < plot.series.length; j++) {
-            plot.setSeries(j, { show: true });
-          }
           pills.forEach(function (p) { p.classList.add("active"); });
         } else {
-          // Hide all others; show this one.
-          for (var m = 1; m < plot.series.length; m++) {
-            plot.setSeries(m, { show: m === idx });
-          }
           pills.forEach(function (p) {
             p.classList.toggle("active", Number(p.getAttribute("data-idx")) === idx);
           });
         }
+        applyVisibility();
       });
       // Hover-to-focus: hovering a pill dims every other series in the
       // plot so you can visually isolate one line without clicking.
@@ -778,12 +804,17 @@
     var buttons = [];
     var currentIdx = 0;
     var plot = null, legendEl = null;
+    // Labels the user has hidden via the legend. The set persists
+    // across both dimension switches and draw() rebuilds so that
+    // re-selecting a dimension carries previously-hidden buckets with
+    // a consistent identity (by label, since indexes shuffle per
+    // dimension). The label for the "Other (N)" bucket includes its
+    // count, which changes per-dimension — that's acceptable because
+    // Other is a derived aggregation and there is no cross-dimension
+    // identity to preserve.
+    var hiddenLabels = new Set();
 
-    // Pre-resolved bars path builder (falls back gracefully if uPlot
-    // doesn't expose one — older bundles).
-    var barsPath = (typeof uPlot !== "undefined" && uPlot.paths && typeof uPlot.paths.bars === "function")
-      ? uPlot.paths.bars({ size: [1.0, Infinity], align: 0 })
-      : undefined;
+    var barsPath = uPlot.paths.bars({ size: [1.0, Infinity], align: 0 });
 
     function draw() {
       if (plot) { unregisterChart(plot); plot.destroy(); plot = null; }
@@ -792,12 +823,18 @@
       var seriesData = rankSeries(dim.series);
       var n = data.timestamps.length;
 
-      // Raw per-segment values per bucket, kept alongside the stacked
-      // values so the tooltip can display each bucket's actual thread
-      // count rather than the cumulative total.
+      // Raw per-segment values per bucket. When a bucket is hidden via
+      // the legend, its row is replaced with zeros so it contributes
+      // nothing to the cumulative stack — the visible buckets then
+      // stack together as if the hidden ones weren't there. Keeping
+      // hidden buckets in the plotSeries array (just at zero height)
+      // keeps legend indexes stable across toggles and lets the user
+      // un-hide them by clicking the now-inactive pill.
       var rawValues = seriesData.map(function (s) {
         var out = new Array(n);
+        var hidden = hiddenLabels.has(s.label);
         for (var j = 0; j < n; j++) {
+          if (hidden) { out[j] = 0; continue; }
           var v = +s.values[j];
           out[j] = isNaN(v) ? null : v;
         }
@@ -823,6 +860,17 @@
       var plotSeries = [{ label: "time" }];
       var plotData = [data.timestamps.slice()];
       var plotRawByIdx = [null];
+      // Raw (un-zeroed) values for the tooltip, even for hidden
+      // buckets, so hover can still tell you what a bucket's value
+      // would be if it were visible.
+      var tooltipRaw = seriesData.map(function (s) {
+        var out = new Array(n);
+        for (var j = 0; j < n; j++) {
+          var v = +s.values[j];
+          out[j] = isNaN(v) ? null : v;
+        }
+        return out;
+      });
       for (var k = seriesData.length - 1; k >= 0; k--) {
         var stroke = SERIES_COLORS[k % SERIES_COLORS.length];
         plotSeries.push({
@@ -835,7 +883,7 @@
           value: function (u, v) { return v == null ? "–" : v.toLocaleString(); },
         });
         plotData.push(stacked[k]);
-        plotRawByIdx.push(rawValues[k]);
+        plotRawByIdx.push(tooltipRaw[k]);
       }
 
       var w = measureChartWidth(el);
@@ -843,7 +891,24 @@
       plot = new uPlot(opts, plotData, el);
       plot.__rawData = plotRawByIdx; // consumed by updateTooltipOnCursor
       registerChart(plot, el, opts);
-      mountLegend(el, plotSeries, plot);
+      mountLegend(el, plotSeries, plot, {
+        // Pill is active ⇔ bucket is NOT hidden.
+        initialVisible: function (idx) {
+          var label = plotSeries[idx].label;
+          return !hiddenLabels.has(label);
+        },
+        // Rebuild the entire chart from the new visibility set so the
+        // stack geometry (cumulative heights) matches the visible
+        // subset — the bug codex flagged.
+        onVisibilityChange: function (visibleIdxs) {
+          var active = new Set(visibleIdxs);
+          hiddenLabels = new Set();
+          for (var idx = 1; idx < plotSeries.length; idx++) {
+            if (!active.has(idx)) hiddenLabels.add(plotSeries[idx].label);
+          }
+          draw();
+        },
+      });
       legendEl = el.nextSibling;
     }
 
