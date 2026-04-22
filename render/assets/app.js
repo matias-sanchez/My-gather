@@ -779,6 +779,7 @@
     if (name === "top")         return "%CPU";
     if (name === "processlist") return "threads";
     if (name === "vmstat")      return "runqueue · blocked · %iowait";
+    if (name === "meminfo")     return "GB";
     return "";
   }
 

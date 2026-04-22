@@ -370,6 +370,8 @@ func runOneParser(snap *model.Snapshot, sf *model.SourceFile, sink DiagnosticSin
 		parsed, diagnostics = parseTop(file, snap.Timestamp, sf.Path)
 	case model.SuffixVmstat:
 		parsed, diagnostics = parseVmstat(file, snap.Timestamp, sf.Path)
+	case model.SuffixMeminfo:
+		parsed, diagnostics = parseMeminfo(file, sf.Path)
 	case model.SuffixVariables:
 		parsed, diagnostics = parseVariables(file, sf.Path)
 	case model.SuffixInnodbStatus:

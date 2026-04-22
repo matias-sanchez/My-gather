@@ -242,6 +242,7 @@ func buildOSSection(c *model.Collection) *model.OSSection {
 	var ios []*model.IostatData
 	var tops []*model.TopData
 	var vms []*model.VmstatData
+	var mems []*model.MeminfoData
 	for _, snap := range c.Snapshots {
 		if sf, ok := snap.SourceFiles[model.SuffixIostat]; ok && sf.Parsed != nil {
 			if v, ok := sf.Parsed.(*model.IostatData); ok {
@@ -258,10 +259,16 @@ func buildOSSection(c *model.Collection) *model.OSSection {
 				vms = append(vms, v)
 			}
 		}
+		if sf, ok := snap.SourceFiles[model.SuffixMeminfo]; ok && sf.Parsed != nil {
+			if v, ok := sf.Parsed.(*model.MeminfoData); ok {
+				mems = append(mems, v)
+			}
+		}
 	}
 	sec.Iostat = concatIostat(ios)
 	sec.Top = concatTop(tops)
 	sec.Vmstat = concatVmstat(vms)
+	sec.Meminfo = concatMeminfo(mems)
 	if sec.Iostat == nil {
 		sec.Missing = append(sec.Missing, "-iostat")
 	}
@@ -270,6 +277,9 @@ func buildOSSection(c *model.Collection) *model.OSSection {
 	}
 	if sec.Vmstat == nil {
 		sec.Missing = append(sec.Missing, "-vmstat")
+	}
+	if sec.Meminfo == nil {
+		sec.Missing = append(sec.Missing, "-meminfo")
 	}
 	sort.Strings(sec.Missing)
 	return sec
@@ -563,6 +573,54 @@ func concatVmstat(ins []*model.VmstatData) *model.VmstatData {
 	return out
 }
 
+// concatMeminfo merges multiple per-Snapshot *MeminfoData the same
+// way concatVmstat does, aligning by Metric so a later snapshot that
+// happens to emit a different subset of series doesn't shift the
+// axis. Unit is always "GB" — no need for the "mixed" fallback
+// vmstat carries.
+func concatMeminfo(ins []*model.MeminfoData) *model.MeminfoData {
+	nonNil := ins[:0]
+	for _, d := range ins {
+		if d != nil && len(d.Series) > 0 {
+			nonNil = append(nonNil, d)
+		}
+	}
+	if len(nonNil) == 0 {
+		return nil
+	}
+	metrics := make([]string, 0, len(nonNil[0].Series))
+	for _, s := range nonNil[0].Series {
+		metrics = append(metrics, s.Metric)
+	}
+	seriesByMetric := make(map[string]*model.MetricSeries, len(metrics))
+	for _, m := range metrics {
+		seriesByMetric[m] = &model.MetricSeries{Metric: m, Unit: "GB"}
+	}
+
+	boundaries := make([]int, 0, len(nonNil))
+	cumulative := 0
+	for _, d := range nonNil {
+		boundaries = append(boundaries, cumulative)
+		primaryAdded := 0
+		for _, s := range d.Series {
+			m := seriesByMetric[s.Metric]
+			if m == nil {
+				continue
+			}
+			m.Samples = append(m.Samples, s.Samples...)
+			if s.Metric == metrics[0] {
+				primaryAdded = len(s.Samples)
+			}
+		}
+		cumulative += primaryAdded
+	}
+	out := &model.MeminfoData{SnapshotBoundaries: boundaries}
+	for _, m := range metrics {
+		out.Series = append(out.Series, *seriesByMetric[m])
+	}
+	return out
+}
+
 func buildVariablesSection(c *model.Collection) *model.VariablesSection {
 	sec := &model.VariablesSection{}
 	for _, snap := range c.Snapshots {
@@ -808,6 +866,7 @@ func buildNavigation(r *model.Report) []model.NavEntry {
 	nav = append(nav, model.NavEntry{ID: "sub-os-iostat", Title: "Disk utilization", Level: 2, ParentID: "sec-os"})
 	nav = append(nav, model.NavEntry{ID: "sub-os-top", Title: "Top CPU processes", Level: 2, ParentID: "sec-os"})
 	nav = append(nav, model.NavEntry{ID: "sub-os-vmstat", Title: "vmstat saturation", Level: 2, ParentID: "sec-os"})
+	nav = append(nav, model.NavEntry{ID: "sub-os-meminfo", Title: "Memory usage", Level: 2, ParentID: "sec-os"})
 
 	// Variables section (one Level-2 per *unique* snapshot — adjacent
 	// snapshots with identical variables are collapsed, matching the
@@ -909,12 +968,14 @@ type reportView struct {
 	HasFindings   bool
 
 	// OS section payload
-	HasIostat     bool
-	HasTop        bool
-	HasVmstat     bool
-	IostatSummary *iostatSummaryView
-	TopSummary    *topSummaryView
-	VmstatSummary *vmstatSummaryView
+	HasIostat      bool
+	HasTop         bool
+	HasVmstat      bool
+	HasMeminfo     bool
+	IostatSummary  *iostatSummaryView
+	TopSummary     *topSummaryView
+	VmstatSummary  *vmstatSummaryView
+	MeminfoSummary *meminfoSummaryView
 
 	// Variables section payload
 	HasVariables      bool
@@ -1096,6 +1157,15 @@ type vmstatSummaryView struct {
 	SampleCount  int
 }
 
+type meminfoSummaryView struct {
+	// All values are formatted in GB to match the chart axis.
+	MinAvailable string // smallest MemAvailable seen — "pressure floor"
+	MaxAnonPages string // peak process-memory footprint
+	MaxDirty     string // peak dirty-page backlog (fsync pressure)
+	MaxSwapUsed  string // peak swap pressure
+	SampleCount  int
+}
+
 // buildView flattens the Report into the template-friendly shape.
 func buildView(r *model.Report, c *model.Collection) (*reportView, error) {
 	v := &reportView{
@@ -1118,6 +1188,7 @@ func buildView(r *model.Report, c *model.Collection) (*reportView, error) {
 		v.HasIostat = r.OSSection.Iostat != nil
 		v.HasTop = r.OSSection.Top != nil
 		v.HasVmstat = r.OSSection.Vmstat != nil
+		v.HasMeminfo = r.OSSection.Meminfo != nil
 		if v.HasIostat {
 			v.IostatSummary = summariseIostat(r.OSSection.Iostat)
 		}
@@ -1126,6 +1197,9 @@ func buildView(r *model.Report, c *model.Collection) (*reportView, error) {
 		}
 		if v.HasVmstat {
 			v.VmstatSummary = summariseVmstat(r.OSSection.Vmstat)
+		}
+		if v.HasMeminfo {
+			v.MeminfoSummary = summariseMeminfo(r.OSSection.Meminfo)
 		}
 	}
 	totalSnaps := 0
@@ -1279,6 +1353,9 @@ func buildChartPayload(r *model.Report) map[string]any {
 		}
 		if r.OSSection.Vmstat != nil {
 			payload["vmstat"] = vmstatChartPayload(r.OSSection.Vmstat)
+		}
+		if r.OSSection.Meminfo != nil {
+			payload["meminfo"] = meminfoChartPayload(r.OSSection.Meminfo)
 		}
 	}
 	if r.DBSection != nil {
@@ -1555,6 +1632,29 @@ func vmstatChartPayload(d *model.VmstatData) map[string]any {
 		return nil
 	}
 	// Use the first series' timestamps.
+	timestamps := chartTimestamps(d.Series[0].Samples)
+	var series []map[string]any
+	for _, s := range d.Series {
+		vals := make([]float64, len(s.Samples))
+		for i, sp := range s.Samples {
+			vals[i] = sp.Measurements[s.Metric]
+		}
+		series = append(series, map[string]any{
+			"label":  s.Metric,
+			"values": vals,
+		})
+	}
+	return map[string]any{
+		"timestamps":         timestamps,
+		"series":             series,
+		"snapshotBoundaries": d.SnapshotBoundaries,
+	}
+}
+
+func meminfoChartPayload(d *model.MeminfoData) map[string]any {
+	if len(d.Series) == 0 {
+		return nil
+	}
 	timestamps := chartTimestamps(d.Series[0].Samples)
 	var series []map[string]any
 	for _, s := range d.Series {
@@ -2001,6 +2101,64 @@ func summariseVmstat(d *model.VmstatData) *vmstatSummaryView {
 	sum.PeakRunqueue = FormatFloat(peakForMetric("runqueue"), 0)
 	sum.PeakBlocked = FormatFloat(peakForMetric("blocked"), 0)
 	sum.PeakIowait = FormatFloat(peakForMetric("cpu_iowait"), 0)
+	return sum
+}
+
+func summariseMeminfo(d *model.MeminfoData) *meminfoSummaryView {
+	sum := &meminfoSummaryView{}
+	// Helpers: for "pressure floor" we want the MIN value across
+	// samples (i.e. the headroom at its worst); for backlog metrics
+	// we want the MAX.
+	minSeries := func(name string) (float64, bool) {
+		for _, s := range d.Series {
+			if s.Metric != name {
+				continue
+			}
+			sum.SampleCount = maxInt(sum.SampleCount, len(s.Samples))
+			if len(s.Samples) == 0 {
+				return 0, false
+			}
+			min := s.Samples[0].Measurements[name]
+			for _, sp := range s.Samples {
+				if v := sp.Measurements[name]; v < min {
+					min = v
+				}
+			}
+			return min, true
+		}
+		return 0, false
+	}
+	maxSeries := func(name string) (float64, bool) {
+		for _, s := range d.Series {
+			if s.Metric != name {
+				continue
+			}
+			sum.SampleCount = maxInt(sum.SampleCount, len(s.Samples))
+			if len(s.Samples) == 0 {
+				return 0, false
+			}
+			var peak float64
+			for _, sp := range s.Samples {
+				if v := sp.Measurements[name]; v > peak {
+					peak = v
+				}
+			}
+			return peak, true
+		}
+		return 0, false
+	}
+	if v, ok := minSeries("mem_available"); ok {
+		sum.MinAvailable = FormatFloat(v, 2)
+	}
+	if v, ok := maxSeries("anon_pages"); ok {
+		sum.MaxAnonPages = FormatFloat(v, 2)
+	}
+	if v, ok := maxSeries("dirty"); ok {
+		sum.MaxDirty = FormatFloat(v, 3)
+	}
+	if v, ok := maxSeries("swap_used"); ok {
+		sum.MaxSwapUsed = FormatFloat(v, 2)
+	}
 	return sum
 }
 

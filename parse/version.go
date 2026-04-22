@@ -29,6 +29,8 @@ func DetectFormat(peeked []byte, suffix model.Suffix) model.FormatVersion {
 		return detectVariables(peeked)
 	case model.SuffixVmstat:
 		return detectVmstat(peeked)
+	case model.SuffixMeminfo:
+		return detectMeminfo(peeked)
 	case model.SuffixInnodbStatus:
 		return detectInnodbStatus(peeked)
 	case model.SuffixMysqladmin:
@@ -77,6 +79,16 @@ func detectVmstat(peeked []byte) model.FormatVersion {
 	// vmstat prints a "procs" / "memory" / "swap" banner and numeric
 	// columns. "procs" is present in every supported release.
 	if bytes.Contains(peeked, []byte("procs")) && bytes.Contains(peeked, []byte("memory")) {
+		return model.FormatV1
+	}
+	return model.FormatUnknown
+}
+
+func detectMeminfo(peeked []byte) model.FormatVersion {
+	// /proc/meminfo always starts with MemTotal; pt-stalk prefixes
+	// each sample with a "TS <epoch>" marker. Requiring both avoids
+	// misclassifying an accidentally-named file.
+	if bytes.Contains(peeked, []byte("MemTotal:")) && bytes.Contains(peeked, []byte("TS ")) {
 		return model.FormatV1
 	}
 	return model.FormatUnknown

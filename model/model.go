@@ -30,6 +30,7 @@ const (
 	SuffixTop          Suffix = "top"
 	SuffixVariables    Suffix = "variables"
 	SuffixVmstat       Suffix = "vmstat"
+	SuffixMeminfo      Suffix = "meminfo"
 	SuffixInnodbStatus Suffix = "innodbstatus1" // parses the first innodb-status snapshot; -innodbstatus2 is out of scope for v1
 	SuffixMysqladmin   Suffix = "mysqladmin"
 	SuffixProcesslist  Suffix = "processlist"
@@ -44,6 +45,7 @@ var KnownSuffixes = []Suffix{
 	SuffixTop,
 	SuffixVariables,
 	SuffixVmstat,
+	SuffixMeminfo,
 	SuffixInnodbStatus,
 	SuffixMysqladmin,
 	SuffixProcesslist,
@@ -349,6 +351,17 @@ type VmstatData struct {
 	// SnapshotBoundaries lists the sample indexes at which a new
 	// Snapshot's first sample sits within the concatenated time axis.
 	// Same semantics as IostatData.SnapshotBoundaries.
+	SnapshotBoundaries []int
+}
+
+// MeminfoData is the typed payload for a -meminfo SourceFile (a
+// snapshot of /proc/meminfo captured once per second for the
+// snapshot window, TS-delimited). A curated set of series (the
+// fields meaningful for DB capacity + pressure analysis) is emitted
+// in the fixed order declared in parse/meminfo.go. All values are
+// reported in gigabytes for chart readability.
+type MeminfoData struct {
+	Series             []MetricSeries
 	SnapshotBoundaries []int
 }
 
