@@ -466,21 +466,28 @@ matching their respective golden files.
   attach a PDF to a customer ticket without losing any collapsed
   content.
 
-- **FR-038**: The report MUST NOT present the same factual
-  observation in more than one place unless the duplication is an
-  explicit, labelled navigation aid (e.g., a ToC link that repeats
-  a section title). Every primary data surface — chart, table,
-  scalar callout, diagnostic list — has a single canonical home:
-  `-iostat` samples in OS-Usage → Disk utilization; `-top` samples
-  in OS-Usage → Top CPU processes; `-vmstat` samples in OS-Usage →
-  vmstat saturation; `-variables` global values in Variables;
-  `-innodbstatus1` scalars in Database Usage → InnoDB status;
-  `-mysqladmin` deltas in Database Usage → Counter deltas;
-  `-processlist` thread-state samples in Database Usage → Thread
-  states; parser diagnostics in the Parser Diagnostics panel. Any
-  summary or overview widget introduced in a future feature MUST
-  source from and link to its canonical subview rather than
-  re-plot or re-tabulate the underlying data.
+- **FR-038**: The report MUST NOT render the same underlying
+  factual observation on more than one canonical data surface.
+  For the purposes of this rule, a **canonical data surface** is
+  one of: a chart, a data table, a scalar callout, or the Parser
+  Diagnostics list — i.e., any element that visualises sample
+  values, variable values, or diagnostic records. Repetition used
+  purely for **navigation or labelling** — section titles, ToC
+  and nav-rail entries, chart legends, axis labels, anchor
+  links, and tooltips that identify a series or variable without
+  re-rendering its values — does NOT count as duplication and is
+  explicitly permitted. The canonical data surfaces in v1 and
+  their homes are: `-iostat` samples → OS-Usage → Disk
+  utilization; `-top` samples → OS-Usage → Top CPU processes;
+  `-vmstat` samples → OS-Usage → vmstat saturation; `-variables`
+  global values → Variables; `-innodbstatus1` scalars → Database
+  Usage → InnoDB status; `-mysqladmin` deltas → Database Usage →
+  Counter deltas; `-processlist` thread-state samples → Database
+  Usage → Thread states; and every `Diagnostic` record → the
+  Parser Diagnostics panel. Any summary or overview widget
+  introduced by a future feature MUST source from and link to
+  its canonical subview rather than re-plot or re-tabulate the
+  underlying data.
 
 - **FR-039**: Every rendered section MUST follow a consistent
   three-level visual hierarchy: `h2` section title → `h3` subview
@@ -621,10 +628,16 @@ matching their respective golden files.
   `specs/001-ptstalk-report-mvp/ux-audits/<YYYY-MM-DD>-<label>.md`
   whose every checklist item from `checklists/ux-quality.md` is
   marked PASS — or carries an explicit DEFERRED status with a
-  follow-up task ID. A CI check (or the `testdata_coverage` style
-  guard, at implementer's discretion) asserts that the latest
-  audit file is newer than the most recent commit that touches
-  `render/` or `render/assets/`; a stale audit blocks the cut.
+  follow-up task ID. Freshness is enforced by a **diff-based
+  invariant** (not by commit timestamps, which are unreliable
+  under rebase / cherry-pick): any PR or commit range that
+  changes a report-shaping code path — `render/`, `render/assets/`,
+  `model/`, or `parse/` — MUST also add or modify at least one
+  file under `specs/001-ptstalk-report-mvp/ux-audits/`. A missing
+  audit update blocks the cut. A `testdata_coverage`-style guard
+  (`tests/coverage/ux_audit_freshness_test.go` or equivalent,
+  T119) implements the check against the PR's diff; wiring it as
+  a regular Go test avoids introducing a new CI lane.
 
 ## Assumptions
 

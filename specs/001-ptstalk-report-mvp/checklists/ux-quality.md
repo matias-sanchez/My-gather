@@ -32,21 +32,36 @@ approval recorded in the same audit file.
 
 Applies to every rendered surface, independent of section.
 
-- [ ] **G-1** Typography scale is a single harmonic progression (no
-      arbitrary font sizes). Every `h2` shares one size; every `h3`
-      shares one size; body text is one size; captions are one size.
-- [ ] **G-2** Spacing rhythm is a single base grid (`4px` or `8px`).
-      No section introduces ad-hoc margin/padding values outside the
-      grid.
+- [ ] **G-1** Every font size on every rendered surface MUST be
+      expressed via one of the four named CSS custom properties
+      `var(--font-h2)`, `var(--font-h3)`, `var(--font-body)`, or
+      `var(--font-caption)`. No literal `font-size:` declaration
+      appears in `render/assets/app.css` outside the `:root`-level
+      custom property definitions. Auditable by grep against the
+      shipped stylesheet; reviewer taste is not in scope.
+- [ ] **G-2** Spacing rhythm is pinned to a single `8px` base grid
+      exposed as `var(--grid)` on `:root`. Every margin, padding,
+      and gap value in `render/assets/app.css` MUST be either
+      `0`, `var(--grid)`, or `calc(var(--grid) * N)` for an integer
+      `N`. Grep confirms no literal non-zero `px` spacing values
+      outside the `:root` declaration of `--grid`.
 - [ ] **G-3** Colour palette: one primary accent, one muted-text
       tone, one warning tone, one success tone. Charts use the same
       named palette across all sections.
 - [ ] **G-4** All chart axes format numbers via the shared
       `formatYTick` helper (compact: `1.2K` / `3.4M` / `1.2B`). No
       axis falls back to raw `toLocaleString()`.
-- [ ] **G-5** All timestamps render UTC ISO-8601 via the shared
-      formatter (Principle IV). No section prints locale-dependent
-      or raw-epoch time.
+- [ ] **G-5** Every rendered timestamp — including server-rendered
+      header / banner / table text, chart tooltips and other
+      JavaScript-rendered timestamp labels, and timestamp fields
+      in the embedded JSON payload — uses the shared UTC ISO-8601
+      formatter (Principle IV). No rendered surface or payload
+      field uses locale-dependent (`toLocaleDateString`,
+      `toLocaleString`) or raw-epoch time. A grep of `app.js` for
+      `toLocaleDate`, `toLocaleString`, or `toLocaleTime` returns
+      no hits in rendering paths (note: `toLocaleString()` on
+      non-timestamp numeric values — e.g., integer formatting — is
+      still permitted and is governed by G-4, not G-5).
 - [ ] **G-6** Every interactive element (button, dropdown, chip,
       checkbox, search input) is reachable and operable by keyboard
       alone (FR-031, FR-036).
@@ -137,9 +152,13 @@ Applies to every rendered surface, independent of section.
       multiple snapshots exist; visual form matches the shape of
       the data.
 - [ ] **DB-2** Counter-deltas chart (FR-015): keyboard-accessible
-      toggle UI surfaces all variables; category chooser (FR-034)
-      lists every declared category from
-      `render/assets/mysqladmin-categories.json` in declared order.
+      toggle UI surfaces every variable present in the embedded
+      `report-data` JSON payload (reviewer reads the payload's
+      `variables` array and confirms every entry is reachable from
+      the UI). Category chooser (FR-034) lists every category
+      present in the payload's `categories` array, in array order.
+      Reviewer reads both from the rendered HTML alone — no source
+      file lookup required.
 - [ ] **DB-3** Counter-deltas chart respects `defaultVisible`
       (FR-035): column 0 (initial tally) is NOT in the default
       series; viewer may opt in via the toggle.
@@ -154,11 +173,15 @@ Applies to every rendered surface, independent of section.
 ## 6. Parser Diagnostics panel
 
 - [ ] **PD-1** Collapsed by default (FR-032, Principle XI).
-- [ ] **PD-2** Each diagnostic row: file basename, location (line
-      or byte), severity (Warning or Error), single-line message.
+- [ ] **PD-2** Each diagnostic row carries: file basename,
+      location (line or byte when known, otherwise `—`), severity
+      (one of `Info` / `Warning` / `Error`), and a single-line
+      message.
 - [ ] **PD-3** `SeverityInfo` diagnostics appear here and only here
-      (FR-027 / FR-030; snapshot-boundary info from R8 improvement D
-      is the canonical example).
+      (never on stderr, per FR-027 / FR-030). Snapshot-boundary
+      info from R8 improvement D is the canonical example and MUST
+      appear in this panel for any multi-Snapshot `-mysqladmin`
+      input.
 - [ ] **PD-4** Warnings / Errors are colour-coded AND prefixed with
       a word (`[warning]` / `[error]`) — not colour-only (G-7).
 - [ ] **PD-5** No diagnostic is duplicated from a subview banner

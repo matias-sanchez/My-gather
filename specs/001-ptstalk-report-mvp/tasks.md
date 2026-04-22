@@ -260,7 +260,7 @@ written.
 ### Shared stylesheet invariants (FR-039)
 
 - [ ] T108 Refactor `render/assets/app.css` to express the typography scale, spacing grid, colour palette, chart palette, and axis/legend rules as named CSS custom properties (`--fg`, `--accent`, `--muted`, `--warn`, `--ok`, `--grid`, `--font-h2`, `--font-h3`, `--font-body`, `--chart-series-1…N`). No per-template `<style>` blocks survive the refactor (FR-039). Covered by G-8 in the checklist.
-- [ ] T109 [P] `render/render_test.go::TestNoPerTemplateStyleBlocks` (FR-039 coverage): parse the rendered HTML; assert the document contains exactly one top-level `<style>` block sourced from `render/assets/app.css` via `//go:embed`, and that every `<section>` / `<details>` it contains is free of inline `<style>` children.
+- [ ] T109 [P] `render/render_test.go::TestNoPerTemplateStyleBlocks` (FR-039 coverage): parse the rendered HTML; assert the document contains exactly one top-level `<style>` block (the existing `render.go` concatenation of `embeddedChartCSS + embeddedAppCSS` is acceptable), that the block contains the named CSS custom-property invariants introduced by T108 (`--fg`, `--accent`, `--muted`, `--warn`, `--ok`, `--grid`, `--font-h2`, `--font-h3`, `--font-body`, `--font-caption`), and that every `<section>` / `<details>` in the document is free of inline `<style>` children. The test does NOT prescribe the block's origin — only the invariant set it carries and the per-template absence.
 
 ### Section audits (one audit item per subview; produces the per-section PASS/FAIL table for the audit record)
 
@@ -279,7 +279,7 @@ written.
 ### Synthesis + gate
 
 - [ ] T118 Commit the full audit record at `specs/001-ptstalk-report-mvp/ux-audits/<YYYY-MM-DD>-<label>.md` using the template at the bottom of `checklists/ux-quality.md`. Every checklist item is PASS or carries an explicit DEFERRED → T### link with owner approval recorded in the same file.
-- [ ] T119 CI gate for SC-011: add a lightweight check (at implementer's discretion — Go test or Makefile target) that asserts the newest file under `specs/001-ptstalk-report-mvp/ux-audits/` is newer than the most recent commit that touches `render/` or `render/assets/`. A stale audit blocks the cut. Covered by the SC-011 clause; wiring can live in `tests/coverage/` as a `TestUXAuditFreshness` test to avoid introducing a new CI lane.
+- [ ] T119 CI gate for SC-011: implement a **diff-based** freshness check (not timestamp-based — commit times are unreliable under rebase / cherry-pick). Concretely: a `tests/coverage/ux_audit_freshness_test.go::TestUXAuditFreshness` test that, given the merge-base against `origin/main`, asserts that any change in the PR's diff under `render/`, `render/assets/`, `model/`, or `parse/` is accompanied by at least one change under `specs/001-ptstalk-report-mvp/ux-audits/`. Implementation runs `git diff --name-only $(git merge-base HEAD origin/main)..HEAD` — or the equivalent env-provided PR-base in CI — and enforces the invariant. No new CI lane; the guard lives inside the regular `go test ./...` pass.
 
 **Checkpoint**: a clean Phase 8 pass means the report ships at a quality bar that any senior reviewer who just read the constitution and the checklist can independently confirm — not a matter of reviewer taste.
 
