@@ -650,6 +650,37 @@ table.variables-table td.status-label {
 table.variables-table tr[data-status="modified"] td.status-label { color: var(--warn); }
 table.variables-table tr[data-status="default"]  td.status-label { color: var(--fg-dim); }
 
+/* Changed rows: the variable's value differs from the previous kept
+   snapshot. Highlighted with a subtle accent tint plus a 2 px left
+   bar so the reader can scan the table top-to-bottom and spot what
+   moved without having to diff values by eye. */
+table.variables-table tr[data-changed="true"] td {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+table.variables-table tr[data-changed="true"] td.status-dot {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+table.variables-table tr[data-changed="true"] td.mono {
+  color: var(--fg);
+}
+table.variables-table tr[data-changed="true"] td.status-label .label-changed {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* Changed chip accent: the panel-level filter that maps to the
+   same highlight. */
+.var-chips .var-chip.chip-changed {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+}
+.var-chips .var-chip.chip-changed.active {
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg-elev));
+  border-color: var(--accent);
+  color: var(--fg);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent) inset;
+}
+
 /* ---------- Scalar callouts (InnoDB per-snapshot) ---------- */
 
 .callouts {

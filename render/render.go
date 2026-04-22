@@ -941,6 +941,9 @@ type variableSnapshotView struct {
 	RangeNote     string
 	Count         int
 	ModifiedCount int
+	// ChangedCount is the number of rows flagged .Changed — useful
+	// for showing a "N changed" hint on panels that aren't the first.
+	ChangedCount  int
 	Entries       []variableRowView
 }
 
@@ -956,9 +959,14 @@ var volatileVariables = map[string]struct{}{
 }
 
 type variableRowView struct {
-	Name   string
-	Value  string
-	Status string // "default" | "modified" | "unknown"
+	Name    string
+	Value   string
+	Status  string // "default" | "modified" | "unknown"
+	// Changed marks this variable as different from the previous kept
+	// snapshot. Volatile variables (gtid_executed/gtid_purged) are
+	// intentionally never marked so the highlight doesn't light up
+	// every snapshot on a busy replica.
+	Changed bool
 }
 
 // innoDBMetricView holds one row in the aggregated InnoDB status
@@ -1096,6 +1104,7 @@ func buildView(r *model.Report, c *model.Collection) (*reportView, error) {
 		// partial captures remain visible.
 		lastKept := -1
 		var lastSig string
+		var lastKeptMap map[string]string // name → value from previous kept snapshot
 		for i, sv := range r.VariablesSection.PerSnapshot {
 			if sv.Data == nil {
 				v.VariableSnapshots = append(v.VariableSnapshots, variableSnapshotView{
@@ -1105,6 +1114,7 @@ func buildView(r *model.Report, c *model.Collection) (*reportView, error) {
 				})
 				lastKept = -1
 				lastSig = ""
+				lastKeptMap = nil
 				continue
 			}
 			sig := snapshotSignature(sv.Data.Entries)
@@ -1125,16 +1135,39 @@ func buildView(r *model.Report, c *model.Collection) (*reportView, error) {
 				if st == "modified" {
 					vv.ModifiedCount++
 				}
+				// Flag the row as Changed when (1) there IS a previous
+				// kept snapshot, (2) this variable is NOT in the
+				// volatile ignorelist, and (3) its value differs from
+				// (or was absent in) the previous snapshot. The first
+				// kept panel never highlights — nothing to compare to.
+				changed := false
+				if lastKeptMap != nil {
+					if _, vol := volatileVariables[strings.ToLower(e.Name)]; !vol {
+						prev, ok := lastKeptMap[e.Name]
+						if !ok || prev != e.Value {
+							changed = true
+						}
+					}
+				}
+				if changed {
+					vv.ChangedCount++
+				}
 				vv.Entries = append(vv.Entries, variableRowView{
-					Name:   e.Name,
-					Value:  e.Value,
-					Status: st,
+					Name:    e.Name,
+					Value:   e.Value,
+					Status:  st,
+					Changed: changed,
 				})
 			}
 			haveAny = true
 			v.VariableSnapshots = append(v.VariableSnapshots, vv)
 			lastKept = len(v.VariableSnapshots) - 1
 			lastSig = sig
+			// Snapshot the name→value map for the next kept comparison.
+			lastKeptMap = make(map[string]string, len(sv.Data.Entries))
+			for _, e := range sv.Data.Entries {
+				lastKeptMap[e.Name] = e.Value
+			}
 			// Seed the range tracker with the current snapshot number
 			// so extendRange can grow it later.
 			v.VariableSnapshots[lastKept].RangeNote = formatRangeNote(i+1, i+1)

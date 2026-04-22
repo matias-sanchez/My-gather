@@ -89,25 +89,39 @@
         var chips = input.parentNode.querySelectorAll(
           '.var-chip[data-snapshot="' + cssEscape(snapshot) + '"]'
         );
-        var state = { needle: "", statusFilter: "modified" };
+        // Default filter prefers 'changed' when the panel was kept
+        // due to a dedup diff (the Changed chip carries the .active
+        // class emitted by the template); otherwise fall back to
+        // 'modified'. The DOM is the source of truth so both
+        // branches stay in sync.
+        var initialChip = input.parentNode.querySelector(".var-chip.active");
+        var initialFilter = (initialChip && initialChip.getAttribute("data-filter")) || "modified";
+        var state = { needle: "", statusFilter: initialFilter };
 
         function update() {
           var needle = state.needle;
           var sf = state.statusFilter;
-          var shown = 0, modified = 0;
+          var shown = 0, modified = 0, changed = 0;
           for (var r = 0; r < rows.length; r++) {
             var row = rows[r];
             var name = row.getAttribute("data-variable-name") || "";
             var status = row.getAttribute("data-status") || "unknown";
+            var isChanged = row.getAttribute("data-changed") === "true";
             if (status === "modified") modified++;
+            if (isChanged) changed++;
             var nameHit = needle === "" || name.toLowerCase().indexOf(needle) !== -1;
-            var statusHit = sf === "all" || sf === status;
+            var statusHit;
+            if (sf === "all")          statusHit = true;
+            else if (sf === "changed") statusHit = isChanged;
+            else                       statusHit = sf === status;
             var hit = nameHit && statusHit;
             row.hidden = !hit;
             if (hit) shown++;
           }
           if (countEl) {
-            countEl.textContent = shown + " of " + rows.length + " shown · " + modified + " modified";
+            var summary = shown + " of " + rows.length + " shown · " + modified + " modified";
+            if (changed > 0) summary += " · " + changed + " changed";
+            countEl.textContent = summary;
           }
         }
 
