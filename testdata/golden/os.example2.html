@@ -1,0 +1,51 @@
+<details id="sec-os" class="section" open>
+      <summary>
+        <span>OS Usage</span>
+        <span class="badge">3 / 3 subviews</span>
+      </summary>
+      <div class="body">
+        
+
+<details id="sub-os-iostat" class="subview" open>
+  <summary><span>Disk utilization</span><span class="badge">-iostat</span></summary>
+  <div class="body">
+    <div class="chart-summary">
+      <span class="stat"><span class="k">peak %util</span> <span class="v">5.0%</span> <span class="ctx">on dm-2</span></span>
+      <span class="stat"><span class="k">peak aqu-sz</span> <span class="v">5.15</span> <span class="ctx">on dm-1</span></span>
+      <span class="stat"><span class="k">devices</span> <span class="v">8</span></span>
+      <span class="stat"><span class="k">samples</span> <span class="v">30</span></span>
+    </div>
+    <div class="chart" id="chart-iostat" data-chart="iostat" aria-label="Per-device iostat utilization over time"></div>
+    <noscript><p class="banner">Chart requires JavaScript. Raw iostat data is embedded in the page.</p></noscript>
+  </div>
+</details>
+
+<details id="sub-os-top" class="subview" open>
+  <summary><span>Top CPU processes</span><span class="badge">-top</span></summary>
+  <div class="body">
+    <div class="chart-summary">
+      <span class="stat"><span class="k">#1</span> <span class="v">mysqld (pid 5555)</span> <span class="ctx">avg 129.6%</span></span><span class="stat"><span class="k">#2</span> <span class="v">bash (pid 16030)</span> <span class="ctx">avg 0.4%</span></span><span class="stat"><span class="k">#3</span> <span class="v">bash (pid 13962)</span> <span class="ctx">avg 0.3%</span></span>
+      <span class="stat"><span class="k">samples</span> <span class="v">33</span></span>
+    </div>
+    <div class="chart" id="chart-top" data-chart="top" aria-label="Top 3 CPU-consuming processes over time"></div>
+    <noscript><p class="banner">Chart requires JavaScript. Raw top data is embedded in the page.</p></noscript>
+  </div>
+</details>
+
+<details id="sub-os-vmstat" class="subview" open>
+  <summary><span>vmstat saturation</span><span class="badge">-vmstat</span></summary>
+  <div class="body">
+    <div class="chart-summary">
+      <span class="stat"><span class="k">peak runqueue</span> <span class="v">20</span></span>
+      <span class="stat"><span class="k">peak blocked</span> <span class="v">7</span></span>
+      <span class="stat"><span class="k">peak iowait</span> <span class="v">13%</span></span>
+      <span class="stat"><span class="k">samples</span> <span class="v">60</span></span>
+    </div>
+    <div class="chart" id="chart-vmstat" data-chart="vmstat" aria-label="System resource saturation over time"></div>
+    <noscript><p class="banner">Chart requires JavaScript. Raw vmstat data is embedded in the page.</p></noscript>
+  </div>
+</details>
+
+
+      </div>
+    </details>
