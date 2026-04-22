@@ -46,7 +46,10 @@
     try { window.localStorage.setItem(key, val); } catch (_) { /* ignore */ }
   }
   function collapseKey(sectionId) {
-    return "mygather:" + REPORT_ID + ":collapse:" + sectionId;
+    // v2: top-level sections now default to collapsed. Bumping the
+    // namespace invalidates any "open" entries left over from v1
+    // reports of the same capture so the new default is honoured.
+    return "mygather:v2:" + REPORT_ID + ":collapse:" + sectionId;
   }
   function mysqladminSelectionKey() {
     return "mygather:" + REPORT_ID + ":mysqladmin:selected";
