@@ -103,26 +103,43 @@ func TestTopGolden(t *testing.T) {
 	// NOT len(Samples). Using len(Samples) as the divisor would
 	// contradict F7 and silently re-classify the ranking here.
 	avgs := make([]float64, len(data.Top3ByAverage))
+	pids := make([]int, len(data.Top3ByAverage))
 	for i, ps := range data.Top3ByAverage {
 		var sum float64
 		for _, s := range ps.CPU.Samples {
 			sum += s.Measurements["cpu_percent"]
 		}
 		avgs[i] = sum / float64(batchCount)
+		pids[i] = ps.PID
 	}
-	for i := 1; i < len(avgs); i++ {
-		if avgs[i-1] < avgs[i] {
-			t.Errorf("Top3ByAverage not sorted by average desc: idx %d avg=%.4f < idx %d avg=%.4f",
-				i-1, avgs[i-1], i, avgs[i])
-		}
-		if avgs[i-1] == avgs[i] {
-			// Tiebreaker: higher PID first (data-model.md).
-			if data.Top3ByAverage[i-1].PID < data.Top3ByAverage[i].PID {
-				t.Errorf("Top3ByAverage tie at avg=%.4f resolved to lower PID first: idx %d PID=%d < idx %d PID=%d",
-					avgs[i], i-1, data.Top3ByAverage[i-1].PID, i, data.Top3ByAverage[i].PID)
+	// Factor the "desc by avg + PID-desc tiebreak" assertion so we can
+	// exercise it against both (a) the fixture-derived Top3 and (b) a
+	// deterministic synthetic slice that forces an equal-average tie.
+	// Floating-point averages from a real fixture rarely compare equal;
+	// without the synthetic case the tie branch is effectively dead
+	// code and a tiebreaker regression would not fail this test.
+	assertSortedByAverageWithPIDTiebreak := func(name string, avgs []float64, pids []int) {
+		t.Helper()
+		for i := 1; i < len(avgs); i++ {
+			if avgs[i-1] < avgs[i] {
+				t.Errorf("%s not sorted by average desc: idx %d avg=%.4f < idx %d avg=%.4f",
+					name, i-1, avgs[i-1], i, avgs[i])
+			}
+			if avgs[i-1] == avgs[i] && pids[i-1] < pids[i] {
+				t.Errorf("%s tie at avg=%.4f resolved to lower PID first: idx %d PID=%d < idx %d PID=%d",
+					name, avgs[i], i-1, pids[i-1], i, pids[i])
 			}
 		}
 	}
+	assertSortedByAverageWithPIDTiebreak("Top3ByAverage", avgs, pids)
+	// Synthetic tie: pins the "higher PID first" contract
+	// deterministically so this test does not rely on the fixture
+	// happening to produce an exact floating-point tie.
+	assertSortedByAverageWithPIDTiebreak(
+		"Top3ByAverage synthetic tie",
+		[]float64{10, 10, 9},
+		[]int{200, 100, 50},
+	)
 
 	// Single-file parse MUST NOT emit multi-snapshot boundaries. The
 	// render layer owns concatenation (same ownership line as iostat

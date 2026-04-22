@@ -338,11 +338,12 @@ type VmstatData struct {
 	// MetricSeries slot: the parser's per-row map lookup returns
 	// float64's zero-value for the missing key, so every MetricSeries
 	// ends up with the same sample count as the number of parsed data
-	// rows. The canonical Metric name is still set, and the renderer
-	// can surface a per-column absence via the parser's Diagnostic
-	// stream rather than relying on a zero-length Samples slice. When
-	// multiple Snapshots contribute (spec FR-018) each Series.Samples
-	// is the concatenation of per-Snapshot samples in Snapshot order.
+	// rows. The canonical Metric name is still set. Column absence is
+	// otherwise silent in the parsed data model: the parser does NOT
+	// emit a Diagnostic for a missing column today and does NOT
+	// produce a zero-length Samples slice. When multiple Snapshots
+	// contribute (spec FR-018) each Series.Samples is the
+	// concatenation of per-Snapshot samples in Snapshot order.
 	Series []MetricSeries
 
 	// SnapshotBoundaries lists the sample indexes at which a new

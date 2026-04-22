@@ -276,11 +276,12 @@ Invariants:
   zero-substitutes the missing value per row, so every MetricSeries
   ends up with the same sample count as the number of parsed data
   rows. The canonical Metric name is always set so the renderer can
-  keep a stable legend, and a per-column absence surfaces through the
-  parser's Diagnostic stream rather than via a zero-length Samples
-  slice. No committed fixture exercises a missing column today; the
-  contract is pinned by `parse/vmstat_test.go`'s length-equality
-  invariant.
+  keep a stable legend, and a per-column absence is represented by
+  those zero-substituted samples — the parser does NOT emit a
+  diagnostic and does NOT produce a zero-length Samples slice for
+  missing columns today. No committed fixture exercises a missing
+  column; the contract is pinned by `parse/vmstat_test.go`'s
+  length-equality invariant.
 - `SnapshotBoundaries` indexes into `Series[0].Samples` — the primary
   timestamp axis the renderer uses. Same semantics as
   IostatData.SnapshotBoundaries.
