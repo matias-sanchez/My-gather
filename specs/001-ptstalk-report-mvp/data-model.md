@@ -186,13 +186,23 @@ Invariants:
 - `Devices` sorted alphabetically by `Device`.
 - For any given `Device`, `Utilization.Samples` and `AvgQueueSize.Samples`
   cover the same set of timestamps (per iostat's design).
-- `SnapshotBoundaries` indexes into the first sorted device's
-  `Utilization.Samples` slice (the primary timestamp axis the renderer
-  uses). Always includes `0`. For multi-Snapshot collections
-  (spec FR-018) the merger at `render.concatIostat` concatenates
-  samples across Snapshots and records a boundary at each Snapshot's
-  first sample index. The renderer draws a vertical boundary marker
-  at each corresponding timestamp (FR-030).
+- **All `DeviceSeries` in a merged `IostatData` share a single
+  timestamp axis.** Within a single-Snapshot payload every device
+  has matched-length samples by construction (pt-stalk's iostat
+  reports every device at the same intervals within one file). In
+  the multi-Snapshot case, `render.concatIostat` pads devices that
+  were absent in some Snapshots: each absent-Snapshot sample has a
+  valid `Timestamp` from that Snapshot's axis and a `NaN`
+  `Measurements["util_percent"]` / `["avgqu_sz"]` value. The chart
+  payload serialises NaN as JSON `null` so uPlot draws a visible
+  gap rather than a misaligned series.
+- `SnapshotBoundaries` indexes into the shared axis (equivalently,
+  into any sorted device's `Utilization.Samples` slice — every
+  device is aligned to the same length). Always includes `0`. For
+  multi-Snapshot collections (spec FR-018) the merger at
+  `render.concatIostat` records a boundary at each Snapshot's first
+  sample index. The renderer draws a vertical boundary marker at
+  each corresponding timestamp (FR-030).
 
 ### `TopData`
 

@@ -129,13 +129,31 @@ func TestReportIDStability(t *testing.T) {
 	}
 }
 
-// twoSnapshotCollection builds a Collection with two Snapshots, each
-// carrying a minimal -iostat / -vmstat / -processlist / -mysqladmin
-// payload with distinct timestamps, so every time-series collector
-// exercises the concat-across-snapshots path (T054 / FR-018 / FR-030).
+// twoSnapshotCollection builds a Collection with two Snapshots,
+// each carrying a minimal payload for every time-series collector
+// (-iostat / -top / -vmstat / -processlist / -mysqladmin) with
+// distinct timestamps, so every concat-across-Snapshots path
+// (T054 / FR-018 / FR-030) is exercised end-to-end through Render.
 func twoSnapshotCollection() *model.Collection {
 	ts := func(sec int) time.Time {
 		return time.Date(2026, 4, 21, 16, 52, 11+sec, 0, time.UTC)
+	}
+
+	top := func(tsOffset int) *model.TopData {
+		mkCPUSeries := func(base float64) model.MetricSeries {
+			return model.MetricSeries{Metric: "cpu_percent", Unit: "%", Subject: "pid=1", Samples: []model.Sample{
+				{Timestamp: ts(tsOffset), Measurements: map[string]float64{"cpu_percent": base}},
+				{Timestamp: ts(tsOffset + 1), Measurements: map[string]float64{"cpu_percent": base + 1}},
+			}}
+		}
+		return &model.TopData{
+			ProcessSamples: []model.ProcessSample{
+				{Timestamp: ts(tsOffset), PID: 1, Command: "mysqld", CPUPercent: 75},
+				{Timestamp: ts(tsOffset + 1), PID: 1, Command: "mysqld", CPUPercent: 76},
+			},
+			Top3ByAverage: []model.ProcessSeries{{PID: 1, Command: "mysqld", CPU: mkCPUSeries(75)}},
+			SnapshotBoundaries: []int{0},
+		}
 	}
 
 	iostat := func(tsOffset int) *model.IostatData {
@@ -200,6 +218,7 @@ func twoSnapshotCollection() *model.Collection {
 			Prefix:    prefix,
 			SourceFiles: map[model.Suffix]*model.SourceFile{
 				model.SuffixIostat:      {Suffix: model.SuffixIostat, Parsed: iostat(tsOffset)},
+				model.SuffixTop:         {Suffix: model.SuffixTop, Parsed: top(tsOffset)},
 				model.SuffixVmstat:      {Suffix: model.SuffixVmstat, Parsed: vmstat(tsOffset)},
 				model.SuffixProcesslist: {Suffix: model.SuffixProcesslist, Parsed: processlist(tsOffset)},
 				model.SuffixMysqladmin:  {Suffix: model.SuffixMysqladmin, Parsed: mysqladmin(tsOffset, mysqlBase)},
@@ -214,18 +233,14 @@ func twoSnapshotCollection() *model.Collection {
 	}
 }
 
-// TestMultiSnapshotMergerRecordsBoundaries: FR-018 / T054 — every
-// time-series collector that spans more than one Snapshot MUST carry
-// SnapshotBoundaries on the merged *Data struct, with the cumulative
-// start index of each Snapshot in the concatenated stream.
-func TestMultiSnapshotMergerRecordsBoundaries(t *testing.T) {
+// TestTwoSnapshotRenderSmokeTest: FR-018 / T054 — the render
+// pipeline accepts a Collection with two Snapshots carrying every
+// time-series collector and produces non-empty output without
+// error. This is the sanity-check sibling of
+// TestChartPayloadBoundaryShape (the structural-assertion test
+// below).
+func TestTwoSnapshotRenderSmokeTest(t *testing.T) {
 	c := twoSnapshotCollection()
-	// Build is package-private in render; exercise it through Render
-	// and by inspecting the Report envelope via CanonicalReportID-free
-	// helpers. The simpler path: render and verify the embedded JSON
-	// payload carries the boundaries. That round-trip is covered by
-	// TestChartPayloadExportsSnapshotBoundaries; here we just confirm
-	// the full pipeline accepts multi-Snapshot input without error.
 	var buf bytes.Buffer
 	opts := render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}
 	if err := render.Render(&buf, c, opts); err != nil {
@@ -236,11 +251,13 @@ func TestMultiSnapshotMergerRecordsBoundaries(t *testing.T) {
 	}
 }
 
-// TestChartPayloadExportsSnapshotBoundaries: FR-018 / FR-030 / T054 —
-// the embedded JSON chart payload for every time-series subview MUST
-// expose its `snapshotBoundaries` field so app.js can draw the
-// vertical boundary markers.
-func TestChartPayloadExportsSnapshotBoundaries(t *testing.T) {
+// TestChartPayloadBoundaryShape: FR-018 / FR-030 / T054 — the
+// embedded JSON chart payload for every time-series subview MUST
+// expose `snapshotBoundaries` with the cumulative-start index of
+// each Snapshot in the merged stream. For twoSnapshotCollection
+// (2 samples in each of 2 Snapshots) every time-series chart MUST
+// report `"snapshotBoundaries":[0,2]`.
+func TestChartPayloadBoundaryShape(t *testing.T) {
 	c := twoSnapshotCollection()
 	var buf bytes.Buffer
 	opts := render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}
@@ -249,20 +266,6 @@ func TestChartPayloadExportsSnapshotBoundaries(t *testing.T) {
 	}
 	out := buf.String()
 
-	// The chart payload is embedded as a JSON island. We only need to
-	// verify it mentions snapshotBoundaries; a full JSON parse would
-	// tie the test to the exact payload shape, which is orthogonal.
-	mustContain := []string{
-		`"snapshotBoundaries"`, // at least one occurrence
-	}
-	for _, s := range mustContain {
-		if !strings.Contains(out, s) {
-			t.Errorf("rendered output missing %q — every time-series chart payload MUST carry snapshotBoundaries per FR-018", s)
-		}
-	}
-
-	// More specifically, assert boundaries appear within the chart
-	// payload block (not, say, only inside a comment).
 	payloadIdx := strings.Index(out, `id="report-data"`)
 	if payloadIdx == -1 {
 		t.Fatalf("no embedded report-data payload found")
@@ -272,8 +275,86 @@ func TestChartPayloadExportsSnapshotBoundaries(t *testing.T) {
 		t.Fatalf("unterminated report-data payload")
 	}
 	payload := out[payloadIdx : payloadIdx+payloadEnd]
-	if !strings.Contains(payload, `"snapshotBoundaries"`) {
-		t.Errorf("report-data payload does not expose snapshotBoundaries; app.js cannot draw boundary markers")
+
+	// Every time-series chart must expose the [0,2] boundary shape
+	// for this fixture. Counting occurrences rather than checking
+	// specific positions avoids coupling the test to the JSON
+	// encoder's key-ordering.
+	want := `"snapshotBoundaries":[0,2]`
+	got := strings.Count(payload, want)
+	if got < 5 {
+		t.Errorf("expected at least 5 time-series charts to expose %q (iostat, top, vmstat, processlist, mysqladmin); got %d occurrences", want, got)
+	}
+}
+
+// TestIostatDevicesAlignedAfterMerge: T054 / FR-018 — after
+// concatIostat, every DeviceSeries in the merged IostatData has the
+// same sample count as the primary (first-sorted) device, even when
+// device sets differ across Snapshots. Guards against the
+// "primary device absent in a later Snapshot" correctness bug
+// Copilot P1 / Codex P1 flagged on PR #3 round 1: uPlot requires
+// all series to match the x-axis length, and the chart payload
+// treats `Devices[0].Utilization.Samples` as authoritative.
+func TestIostatDevicesAlignedAfterMerge(t *testing.T) {
+	ts := func(sec int) time.Time {
+		return time.Date(2026, 4, 21, 16, 52, 11+sec, 0, time.UTC)
+	}
+	mkSnap := func(prefix string, tsOffset int, deviceNames ...string) *model.Snapshot {
+		devices := make([]model.DeviceSeries, 0, len(deviceNames))
+		for _, n := range deviceNames {
+			devices = append(devices, model.DeviceSeries{
+				Device: n,
+				Utilization: model.MetricSeries{Metric: "util_percent", Unit: "%", Subject: n, Samples: []model.Sample{
+					{Timestamp: ts(tsOffset), Measurements: map[string]float64{"util_percent": 10}},
+					{Timestamp: ts(tsOffset + 1), Measurements: map[string]float64{"util_percent": 11}},
+				}},
+				AvgQueueSize: model.MetricSeries{Metric: "avgqu_sz", Unit: "count", Subject: n, Samples: []model.Sample{
+					{Timestamp: ts(tsOffset), Measurements: map[string]float64{"avgqu_sz": 0.5}},
+					{Timestamp: ts(tsOffset + 1), Measurements: map[string]float64{"avgqu_sz": 0.6}},
+				}},
+			})
+		}
+		return &model.Snapshot{
+			Timestamp: ts(tsOffset),
+			Prefix:    prefix,
+			SourceFiles: map[model.Suffix]*model.SourceFile{
+				model.SuffixIostat: {Suffix: model.SuffixIostat, Parsed: &model.IostatData{Devices: devices, SnapshotBoundaries: []int{0}}},
+			},
+		}
+	}
+	// Snap1 has only sdb; Snap2 has only sda. The merged output's
+	// primary-by-name is "sda" (alphabetical), which is ABSENT in
+	// snap1 — the exact shape of the regression the reviewers
+	// flagged. A buggy concat would emit boundaries [0,0] because
+	// cumulative only advanced when the primary device was in the
+	// current Snapshot.
+	c := &model.Collection{
+		RootPath:  "/tmp/example",
+		Hostname:  "example-db-01",
+		Snapshots: []*model.Snapshot{mkSnap("snap1", 0, "sdb"), mkSnap("snap2", 30, "sda")},
+	}
+	var buf bytes.Buffer
+	opts := render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}
+	if err := render.Render(&buf, c, opts); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	out := buf.String()
+	payloadIdx := strings.Index(out, `id="report-data"`)
+	payloadEnd := strings.Index(out[payloadIdx:], "</script>")
+	payload := out[payloadIdx : payloadIdx+payloadEnd]
+
+	// iostat boundaries advance to 2 even though the primary device
+	// (sda) was absent in snap1.
+	if !strings.Contains(payload, `"snapshotBoundaries":[0,2]`) {
+		t.Errorf("iostat boundaries do not advance when the primary device is absent in the first Snapshot; the payload must carry [0,2] for this 2×2 fixture. Payload excerpt: %s", sliceAround(payload, "snapshotBoundaries", 80))
+	}
+	// Absent-Snapshot samples are NaN-padded → JSON null in the
+	// payload. With two devices × two Snapshots × two metrics
+	// (util_percent, avgqu_sz) and half the cells absent, we expect
+	// a healthy count of nulls. A too-low count means alignment
+	// regressed.
+	if strings.Count(payload, `null`) < 4 {
+		t.Errorf("expected at least 4 NaN-padded null values in iostat payload when device sets diverge across Snapshots; payload excerpt: %s", sliceAround(payload, "sda", 120))
 	}
 }
 

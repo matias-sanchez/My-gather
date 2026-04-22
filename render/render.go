@@ -263,17 +263,26 @@ func buildOSSection(c *model.Collection) *model.OSSection {
 	return sec
 }
 
-// concatIostat merges multiple per-Snapshot *IostatData into one by
-// concatenating each device's Utilization and AvgQueueSize samples in
-// input order. The union of device names is preserved; a device absent
-// from a given input simply contributes no samples for that Snapshot's
-// window. SnapshotBoundaries indexes into the first sorted-by-name
-// device's Utilization.Samples slice, which is the primary timestamp
-// axis the renderer uses.
+// concatIostat merges multiple per-Snapshot *IostatData into one.
+//
+// All merged DeviceSeries share a **single, unified timestamp axis**:
+// for each Snapshot, the per-Snapshot axis is taken from that
+// Snapshot's first DeviceSeries (pt-stalk emits all devices at the
+// same intervals within one -iostat file, so any device's timestamps
+// represent the whole Snapshot). Across the global union of device
+// names, a device absent from a given Snapshot gets NaN-padded
+// samples at each axis timestamp so every device ends up with the
+// same total sample count; uPlot requires matched-length series on
+// a shared x-axis, and the chart payload treats
+// `Devices[0].Utilization.Samples` as authoritative.
+//
+// SnapshotBoundaries indexes into that shared axis — equivalently,
+// into any merged DeviceSeries' samples, since all of them are
+// aligned to the same length.
 func concatIostat(ins []*model.IostatData) *model.IostatData {
 	nonNil := ins[:0]
 	for _, d := range ins {
-		if d != nil && len(d.Devices) > 0 {
+		if d != nil && len(d.Devices) > 0 && len(d.Devices[0].Utilization.Samples) > 0 {
 			nonNil = append(nonNil, d)
 		}
 	}
@@ -302,21 +311,44 @@ func concatIostat(ins []*model.IostatData) *model.IostatData {
 		}
 	}
 
-	primary := names[0]
 	boundaries := make([]int, 0, len(nonNil))
 	cumulative := 0
 	for _, d := range nonNil {
 		boundaries = append(boundaries, cumulative)
-		primaryContribution := 0
-		for _, dev := range d.Devices {
-			m := devices[dev.Device]
-			m.Utilization.Samples = append(m.Utilization.Samples, dev.Utilization.Samples...)
-			m.AvgQueueSize.Samples = append(m.AvgQueueSize.Samples, dev.AvgQueueSize.Samples...)
-			if dev.Device == primary {
-				primaryContribution = len(dev.Utilization.Samples)
+		// Per-Snapshot axis: take the first device's timestamps in
+		// that Snapshot (all devices in one -iostat file share the
+		// same sample grid).
+		axis := d.Devices[0].Utilization.Samples
+		// Quick-lookup per-Snapshot device map so we can pad the
+		// absent-devices path without a linear scan per timestamp.
+		snapDevices := make(map[string]*model.DeviceSeries, len(d.Devices))
+		for i := range d.Devices {
+			snapDevices[d.Devices[i].Device] = &d.Devices[i]
+		}
+		for _, n := range names {
+			m := devices[n]
+			src, present := snapDevices[n]
+			if present {
+				m.Utilization.Samples = append(m.Utilization.Samples, src.Utilization.Samples...)
+				m.AvgQueueSize.Samples = append(m.AvgQueueSize.Samples, src.AvgQueueSize.Samples...)
+				continue
+			}
+			// Absent in this Snapshot: pad with NaN samples whose
+			// timestamps match the Snapshot's axis. The chart
+			// payload will surface these as JSON null so uPlot
+			// draws a visible gap at those positions.
+			for _, a := range axis {
+				m.Utilization.Samples = append(m.Utilization.Samples, model.Sample{
+					Timestamp:    a.Timestamp,
+					Measurements: map[string]float64{"util_percent": math.NaN()},
+				})
+				m.AvgQueueSize.Samples = append(m.AvgQueueSize.Samples, model.Sample{
+					Timestamp:    a.Timestamp,
+					Measurements: map[string]float64{"avgqu_sz": math.NaN()},
+				})
 			}
 		}
-		cumulative += primaryContribution
+		cumulative += len(axis)
 	}
 
 	out := &model.IostatData{SnapshotBoundaries: boundaries}
@@ -562,11 +594,15 @@ func buildDBSection(c *model.Collection) *model.DBSection {
 
 // concatMysqladmin merges multiple per-Snapshot *MysqladminData onto
 // a single time axis. Counters reset at each Snapshot boundary per
-// FR-030: the first post-boundary sample's delta is NaN and an Info
-// diagnostic is emitted in the audit (the Diagnostic itself is
-// attached to the merged data's note stream; Discover-time diagnostics
-// already exist on the individual SourceFile records). Gauges just
-// concat raw values.
+// FR-030: the first post-boundary sample's delta is NaN. Gauges just
+// concat their raw values.
+//
+// This function does NOT emit model.Diagnostic records itself; any
+// Info-severity diagnostic about the boundary is already attached to
+// the relevant SourceFile by the parser at Discover time (the parser
+// exposes `ResetForNewSnapshot` for callers that feed a concatenated
+// stream; single-file parses record their own boundary info), so
+// surfacing it twice would violate FR-038's no-duplication rule.
 //
 // SnapshotBoundaries indexes into the merged Timestamps slice — the
 // primary timestamp axis the renderer uses.
@@ -1180,14 +1216,26 @@ func iostatChartPayload(d *model.IostatData) map[string]any {
 	if len(d.Devices) == 0 {
 		return nil
 	}
-	// Use the first device's timestamps as the x-axis.
+	// Use the first device's timestamps as the x-axis. After
+	// concatIostat, every DeviceSeries is aligned to this same axis
+	// (NaN-padded for Snapshots where a device was absent), so every
+	// per-device `values` slice below has the same length as
+	// `timestamps`.
 	timestamps := chartTimestamps(d.Devices[0].Utilization.Samples)
 	var series []map[string]any
-	// Emit %util for every device first, then avgqu-sz.
+	// Emit %util for every device first, then avgqu-sz. NaN values
+	// (from the concat NaN-padding path) are serialised as JSON
+	// `null` so uPlot draws a visible gap — json.Marshal rejects
+	// raw NaN floats.
 	for _, dev := range d.Devices {
-		vals := make([]float64, len(dev.Utilization.Samples))
+		vals := make([]any, len(dev.Utilization.Samples))
 		for i, s := range dev.Utilization.Samples {
-			vals[i] = s.Measurements["util_percent"]
+			v := s.Measurements["util_percent"]
+			if math.IsNaN(v) {
+				vals[i] = nil
+			} else {
+				vals[i] = v
+			}
 		}
 		series = append(series, map[string]any{
 			"label":  dev.Device + " %util",
@@ -1195,9 +1243,14 @@ func iostatChartPayload(d *model.IostatData) map[string]any {
 		})
 	}
 	for _, dev := range d.Devices {
-		vals := make([]float64, len(dev.AvgQueueSize.Samples))
+		vals := make([]any, len(dev.AvgQueueSize.Samples))
 		for i, s := range dev.AvgQueueSize.Samples {
-			vals[i] = s.Measurements["avgqu_sz"]
+			v := s.Measurements["avgqu_sz"]
+			if math.IsNaN(v) {
+				vals[i] = nil
+			} else {
+				vals[i] = v
+			}
 		}
 		series = append(series, map[string]any{
 			"label":  dev.Device + " aqu-sz",

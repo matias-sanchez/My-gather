@@ -192,15 +192,21 @@
   //
   // Every time-series chart payload carries `snapshotBoundaries`: a
   // list of sample indexes at which a new pt-stalk Snapshot's first
-  // sample sits in the concatenated time axis. When the collection
-  // has more than one Snapshot this hook paints a dashed vertical
-  // line at each boundary's timestamp so a viewer reading the report
-  // sees where one Snapshot ends and the next begins. When the
-  // collection has a single Snapshot the list is [0] and no line is
-  // drawn (0 maps to the left edge of the plot and carries no signal).
-  function drawSnapshotBoundaries(u) {
-    var boundaries = u.__snapshotBoundaries;
-    var timestamps = u.__boundaryTimestamps;
+  // sample sits in the concatenated time axis. This helper paints a
+  // dashed vertical line at each boundary's timestamp so a viewer
+  // reading the report sees where one Snapshot ends and the next
+  // begins. When the collection has a single Snapshot the list is
+  // [0] and no line is drawn (0 maps to the left edge of the plot
+  // and carries no signal).
+  //
+  // Boundary data MUST be bound via a closure (see
+  // `makeBoundaryDrawHook` below) rather than read from
+  // `plot.__*` fields, because uPlot performs its initial render
+  // synchronously inside `new uPlot(...)` — including the
+  // `drawAxes` hook — before the caller has a chance to attach
+  // per-instance data on the returned plot object. Closure-bound
+  // data is available at first paint.
+  function drawSnapshotBoundariesWith(u, boundaries, timestamps) {
     if (!Array.isArray(boundaries) || !Array.isArray(timestamps)) return;
     if (boundaries.length <= 1) return; // single-Snapshot case
 
@@ -229,17 +235,18 @@
     ctx.restore();
   }
 
-  // attachBoundaryMarkers stashes the chart's boundary data on the
-  // uPlot instance so drawSnapshotBoundaries can reach it from the
-  // `draw` hook (uPlot passes only the instance to hooks). Call this
-  // once per chart from its render* function, AFTER the uPlot instance
-  // is constructed and the data is known.
-  function attachBoundaryMarkers(plot, boundaries, timestamps) {
-    plot.__snapshotBoundaries = Array.isArray(boundaries) ? boundaries : [];
-    plot.__boundaryTimestamps = Array.isArray(timestamps) ? timestamps : [];
+  // makeBoundaryDrawHook returns a uPlot `drawAxes` hook closed over
+  // the chart's snapshot-boundary data. The returned function is the
+  // value uPlot invokes on every draw (including the synchronous
+  // first draw inside `new uPlot(...)`), so boundary markers are
+  // visible from the first paint without a follow-up redraw.
+  function makeBoundaryDrawHook(boundaries, timestamps) {
+    var b = Array.isArray(boundaries) ? boundaries : [];
+    var t = Array.isArray(timestamps) ? timestamps : [];
+    return function (u) { drawSnapshotBoundariesWith(u, b, t); };
   }
 
-  function basePlotOpts(width, height, labelSeries, unit) {
+  function basePlotOpts(width, height, labelSeries, unit, boundaries, timestamps) {
     return {
       width: width,
       height: height,
@@ -280,7 +287,10 @@
         // drawAxes fires after uPlot renders axes/grid but before
         // data points — perfect layer for boundary markers: they
         // live on top of the grid and under the plotted series.
-        drawAxes: [drawSnapshotBoundaries],
+        // The hook closes over `boundaries` + `timestamps` via
+        // makeBoundaryDrawHook so the very first synchronous draw
+        // (inside `new uPlot(...)`) already has the data it needs.
+        drawAxes: [makeBoundaryDrawHook(boundaries, timestamps)],
       },
     };
   }
@@ -519,9 +529,8 @@
       })
     );
     var values = [data.timestamps.slice()].concat(data.series.map(function (s) { return s.values; }));
-    var opts = basePlotOpts(width, 260, series, unit);
+    var opts = basePlotOpts(width, 260, series, unit, data.snapshotBoundaries, data.timestamps);
     var plot = new uPlot(opts, values, el);
-    attachBoundaryMarkers(plot, data.snapshotBoundaries, data.timestamps);
     registerChart(plot, el, opts);
     mountLegend(el, series, plot);
   }
@@ -584,9 +593,8 @@
       }));
       var values = [data.timestamps.slice()].concat(rows);
       var w = measureChartWidth(el);
-      var opts = basePlotOpts(w, 260, series, unit);
+      var opts = basePlotOpts(w, 260, series, unit, data.snapshotBoundaries, data.timestamps);
       plot = new uPlot(opts, values, el);
-      attachBoundaryMarkers(plot, data.snapshotBoundaries, data.timestamps);
       registerChart(plot, el, opts);
       mountLegend(el, series, plot);
       legendEl = el.nextSibling;
@@ -989,14 +997,16 @@
       });
       var width = measureChartWidth(el);
       // No rotated y-axis label — the chart's heading carries the unit.
-      var opts = basePlotOpts(width, 300, series, "");
+      //
+      // Boundaries are indexes into the UN-truncated
+      // `data.timestamps` (server-side FR-018 / FR-030 semantics);
+      // we pass the un-truncated timestamps so the boundary-draw
+      // hook can look up wall-clock times directly. Any boundary
+      // whose timestamp is outside the plot's visible x-range
+      // (e.g. the column-0 boundary when the chart truncates
+      // tStart = 1) is skipped silently by the hook's bounds check.
+      var opts = basePlotOpts(width, 300, series, "", data.snapshotBoundaries, data.timestamps);
       chart = new uPlot(opts, values, el);
-      // Boundaries are indexes into the UN-truncated data.timestamps
-      // (server-side FR-018 / FR-030 semantics). We pass the
-      // un-truncated timestamps so the hook can look up boundary
-      // wall-clock times directly; any boundary whose timestamp is
-      // outside the plot's visible x-range is skipped by the hook.
-      attachBoundaryMarkers(chart, data.snapshotBoundaries, data.timestamps);
       registerChart(chart, el, opts);
       mountLegend(el, series, chart);
     }
