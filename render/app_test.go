@@ -24,7 +24,8 @@ import (
 //
 //   - checks for the Cmd OR Ctrl modifier (`metaKey || ctrlKey`);
 //   - checks the `key` property against `"\\"` (backslash, which in
-//     a JS string literal is written `"\\\\"`);
+//     a JS string literal is written `"\\"` — two source characters
+//     for one backslash);
 //   - calls `preventDefault()` so the browser's default action for
 //     the combo (navigate back in some UAs) does not fire;
 //   - toggles the nav-hidden state (asserted indirectly via the
@@ -70,74 +71,45 @@ func TestKeyboardShortcutWiring(t *testing.T) {
 	}
 
 	// The previous checks are token-level: each token can live
-	// anywhere in the file. Tighten by requiring that the FR-036
-	// moving parts co-locate inside a single keydown handler body:
-	// the modifier check, the backslash-key check, preventDefault(),
-	// AND a `"nav-hidden"` class interaction must all live in the
-	// SAME callback. File-wide token checks would miss a regression
-	// that leaves (e.g.) preventDefault elsewhere in the file but
-	// drops it from the shortcut handler.
+	// anywhere in the file. Tighten by requiring that EVERY FR-036
+	// moving part lives inside the SAME handler body, AND that that
+	// handler is bound to `document.addEventListener(...)` — not to
+	// a narrower scope like a section-local element (which would
+	// miss keydown events on children that stop propagation).
 	//
-	// A co-location failure typically means the FR-036 handler was
-	// split across two functions, which breaks behaviour because
-	// preventDefault runs on a different event object than the
-	// toggle logic — or the toggle was removed entirely while the
-	// string `"nav-hidden"` still appears somewhere else (e.g. a
-	// tests-only export). The per-handler scan catches both shapes.
+	// Consolidating the handler-content check and the document-scope
+	// check into a single per-handler scan is the test's strongest
+	// assertion: a refactor that accidentally moves the shortcut
+	// logic onto a non-document listener while leaving an unrelated
+	// `document.addEventListener("keydown")` near a `nav-hidden`
+	// reference would have passed an earlier split-check version of
+	// this test. With the unified scan, the same regression fails
+	// here — the only way past is one document-bound handler that
+	// carries all four FR-036 content invariants inside its body.
 	//
 	// Accept either callback shape — `function (…) { … }` or an
 	// arrow `(…) => { … }` — so a behaviour-preserving refactor to
 	// arrow syntax (or single-quoted event names) doesn't false-fail
 	// this test. Both forms still enclose a `{ … }` body which the
-	// regex captures via one-level brace nesting.
-	handlerRE := regexp.MustCompile(`addEventListener\(\s*["']keydown["']\s*,\s*(?:function\s*\([^)]*\)|\([^)]*\)\s*=>)\s*\{([^{}]|\{[^{}]*\})*\}`)
-	handlers := handlerRE.FindAllString(js, -1)
-	if len(handlers) == 0 {
-		t.Fatalf("no keydown addEventListener handler bodies extracted from app.js (accepted shapes: function-expression or arrow)")
+	// regex captures via one-level brace nesting (enough for the
+	// shipped handler's single nested `if` block).
+	docHandlerRE := regexp.MustCompile(`document\.addEventListener\(\s*["']keydown["']\s*,\s*(?:function\s*\([^)]*\)|\([^)]*\)\s*=>)\s*\{([^{}]|\{[^{}]*\})*\}`)
+	docHandlers := docHandlerRE.FindAllString(js, -1)
+	if len(docHandlers) == 0 {
+		t.Fatalf("no `document.addEventListener(\"keydown\", …)` handler bodies extracted from app.js (accepted shapes: function-expression or arrow, single or double quotes); FR-036 requires a document-level listener")
 	}
-	coLocated := false
-	for _, body := range handlers {
+	wired := false
+	for _, body := range docHandlers {
 		hasMod := regexp.MustCompile(`metaKey\s*\|\|\s*[a-zA-Z_.$]*ctrlKey|ctrlKey\s*\|\|\s*[a-zA-Z_.$]*metaKey`).MatchString(body)
 		hasBackslash := regexp.MustCompile(`key\s*===\s*"\\\\"`).MatchString(body)
 		hasPreventDefault := regexp.MustCompile(`\bpreventDefault\s*\(\s*\)`).MatchString(body)
 		hasNavHidden := strings.Contains(body, `"nav-hidden"`) || strings.Contains(body, `'nav-hidden'`)
 		if hasMod && hasBackslash && hasPreventDefault && hasNavHidden {
-			coLocated = true
+			wired = true
 			break
 		}
 	}
-	if !coLocated {
-		t.Errorf("no single keydown handler in app.js carries the (meta||ctrl) modifier check, the backslash-key check, preventDefault(), AND a \"nav-hidden\" class interaction; FR-036 requires all of them in the same callback")
+	if !wired {
+		t.Errorf("no `document.addEventListener(\"keydown\", …)` handler in app.js carries ALL of: (meta||ctrl) modifier check, backslash-key check, preventDefault(), and a \"nav-hidden\" class interaction inside the same callback body. FR-036 requires all four invariants and document-level scope on a single handler.")
 	}
-
-	// Belt-and-suspenders: the handler must be bound to
-	// `document.addEventListener`, not a narrower scope such as a
-	// specific section. A body-scoped keydown listener would miss
-	// keyboard events when the focus is on a child element that
-	// stops propagation. Scan the raw source for any
-	// `document.addEventListener(<quote>keydown<quote>` binding —
-	// accepting either quote style so a behaviour-preserving
-	// single-quote refactor doesn't false-fail — and require ONE
-	// such binding to live reasonably close to a `nav-hidden`
-	// reference (500-char window — wide enough to absorb additional
-	// comments or `var` declarations a future refactor might insert,
-	// tight enough to fail if the handler lives in a completely
-	// unrelated part of the file).
-	docBindRE := regexp.MustCompile(`document\.addEventListener\(\s*["']keydown["']`)
-	binds := docBindRE.FindAllStringIndex(js, -1)
-	if len(binds) == 0 {
-		t.Errorf("no `document.addEventListener(\"keydown\", …)` (or single-quoted equivalent) binding found in app.js; FR-036 expects a document-level listener")
-		return
-	}
-	for _, loc := range binds {
-		end := loc[0] + 500
-		if end > len(js) {
-			end = len(js)
-		}
-		window := js[loc[0]:end]
-		if strings.Contains(window, `"nav-hidden"`) || strings.Contains(window, `'nav-hidden'`) {
-			return // found the FR-036 handler bound to document
-		}
-	}
-	t.Errorf("no document-level keydown handler in app.js sits within 500 chars of a `nav-hidden` class reference; FR-036 expects the shortcut to toggle the nav rail via the document-level listener")
 }

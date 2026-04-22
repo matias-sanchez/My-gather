@@ -342,8 +342,8 @@ func stringSliceEqualsIgnoringOrder(a, b []string) bool {
 //     in full, including `Deltas[v][0]` which for counters holds the
 //     raw initial value (per pt-mext semantics + our classifier).
 //
-// This test drives a synthetic fixture with three counters and
-// asserts both halves:
+// This test drives a synthetic fixture with four counters plus one
+// gauge and asserts both halves:
 //
 //   1. `defaultVisible` is a subset of `variables` and contains only
 //      counter names (no gauge, no "*_initial"-style pseudo entry).

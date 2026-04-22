@@ -153,10 +153,11 @@ func TestDefaultsBadges(t *testing.T) {
 	modified := model.VariableEntry{Name: "max_connections", Value: "4096"}
 	unknown := model.VariableEntry{Name: "DefinitelyNotAMySQLVariable_2026", Value: "42"}
 
-	// Build a minimal Collection with one Snapshot carrying a
-	// VariablesData whose Entries list includes all three rows.
-	// max_connections appears twice under different snapshots so the
-	// "default" + "modified" halves of the classifier both exercise.
+	// Build a minimal Collection with two Snapshots: the first
+	// carries VariablesData entries for atDefault + unknown, and the
+	// second carries modified. `max_connections` therefore appears in
+	// different snapshots so the "default" + "modified" classifier
+	// paths both exercise.
 	c := &model.Collection{
 		RootPath: "/tmp/fr033",
 		Hostname: "example-db-01",
