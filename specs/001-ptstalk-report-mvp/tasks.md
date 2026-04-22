@@ -187,7 +187,7 @@ All tasks write paths relative to the repository root.
 - [ ] T067 [US4] `parse/mysqladmin_test.go::TestVariableDrift`: parse a fixture where a counter appears in snapshot 1 but not snapshot 2; assert `NaN` in the drift slot + one `Diagnostic(Severity=Warning)` (research R8 improvement C). **Sequential with T064-T066** (same file).
 - [ ] T068 [P] [US4] `parse/processlist_test.go::TestProcesslistGolden`: parse `-processlist` fixture; compare against golden; assert `Other`-bucketing for unknown/empty states (FR-017).
 - [ ] T069 [P] [US4] `render/db_test.go::TestDBGoldenHTML`: render DB section; compare against golden HTML.
-- [ ] T070 [P] [US4] `render/db_test.go::TestMysqladminToggleMarkup`: assert the rendered DB section has a `<select multiple>` (or equivalent multi-select) whose options match `MysqladminData.VariableNames`; assert each chart series `<canvas>` element has the matching `data-variable-name` attribute.
+- [ ] T070 [P] [US4] `render/db_test.go::TestMysqladminToggleMarkup`: assert the rendered DB section's mysqladmin toggle UI (custom dropdown per the current implementation; any keyboard-accessible multi-select per FR-015) exposes a variable-name option for every entry in `MysqladminData.VariableNames`; assert each chart-series marker carries a `data-variable-name` attribute matching the counter name; assert the toggle operates without network access (no `src` / `href` on interactive controls).
 
 ### Implementation for User Story 4
 
@@ -195,7 +195,7 @@ All tasks write paths relative to the repository root.
 - [x] T072 [P] [US4] Implement `parse/mysqladmin.go` — the pt-mext port. Functions: `parseMysqladmin(r io.Reader, format FormatVersion) (*model.MysqladminData, []model.Diagnostic)`. Line-by-line state machine: skip non-`|` lines; `Variable_name` row → sample boundary → increment `col`; data row → `delta = value - previous[name]`, `previous[name] = value`. Floating-point aggregates (research R8 improvement B). Counter-vs-gauge classification via a hardcoded allowlist keyed by `FormatVersion`. Snapshot-boundary reset (FR-030 / R8 improvement D) applied when the caller passes concatenated input — implemented as an explicit `ResetPrevious()` call at boundaries by the Discover glue, not guessed from the stream.
 - [x] T073 [P] [US4] Implement `parse/processlist.go` — pipe-delimited multi-sample parser; thread-state bucketing; `Other` fallback for empty/unknown states.
 - [x] T074 [US4] Wire all three DB parsers into `parse.Discover`. `-mysqladmin` specifically: when the same collector exists across multiple snapshots, build a single merged `MysqladminData` by concatenating samples and calling `ResetPrevious()` at each boundary; populate `SnapshotBoundaries`.
-- [x] T075 [US4] Implement `render/templates/db.html.tmpl` — four subview blocks: InnoDB side-by-side scalar callouts per snapshot; mysqladmin interactive chart with `<select multiple>` toggle; processlist thread-state stacked chart; vertical boundary markers on all time-series charts (FR-030 renderer requirement). Nav rail extended with four Level=2 NavEntries under "Database Usage".
+- [x] T075 [US4] Implement `render/templates/db.html.tmpl` — four subview blocks: InnoDB side-by-side scalar callouts per snapshot; mysqladmin interactive chart with a keyboard-accessible toggle UI (current implementation: custom dropdown + category chips per FR-034; any UI satisfying FR-015 is acceptable); processlist thread-state stacked chart. Nav rail extended with four Level=2 NavEntries under "Database Usage". (Vertical snapshot-boundary markers across all time-series charts are required by FR-018 / FR-030 but are tracked separately by T054; T075 does not block on them.)
 - [x] T076 [US4] Implement the mysqladmin interactive toggle in `render/assets/app.js` — multi-select change event toggles chart series visibility; persist selected-variables state via the same `Report.ReportID`-keyed `localStorage` scheme as collapse state (research R9).
 - [x] T077 [US4] Implement uPlot chart wiring for DB subviews in `render/assets/app.js` (extension of T053): processlist stacked chart, mysqladmin multi-series chart with boundary markers.
 
@@ -226,6 +226,24 @@ All tasks write paths relative to the repository root.
 - [ ] T094 [P] `tests/integration/degraded_test.go::TestOneMissingCollector` (F31 — SC-004 gap): parametrised test iterating over the seven supported suffixes. For each: copy `testdata/example2/` to a tempdir, delete the one matching file from both snapshots, run the CLI, assert exit 0 and the output HTML contains the other six sections' data AND a "data not available" banner naming the missing file. Seven subtests, one task.
 - [ ] T095 `cmd/my-gather/main_test.go::TestVersionOutput` (FR-023 coverage): invoke `--version` with `ldflags` injecting a fixed semver + commit + build date; assert the five-line format from `contracts/cli.md`. **Sequential with T030/T031/T088/T091/T092/T093** (same file).
 - [ ] T096 [P] `render/os_test.go::TestOSSubviewAnchors` (SC-005 coverage): render a report with all three OS parsers wired; assert the HTML contains `id="os-disk-util"`, `id="os-top-cpu"`, and `id="os-vmstat"` anchors, all three nested inside the `id="os-usage"` section element, and all three reachable from an entry in `Report.Navigation`.
+
+### New feature coverage (FR-033–FR-037)
+
+These tasks exist for features already shipping in `render/assets/`.
+The implementation tasks are marked `[x]` where the feature is live in
+the binary; the paired test tasks remain `[ ]` until the test file is
+written.
+
+- [x] T097 [US3] Implement MySQL-defaults modified-vs-default badging for the Variables section (FR-033, research R10): commit `render/assets/mysql-defaults.json` with the curated MySQL 8.0 subset + `_source`/`_updated` metadata header, embed it via `//go:embed`, and surface "modified" / "default" badges in `render/templates/variables.html.tmpl`. Variables absent from the defaults map render without a badge.
+- [ ] T098 [P] [US3] `render/variables_test.go::TestDefaultsBadges` (FR-033 coverage): render a Variables section whose fixture includes at least one variable at its documented default, one with a modified value, and one absent from the defaults map; assert exactly the first two carry the "default"/"modified" badge markup and the third carries neither.
+- [x] T099 [US4] Implement mysqladmin category taxonomy (FR-034, research R11): commit `render/assets/mysqladmin-categories.json` with the curated category list and matcher/member rules + provenance header, embed it, compute `variable → category` in `render/render.go::classifyMysqladminCategory`, and emit `categories` + `categoryMap` into the embedded JSON payload consumed by `render/assets/app.js`.
+- [ ] T100 [P] [US4] `render/db_test.go::TestMysqladminCategoryMap` (FR-034 coverage): parse a fixture with variables that hit a matcher, variables overridden by `members`, and variables excluded via `exclude_matchers`; assert the rendered HTML embeds a `categoryMap` whose entries reproduce the declared resolution rules and an ordered `categories` list matching the declared order in `mysqladmin-categories.json`.
+- [x] T101 [US4] Implement default-hidden initial-tally column in the counter-deltas chart (FR-035, research R12): populate `defaultVisible` in the embedded JSON payload excluding column 0's raw tally view; respect `defaultVisible` in `render/assets/app.js`'s initial series selection; preserve the raw tally inside `MysqladminData` so pt-mext parity (research R8) and the `TestPtMextFixture` golden (T065) continue to hold.
+- [ ] T102 [P] [US4] `render/db_test.go::TestDefaultVisibleSkipsInitialTally` (FR-035 coverage): render a DB section whose mysqladmin fixture has N counter variables; assert `defaultVisible` in the embedded JSON contains the counter series but does NOT include the raw-initial-tally view for any counter; assert `MysqladminData.Deltas[v][0]` is still present in the embedded payload so the UI can restore it on request.
+- [x] T103 [US1] Implement the Cmd/Ctrl+`\` nav toggle shortcut (FR-036) in `render/assets/app.js`: bind the accelerator to show/hide the nav rail; degrade silently when `window.addEventListener` is unavailable.
+- [ ] T104 [P] [US1] `render/app_test.go::TestKeyboardShortcutWiring` (FR-036 coverage): load `render/assets/app.js` under the same JS harness used by T034; dispatch a synthetic `KeyboardEvent({ key: "\\", metaKey: true })`; assert the nav rail element's visibility attribute / class flipped.
+- [x] T105 Implement `@media print` stylesheet (FR-037) in `render/assets/app.css`: expand every `<details>`, suppress the sticky nav rail, flatten to a single scrolling column, keep the verbatim-passthrough banner visible at the top of the first printed page.
+- [ ] T106 [P] `tests/integration/print_test.go::TestPrintStylesheetPresent` (FR-037 coverage): render a report; parse the embedded `<style>` block(s); assert one rule is scoped under `@media print` and that it contains selectors for `details`, `.nav-rail` (or equivalent), and page-layout overrides.
 
 ---
 
@@ -313,9 +331,9 @@ Serial execution by user-story priority: T001 → T095 (95 tasks total). Treat e
 
 ---
 
-## Reconciliation Summary (2026-04-21)
+## Reconciliation Summary (last updated 2026-04-22)
 
-A mechanical pass compared every task ID against the real repository state. `57 / 96 tasks (≈59 %) carry an [x] mark`. The pipeline builds, `go test ./...` is green, and the binary produces a deterministic three-section report against `testdata/example2/`. What remains is almost entirely **missing tests** plus a handful of documentation and coverage gaps — no core implementation is unshipped.
+A mechanical pass compared every task ID against the real repository state. `62 / 106 tasks (≈58 %) carry an [x] mark`. The pipeline builds, `go test ./...` is green, and the binary produces a deterministic three-section report against `testdata/example2/`. The 2026-04-22 spec-drift reconciliation added five new shipping features captured as FR-033–FR-037 (MySQL-defaults badging, mysqladmin category chooser, default-hidden initial-tally column, Cmd/Ctrl+`\` nav shortcut, `@media print` stylesheet); their implementation tasks (T097, T099, T101, T103, T105) are already live in `render/assets/` and `render/render.go` and carry `[x]` marks, while their paired tests (T098, T100, T102, T104, T106) are tracked `[ ]`. What remains across the whole feature is almost entirely **missing tests** plus a handful of documentation and coverage gaps — no core implementation is unshipped.
 
 ### What's done
 

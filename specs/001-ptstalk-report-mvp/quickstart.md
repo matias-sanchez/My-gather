@@ -29,7 +29,9 @@ go test ./...
 All tests must pass. This exercises:
 
 - Per-collector parser unit tests using fixtures under
-  `testdata/example1/` and `testdata/example2/`.
+  `testdata/example2/` (v1 ships a single curated example; a second
+  fixture set under `testdata/example1/` for the preceding pt-stalk
+  version, per FR-024, is a reserved slot — see tasks.md T019).
 - Golden-file round-trips (parse → model → render → compare to
   `testdata/golden/*.html` byte-for-byte).
 - A determinism test that renders twice and asserts the outputs
@@ -69,8 +71,11 @@ and `darwin/{amd64,arm64}`, writing artifacts to `dist/`.
 
 ## Run against a reference collection
 
+Always put flags before the positional `<input-dir>` — the Go stdlib
+`flag` package stops at the first non-flag token:
+
 ```bash
-./bin/my-gather _references/examples/example2 -o /tmp/report.html
+./bin/my-gather --out /tmp/report.html testdata/example2
 open /tmp/report.html      # macOS; on Linux use: xdg-open /tmp/report.html
 ```
 
@@ -82,7 +87,7 @@ identically.
 With `-v` for progress:
 
 ```bash
-./bin/my-gather _references/examples/example2 -o /tmp/report.html -v
+./bin/my-gather -v --out /tmp/report.html testdata/example2
 ```
 
 ## Exit codes to expect
@@ -96,8 +101,8 @@ With `-v` for progress:
 ## Verifying determinism locally
 
 ```bash
-./bin/my-gather _references/examples/example2 -o /tmp/a.html --overwrite
-./bin/my-gather _references/examples/example2 -o /tmp/b.html --overwrite
+./bin/my-gather --out /tmp/a.html --overwrite testdata/example2
+./bin/my-gather --out /tmp/b.html --overwrite testdata/example2
 diff /tmp/a.html /tmp/b.html
 ```
 

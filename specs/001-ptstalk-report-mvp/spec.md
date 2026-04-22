@@ -265,8 +265,11 @@ matching their respective golden files.
   vs. sampled values vs. cumulative counters).
 - **FR-015**: The Database Usage section MUST include an interactive
   time-series chart derived from the `-mysqladmin` file that plots
-  per-sample deltas (not absolute counter values) and allows the user to
-  toggle which variables are plotted.
+  per-sample deltas (not absolute counter values) and allows the user
+  to toggle which variables are plotted. The toggle UI is
+  implementation-agnostic (native `<select multiple>`, a custom
+  dropdown, checkbox list, etc. all satisfy this requirement) provided
+  it is keyboard-accessible and operates entirely offline.
 - **FR-016**: The interactive toggle UI for FR-015 MUST operate entirely
   on the embedded data with no network access at view-time.
 - **FR-017**: The Database Usage section MUST include a time-series chart
@@ -408,6 +411,56 @@ matching their respective golden files.
   panel: default collapsed, per Principle XI ("prioritise signal over
   clutter"). When JavaScript is disabled, all sections MUST be
   rendered expanded — collapse is progressive enhancement only.
+
+- **FR-033**: The Variables section MUST visually distinguish each
+  global variable whose value differs from its MySQL 8.0 compiled-in
+  default from variables that are at their default. The default set
+  is a hand-curated embedded subset of the MySQL 8.0 Server System
+  Variable Reference shipped inside the binary at
+  `render/assets/mysql-defaults.json` (no network fetch at build or
+  run time). Variables absent from the embedded defaults map MUST
+  render without either "modified" or "default" badge — the absence
+  is explicit, not a guess. The defaults map is a reviewed, versioned
+  asset; staleness against upstream MySQL is acceptable at v1 and is
+  documented in the asset header.
+
+- **FR-034**: The `-mysqladmin` toggle UI (FR-015) MUST group
+  variables into named categories (e.g., "Buffer Pool", "Redo Log",
+  "Pending I/O", "InnoDB Reads", "InnoDB Writes", "Replication",
+  "Query Cache", "Temporary Tables", …) to support one-click "load
+  this category of counters" workflows during incident triage. The
+  category taxonomy is a reviewed, embedded asset
+  (`render/assets/mysqladmin-categories.json`) shipped inside the
+  binary; no network call. The category for each variable is
+  computed at render time from `matchers` / `exclude_matchers` prefix
+  rules plus explicit `members` overrides, and emitted into the
+  embedded JSON payload so the client-side toggle can render the
+  category chooser without round-tripping to any server.
+
+- **FR-035**: The `-mysqladmin` chart's first column (the initial
+  raw-tally slot that the pt-mext algorithm stores as the first
+  "delta" per research R8) MUST NOT be plotted by default in the
+  Database Usage counter-deltas chart — its magnitude would crush
+  the Y-axis scale of real per-sample deltas to a visually-unreadable
+  flatline. The underlying model (`MysqladminData.Deltas[v][0]`)
+  still carries the raw initial tally as captured by the parser
+  (Principle IV / test fixture parity with pt-mext is preserved);
+  only the chart's default series selection drops column 0. A
+  viewer MAY explicitly opt into showing the initial tally via the
+  toggle UI.
+
+- **FR-036**: The report's navigation index (FR-031) MUST support
+  keyboard-driven show/hide via a platform-idiomatic accelerator
+  (Cmd/Ctrl + `\`). The accelerator is progressive enhancement only
+  — with JavaScript disabled the nav remains visible via the
+  `<noscript>` / degraded-anchor-list path declared in FR-031.
+
+- **FR-037**: The rendered HTML MUST include a `@media print`
+  stylesheet that expands every `<details>` section, suppresses the
+  sticky nav rail, and lays out the content as a single scrolling
+  column so an engineer can print the report for offline review or
+  attach a PDF to a customer ticket without losing any collapsed
+  content.
 
 ### Key Entities
 

@@ -69,7 +69,10 @@ III) — they surface in the report and as stderr warnings.
 
 Per spec FR-027:
 
-- **Silent on success** by default. No progress chatter.
+- **Silent on clean success** by default — when no parser diagnostics
+  are recorded and `-v` is not set, stderr is empty. On a successful
+  run that nonetheless produces warnings or errors from partial
+  sources, stderr still carries those diagnostic lines.
 - **Parser diagnostics** (model `Diagnostic` with `Severity >=
   SeverityWarning`) are mirrored to stderr as they are emitted, one per
   line, in the format:
@@ -79,14 +82,22 @@ Per spec FR-027:
   [error]   <source-file-basename>: <message>
   ```
 
-- **`-v` / `--verbose`** additionally emits per-file progress lines:
+- **`-v` / `--verbose`** additionally emits one progress line per
+  high-level step, each prefixed with a bracketed tag. The minimum
+  contract is:
 
   ```text
-  [parse]  2026_04_21_16_52_11-iostat (1.2 MB) -> 3421 samples, 8 devices
-  [parse]  2026_04_21_16_52_11-top    (812 kB) -> 148 batches, 94 processes
-  [render] writing report.html
-  [done]   42,117 bytes written in 3.8s
+  [parse]  reading <absolute-input-path>
+  [parse]  <N> snapshot(s), <T> MB total
+  [render] writing <absolute-output-path>
+  [done]   <bytes> bytes written in <seconds>s
   ```
+
+  Richer per-file progress (for example, `[parse] 2026_04_21_16_52_11-iostat
+  (1.2 MB) -> 3421 samples, 8 devices`) is a permitted enhancement but
+  is not required by this contract. Any concrete format MUST keep
+  the `[tag] …` prefix shape so tests and operators can parse the
+  stream deterministically.
 
 - **Structural errors** (exit codes 2–6 and 70) always write exactly
   one line to stderr regardless of verbosity.
