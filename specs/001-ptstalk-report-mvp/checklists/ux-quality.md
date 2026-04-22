@@ -69,7 +69,8 @@ Applies to every rendered surface, independent of section.
 - [ ] **H-3** `GeneratedAt` timestamp is labelled as the sole
       non-deterministic field and rendered via the shared formatter.
 - [ ] **H-4** Tool version (`my-gather <semver>`) + short commit
-      visible in the header or footer.
+      visible in the header or footer (`render/templates/report.html.tmpl`;
+      no standalone FR — FR-023 governs the CLI counterpart).
 - [ ] **H-5** No duplicated metadata between header, footer, and
       section breadcrumbs.
 
@@ -96,8 +97,9 @@ Applies to every rendered surface, independent of section.
       labelled; peak-utilization device identifiable at a glance.
 - [ ] **OS-2** Top CPU processes chart (`-top`): each plotted
       process identified by both PID and command, not just PID.
-- [ ] **OS-3** vmstat saturation chart (`-vmstat`): 13-series
-      legend is readable without overlapping the plot; a collapsed-
+- [ ] **OS-3** vmstat saturation chart (`-vmstat`): all 13 declared
+      series (`VmstatData.Series` in `data-model.md`) are
+      legend-labelled without overlapping the plot; a collapsed-
       legend affordance exists when screen real estate is tight.
 - [ ] **OS-4** Three subview anchors — `os-disk-util`, `os-top-cpu`,
       `os-vmstat` — present and nav-linked (SC-005 / T096).
@@ -155,8 +157,8 @@ Applies to every rendered surface, independent of section.
 - [ ] **PD-2** Each diagnostic row: file basename, location (line
       or byte), severity (Warning or Error), single-line message.
 - [ ] **PD-3** `SeverityInfo` diagnostics appear here and only here
-      (FR-027 / R8 D snapshot-boundary info is the canonical
-      example).
+      (FR-027 / FR-030; snapshot-boundary info from R8 improvement D
+      is the canonical example).
 - [ ] **PD-4** Warnings / Errors are colour-coded AND prefixed with
       a word (`[warning]` / `[error]`) — not colour-only (G-7).
 - [ ] **PD-5** No diagnostic is duplicated from a subview banner
@@ -187,7 +189,9 @@ Run the full audit against each of these fixture classes.
       against `testdata/example2/` passes all § 0–7 items.
 - [ ] **R-M** Maximum collection (approaching 1 GB / 200 MB per
       FR-025): axis labels not clipped; legend not overlapping plot;
-      no subview overflows its container.
+      no subview overflows its container. (The near-1 GB synthetic
+      fixture is built as part of T116; no pre-committed testdata
+      path exists for this class.)
 - [ ] **R-MS** Multi-snapshot collection (`testdata/example2/` has
       two): snapshot-scoped subviews show one block per snapshot;
       time-series subviews show vertical boundary markers.
@@ -207,9 +211,12 @@ Run the full audit against each of these fixture classes.
       for key values (e.g., a distinctive variable name, a specific
       PID) and confirm each appears in only one subview outside of
       the Parser Diagnostics panel.
-- [ ] **D-2** Any summary or overview widget (if present in a future
-      feature) sources from a canonical subview via anchor link; it
-      does NOT re-plot or re-tabulate the underlying data.
+- [ ] **D-2** No section introduces a summary or overview widget that
+      re-plots or re-tabulates data already present in another
+      section's canonical subview (confirm by scanning the rendered
+      HTML for any element that aggregates or repeats values from a
+      non-home source). When a widget is added in a future feature,
+      add a corresponding audit row to this section at that time.
 - [ ] **D-3** Cross-references between sections are navigation aids
       only (anchor links, `<a href="#sec-...">`), never duplicated
       data displays.
@@ -227,7 +234,7 @@ File path: `specs/001-ptstalk-report-mvp/ux-audits/<YYYY-MM-DD>-<label>.md`
 **Reviewed commit**: `<short-sha>`
 **Reference fixtures**: testdata/example2/, <synthetic-1-sample>, …
 **Browsers**: Chromium <v>, Firefox <v>, Safari <v>
-**Viewports**: 1440×900, 1920×1080, 375×667
+**Viewports**: 1440×900, 1920×1080, 375×667 (crash-check only — mobile UX out of scope per spec Assumptions)
 
 ## Results
 
