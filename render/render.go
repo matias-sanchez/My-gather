@@ -859,9 +859,7 @@ type reportView struct {
 	LogoDataURI     template.URL
 
 	AdvisorBadge   string
-	OSBadge        string
 	VariablesBadge string
-	DBBadge        string
 
 	// Advisor section payload.
 	Findings      []findingView
@@ -1014,9 +1012,6 @@ func buildView(r *model.Report, c *model.Collection) (*reportView, error) {
 			v.VmstatSummary = summariseVmstat(r.OSSection.Vmstat)
 		}
 	}
-	presentOS := boolToInt(v.HasIostat) + boolToInt(v.HasTop) + boolToInt(v.HasVmstat)
-	v.OSBadge = fmt.Sprintf("%d / 3 subviews", presentOS)
-
 	if r.VariablesSection != nil {
 		defaults := loadMySQLDefaults()
 		haveAny := false
@@ -1072,9 +1067,6 @@ func buildView(r *model.Report, c *model.Collection) (*reportView, error) {
 			v.MysqladminCount = len(r.DBSection.Mysqladmin.VariableNames)
 		}
 	}
-	presentDB := boolToInt(v.HasInnoDB) + boolToInt(v.HasMysqladmin) + boolToInt(v.HasProcesslist)
-	v.DBBadge = fmt.Sprintf("%d / 3 subviews", presentDB)
-
 	// Advisor: rule-based findings derived from the captured data.
 	fs := findings.Analyze(r)
 	v.Findings = buildFindingViews(fs)
@@ -1575,13 +1567,6 @@ func commaSetsEqual(a, b string) bool {
 		}
 	}
 	return true
-}
-
-func boolToInt(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
 }
 
 // --- Advisor / findings view helpers --------------------------------

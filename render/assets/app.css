@@ -232,7 +232,12 @@ body.nav-open .nav-backdrop {
   pointer-events: auto;
 }
 
-/* --- Drawer panel --- */
+/* --- Drawer panel ---
+   Opens with an iris-reveal: a circular clip-path centered on the logo
+   button (52 px in from the top-left corner, same as the button's
+   geometric center) expands to cover the whole drawer. On close it
+   collapses back into the logo, so the panel visually "pours out of"
+   and "retreats into" the button — one continuous object, not two. */
 nav.index {
   position: fixed;
   top: 0;
@@ -250,13 +255,15 @@ nav.index {
     inset -1px 0 0 color-mix(in srgb, var(--accent) 12%, transparent);
   overflow-y: auto;
   font-size: 13px;
-  transform: translateX(-108%);
-  transition: transform 320ms cubic-bezier(.22, 1, .36, 1),
+  clip-path: circle(0px at 52px 52px);
+  pointer-events: none;
+  transition: clip-path 480ms cubic-bezier(.22, 1, .36, 1),
               box-shadow 320ms ease;
-  will-change: transform;
+  will-change: clip-path;
 }
 body.nav-open nav.index {
-  transform: translateX(0);
+  clip-path: circle(200vmax at 52px 52px);
+  pointer-events: auto;
 }
 nav.index::-webkit-scrollbar { width: 8px; }
 nav.index::-webkit-scrollbar-thumb {
