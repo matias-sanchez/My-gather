@@ -1,0 +1,2437 @@
+{
+  "series": [
+    {
+      "Metric": "runqueue",
+      "Unit": "count",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "runqueue": 12
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "runqueue": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "runqueue": 4
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:44Z",
+          "Measurements": {
+            "runqueue": 5
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:45Z",
+          "Measurements": {
+            "runqueue": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:46Z",
+          "Measurements": {
+            "runqueue": 5
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:47Z",
+          "Measurements": {
+            "runqueue": 4
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:48Z",
+          "Measurements": {
+            "runqueue": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:49Z",
+          "Measurements": {
+            "runqueue": 17
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:50Z",
+          "Measurements": {
+            "runqueue": 4
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:51Z",
+          "Measurements": {
+            "runqueue": 3
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:52Z",
+          "Measurements": {
+            "runqueue": 10
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:53Z",
+          "Measurements": {
+            "runqueue": 17
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:54Z",
+          "Measurements": {
+            "runqueue": 4
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:55Z",
+          "Measurements": {
+            "runqueue": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:56Z",
+          "Measurements": {
+            "runqueue": 4
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:57Z",
+          "Measurements": {
+            "runqueue": 4
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:58Z",
+          "Measurements": {
+            "runqueue": 17
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:59Z",
+          "Measurements": {
+            "runqueue": 20
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:00Z",
+          "Measurements": {
+            "runqueue": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:01Z",
+          "Measurements": {
+            "runqueue": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:02Z",
+          "Measurements": {
+            "runqueue": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:03Z",
+          "Measurements": {
+            "runqueue": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:04Z",
+          "Measurements": {
+            "runqueue": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:05Z",
+          "Measurements": {
+            "runqueue": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:06Z",
+          "Measurements": {
+            "runqueue": 9
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:07Z",
+          "Measurements": {
+            "runqueue": 5
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:08Z",
+          "Measurements": {
+            "runqueue": 4
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:09Z",
+          "Measurements": {
+            "runqueue": 3
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:10Z",
+          "Measurements": {
+            "runqueue": 4
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "blocked",
+      "Unit": "count",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:44Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:45Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:46Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:47Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:48Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:49Z",
+          "Measurements": {
+            "blocked": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:50Z",
+          "Measurements": {
+            "blocked": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:51Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:52Z",
+          "Measurements": {
+            "blocked": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:53Z",
+          "Measurements": {
+            "blocked": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:54Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:55Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:56Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:57Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:58Z",
+          "Measurements": {
+            "blocked": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:59Z",
+          "Measurements": {
+            "blocked": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:00Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:01Z",
+          "Measurements": {
+            "blocked": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:02Z",
+          "Measurements": {
+            "blocked": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:03Z",
+          "Measurements": {
+            "blocked": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:04Z",
+          "Measurements": {
+            "blocked": 4
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:05Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:06Z",
+          "Measurements": {
+            "blocked": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:07Z",
+          "Measurements": {
+            "blocked": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:08Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:09Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:10Z",
+          "Measurements": {
+            "blocked": 1
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "free_kb",
+      "Unit": "kB",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "free_kb": 104588800
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "free_kb": 104555712
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "free_kb": 104574640
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:44Z",
+          "Measurements": {
+            "free_kb": 104532296
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:45Z",
+          "Measurements": {
+            "free_kb": 104628208
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:46Z",
+          "Measurements": {
+            "free_kb": 104554848
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:47Z",
+          "Measurements": {
+            "free_kb": 104470800
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:48Z",
+          "Measurements": {
+            "free_kb": 104523600
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:49Z",
+          "Measurements": {
+            "free_kb": 104434048
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:50Z",
+          "Measurements": {
+            "free_kb": 104378576
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:51Z",
+          "Measurements": {
+            "free_kb": 104461824
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:52Z",
+          "Measurements": {
+            "free_kb": 104455504
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:53Z",
+          "Measurements": {
+            "free_kb": 104468832
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:54Z",
+          "Measurements": {
+            "free_kb": 104525144
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:55Z",
+          "Measurements": {
+            "free_kb": 104498656
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:56Z",
+          "Measurements": {
+            "free_kb": 104467152
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:57Z",
+          "Measurements": {
+            "free_kb": 104408816
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:58Z",
+          "Measurements": {
+            "free_kb": 104417488
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:59Z",
+          "Measurements": {
+            "free_kb": 104395944
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:00Z",
+          "Measurements": {
+            "free_kb": 104399856
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:01Z",
+          "Measurements": {
+            "free_kb": 104357824
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:02Z",
+          "Measurements": {
+            "free_kb": 104394000
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:03Z",
+          "Measurements": {
+            "free_kb": 104375808
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:04Z",
+          "Measurements": {
+            "free_kb": 104457096
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:05Z",
+          "Measurements": {
+            "free_kb": 104443976
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:06Z",
+          "Measurements": {
+            "free_kb": 104386560
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:07Z",
+          "Measurements": {
+            "free_kb": 104448608
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:08Z",
+          "Measurements": {
+            "free_kb": 104482080
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:09Z",
+          "Measurements": {
+            "free_kb": 104315936
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:10Z",
+          "Measurements": {
+            "free_kb": 104317920
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "buff_kb",
+      "Unit": "kB",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:44Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:45Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:46Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:47Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:48Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:49Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:50Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:51Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:52Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:53Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:54Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:55Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:56Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:57Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:58Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:59Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:00Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:01Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:02Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:03Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:04Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:05Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:06Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:07Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:08Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:09Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:10Z",
+          "Measurements": {
+            "buff_kb": 10433708
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "cache_kb",
+      "Unit": "kB",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "cache_kb": 236728672
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "cache_kb": 236731536
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "cache_kb": 236735136
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:44Z",
+          "Measurements": {
+            "cache_kb": 236737472
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:45Z",
+          "Measurements": {
+            "cache_kb": 236738416
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:46Z",
+          "Measurements": {
+            "cache_kb": 236741056
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:47Z",
+          "Measurements": {
+            "cache_kb": 236742688
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:48Z",
+          "Measurements": {
+            "cache_kb": 236749904
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:49Z",
+          "Measurements": {
+            "cache_kb": 236750928
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:50Z",
+          "Measurements": {
+            "cache_kb": 236755168
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:51Z",
+          "Measurements": {
+            "cache_kb": 236758096
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:52Z",
+          "Measurements": {
+            "cache_kb": 236758816
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:53Z",
+          "Measurements": {
+            "cache_kb": 236759648
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:54Z",
+          "Measurements": {
+            "cache_kb": 236763872
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:55Z",
+          "Measurements": {
+            "cache_kb": 236771008
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:56Z",
+          "Measurements": {
+            "cache_kb": 236773504
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:57Z",
+          "Measurements": {
+            "cache_kb": 236777408
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:58Z",
+          "Measurements": {
+            "cache_kb": 236779328
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:59Z",
+          "Measurements": {
+            "cache_kb": 236781856
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:00Z",
+          "Measurements": {
+            "cache_kb": 236781504
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:01Z",
+          "Measurements": {
+            "cache_kb": 236784384
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:02Z",
+          "Measurements": {
+            "cache_kb": 236791584
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:03Z",
+          "Measurements": {
+            "cache_kb": 236793824
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:04Z",
+          "Measurements": {
+            "cache_kb": 236797600
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:05Z",
+          "Measurements": {
+            "cache_kb": 236800288
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:06Z",
+          "Measurements": {
+            "cache_kb": 236802592
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:07Z",
+          "Measurements": {
+            "cache_kb": 236802608
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:08Z",
+          "Measurements": {
+            "cache_kb": 236806144
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:09Z",
+          "Measurements": {
+            "cache_kb": 236813424
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:10Z",
+          "Measurements": {
+            "cache_kb": 236815712
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "swap_in",
+      "Unit": "kB/s",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:44Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:45Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:46Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:47Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:48Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:49Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:50Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:51Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:52Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:53Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:54Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:55Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:56Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:57Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:58Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:59Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:00Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:01Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:02Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:03Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:04Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:05Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:06Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:07Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:08Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:09Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:10Z",
+          "Measurements": {
+            "swap_in": 0
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "swap_out",
+      "Unit": "kB/s",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:44Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:45Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:46Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:47Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:48Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:49Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:50Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:51Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:52Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:53Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:54Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:55Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:56Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:57Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:58Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:59Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:00Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:01Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:02Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:03Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:04Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:05Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:06Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:07Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:08Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:09Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:10Z",
+          "Measurements": {
+            "swap_out": 0
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "io_in",
+      "Unit": "blocks/s",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "io_in": 5
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:44Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:45Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:46Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:47Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:48Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:49Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:50Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:51Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:52Z",
+          "Measurements": {
+            "io_in": 16
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:53Z",
+          "Measurements": {
+            "io_in": 32
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:54Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:55Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:56Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:57Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:58Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:59Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:00Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:01Z",
+          "Measurements": {
+            "io_in": 4
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:02Z",
+          "Measurements": {
+            "io_in": 12
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:03Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:04Z",
+          "Measurements": {
+            "io_in": 20
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:05Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:06Z",
+          "Measurements": {
+            "io_in": 28
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:07Z",
+          "Measurements": {
+            "io_in": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:08Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:09Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:10Z",
+          "Measurements": {
+            "io_in": 0
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "io_out",
+      "Unit": "blocks/s",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "io_out": 93
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "io_out": 43336
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "io_out": 54908
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:44Z",
+          "Measurements": {
+            "io_out": 49488
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:45Z",
+          "Measurements": {
+            "io_out": 78924
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:46Z",
+          "Measurements": {
+            "io_out": 57204
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:47Z",
+          "Measurements": {
+            "io_out": 32740
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:48Z",
+          "Measurements": {
+            "io_out": 106892
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:49Z",
+          "Measurements": {
+            "io_out": 55220
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:50Z",
+          "Measurements": {
+            "io_out": 43672
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:51Z",
+          "Measurements": {
+            "io_out": 117336
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:52Z",
+          "Measurements": {
+            "io_out": 62480
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:53Z",
+          "Measurements": {
+            "io_out": 80240
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:54Z",
+          "Measurements": {
+            "io_out": 225780
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:55Z",
+          "Measurements": {
+            "io_out": 98336
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:56Z",
+          "Measurements": {
+            "io_out": 37092
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:57Z",
+          "Measurements": {
+            "io_out": 52048
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:58Z",
+          "Measurements": {
+            "io_out": 55544
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:59Z",
+          "Measurements": {
+            "io_out": 78220
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:00Z",
+          "Measurements": {
+            "io_out": 60084
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:01Z",
+          "Measurements": {
+            "io_out": 59236
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:02Z",
+          "Measurements": {
+            "io_out": 82564
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:03Z",
+          "Measurements": {
+            "io_out": 44680
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:04Z",
+          "Measurements": {
+            "io_out": 95408
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:05Z",
+          "Measurements": {
+            "io_out": 83956
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:06Z",
+          "Measurements": {
+            "io_out": 63904
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:07Z",
+          "Measurements": {
+            "io_out": 170896
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:08Z",
+          "Measurements": {
+            "io_out": 146444
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:09Z",
+          "Measurements": {
+            "io_out": 66624
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:10Z",
+          "Measurements": {
+            "io_out": 60176
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "cpu_user",
+      "Unit": "%",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "cpu_user": 3
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "cpu_user": 4
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "cpu_user": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:44Z",
+          "Measurements": {
+            "cpu_user": 5
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:45Z",
+          "Measurements": {
+            "cpu_user": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:46Z",
+          "Measurements": {
+            "cpu_user": 4
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:47Z",
+          "Measurements": {
+            "cpu_user": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:48Z",
+          "Measurements": {
+            "cpu_user": 10
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:49Z",
+          "Measurements": {
+            "cpu_user": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:50Z",
+          "Measurements": {
+            "cpu_user": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:51Z",
+          "Measurements": {
+            "cpu_user": 10
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:52Z",
+          "Measurements": {
+            "cpu_user": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:53Z",
+          "Measurements": {
+            "cpu_user": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:54Z",
+          "Measurements": {
+            "cpu_user": 16
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:55Z",
+          "Measurements": {
+            "cpu_user": 10
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:56Z",
+          "Measurements": {
+            "cpu_user": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:57Z",
+          "Measurements": {
+            "cpu_user": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:58Z",
+          "Measurements": {
+            "cpu_user": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:59Z",
+          "Measurements": {
+            "cpu_user": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:00Z",
+          "Measurements": {
+            "cpu_user": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:01Z",
+          "Measurements": {
+            "cpu_user": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:02Z",
+          "Measurements": {
+            "cpu_user": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:03Z",
+          "Measurements": {
+            "cpu_user": 4
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:04Z",
+          "Measurements": {
+            "cpu_user": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:05Z",
+          "Measurements": {
+            "cpu_user": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:06Z",
+          "Measurements": {
+            "cpu_user": 5
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:07Z",
+          "Measurements": {
+            "cpu_user": 9
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:08Z",
+          "Measurements": {
+            "cpu_user": 9
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:09Z",
+          "Measurements": {
+            "cpu_user": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:10Z",
+          "Measurements": {
+            "cpu_user": 4
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "cpu_sys",
+      "Unit": "%",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "cpu_sys": 3
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "cpu_sys": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "cpu_sys": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:44Z",
+          "Measurements": {
+            "cpu_sys": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:45Z",
+          "Measurements": {
+            "cpu_sys": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:46Z",
+          "Measurements": {
+            "cpu_sys": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:47Z",
+          "Measurements": {
+            "cpu_sys": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:48Z",
+          "Measurements": {
+            "cpu_sys": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:49Z",
+          "Measurements": {
+            "cpu_sys": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:50Z",
+          "Measurements": {
+            "cpu_sys": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:51Z",
+          "Measurements": {
+            "cpu_sys": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:52Z",
+          "Measurements": {
+            "cpu_sys": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:53Z",
+          "Measurements": {
+            "cpu_sys": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:54Z",
+          "Measurements": {
+            "cpu_sys": 11
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:55Z",
+          "Measurements": {
+            "cpu_sys": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:56Z",
+          "Measurements": {
+            "cpu_sys": 6
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:57Z",
+          "Measurements": {
+            "cpu_sys": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:58Z",
+          "Measurements": {
+            "cpu_sys": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:59Z",
+          "Measurements": {
+            "cpu_sys": 10
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:00Z",
+          "Measurements": {
+            "cpu_sys": 9
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:01Z",
+          "Measurements": {
+            "cpu_sys": 10
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:02Z",
+          "Measurements": {
+            "cpu_sys": 9
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:03Z",
+          "Measurements": {
+            "cpu_sys": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:04Z",
+          "Measurements": {
+            "cpu_sys": 10
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:05Z",
+          "Measurements": {
+            "cpu_sys": 10
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:06Z",
+          "Measurements": {
+            "cpu_sys": 9
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:07Z",
+          "Measurements": {
+            "cpu_sys": 10
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:08Z",
+          "Measurements": {
+            "cpu_sys": 11
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:09Z",
+          "Measurements": {
+            "cpu_sys": 8
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:10Z",
+          "Measurements": {
+            "cpu_sys": 7
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "cpu_idle",
+      "Unit": "%",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "cpu_idle": 94
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "cpu_idle": 87
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "cpu_idle": 84
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:44Z",
+          "Measurements": {
+            "cpu_idle": 86
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:45Z",
+          "Measurements": {
+            "cpu_idle": 85
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:46Z",
+          "Measurements": {
+            "cpu_idle": 86
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:47Z",
+          "Measurements": {
+            "cpu_idle": 85
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:48Z",
+          "Measurements": {
+            "cpu_idle": 80
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:49Z",
+          "Measurements": {
+            "cpu_idle": 86
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:50Z",
+          "Measurements": {
+            "cpu_idle": 86
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:51Z",
+          "Measurements": {
+            "cpu_idle": 81
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:52Z",
+          "Measurements": {
+            "cpu_idle": 82
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:53Z",
+          "Measurements": {
+            "cpu_idle": 80
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:54Z",
+          "Measurements": {
+            "cpu_idle": 72
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:55Z",
+          "Measurements": {
+            "cpu_idle": 80
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:56Z",
+          "Measurements": {
+            "cpu_idle": 85
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:57Z",
+          "Measurements": {
+            "cpu_idle": 82
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:58Z",
+          "Measurements": {
+            "cpu_idle": 83
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:59Z",
+          "Measurements": {
+            "cpu_idle": 80
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:00Z",
+          "Measurements": {
+            "cpu_idle": 81
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:01Z",
+          "Measurements": {
+            "cpu_idle": 80
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:02Z",
+          "Measurements": {
+            "cpu_idle": 77
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:03Z",
+          "Measurements": {
+            "cpu_idle": 75
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:04Z",
+          "Measurements": {
+            "cpu_idle": 75
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:05Z",
+          "Measurements": {
+            "cpu_idle": 80
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:06Z",
+          "Measurements": {
+            "cpu_idle": 82
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:07Z",
+          "Measurements": {
+            "cpu_idle": 78
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:08Z",
+          "Measurements": {
+            "cpu_idle": 78
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:09Z",
+          "Measurements": {
+            "cpu_idle": 82
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:10Z",
+          "Measurements": {
+            "cpu_idle": 87
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "cpu_iowait",
+      "Unit": "%",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "cpu_iowait": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:44Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:45Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:46Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:47Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:48Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:49Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:50Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:51Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:52Z",
+          "Measurements": {
+            "cpu_iowait": 5
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:53Z",
+          "Measurements": {
+            "cpu_iowait": 4
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:54Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:55Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:56Z",
+          "Measurements": {
+            "cpu_iowait": 3
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:57Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:58Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:59Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:00Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:01Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:02Z",
+          "Measurements": {
+            "cpu_iowait": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:03Z",
+          "Measurements": {
+            "cpu_iowait": 13
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:04Z",
+          "Measurements": {
+            "cpu_iowait": 7
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:05Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:06Z",
+          "Measurements": {
+            "cpu_iowait": 3
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:07Z",
+          "Measurements": {
+            "cpu_iowait": 3
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:08Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:09Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:52:10Z",
+          "Measurements": {
+            "cpu_iowait": 2
+          }
+        }
+      ]
+    }
+  ],
+  "snapshotBoundaries": null,
+  "diagnostics": null
+}

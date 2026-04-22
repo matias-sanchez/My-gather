@@ -1,0 +1,2543 @@
+{
+  "processSamples": [
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 13983,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 13992,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 14016,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 14033,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 14034,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:42Z",
+      "PID": 14054,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 61
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 1
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 13983,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 13992,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 14016,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 14033,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 14034,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "PID": 14256,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 90
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 1.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 13983,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 13992,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 14016,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 14033,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 14034,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "PID": 14456,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 87.4
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 1
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 13983,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 13992,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 14016,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 14033,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 14034,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "PID": 14657,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 119
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 1
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 13983,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 13992,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 14016,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 14033,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 14034,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "PID": 14858,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 245.7
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 1.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 13983,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 13992,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 14016,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 14033,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 14034,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "PID": 15059,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 85.7
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 0.7
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 13983,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 13992,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 14016,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 14033,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 14034,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "PID": 15260,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 80.7
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 1.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 13983,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 13992,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 14016,
+      "Command": "mysqlad+",
+      "CPUPercent": 0.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 14033,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 14034,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "PID": 15461,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 124.7
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 1
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 13983,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 13992,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 14016,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 14033,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 14034,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "PID": 15663,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 221.9
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 1
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 13983,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 13992,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 14016,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 14033,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 14034,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "PID": 15864,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 69.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 1.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 16030,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 16056,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 16139,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 16146,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 16158,
+      "Command": "mysql",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "PID": 16159,
+      "Command": "grep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 87.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 16030,
+      "Command": "bash",
+      "CPUPercent": 1.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 16146,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 16168,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 16174,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 16185,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 16186,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 16355,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 16420,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:15Z",
+      "PID": 16424,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 93.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0.7
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 16030,
+      "Command": "bash",
+      "CPUPercent": 1
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 16146,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 16168,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 16174,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 16185,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 16186,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 16574,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 16639,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:18Z",
+      "PID": 16642,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 148.2
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 16030,
+      "Command": "bash",
+      "CPUPercent": 0.7
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 16146,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 16168,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 16174,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 16185,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 16186,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 16793,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 16860,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:21Z",
+      "PID": 16863,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 224.7
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 0.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 16030,
+      "Command": "bash",
+      "CPUPercent": 1.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 16146,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 16168,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 16174,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 16185,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 16186,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 17012,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 17077,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:24Z",
+      "PID": 17081,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 72
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 16030,
+      "Command": "bash",
+      "CPUPercent": 1
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 16146,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 16168,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 16174,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 16185,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 16186,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 17228,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 17295,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:27Z",
+      "PID": 17298,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 96.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 16030,
+      "Command": "bash",
+      "CPUPercent": 1.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 16146,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 16168,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 16174,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 16185,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 16186,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 17447,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 17512,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:30Z",
+      "PID": 17516,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 170
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 16030,
+      "Command": "bash",
+      "CPUPercent": 1
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 16146,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 16168,
+      "Command": "mysqlad+",
+      "CPUPercent": 0.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 16174,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 16185,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 16186,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 17692,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 17732,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:33Z",
+      "PID": 17736,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 262.1
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 16030,
+      "Command": "bash",
+      "CPUPercent": 1
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 16146,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 16168,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 16174,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 16185,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 16186,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 17923,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 17951,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:36Z",
+      "PID": 17955,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 1,
+      "Command": "systemd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 18,
+      "Command": "systemd+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 54,
+      "Command": "sshd",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 2669,
+      "Command": "sh",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 2670,
+      "Command": "percona+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPUPercent": 83.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 5620,
+      "Command": "bash",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 13587,
+      "Command": "sudo",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 13588,
+      "Command": "bash",
+      "CPUPercent": 0.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 13962,
+      "Command": "bash",
+      "CPUPercent": 0.3
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 14022,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 16030,
+      "Command": "bash",
+      "CPUPercent": 1
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 16146,
+      "Command": "tail",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 16168,
+      "Command": "mysqlad+",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 16174,
+      "Command": "top",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 16185,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 16186,
+      "Command": "vmstat",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 18144,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 18169,
+      "Command": "sleep",
+      "CPUPercent": 0
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:39Z",
+      "PID": 18173,
+      "Command": "sleep",
+      "CPUPercent": 0
+    }
+  ],
+  "top3ByAverage": [
+    {
+      "PID": 5555,
+      "Command": "mysqld",
+      "CPU": {
+        "Metric": "cpu_percent",
+        "Unit": "%",
+        "Subject": "pid=5555 mysqld",
+        "Samples": [
+          {
+            "Timestamp": "2026-04-21T16:51:42Z",
+            "Measurements": {
+              "cpu_percent": 0
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:51:45Z",
+            "Measurements": {
+              "cpu_percent": 61
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:51:48Z",
+            "Measurements": {
+              "cpu_percent": 90
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:51:51Z",
+            "Measurements": {
+              "cpu_percent": 87.4
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:51:54Z",
+            "Measurements": {
+              "cpu_percent": 119
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:51:57Z",
+            "Measurements": {
+              "cpu_percent": 245.7
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:00Z",
+            "Measurements": {
+              "cpu_percent": 85.7
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:03Z",
+            "Measurements": {
+              "cpu_percent": 80.7
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:06Z",
+            "Measurements": {
+              "cpu_percent": 124.7
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:09Z",
+            "Measurements": {
+              "cpu_percent": 221.9
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:12Z",
+            "Measurements": {
+              "cpu_percent": 69.3
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:15Z",
+            "Measurements": {
+              "cpu_percent": 87.3
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:18Z",
+            "Measurements": {
+              "cpu_percent": 93.3
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:21Z",
+            "Measurements": {
+              "cpu_percent": 148.2
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:24Z",
+            "Measurements": {
+              "cpu_percent": 224.7
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:27Z",
+            "Measurements": {
+              "cpu_percent": 72
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:30Z",
+            "Measurements": {
+              "cpu_percent": 96.3
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:33Z",
+            "Measurements": {
+              "cpu_percent": 170
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:36Z",
+            "Measurements": {
+              "cpu_percent": 262.1
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:39Z",
+            "Measurements": {
+              "cpu_percent": 83.3
+            }
+          }
+        ]
+      }
+    },
+    {
+      "PID": 13962,
+      "Command": "bash",
+      "CPU": {
+        "Metric": "cpu_percent",
+        "Unit": "%",
+        "Subject": "pid=13962 bash",
+        "Samples": [
+          {
+            "Timestamp": "2026-04-21T16:51:42Z",
+            "Measurements": {
+              "cpu_percent": 0
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:51:45Z",
+            "Measurements": {
+              "cpu_percent": 1
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:51:48Z",
+            "Measurements": {
+              "cpu_percent": 1.3
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:51:51Z",
+            "Measurements": {
+              "cpu_percent": 1
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:51:54Z",
+            "Measurements": {
+              "cpu_percent": 1
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:51:57Z",
+            "Measurements": {
+              "cpu_percent": 1.3
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:00Z",
+            "Measurements": {
+              "cpu_percent": 0.7
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:03Z",
+            "Measurements": {
+              "cpu_percent": 1.3
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:06Z",
+            "Measurements": {
+              "cpu_percent": 1
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:09Z",
+            "Measurements": {
+              "cpu_percent": 1
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:12Z",
+            "Measurements": {
+              "cpu_percent": 1.3
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:15Z",
+            "Measurements": {
+              "cpu_percent": 0
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:18Z",
+            "Measurements": {
+              "cpu_percent": 0
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:21Z",
+            "Measurements": {
+              "cpu_percent": 0
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:24Z",
+            "Measurements": {
+              "cpu_percent": 0.3
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:27Z",
+            "Measurements": {
+              "cpu_percent": 0
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:30Z",
+            "Measurements": {
+              "cpu_percent": 0
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:33Z",
+            "Measurements": {
+              "cpu_percent": 0
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:36Z",
+            "Measurements": {
+              "cpu_percent": 0
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:39Z",
+            "Measurements": {
+              "cpu_percent": 0.3
+            }
+          }
+        ]
+      }
+    },
+    {
+      "PID": 16030,
+      "Command": "bash",
+      "CPU": {
+        "Metric": "cpu_percent",
+        "Unit": "%",
+        "Subject": "pid=16030 bash",
+        "Samples": [
+          {
+            "Timestamp": "2026-04-21T16:52:12Z",
+            "Measurements": {
+              "cpu_percent": 0
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:15Z",
+            "Measurements": {
+              "cpu_percent": 1.3
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:18Z",
+            "Measurements": {
+              "cpu_percent": 1
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:21Z",
+            "Measurements": {
+              "cpu_percent": 0.7
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:24Z",
+            "Measurements": {
+              "cpu_percent": 1.3
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:27Z",
+            "Measurements": {
+              "cpu_percent": 1
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:30Z",
+            "Measurements": {
+              "cpu_percent": 1.3
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:33Z",
+            "Measurements": {
+              "cpu_percent": 1
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:36Z",
+            "Measurements": {
+              "cpu_percent": 1
+            }
+          },
+          {
+            "Timestamp": "2026-04-21T16:52:39Z",
+            "Measurements": {
+              "cpu_percent": 1
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "snapshotBoundaries": null,
+  "diagnostics": null
+}
