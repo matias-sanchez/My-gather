@@ -62,11 +62,12 @@ func TestProcesslistGolden(t *testing.T) {
 				nonOther[i-1], nonOther[i], i)
 		}
 	}
-	// Single-Snapshot parse → SnapshotBoundaries is [0] or empty;
-	// anything else hints at a parser-layer regression.
-	if len(data.SnapshotBoundaries) > 1 {
-		t.Errorf("single-file parse emitted %d boundaries; expected 0 or 1 (got %v)",
-			len(data.SnapshotBoundaries), data.SnapshotBoundaries)
+	// The parser never sets SnapshotBoundaries — that is the render
+	// layer's responsibility (concatProcesslist sets it during
+	// multi-Snapshot merging). A direct parse call must return nil.
+	if len(data.SnapshotBoundaries) != 0 {
+		t.Errorf("parseProcesslist must not set SnapshotBoundaries (render layer owns it); got %v",
+			data.SnapshotBoundaries)
 	}
 
 	got := goldens.MarshalDeterministic(t, struct {
