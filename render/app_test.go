@@ -60,7 +60,7 @@ func TestKeyboardShortcutWiring(t *testing.T) {
 	}{
 		{"addEventListener keydown", regexp.MustCompile(`addEventListener\(\s*["']keydown["']`)},
 		{"modifier check (Cmd or Ctrl)", regexp.MustCompile(`metaKey\s*\|\|\s*[a-zA-Z_.$]*ctrlKey|ctrlKey\s*\|\|\s*[a-zA-Z_.$]*metaKey`)},
-		{`backslash "\\" literal`, regexp.MustCompile(`key\s*===\s*"\\\\"`)},
+		{`backslash "\\" literal`, regexp.MustCompile(`key\s*===\s*(?:"\\\\"|'\\\\')`)},
 		{"preventDefault", regexp.MustCompile(`preventDefault\s*\(\)`)},
 		{"nav-hidden class toggle", regexp.MustCompile(`classList\.contains\(\s*["']nav-hidden["']\s*\)`)},
 	}
@@ -102,7 +102,7 @@ func TestKeyboardShortcutWiring(t *testing.T) {
 	wired := false
 	for _, body := range docHandlers {
 		hasMod := regexp.MustCompile(`metaKey\s*\|\|\s*[a-zA-Z_.$]*ctrlKey|ctrlKey\s*\|\|\s*[a-zA-Z_.$]*metaKey`).MatchString(body)
-		hasBackslash := regexp.MustCompile(`key\s*===\s*"\\\\"`).MatchString(body)
+		hasBackslash := regexp.MustCompile(`key\s*===\s*(?:"\\\\"|'\\\\')`).MatchString(body)
 		hasPreventDefault := regexp.MustCompile(`\bpreventDefault\s*\(\s*\)`).MatchString(body)
 		hasNavHidden := strings.Contains(body, `"nav-hidden"`) || strings.Contains(body, `'nav-hidden'`)
 		if hasMod && hasBackslash && hasPreventDefault && hasNavHidden {

@@ -80,47 +80,65 @@ func TestPrintStylesheetPresent(t *testing.T) {
 	}
 	combined := css.String()
 
-	// Invariant 1: one `@media print` rule present.
+	// Invariant 1: at least one `@media print` rule present.
 	mediaPrintRE := regexp.MustCompile(`@media\s+print\b`)
 	if !mediaPrintRE.MatchString(combined) {
 		t.Fatalf("no @media print rule found in any <style> block; FR-037 requires a print stylesheet")
 	}
 
-	// Invariants 2 + 3: locate the @media print body and assert it
-	// contains the required selectors. Using a brace-counting walker
-	// rather than a regex because the body contains nested rules
-	// and an opaque regex would either under-match or over-match.
-	start := mediaPrintRE.FindStringIndex(combined)
-	if start == nil {
-		t.Fatalf("regex match failed after presence check — should not happen")
-	}
-	// Advance to the opening brace of the media block.
-	openIdx := strings.Index(combined[start[1]:], "{")
-	if openIdx == -1 {
-		t.Fatalf("@media print declaration has no opening brace")
-	}
-	openIdx += start[1]
-	depth := 1
-	i := openIdx + 1
-	for i < len(combined) && depth > 0 {
-		switch combined[i] {
-		case '{':
-			depth++
-		case '}':
-			depth--
+	// Invariants 2 + 3: aggregate the bodies of EVERY `@media print`
+	// block and assert the required selectors appear somewhere in
+	// the union. Valid CSS allows print rules to be split across
+	// multiple `@media print` blocks (e.g. one for layout, one for
+	// typography); asserting against only the first block would
+	// false-fail on a harmless split refactor while the shipped
+	// contract is still honoured.
+	//
+	// Brace-counting walker (not a regex) because each body
+	// contains nested rules; an opaque `.*?` regex would either
+	// under- or over-match.
+	var aggregatedPrintBody strings.Builder
+	searchStart := 0
+	for {
+		locRel := mediaPrintRE.FindStringIndex(combined[searchStart:])
+		if locRel == nil {
+			break
 		}
-		i++
+		loc := []int{locRel[0] + searchStart, locRel[1] + searchStart}
+		openIdx := strings.Index(combined[loc[1]:], "{")
+		if openIdx == -1 {
+			t.Fatalf("@media print declaration at offset %d has no opening brace", loc[0])
+		}
+		openIdx += loc[1]
+		depth := 1
+		i := openIdx + 1
+		for i < len(combined) && depth > 0 {
+			switch combined[i] {
+			case '{':
+				depth++
+			case '}':
+				depth--
+			}
+			i++
+		}
+		if depth != 0 {
+			t.Fatalf("@media print block at offset %d is unterminated (depth=%d)", loc[0], depth)
+		}
+		// Append this block's body to the aggregate (with a
+		// separating newline so adjacent rules don't accidentally
+		// fuse into selectors that span block boundaries).
+		aggregatedPrintBody.WriteString(combined[openIdx+1 : i-1])
+		aggregatedPrintBody.WriteByte('\n')
+		searchStart = i
 	}
-	if depth != 0 {
-		t.Fatalf("@media print block is unterminated (depth=%d)", depth)
-	}
+
 	// Strip CSS block comments before running selector assertions.
 	// Without this, a `/* details > .body { display: block } */`
-	// comment inside the @media print block would satisfy a bare
+	// comment inside any @media print block would satisfy a bare
 	// `\bdetails\b` substring/word check, leaving a real stylesheet
 	// regression (e.g. the `details` rule deleted but a comment
 	// left behind) invisible to this test.
-	rawBody := combined[openIdx+1 : i-1]
+	rawBody := aggregatedPrintBody.String()
 	printBody := regexp.MustCompile(`(?s)/\*.*?\*/`).ReplaceAllString(rawBody, "")
 
 	// Selectors the shipped app.css emits inside @media print.
@@ -138,7 +156,7 @@ func TestPrintStylesheetPresent(t *testing.T) {
 	}
 	for _, sel := range requiredSelectors {
 		if !sel.pattern.MatchString(printBody) {
-			t.Errorf("@media print block is missing %q; FR-037 requires this selector", sel.name)
+			t.Errorf("no @media print block carries %q; FR-037 requires this selector (searched aggregated bodies of every @media print block)", sel.name)
 		}
 	}
 }
