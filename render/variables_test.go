@@ -31,21 +31,17 @@ func TestVariablesGoldenHTML(t *testing.T) {
 // TestVariablesSearchMarkup: T058 / FR-013.
 //
 // FR-013 requires the Variables table to be filterable client-side
-// via a search input. The real contract the current template emits
-// (see render/templates/variables.html.tmpl) is:
+// via a search input. The shipped JS in `render/assets/app.js`
+// binds with `document.querySelectorAll("input.variables-search[data-snapshot]")`,
+// so the runtime contract is `class="variables-search"` AND
+// `data-snapshot="<id>"` on the SAME input element. An input with
+// only one of the two attributes would not be picked up by
+// `initVariablesSearch`, even though it might look reasonable in a
+// static inspection.
 //
-//   - one `<input type="search" class="variables-search" …>` per
-//     Variables subview, carrying a `data-snapshot` attribute that
-//     the client-side filter in render/assets/app.js pairs with the
-//     matching `<table class="variables-table" data-snapshot=…>`;
-//   - every data row MUST carry a `data-variable-name` attribute so
-//     the filter can match/hide rows by variable name without
-//     re-parsing the rendered cell content.
-//
-// We do NOT require an `id=` attribute on the search input: the JS
-// filter binds via the `class + data-snapshot` pair, which is the
-// shipped mechanism. Asserting an id would pin an aspirational
-// contract instead of the real one.
+// Per-row invariant: every data row MUST carry a
+// `data-variable-name` attribute so the filter can match/hide rows
+// by variable name without re-parsing the rendered cell content.
 //
 // Structural invariant (not a value assertion) — sits alongside
 // TestVariablesGoldenHTML rather than inside the golden so a
@@ -64,18 +60,33 @@ func TestVariablesSearchMarkup(t *testing.T) {
 		t.Errorf(`sec-variables missing <input type="search">; FR-013 requires a client-side filter input`)
 	}
 
-	// The search input must also carry a binding hook the JS filter
-	// can pair with its matching table: today that's
-	// `class="variables-search"` + `data-snapshot="<id>"`. Accept
-	// either attribute (or an id) — the invariant is "SOMETHING
-	// addressable exists", not a specific scheme, so a template
-	// refactor that swaps the mechanism stays green as long as it
-	// still exposes a hook.
-	classBoundRE := regexp.MustCompile(`<input[^>]*type="search"[^>]*class="[^"]*variables-search[^"]*"|<input[^>]*class="[^"]*variables-search[^"]*"[^>]*type="search"`)
-	dataBoundRE := regexp.MustCompile(`<input[^>]*type="search"[^>]*data-snapshot="[^"]+"|<input[^>]*data-snapshot="[^"]+"[^>]*type="search"`)
-	idBoundRE := regexp.MustCompile(`<input[^>]*type="search"[^>]*id="[^"]+"|<input[^>]*id="[^"]+"[^>]*type="search"`)
-	if !(classBoundRE.MatchString(section) || dataBoundRE.MatchString(section) || idBoundRE.MatchString(section)) {
-		t.Errorf(`<input type="search"> must carry a binding hook (class="variables-search", data-snapshot="…", or id="…") for the client-side filter to bind to; sec-variables excerpt: %s`,
+	// The binding contract from app.js is
+	// `input.variables-search[data-snapshot]` — both attributes on
+	// the same element. Check each candidate `<input …>` tag for BOTH
+	// attributes rather than scanning the document for either: a
+	// regression that keeps the class but drops data-snapshot (or
+	// vice-versa) would break the filter in the browser silently.
+	inputTagRE := regexp.MustCompile(`<input[^>]*>`)
+	tags := inputTagRE.FindAllString(section, -1)
+	var matched []string
+	for _, tag := range tags {
+		if !strings.Contains(tag, `type="search"`) {
+			continue
+		}
+		hasClass := strings.Contains(tag, `class="variables-search"`) ||
+			// Allow a multi-class attribute string that contains the
+			// token; CSS class matching in the DOM is
+			// whitespace-delimited. A future template refactor that
+			// mixes classes ("variables-search filterable") is still
+			// acceptable as long as the token is present.
+			regexp.MustCompile(`class="[^"]*\bvariables-search\b[^"]*"`).MatchString(tag)
+		hasSnapshot := regexp.MustCompile(`data-snapshot="[^"]+"`).MatchString(tag)
+		if hasClass && hasSnapshot {
+			matched = append(matched, tag)
+		}
+	}
+	if len(matched) == 0 {
+		t.Errorf(`no <input type="search"> carries BOTH class="variables-search" AND data-snapshot="…" on the same tag; app.js's selector "input.variables-search[data-snapshot]" will not bind. sec-variables excerpt: %s`,
 			truncateForError(section, 400))
 	}
 

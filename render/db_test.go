@@ -112,13 +112,39 @@ func TestMysqladminToggleMarkup(t *testing.T) {
 		t.Errorf(`sec-db missing data-mysqladmin-host wrapper; the toggle scopes its DOM surgery to this host`)
 	}
 
-	// Invariant 2: every variable name appears at least once in the
-	// JSON payload so the toggle has a full list to render. The
-	// payload is document-wide, not section-local.
+	// Invariant 2: every variable name appears in the
+	// `charts.mysqladmin.variables` array of the JSON payload — NOT
+	// just anywhere in the raw payload text. The toggle widget reads
+	// its dropdown options from exactly this field (app.js comment on
+	// mysqladminChartPayload: "app.js reads { variables, timestamps,
+	// deltas, … }"). A raw-text Contains check would pass even if
+	// `variables` were empty as long as the names happened to appear
+	// as `deltas` map keys or inside the category metadata — in which
+	// case the client-side selector list breaks in the browser while
+	// this test stays green.
 	payload := extractJSONPayload(t, html)
+	// Invariant 3a: payload is valid JSON (precondition for the
+	// structural assertion below). An invalid payload would
+	// otherwise surface as an opaque `charts` lookup failure.
+	var parsed struct {
+		Charts struct {
+			Mysqladmin struct {
+				Variables []string `json:"variables"`
+			} `json:"mysqladmin"`
+		} `json:"charts"`
+	}
+	if err := json.Unmarshal([]byte(payload), &parsed); err != nil {
+		t.Fatalf("report-data payload is not valid JSON: %v", err)
+	}
+	// Build a set for O(1) membership lookup, then diff against
+	// `unique` so the error message lists the missing names directly.
+	varsInPayload := make(map[string]struct{}, len(parsed.Charts.Mysqladmin.Variables))
+	for _, v := range parsed.Charts.Mysqladmin.Variables {
+		varsInPayload[v] = struct{}{}
+	}
 	missingInPayload := []string{}
 	for _, n := range unique {
-		if !strings.Contains(payload, `"`+n+`"`) {
+		if _, ok := varsInPayload[n]; !ok {
 			missingInPayload = append(missingInPayload, n)
 		}
 	}
@@ -127,16 +153,8 @@ func TestMysqladminToggleMarkup(t *testing.T) {
 		if len(report) > 10 {
 			report = report[:10]
 		}
-		t.Errorf("report-data payload is missing %d/%d MysqladminData.VariableNames entries; first 10 missing: %v",
+		t.Errorf("charts.mysqladmin.variables is missing %d/%d MysqladminData.VariableNames entries (the toggle reads this array — a raw-substring Contains check would have passed on deltas keys and missed this). First 10 missing: %v",
 			len(missingInPayload), len(unique), report)
-	}
-
-	// Invariant 3: payload is valid JSON. An invalid payload breaks
-	// the chart JS silently at runtime; a failed unmarshal here
-	// surfaces it loudly at test time.
-	var anyVal any
-	if err := json.Unmarshal([]byte(payload), &anyVal); err != nil {
-		t.Fatalf("report-data payload is not valid JSON: %v", err)
 	}
 
 	// Invariant 4: offline operation. Scan sec-db for src=/href=
