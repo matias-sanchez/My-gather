@@ -227,9 +227,16 @@ type ProcessSeries struct {
 }
 ```
 
-Derived invariant: `Top3ByAverage` is computed at parse time using
-average `CPUPercent` across all samples in which the PID appears;
-ties are broken deterministically by (higher PID first).
+Derived invariant: `Top3ByAverage` is computed at parse time ranking
+by `sum(CPUPercent) / totalBatchCount` — i.e., a PID that appears in
+only half the `-top` batches is penalised for the missing half
+(absent-in-batch contributes 0 to the numerator). This matches spec
+FR-010 "aggregate across the collection window" with the F7 remediation
+and the implementation in `parse/top.go`. Each returned
+`ProcessSeries.CPU.Samples` holds only the observed samples (not
+zero-padded to `totalBatchCount`) — the zero-fill is an averaging
+convention, not a storage shape. Ties are broken deterministically by
+(higher PID first).
 
 ### `VariablesData`
 
