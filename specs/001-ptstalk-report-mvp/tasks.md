@@ -77,7 +77,7 @@ All tasks write paths relative to the repository root.
 - [x] T018 [P] Forbidden-import linter test at `tests/lint/imports_test.go` (research R7). Walks the import graph of `cmd/`, `parse/`, `model/`, `render/`; fails if any of `net/http`, `net`, `net/rpc`, `net/smtp`, `crypto/tls` appear. Stdlib-only via `go/parser` + `go/ast`.
 - [ ] T019 Commit anonymised fixtures under `testdata/example1/` and `testdata/example2/` produced by `scripts/anonymise-fixtures.sh` run against `_references/examples/example1/` and `_references/examples/example2/`. Only the seven source-file suffixes this feature supports need be committed (plus `pt-summary.out` / `pt-mysql-summary.out` for discovery tests).
 - [x] T020 Commit the pt-mext golden fixture under `testdata/pt-mext/`: `input.txt` is a verbatim copy of `_references/pt-mext/pt-mext-improved.cpp` comment lines 146–177; `expected.txt` is a verbatim copy of lines 181–189 with a `testdata/pt-mext/README.md` describing provenance (research R8).
-- [x] T021 Coverage guard test at `tests/coverage/testdata_coverage_test.go`: fails the build if any `model.Suffix` constant lacks a fixture under `testdata/example1/` or `testdata/example2/`. Enforces the fixture-coverage half of Constitution Principle VIII / spec FR-021 / SC-006; golden-coverage enforcement lands in T080 once per-collector golden outputs are generated (`go test ./... -update`).
+- [x] T021 Coverage guard test at `tests/coverage/testdata_coverage_test.go`: fails the build if any `model.Suffix` constant lacks a fixture under `testdata/example1/` or `testdata/example2/`. Enforces the fixture-coverage half of Constitution Principle VIII / spec FR-021 / SC-006; golden-coverage enforcement lands in T080 once per-collector golden outputs are generated (`go test ./parse/... -update` today; widen the scope as more packages adopt goldens).
 - [x] T022 [P] godoc-coverage test at `tests/coverage/godoc_coverage_test.go`: walks AST of `model`, `parse`, `render` and asserts every exported identifier has a non-empty `//` doc comment (Constitution Principle VI).
 
 **Checkpoint**: `go test ./...` passes (lint and coverage guards pass over empty packages); CLI builds; an invocation against any test fixture prints exactly one HTML file whose sections all read "data not available".
@@ -157,7 +157,7 @@ All tasks write paths relative to the repository root.
 
 ### Tests for User Story 3
 
-- [ ] T056 [P] [US3] `parse/variables_test.go::TestVariablesGolden`: parse `-variables` fixture; compare `VariablesData` against golden; assert alphabetical sort, no duplicates (first-global-wins dedup per FR-012).
+- [x] T056 [P] [US3] `parse/variables_test.go::TestVariablesGolden`: parse `-variables` fixture; compare `VariablesData` against golden; assert alphabetical sort, no duplicates (first-global-wins dedup per FR-012). Golden at `testdata/golden/variables.example2.2026_04_21_16_51_41.json`; regenerate with `go test ./parse/... -update` (the `-update` flag is only registered in packages that import `tests/goldens`; see the package godoc for the scoping rule).
 - [ ] T057 [P] [US3] `render/variables_test.go::TestVariablesGoldenHTML`: render Variables section; compare against golden HTML.
 - [ ] T058 [P] [US3] `render/variables_test.go::TestVariablesSearchMarkup`: assert the rendered table has a `<input type="search">` with the expected id, and each `<tr>` has a `data-variable-name` attribute for the client-side filter (FR-013).
 
@@ -185,7 +185,7 @@ All tasks write paths relative to the repository root.
 - [x] T065 [US4] `parse/mysqladmin_test.go::TestPtMextFixture`: parse `testdata/pt-mext/input.txt` with the Go mysqladmin parser; format aggregates (total/min/max/avg) for each counter; assert structural equivalence against `testdata/pt-mext/expected.txt` (F10 resolution — structural comparison, not byte-for-byte, so whitespace normalisation is allowed). **Sequential with T064** (same file).
 - [ ] T066 [US4] `parse/mysqladmin_test.go::TestSnapshotBoundaryReset`: parse two concatenated snapshots; assert post-boundary first-slot delta is `math.NaN()` for every counter (FR-030); assert one `Diagnostic(Severity=Info)` per boundary. **Sequential with T064/T065** (same file).
 - [ ] T067 [US4] `parse/mysqladmin_test.go::TestVariableDrift`: parse a fixture where a counter appears in snapshot 1 but not snapshot 2; assert `NaN` in the drift slot + one `Diagnostic(Severity=Warning)` (research R8 improvement C). **Sequential with T064-T066** (same file).
-- [ ] T068 [P] [US4] `parse/processlist_test.go::TestProcesslistGolden`: parse `-processlist` fixture; compare against golden; assert `Other`-bucketing for unknown/empty states (FR-017).
+- [x] T068 [P] [US4] `parse/processlist_test.go::TestProcesslistGolden`: parse `-processlist` fixture; compare against golden; assert `Other`-bucketing for unknown/empty states (FR-017). Golden at `testdata/golden/processlist.example2.2026_04_21_16_51_41.json`; also asserts `States` alphabetical with `Other` last and `SnapshotBoundaries == nil` for a direct parse call (the parser must not set that field — render owns it via `concatProcesslist`).
 - [ ] T069 [P] [US4] `render/db_test.go::TestDBGoldenHTML`: render DB section; compare against golden HTML.
 - [ ] T070 [P] [US4] `render/db_test.go::TestMysqladminToggleMarkup`: assert the rendered DB section's mysqladmin toggle UI (custom dropdown per the current implementation; any keyboard-accessible multi-select per FR-015) exposes a variable-name option for every entry in `MysqladminData.VariableNames`; assert each chart-series marker carries a `data-variable-name` attribute matching the counter name; assert the toggle operates without network access (no `src` / `href` on interactive controls).
 
@@ -307,7 +307,7 @@ written.
 - Per-collector parsers (`parse/*.go`) are parallel to each other ([P]) because each touches its own file. They are NOT parallel with the `parse.Discover` wiring task in the same phase (T051, T060, T074), which integrates them.
 - Per-section render tasks are serial within a story because they share `render/templates/report.html.tmpl`, `render/templates/<section>.html.tmpl`, `render/assets/app.js`, and `render/assets/app.css`.
 - **The `parse.Discover` wiring tasks T051, T060, and T074 all modify `parse/parse.go`.** They therefore serialise across user stories: merging US2 then US3 then US4 into the shared branch requires sequential edits to this file. This is documented as a known cross-story serial point (F32 resolution) — it does not break story-level independent *testability*, but does mean three parallel developers can't commit these specific tasks without rebase-resolving `parse/parse.go`.
-- Goldens are regenerated with `go test ./... -update` as a human-reviewed step — never silently (FR-021).
+- Goldens are regenerated with `go test ./parse/... -update` (scoped to goldens-using packages; see the `tests/goldens` godoc) as a human-reviewed step — never silently (FR-021).
 
 ### Parallel Opportunities
 
@@ -369,7 +369,7 @@ Serial execution by user-story priority: T001 → T119 (119 tasks total). Treat 
 - Every `parse/*.go` parser produces `model.Diagnostic` entries for any recoverable issue; each is mirrored to stderr as `[warning]` / `[error]` via the wired `DiagnosticSink` (FR-027).
 - `SeverityInfo` diagnostics (snapshot-boundary markers in FR-030; any future informational events) surface **only** in the report's Parser Diagnostics panel — never to stderr (F13 resolution).
 - `tests/coverage/testdata_coverage_test.go` (T021) is the hard gate that makes forgetting a fixture impossible; it fails loudly.
-- Every `go test ./... -update` run is a reviewed commit: diff the regenerated goldens, eyeball each, then commit.
+- Every `go test ./parse/... -update` run is a reviewed commit: diff the regenerated goldens, eyeball each, then commit.
 - When the implementation phase starts, commit frequently — one task per commit where the scope fits; smaller if the task touches multiple files.
 - Each task description includes the file path(s) it writes so an LLM (or a developer running `/speckit-implement`) can execute it without additional context.
 - **`F##` markers** (e.g. `F7`, `F13`, `F28`) scattered through task descriptions are stable IDs from prior `/speckit-analyze` passes that were folded into the task list. They are informational anchors, not open work items — every `F##` cited has already been addressed by the task that cites it. No external glossary is required; the resolution lives in the task body itself.
@@ -378,7 +378,7 @@ Serial execution by user-story priority: T001 → T119 (119 tasks total). Treat 
 
 ## Reconciliation Summary (last updated 2026-04-22)
 
-A mechanical pass compared every task ID against the real repository state for the full current range, **T001–T119 (119 tasks total)**. `64 / 119 tasks (≈54 %) carry an [x] mark`. The pipeline builds, `go test ./...` is green, and the binary produces a deterministic three-section report against `testdata/example2/`. The 2026-04-22 spec-drift reconciliation added five shipping features captured as FR-033–FR-037 (MySQL-defaults badging, mysqladmin category chooser, default-hidden initial-tally column, `Cmd/Ctrl+\` nav shortcut, `@media print` stylesheet); their implementation tasks (T097, T099, T101, T103, T105) are already live in `render/assets/` and `render/render.go` and carry `[x]` marks, while their paired tests (T098, T100, T102, T104, T106) are tracked `[ ]`. The 2026-04-22 boundary-markers PR closed T054 (multi-Snapshot concatenation + dashed vertical markers on every time-series chart per FR-018 / FR-030). The 2026-04-22 UX-quality reconciliation added FR-038–FR-041 + SC-011 (research R13) with a committed audit checklist (T107 `[x]`) and Phase 8 release-gate tasks T108–T119 `[ ]`, including a shared-stylesheet refactor (T108) that extracts typography / spacing / palette / chart invariants into named CSS custom properties. What remains across the whole feature is almost entirely **missing tests**, **the UX audit pass itself**, plus a handful of documentation and coverage gaps — no core implementation is unshipped.
+A mechanical pass compared every task ID against the real repository state for the full current range, **T001–T119 (119 tasks total)**. `66 / 119 tasks (≈55 %) carry an [x] mark`. The pipeline builds, `go test ./...` is green, and the binary produces a deterministic three-section report against `testdata/example2/`. The 2026-04-22 spec-drift reconciliation added five shipping features captured as FR-033–FR-037 (MySQL-defaults badging, mysqladmin category chooser, default-hidden initial-tally column, `Cmd/Ctrl+\` nav shortcut, `@media print` stylesheet); their implementation tasks (T097, T099, T101, T103, T105) are already live in `render/assets/` and `render/render.go` and carry `[x]` marks, while their paired tests (T098, T100, T102, T104, T106) are tracked `[ ]`. The 2026-04-22 boundary-markers PR closed T054 (multi-Snapshot concatenation + dashed vertical markers on every time-series chart per FR-018 / FR-030). The 2026-04-22 UX-quality reconciliation added FR-038–FR-041 + SC-011 (research R13) with a committed audit checklist (T107 `[x]`) and Phase 8 release-gate tasks T108–T119 `[ ]`, including a shared-stylesheet refactor (T108) that extracts typography / spacing / palette / chart invariants into named CSS custom properties. What remains across the whole feature is almost entirely **missing tests**, **the UX audit pass itself**, plus a handful of documentation and coverage gaps — no core implementation is unshipped.
 
 ### What's done
 
@@ -405,7 +405,7 @@ A mechanical pass compared every task ID against the real repository state for t
 **Fixture / golden gaps**:
 
 - **T019**: `testdata/example1/` was never committed — only `testdata/example2/` exists. Any test that keys off a distinct first example (or that asserts two format variants co-exist per FR-024) depends on this.
-- `testdata/golden/` is **empty**. Every `*Golden*` test (T043, T044, T045, T046, T056, T057, T063, T064, T068, T069) needs a committed golden under `testdata/golden/` generated via `go test ./... -update` and reviewed. Without them the tests either fail or skip.
+- `testdata/golden/` is **partially populated**: T056 (variables) and T068 (processlist) goldens are committed as of this PR. Remaining `*Golden*` tests (T043, T044, T045, T046, T057, T063, T064, T069) still need committed goldens under `testdata/golden/` generated via `go test ./parse/... -update` and reviewed. Until those are added, those tests either fail or skip.
 
 **Feature gap**:
 
@@ -418,7 +418,7 @@ A mechanical pass compared every task ID against the real repository state for t
 
 ### Pipeline-critical order for closing the gaps
 
-1. **Generate goldens first.** Run `go test ./... -update` once all parser + render tests are written. Without goldens, a dozen tests can't assert anything. The coverage guard at T021 / T080 already expects them.
+1. **Generate goldens first.** Run `go test ./parse/... -update` once all parser + render tests are written (the `-update` flag is only registered in packages that import `tests/goldens`; widen the scope as more packages adopt it). Without goldens, a dozen tests can't assert anything. The coverage guard at T021 / T080 already expects them.
 2. **Write the parser tests** (T043–T045, T047, T056, T063, T064, T066, T067, T068). They are independent per file and can fan out in parallel, then `-update` populates goldens.
 3. **Write the render tests** (T046, T057, T058, T069, T070, T096). Same pattern; they depend on goldens for the section HTMLs.
 4. **Write the CLI / integration tests** (T030, T031, T032, T033, T034, T035, T086, T088, T091–T095, T094). These need a binary built into `./bin/my-gather` — most can use `go test`-driven `exec.Command`.
