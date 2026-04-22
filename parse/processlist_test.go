@@ -67,10 +67,13 @@ func TestProcesslistGolden(t *testing.T) {
 	// multi-Snapshot merging). A direct parse call must return nil.
 	// This is stricter than "[] or [0]" because the parser has no
 	// business writing boundaries at all; delegating to the render
-	// layer keeps the ownership line sharp.
-	if len(data.SnapshotBoundaries) != 0 {
-		t.Errorf("parseProcesslist must not set SnapshotBoundaries (render layer owns it); got %v",
-			data.SnapshotBoundaries)
+	// layer keeps the ownership line sharp. Compare against nil
+	// rather than len() so an empty-but-non-nil slice (`make([]int,
+	// 0)` or `[]int{}`) also fails — both shapes would indicate a
+	// parser that mutated the field it has no business touching.
+	if data.SnapshotBoundaries != nil {
+		t.Errorf("parseProcesslist must not set SnapshotBoundaries (render layer owns it); got %#v (len=%d)",
+			data.SnapshotBoundaries, len(data.SnapshotBoundaries))
 	}
 
 	got := goldens.MarshalDeterministic(t, struct {

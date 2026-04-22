@@ -1,8 +1,8 @@
 // Package goldens is a tiny, dependency-free helper shared by every
 // parser / render golden test in My-gather. It implements:
 //
-//   - the stdlib-only `-update` convention (rerun with
-//     `go test ./... -update` to regenerate committed goldens);
+//   - the stdlib-only `-update` convention for regenerating committed
+//     goldens (see the flag note below);
 //   - deterministic JSON marshalling for per-collector parsed models
 //     (sorted keys, stable float precision);
 //   - a single Compare entry point that reads the committed golden,
@@ -12,6 +12,18 @@
 // The package lives under tests/ rather than parse/ or model/ so no
 // production import graph ever sees the `-update` flag. It ships no
 // third-party dependencies (Principle X).
+//
+// Scope of the `-update` flag. Go's flag registration is per-test-
+// binary: `-update` is only recognised by the `go test` invocation of
+// packages whose test binary imports `tests/goldens`. Running
+// `go test ./... -update` from the repo root today fails in packages
+// that do not use goldens (render, tests/lint, tests/coverage) with
+// `flag provided but not defined: -update`. Regenerate goldens by
+// scoping the invocation to goldens-using packages — currently
+// `go test ./parse/... -update` — and extend the scope as more
+// packages adopt goldens. Deliberately not adding blank-import
+// stubs to every test package: that is speculative scaffolding the
+// repo does not yet need (Principle X).
 package goldens
 
 import (
@@ -24,9 +36,11 @@ import (
 	"testing"
 )
 
-// update is the shared flag: `go test ./... -update` rewrites every
-// golden file referenced in this test run. Normal `go test ./...`
-// runs compare against the committed golden and fail on any drift.
+// update is the shared flag. The flag is registered only in the test
+// binary of packages that import `tests/goldens`; scope the `go test`
+// invocation accordingly (see the package godoc's "Scope of the
+// `-update` flag" note). Typical regeneration today:
+// `go test ./parse/... -update`.
 var update = flag.Bool("update", false, "rewrite committed golden files under testdata/golden/ from the current parser / render output")
 
 // MarshalDeterministic renders v as indented JSON suitable for a
@@ -113,7 +127,7 @@ func Compare(t *testing.T, goldenPath string, got []byte) {
 	}
 	want, err := os.ReadFile(goldenPath)
 	if err != nil {
-		t.Fatalf("Compare: read golden %s: %v (run `go test ./... -update` to create it)", goldenPath, err)
+		t.Fatalf("Compare: read golden %s: %v (run `go test ./parse/... -update` to create it — the -update flag is only registered in packages that import tests/goldens, so scope the invocation to goldens-using packages)", goldenPath, err)
 	}
 	if bytes.Equal(want, got) {
 		return
@@ -124,7 +138,7 @@ func Compare(t *testing.T, goldenPath string, got []byte) {
 	wantExcerpt := excerpt(want, idx, 80)
 	gotExcerpt := excerpt(got, idx, 80)
 	t.Fatalf(
-		"golden mismatch at %s (first differing byte at offset %d):\n  want: %q\n  got:  %q\nRun `go test ./... -update` to regenerate; review the diff before committing.",
+		"golden mismatch at %s (first differing byte at offset %d):\n  want: %q\n  got:  %q\nRun `go test ./parse/... -update` (or the appropriate goldens-using package scope) to regenerate; review the diff before committing.",
 		goldenPath, idx, wantExcerpt, gotExcerpt,
 	)
 }
