@@ -175,7 +175,10 @@ func Render(w io.Writer, c *model.Collection, opts RenderOptions) error {
 	}
 
 	report := buildReport(c, opts)
-	view := buildView(report, c)
+	view, err := buildView(report, c)
+	if err != nil {
+		return fmt.Errorf("render: build view: %w", err)
+	}
 
 	tmpl, err := template.ParseFS(embeddedTemplates, "templates/*.tmpl")
 	if err != nil {
@@ -995,7 +998,7 @@ type vmstatSummaryView struct {
 }
 
 // buildView flattens the Report into the template-friendly shape.
-func buildView(r *model.Report, c *model.Collection) *reportView {
+func buildView(r *model.Report, c *model.Collection) (*reportView, error) {
 	v := &reportView{
 		Title:              r.Title,
 		Hostname:           c.Hostname,
@@ -1108,13 +1111,20 @@ func buildView(r *model.Report, c *model.Collection) *reportView {
 	// emit an empty payload with the report ID — enough for app.js to
 	// wire localStorage keys and for the charts to render "empty"
 	// banners without throwing.
-	payload, _ := json.Marshal(map[string]any{
+	// The embedded payload drives every interactive feature (charts,
+	// filters, localStorage keys). A marshal error here would ship an
+	// HTML that looks valid but is silently non-interactive, so fail
+	// loudly instead of emitting a broken blob.
+	payload, err := json.Marshal(map[string]any{
 		"reportID": r.ReportID,
 		"charts":   buildChartPayload(r),
 	})
+	if err != nil {
+		return nil, fmt.Errorf("marshal embedded data payload: %w", err)
+	}
 	v.DataPayload = template.JS(payload)
 
-	return v
+	return v, nil
 }
 
 func buildChartPayload(r *model.Report) map[string]any {
