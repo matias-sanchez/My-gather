@@ -20,14 +20,16 @@ import (
 // document concatenates the chart CSS + app CSS into exactly one
 // top-level `<style>` block (spec FR-039).
 //
-// This test renders a minimal report, extracts every `<style>…
-// </style>` block, and asserts that:
+// This test renders a minimal report, extracts the (expected to
+// be exactly one) `<style>…</style>` block, and asserts that:
 //
-//  1. At least one `@media print` rule is present.
-//  2. That rule targets `details` (so section bodies expand in
+//  1. The rendered document carries exactly one top-level `<style>`
+//     block (FR-039 — the concatenation of chart CSS + app CSS).
+//  2. At least one `@media print` rule is present inside it.
+//  3. That rule targets `details` (so section bodies expand in
 //     print) and `nav.index` (so the nav rail hides in print) —
 //     the two selectors FR-037 explicitly calls out.
-//  3. The page-layout override (the `.layout` grid collapse or an
+//  4. The page-layout override (the `.layout` grid collapse or an
 //     equivalent single-column rule) is present so multi-column
 //     layouts don't bleed onto a second page.
 //
@@ -59,11 +61,17 @@ func TestPrintStylesheetPresent(t *testing.T) {
 	// change that moved the print rules into a `<style media="print">`
 	// block would technically still satisfy FR-037 but not this
 	// test — in that case the test and the template should BOTH
-	// be updated to the new shape.
+	// be updated to the new shape. FR-039 requires the rendered
+	// document to carry exactly one top-level `<style>` block (the
+	// concatenation of chart CSS + app CSS); asserting that here
+	// keeps the two invariants aligned.
 	styleRE := regexp.MustCompile(`(?s)<style[^>]*>(.*?)</style>`)
 	blocks := styleRE.FindAllStringSubmatch(html, -1)
 	if len(blocks) == 0 {
 		t.Fatalf("rendered HTML carries no <style> blocks; FR-037 requires an embedded print stylesheet")
+	}
+	if len(blocks) != 1 {
+		t.Errorf("rendered HTML carries %d <style> blocks; FR-039 requires exactly one (chart CSS + app CSS concatenated)", len(blocks))
 	}
 	var css strings.Builder
 	for _, m := range blocks {

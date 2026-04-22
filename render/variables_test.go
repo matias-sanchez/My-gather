@@ -143,12 +143,14 @@ func truncateForError(s string, n int) string {
 // branches guaranteed present — impossible to promise from the
 // shipped fixture without adding extra parsing.
 func TestDefaultsBadges(t *testing.T) {
-	// Pick variable names that the curated mysql-defaults.json is
-	// known to include. `max_connections` and `innodb_buffer_pool_size`
-	// are among the most common tuning knobs in that defaults map;
-	// use one at its documented default and one clearly modified.
-	// `DefinitelyNotAMySQLVariable_2026` has no default entry so it
-	// falls through classifyVariable's `unknown` branch.
+	// Pick a variable name the curated mysql-defaults.json is known
+	// to include. `max_connections` is among the most common tuning
+	// knobs in that defaults map; use it twice — once at its
+	// documented default (151) and once clearly modified (4096) —
+	// so both classifier branches exercise against the same
+	// anchor variable. `DefinitelyNotAMySQLVariable_2026` has no
+	// default entry so it falls through classifyVariable's
+	// `unknown` branch.
 	atDefault := model.VariableEntry{Name: "max_connections", Value: "151"}
 	modified := model.VariableEntry{Name: "max_connections", Value: "4096"}
 	unknown := model.VariableEntry{Name: "DefinitelyNotAMySQLVariable_2026", Value: "42"}
