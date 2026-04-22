@@ -13,6 +13,57 @@
         <p class="k">Semaphores</p>
         <p class="v">2</p><p class="sub">waiting</p>
         <p class="stats"><span>min 0</span> · <span>avg 1.0</span> · <span>max 2</span></p>
+        <details class="semaphore-breakdown">
+          <summary>Contention breakdown <span class="cb-chev" aria-hidden="true">▸</span></summary>
+          <div class="cb-body" data-view="peak">
+            <div class="cb-toggle" role="tablist" aria-label="Breakdown scope">
+              <button type="button" class="cb-tab active" data-view="peak">At peak</button>
+              <button type="button" class="cb-tab" data-view="total">Over window</button>
+            </div>
+            <div class="cb-tabview" data-view="peak">
+              <p class="cb-caption">
+                snapshot <code>2026_04_21_16_51_41</code> · 2 waits
+              </p>
+              <table class="cb-table">
+                <thead><tr><th>Call site</th><th>Mutex</th><th class="num">waits</th><th class="num">%</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td class="mono">buf0buf.cc:3207</td>
+                    <td class="mono">BUF_POOL_LRU_LIST</td>
+                    <td class="mono num">1</td>
+                    <td class="mono num">50.0%</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">buf0buf.cc:4968</td>
+                    <td class="mono">BUF_POOL_LRU_LIST</td>
+                    <td class="mono num">1</td>
+                    <td class="mono num">50.0%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="cb-tabview" data-view="total" hidden>
+              <p class="cb-caption">summed across the capture window · 2 waits</p>
+              <table class="cb-table">
+                <thead><tr><th>Call site</th><th>Mutex</th><th class="num">waits</th><th class="num">%</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td class="mono">buf0buf.cc:3207</td>
+                    <td class="mono">BUF_POOL_LRU_LIST</td>
+                    <td class="mono num">1</td>
+                    <td class="mono num">50.0%</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">buf0buf.cc:4968</td>
+                    <td class="mono">BUF_POOL_LRU_LIST</td>
+                    <td class="mono num">1</td>
+                    <td class="mono num">50.0%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
       </div>
       <div class="callout">
         <p class="k">Pending I/O</p>

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -40,6 +41,31 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 	reHashRate := regexp.MustCompile(`([\d.]+)\s+hash searches/s,\s+([\d.]+)\s+non-hash searches/s`)
 	reHashTblSize := regexp.MustCompile(`^Hash table size\s+(\d+)`)
 	reHLL := regexp.MustCompile(`^History list length (\d+)`)
+	// SEMAPHORES entry: "--Thread 140148200982272 has waited at
+	// ibuf0ibuf.cc line 3922 for 0 seconds the semaphore:" — capture
+	// <file> and <line>.
+	reThreadWaited := regexp.MustCompile(`^--Thread \d+ has waited at (\S+) line (\d+) `)
+	// Partner line following the thread line: "Mutex at 0x..., Mutex
+	// TRX_SYS created trx0sys.cc:599, locked by ...". We capture the
+	// mutex name (TRX_SYS) so the breakdown has a readable label next
+	// to the file:line key.
+	reMutexName := regexp.MustCompile(`^Mutex at 0x[0-9a-fA-F]+, Mutex ([^\s]+) created`)
+
+	// Aggregation key for SemaphoreSites so we can group by
+	// (file, line, mutex) without another pass.
+	type siteKey struct {
+		file  string
+		line  int
+		mutex string
+	}
+	siteCounts := map[siteKey]int{}
+	// awaitingMutex holds the pending thread's file/line while we
+	// look for its partner "Mutex ..." line on the next non-blank
+	// row. Only one pending record at a time: pt-stalk always emits
+	// the pair consecutively separated by at most whitespace lines.
+	var pendingFile string
+	var pendingLine int
+	havePending := false
 
 	for scanner.Scan() {
 		line := strings.TrimRight(scanner.Text(), "\r\n")
@@ -58,8 +84,36 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 
 		switch inSection {
 		case "SEMAPHORES":
-			if strings.HasPrefix(trimmed, "--Thread ") && strings.Contains(trimmed, " has waited ") {
+			if m := reThreadWaited.FindStringSubmatch(trimmed); m != nil {
 				threadWaited++
+				// Flush a previous unmatched pending record with no
+				// mutex name so consecutive thread lines (rare but
+				// possible) don't lose their file:line.
+				if havePending {
+					siteCounts[siteKey{file: pendingFile, line: pendingLine, mutex: ""}]++
+				}
+				pendingFile = m[1]
+				pendingLine, _ = strconv.Atoi(m[2])
+				havePending = true
+				continue
+			}
+			if havePending {
+				if m := reMutexName.FindStringSubmatch(trimmed); m != nil {
+					siteCounts[siteKey{file: pendingFile, line: pendingLine, mutex: m[1]}]++
+					havePending = false
+					continue
+				}
+				// If we hit a blank line or an unrelated line, the
+				// mutex partner was missing — record with empty
+				// mutex name so the count is still attributed.
+				if trimmed == "" {
+					continue
+				}
+				// Defensive: any non-blank line that wasn't the
+				// partner and isn't another thread flushes the
+				// pending record.
+				siteCounts[siteKey{file: pendingFile, line: pendingLine, mutex: ""}]++
+				havePending = false
 			}
 		case "TRANSACTIONS":
 			if m := reHLL.FindStringSubmatch(trimmed); m != nil {
@@ -102,6 +156,40 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 		})
 	}
 
+	// Flush any trailing pending record (file reached EOF with no mutex partner).
+	if havePending {
+		siteCounts[siteKey{file: pendingFile, line: pendingLine, mutex: ""}]++
+	}
+
 	data.SemaphoreCount = threadWaited
+
+	// Materialise sites sorted desc by count, stable tie-break by
+	// file ascending then line ascending so identical captures
+	// render identically across runs.
+	if len(siteCounts) > 0 {
+		sites := make([]model.SemaphoreSite, 0, len(siteCounts))
+		for k, c := range siteCounts {
+			sites = append(sites, model.SemaphoreSite{
+				File:      k.file,
+				Line:      k.line,
+				MutexName: k.mutex,
+				WaitCount: c,
+			})
+		}
+		sort.SliceStable(sites, func(i, j int) bool {
+			if sites[i].WaitCount != sites[j].WaitCount {
+				return sites[i].WaitCount > sites[j].WaitCount
+			}
+			if sites[i].File != sites[j].File {
+				return sites[i].File < sites[j].File
+			}
+			if sites[i].Line != sites[j].Line {
+				return sites[i].Line < sites[j].Line
+			}
+			return sites[i].MutexName < sites[j].MutexName
+		})
+		data.SemaphoreSites = sites
+	}
+
 	return data, diagnostics
 }

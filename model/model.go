@@ -357,11 +357,27 @@ type VmstatData struct {
 // time-series — "-innodbstatus1" is a snapshot taken once per
 // pt-stalk collection pass.
 type InnodbStatusData struct {
-	SemaphoreCount    int         // "Number of semaphores"
-	PendingReads      int         // aggregate pending IO reads
-	PendingWrites     int         // aggregate pending IO writes
-	AHIActivity       AHIActivity // adaptive-hash-index view
-	HistoryListLength int         // "HLL"
+	SemaphoreCount    int              // total threads currently waiting (sum of SemaphoreSites[*].WaitCount)
+	PendingReads      int              // aggregate pending IO reads
+	PendingWrites     int              // aggregate pending IO writes
+	AHIActivity       AHIActivity      // adaptive-hash-index view
+	HistoryListLength int              // "HLL"
+	// SemaphoreSites groups the SEMAPHORES-section "--Thread … has
+	// waited at FILE line N the semaphore:" records by (file, line,
+	// mutex name) so the reader can see the contention hotspots
+	// instead of a single total. Sorted descending by WaitCount,
+	// tie-broken by File / Line ascending for stability.
+	SemaphoreSites []SemaphoreSite
+}
+
+// SemaphoreSite is one row of the aggregated SEMAPHORES contention
+// breakdown — all threads waiting at the same caller line on the
+// same mutex.
+type SemaphoreSite struct {
+	File      string // e.g. "trx0sys.h"
+	Line      int    // e.g. 602
+	MutexName string // e.g. "TRX_SYS" (empty when the partner "Mutex ..." line couldn't be associated)
+	WaitCount int
 }
 
 // AHIActivity summarises InnoDB adaptive-hash-index metrics at the

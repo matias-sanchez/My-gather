@@ -15,6 +15,63 @@
         <p class="v">{{.Worst}}</p>
         {{- if .Hint }}<p class="sub">{{.Hint}}</p>{{- end }}
         <p class="stats"><span>min {{.Min}}</span> · <span>avg {{.Avg}}</span> · <span>max {{.Max}}</span></p>
+        {{- if or .BreakdownPeak .BreakdownTotal }}
+        <details class="semaphore-breakdown">
+          <summary>Contention breakdown <span class="cb-chev" aria-hidden="true">▸</span></summary>
+          <div class="cb-body" data-view="peak">
+            {{- if .BreakdownPeak }}
+            <div class="cb-toggle" role="tablist" aria-label="Breakdown scope">
+              <button type="button" class="cb-tab active" data-view="peak">At peak</button>
+              {{- if .BreakdownTotal }}
+              <button type="button" class="cb-tab" data-view="total">Over window</button>
+              {{- end }}
+            </div>
+            <div class="cb-tabview" data-view="peak">
+              <p class="cb-caption">
+                snapshot <code>{{.BreakdownPeakSnapshot}}</code> · {{.BreakdownPeakTotal}} waits
+              </p>
+              <table class="cb-table">
+                <thead><tr><th>Call site</th><th>Mutex</th><th class="num">waits</th><th class="num">%</th></tr></thead>
+                <tbody>
+                  {{- range $i, $row := .BreakdownPeak }}
+                  <tr{{if ge $i 10}} class="cb-tail" hidden{{end}}>
+                    <td class="mono">{{.File}}:{{.Line}}</td>
+                    <td class="mono">{{if .MutexName}}{{.MutexName}}{{else}}–{{end}}</td>
+                    <td class="mono num">{{.Count}}</td>
+                    <td class="mono num">{{.Percent}}%</td>
+                  </tr>
+                  {{- end }}
+                </tbody>
+              </table>
+              {{- if gt (len .BreakdownPeak) 10 }}
+              <button type="button" class="cb-more" data-scope="peak">Show all ({{len .BreakdownPeak}} sites)</button>
+              {{- end }}
+            </div>
+            {{- if .BreakdownTotal }}
+            <div class="cb-tabview" data-view="total" hidden>
+              <p class="cb-caption">summed across the capture window · {{.BreakdownTotalTotal}} waits</p>
+              <table class="cb-table">
+                <thead><tr><th>Call site</th><th>Mutex</th><th class="num">waits</th><th class="num">%</th></tr></thead>
+                <tbody>
+                  {{- range $i, $row := .BreakdownTotal }}
+                  <tr{{if ge $i 10}} class="cb-tail" hidden{{end}}>
+                    <td class="mono">{{.File}}:{{.Line}}</td>
+                    <td class="mono">{{if .MutexName}}{{.MutexName}}{{else}}–{{end}}</td>
+                    <td class="mono num">{{.Count}}</td>
+                    <td class="mono num">{{.Percent}}%</td>
+                  </tr>
+                  {{- end }}
+                </tbody>
+              </table>
+              {{- if gt (len .BreakdownTotal) 10 }}
+              <button type="button" class="cb-more" data-scope="total">Show all ({{len .BreakdownTotal}} sites)</button>
+              {{- end }}
+            </div>
+            {{- end }}
+            {{- end }}
+          </div>
+        </details>
+        {{- end }}
       </div>
       {{- end }}
     </div>

@@ -715,6 +715,120 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   color: var(--fg-dim);
   margin-top: 2px;
 }
+/* Semaphore contention-breakdown: expandable panel inside the
+   Semaphores callout listing the wait sites that produced the worst
+   count, with optional switch to a summed-over-window view. Kept
+   collapsed by default so the 4-card row reads at a glance. */
+.semaphore-breakdown {
+  margin-top: 10px;
+  border-top: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
+  padding-top: 8px;
+}
+.semaphore-breakdown > summary {
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg-muted);
+  user-select: none;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.semaphore-breakdown > summary::-webkit-details-marker { display: none; }
+.semaphore-breakdown[open] > summary { color: var(--fg); }
+.semaphore-breakdown .cb-chev {
+  display: inline-block;
+  transition: transform 120ms ease;
+}
+.semaphore-breakdown[open] > summary .cb-chev {
+  transform: rotate(90deg);
+}
+.semaphore-breakdown .cb-body {
+  padding-top: 8px;
+}
+.semaphore-breakdown .cb-toggle {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding: 2px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.semaphore-breakdown .cb-tab {
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+.semaphore-breakdown .cb-tab:hover { color: var(--fg); }
+.semaphore-breakdown .cb-tab.active {
+  background: var(--accent-soft);
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+.semaphore-breakdown .cb-caption {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+}
+.semaphore-breakdown .cb-caption code {
+  background: transparent;
+  color: var(--fg-muted);
+  padding: 0;
+}
+.semaphore-breakdown .cb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.semaphore-breakdown .cb-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.semaphore-breakdown .cb-table td {
+  padding: 3px 8px 3px 0;
+  color: var(--fg);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+}
+.semaphore-breakdown .cb-table th.num,
+.semaphore-breakdown .cb-table td.num {
+  text-align: right;
+}
+.semaphore-breakdown .cb-table tbody tr:first-child td {
+  color: var(--fg);
+  font-weight: 600;
+}
+.semaphore-breakdown .cb-more {
+  margin-top: 8px;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+.semaphore-breakdown .cb-more:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+
 /* Smaller min/avg/max distribution footer under the main (worst) value.
    Visually de-emphasised so the peak is what the reader lands on. */
 .callout .stats {

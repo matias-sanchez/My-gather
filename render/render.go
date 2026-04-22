@@ -981,6 +981,30 @@ type innoDBMetricView struct {
 	Min   string
 	Avg   string
 	Max   string
+	// Semaphores-only: per-site wait breakdowns. When populated,
+	// db.html.tmpl renders a collapsible "contention breakdown"
+	// <details> under the card with two toggleable views:
+	//   - Peak: breakdown from the single snapshot whose count
+	//     equals Max ("at peak · snapshot <prefix> · N waits").
+	//   - Total: sum of waits over ALL snapshots, by the same
+	//     (file, line, mutex) key.
+	// Empty when no snapshot ever saw >0 waits.
+	BreakdownPeak         []semaphoreSiteRow
+	BreakdownPeakSnapshot string
+	BreakdownPeakTotal    int
+	BreakdownTotal        []semaphoreSiteRow
+	BreakdownTotalTotal   int
+}
+
+// semaphoreSiteRow is one row in the contention-breakdown sub-panel.
+// Percent is computed against the view's total (peak-snapshot total
+// or window total), so each view's percents sum to 100.
+type semaphoreSiteRow struct {
+	File      string
+	Line      int
+	MutexName string
+	Count     int
+	Percent   string // formatted, e.g. "94.9"
 }
 
 // navGroupView is the template-facing shape of one Level-1 nav entry
@@ -1699,12 +1723,97 @@ func aggregateInnoDBMetrics(snaps []model.SnapshotInnoDB) []innoDBMetricView {
 	if len(sem) == 0 {
 		return nil
 	}
+	semMetric := innoDBIntMetric("Semaphores", "waiting", sem)
+	attachSemaphoreBreakdown(&semMetric, snaps)
 	return []innoDBMetricView{
-		innoDBIntMetric("Semaphores", "waiting", sem),
+		semMetric,
 		innoDBIntMetric("Pending I/O", "reads + writes", pio),
 		innoDBFloatMetric("AHI", "searches/sec", ahi, 2),
 		innoDBIntMetric("History list", "HLL (undo depth)", hll),
 	}
+}
+
+// attachSemaphoreBreakdown populates the Semaphores card with two
+// contention-breakdown views: the peak-snapshot list and the
+// summed-over-window list. No-op when no snapshot saw >0 waits.
+func attachSemaphoreBreakdown(m *innoDBMetricView, snaps []model.SnapshotInnoDB) {
+	// 1. Find the peak snapshot (first one tying the max) and sum
+	//    sites across the whole window using a single pass.
+	type siteKey struct {
+		file  string
+		line  int
+		mutex string
+	}
+	totalByKey := map[siteKey]int{}
+	totalAll := 0
+	peakIdx := -1
+	peakCount := -1
+	for i, si := range snaps {
+		if si.Data == nil {
+			continue
+		}
+		if si.Data.SemaphoreCount > peakCount {
+			peakCount = si.Data.SemaphoreCount
+			peakIdx = i
+		}
+		for _, s := range si.Data.SemaphoreSites {
+			totalByKey[siteKey{s.File, s.Line, s.MutexName}] += s.WaitCount
+			totalAll += s.WaitCount
+		}
+	}
+	if peakIdx < 0 || peakCount <= 0 {
+		return
+	}
+	peak := snaps[peakIdx].Data
+	peakTotal := peak.SemaphoreCount
+	m.BreakdownPeak = buildSiteRows(peak.SemaphoreSites, peakTotal)
+	m.BreakdownPeakSnapshot = snaps[peakIdx].SnapshotPrefix
+	m.BreakdownPeakTotal = peakTotal
+
+	// 2. Window-total breakdown: flatten the map, sort desc, format.
+	if totalAll > 0 {
+		rows := make([]model.SemaphoreSite, 0, len(totalByKey))
+		for k, c := range totalByKey {
+			rows = append(rows, model.SemaphoreSite{
+				File:      k.file,
+				Line:      k.line,
+				MutexName: k.mutex,
+				WaitCount: c,
+			})
+		}
+		sort.SliceStable(rows, func(i, j int) bool {
+			if rows[i].WaitCount != rows[j].WaitCount {
+				return rows[i].WaitCount > rows[j].WaitCount
+			}
+			if rows[i].File != rows[j].File {
+				return rows[i].File < rows[j].File
+			}
+			if rows[i].Line != rows[j].Line {
+				return rows[i].Line < rows[j].Line
+			}
+			return rows[i].MutexName < rows[j].MutexName
+		})
+		m.BreakdownTotal = buildSiteRows(rows, totalAll)
+		m.BreakdownTotalTotal = totalAll
+	}
+}
+
+func buildSiteRows(sites []model.SemaphoreSite, total int) []semaphoreSiteRow {
+	out := make([]semaphoreSiteRow, 0, len(sites))
+	for _, s := range sites {
+		pct := 0.0
+		if total > 0 {
+			pct = float64(s.WaitCount) * 100.0 / float64(total)
+		}
+		out = append(out, semaphoreSiteRow{
+			File:      s.File,
+			Line:      s.Line,
+			MutexName: s.MutexName,
+			Count:     s.WaitCount,
+			Percent:   FormatFloat(pct, 1),
+		})
+	}
+	return out
 }
 
 func innoDBIntMetric(label, hint string, vals []int) innoDBMetricView {

@@ -8,7 +8,21 @@
       "SearchesPerSec": 2.73,
       "NonHashSearchesPerSec": 11292.91
     },
-    "HistoryListLength": 133
+    "HistoryListLength": 133,
+    "SemaphoreSites": [
+      {
+        "File": "buf0buf.cc",
+        "Line": 3207,
+        "MutexName": "BUF_POOL_LRU_LIST",
+        "WaitCount": 1
+      },
+      {
+        "File": "buf0buf.cc",
+        "Line": 4968,
+        "MutexName": "BUF_POOL_LRU_LIST",
+        "WaitCount": 1
+      }
+    ]
   },
   "diagnostics": null
 }

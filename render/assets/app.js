@@ -1959,6 +1959,39 @@
 
   // --- Print-expand hook ----------------------------------------
 
+  // Semaphore contention-breakdown panel wiring: tab switcher
+  // between "At peak" and "Over window" views, plus the
+  // "Show all (N sites)" button that reveals rows past the top-10.
+  // Both interactions are strictly local to the <details> block
+  // rendered by db.html.tmpl; no cross-card state.
+  function initSemaphoreBreakdown() {
+    var blocks = document.querySelectorAll("details.semaphore-breakdown");
+    for (var i = 0; i < blocks.length; i++) {
+      (function (block) {
+        var tabs = block.querySelectorAll(".cb-tab");
+        var views = block.querySelectorAll(".cb-tabview");
+        tabs.forEach(function (tab) {
+          tab.addEventListener("click", function () {
+            var key = tab.getAttribute("data-view");
+            tabs.forEach(function (t) { t.classList.toggle("active", t === tab); });
+            views.forEach(function (v) {
+              v.hidden = v.getAttribute("data-view") !== key;
+            });
+          });
+        });
+        block.querySelectorAll(".cb-more").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var scope = btn.getAttribute("data-scope");
+            var view = block.querySelector('.cb-tabview[data-view="' + scope + '"]');
+            if (!view) return;
+            view.querySelectorAll("tr.cb-tail").forEach(function (row) { row.hidden = false; });
+            btn.hidden = true;
+          });
+        });
+      })(blocks[i]);
+    }
+  }
+
   function initPrintHook() {
     var beforeState = null;
     function stash() {
@@ -1991,6 +2024,7 @@
     initNavCollapse();
     initNavScrollSpy();
     initAdvisorFilter();
+    initSemaphoreBreakdown();
     initPrintHook();
     observeContentColumn();
     // Also re-fit on any <details> toggle (open/close affects
