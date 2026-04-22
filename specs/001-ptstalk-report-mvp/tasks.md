@@ -405,7 +405,7 @@ A mechanical pass compared every task ID against the real repository state for t
 **Fixture / golden gaps**:
 
 - **T019**: `testdata/example1/` was never committed — only `testdata/example2/` exists. Any test that keys off a distinct first example (or that asserts two format variants co-exist per FR-024) depends on this.
-- `testdata/golden/` is **empty**. Every `*Golden*` test (T043, T044, T045, T046, T056, T057, T063, T064, T068, T069) needs a committed golden under `testdata/golden/` generated via `go test ./parse/... -update` and reviewed. Without them the tests either fail or skip.
+- `testdata/golden/` is **partially populated**: T056 (variables) and T068 (processlist) goldens are committed as of this PR. Remaining `*Golden*` tests (T043, T044, T045, T046, T057, T063, T064, T069) still need committed goldens under `testdata/golden/` generated via `go test ./parse/... -update` and reviewed. Until those are added, those tests either fail or skip.
 
 **Feature gap**:
 
