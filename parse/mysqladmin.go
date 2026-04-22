@@ -211,8 +211,15 @@ func (p *mysqladminParser) finish() (*model.MysqladminData, []model.Diagnostic) 
 		if len(vs) < totalCols {
 			p.diagnostics = append(p.diagnostics, model.Diagnostic{
 				SourceFile: p.sourcePath,
-				Severity:   model.SeverityWarning,
-				Message:    fmt.Sprintf("mysqladmin: variable %q missing from %d trailing sample(s)", name, totalCols-len(vs)),
+				// FR-008 requires a Location on every Warning so a
+				// later render pass can surface "which column / which
+				// offset" to the user. For trailing-drift the column
+				// index is the natural anchor — the variable is
+				// missing starting AT column len(vs) and continuing
+				// through column totalCols-1.
+				Location: fmt.Sprintf("column %d", len(vs)),
+				Severity: model.SeverityWarning,
+				Message:  fmt.Sprintf("mysqladmin: variable %q missing from %d trailing sample(s)", name, totalCols-len(vs)),
 			})
 			for len(vs) < totalCols {
 				vs = append(vs, math.NaN())
