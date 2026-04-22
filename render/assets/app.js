@@ -808,15 +808,20 @@
     var buttons = [];
     var currentIdx = 0;
     var plot = null, legendEl = null;
-    // Labels the user has hidden via the legend. The set persists
-    // across both dimension switches and draw() rebuilds so that
-    // re-selecting a dimension carries previously-hidden buckets with
-    // a consistent identity (by label, since indexes shuffle per
-    // dimension). The label for the "Other (N)" bucket includes its
-    // count, which changes per-dimension — that's acceptable because
-    // Other is a derived aggregation and there is no cross-dimension
-    // identity to preserve.
-    var hiddenLabels = new Set();
+    // Hidden-label state is scoped per dimension. Each grouping
+    // (State / User / Host / Command / db) aggregates threads
+    // differently, and a label like "Other" in one dimension means
+    // something completely different in another — so hiding "Other"
+    // in State must NOT also hide "Other" in Host. Map<dimKey, Set>
+    // gives each dimension its own independent hidden-set that
+    // persists across dimension switches and draw() rebuilds.
+    var hiddenByDim = new Map();
+    function currentHidden() {
+      var key = dims[currentIdx].label;
+      var s = hiddenByDim.get(key);
+      if (!s) { s = new Set(); hiddenByDim.set(key, s); }
+      return s;
+    }
 
     var barsPath = uPlot.paths.bars({ size: [1.0, Infinity], align: 0 });
 
@@ -826,6 +831,7 @@
       var dim = dims[currentIdx];
       var seriesData = rankSeries(dim.series);
       var n = data.timestamps.length;
+      var hiddenLabels = currentHidden();
 
       // Raw per-segment values per bucket. When a bucket is hidden via
       // the legend, its row is replaced with zeros so it contributes
@@ -896,20 +902,22 @@
       plot.__rawData = plotRawByIdx; // consumed by updateTooltipOnCursor
       registerChart(plot, el, opts);
       mountLegend(el, plotSeries, plot, {
-        // Pill is active ⇔ bucket is NOT hidden.
+        // Pill is active ⇔ bucket is NOT hidden in the current dim.
         initialVisible: function (idx) {
           var label = plotSeries[idx].label;
           return !hiddenLabels.has(label);
         },
         // Rebuild the entire chart from the new visibility set so the
         // stack geometry (cumulative heights) matches the visible
-        // subset — the bug codex flagged.
+        // subset. Write-through to the per-dimension set so switches
+        // to another dimension start fresh with their own state.
         onVisibilityChange: function (visibleIdxs) {
           var active = new Set(visibleIdxs);
-          hiddenLabels = new Set();
+          var next = new Set();
           for (var idx = 1; idx < plotSeries.length; idx++) {
-            if (!active.has(idx)) hiddenLabels.add(plotSeries[idx].label);
+            if (!active.has(idx)) next.add(plotSeries[idx].label);
           }
+          hiddenByDim.set(dims[currentIdx].label, next);
           draw();
         },
       });
@@ -1324,6 +1332,9 @@
     btnNew.addEventListener("click", function () {
       var cs = createChart({ selection: [] });
       setActive(cs.id);
+      // Persist immediately so a reload right after "+ New chart"
+      // preserves the empty chart — matches duplicate/remove.
+      persistLayout();
     });
     toolbar.appendChild(toolbarHint);
     toolbar.appendChild(btnNew);
