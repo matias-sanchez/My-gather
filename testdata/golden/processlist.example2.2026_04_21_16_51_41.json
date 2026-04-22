@@ -1,0 +1,367 @@
+{
+  "threadStateSamples": [
+    {
+      "Timestamp": "2026-04-21T16:51:43Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "statistics": 8,
+        "updating": 2
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:44Z",
+      "StateCounts": {
+        "Other": 2,
+        "Waiting on empty queue": 1,
+        "executing": 1,
+        "init": 1,
+        "statistics": 7,
+        "updating": 3
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:45Z",
+      "StateCounts": {
+        "Other": 1,
+        "Sending to client": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "statistics": 7,
+        "updating": 3
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:46Z",
+      "StateCounts": {
+        "Other": 3,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "statistics": 6,
+        "updating": 4
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:47Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "executing": 2,
+        "freeing items": 1,
+        "init": 1,
+        "starting": 1,
+        "statistics": 4,
+        "updating": 5
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:48Z",
+      "StateCounts": {
+        "Other": 1,
+        "Receiving from client": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "statistics": 7,
+        "update": 1,
+        "updating": 2
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:49Z",
+      "StateCounts": {
+        "Other": 3,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "login": 1,
+        "statistics": 5,
+        "update": 1,
+        "updating": 4
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:50Z",
+      "StateCounts": {
+        "Other": 2,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "login": 1,
+        "statistics": 6,
+        "updating": 1,
+        "waiting for handler commit": 3
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:51Z",
+      "StateCounts": {
+        "Opening tables": 1,
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "starting": 2,
+        "statistics": 10
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:52Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "statistics": 9,
+        "updating": 1
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:53Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "statistics": 8,
+        "update": 2,
+        "updating": 1
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:54Z",
+      "StateCounts": {
+        "Opening tables": 1,
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "login": 1,
+        "statistics": 10
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:55Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "executing": 1,
+        "init": 1,
+        "statistics": 3,
+        "updating": 5,
+        "waiting for handler commit": 2
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:56Z",
+      "StateCounts": {
+        "Other": 1,
+        "Sending to client": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "statistics": 6,
+        "updating": 2,
+        "waiting for handler commit": 2
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:57Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "optimizing": 1,
+        "statistics": 10
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:58Z",
+      "StateCounts": {
+        "Other": 1,
+        "Receiving from client": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "login": 1,
+        "statistics": 10
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:51:59Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "executing": 1,
+        "init": 1,
+        "login": 2,
+        "statistics": 10
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:00Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "statistics": 10
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:01Z",
+      "StateCounts": {
+        "Opening tables": 1,
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "statistics": 8,
+        "updating": 2
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:02Z",
+      "StateCounts": {
+        "Opening tables": 1,
+        "Other": 2,
+        "Waiting on empty queue": 1,
+        "executing": 1,
+        "init": 1,
+        "waiting for handler commit": 10
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:03Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "init": 2,
+        "statistics": 8,
+        "updating": 2
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:04Z",
+      "StateCounts": {
+        "Other": 2,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "starting": 2,
+        "statistics": 5,
+        "update": 2,
+        "updating": 2,
+        "waiting for handler commit": 1
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:05Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "login": 2,
+        "statistics": 5,
+        "updating": 5
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:06Z",
+      "StateCounts": {
+        "Opening tables": 1,
+        "Other": 2,
+        "Waiting on empty queue": 1,
+        "executing": 2,
+        "init": 1,
+        "statistics": 7,
+        "updating": 1
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:07Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "statistics": 10
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:08Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "executing": 2,
+        "init": 1,
+        "statistics": 5,
+        "updating": 2,
+        "waiting for handler commit": 1
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:09Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "executing": 1,
+        "init": 1,
+        "preparing": 1,
+        "statistics": 6,
+        "update": 2,
+        "updating": 2
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:10Z",
+      "StateCounts": {
+        "Other": 3,
+        "Sending to client": 1,
+        "System lock": 1,
+        "Waiting on empty queue": 1,
+        "init": 1,
+        "login": 1,
+        "optimizing": 1,
+        "starting": 1,
+        "statistics": 1,
+        "updating": 2,
+        "waiting for handler commit": 1
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:11Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "executing": 1,
+        "init": 1,
+        "starting": 1,
+        "statistics": 3,
+        "update": 1,
+        "updating": 4,
+        "waiting for handler commit": 2
+      }
+    },
+    {
+      "Timestamp": "2026-04-21T16:52:12Z",
+      "StateCounts": {
+        "Other": 1,
+        "Waiting on empty queue": 1,
+        "executing": 1,
+        "init": 1,
+        "statistics": 8,
+        "updating": 2
+      }
+    }
+  ],
+  "states": [
+    "Opening tables",
+    "Receiving from client",
+    "Sending to client",
+    "System lock",
+    "Waiting on empty queue",
+    "executing",
+    "freeing items",
+    "init",
+    "login",
+    "optimizing",
+    "preparing",
+    "starting",
+    "statistics",
+    "update",
+    "updating",
+    "waiting for handler commit",
+    "Other"
+  ],
+  "snapshotBoundaries": null,
+  "diagnostics": null
+}
