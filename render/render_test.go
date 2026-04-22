@@ -46,8 +46,7 @@ func TestRenderEmptyReport(t *testing.T) {
 		`<details id="sec-os"`,
 		`<details id="sec-variables"`,
 		`<details id="sec-db"`,
-		`<details id="sec-diagnostics"`,
-		`Verbatim passthrough:`,
+		`<details id="sec-advisor"`,
 		`Data not available`,
 		`<nav class="index"`,
 		`id="report-data"`,
@@ -61,6 +60,73 @@ func TestRenderEmptyReport(t *testing.T) {
 		// Only benign hit is the uPlot comment https://github.com/leeoniya/uPlot
 		// Accept that, but forbid plain http://.
 		t.Errorf("rendered HTML contains http:// (network fetch risk)")
+	}
+}
+
+// TestAdvisorCardRenders exercises the end-to-end path from a
+// Collection containing mysqladmin data through the findings engine
+// and into the rendered HTML. It asserts that the severity-filter
+// chips are emitted and that a Critical finding-card lands in the
+// output. Keeping the assertions coarse-grained (class names + chip
+// presence) lets the test survive minor template tweaks while still
+// defending against the Advisor section silently breaking.
+func TestAdvisorCardRenders(t *testing.T) {
+	// Construct mysqladmin data whose Innodb_buffer_pool_wait_free
+	// counter increments — a non-zero rate triggers findings rule
+	// "bp.wait_free" at SeverityCrit. Using a two-sample window for
+	// minimal bookkeeping; rate = total / windowSeconds.
+	t0 := time.Date(2026, 4, 21, 16, 52, 0, 0, time.UTC)
+	t1 := t0.Add(30 * time.Second)
+	mysqladmin := &model.MysqladminData{
+		VariableNames: []string{"Innodb_buffer_pool_wait_free"},
+		SampleCount:   2,
+		Timestamps:    []time.Time{t0, t1},
+		Deltas: map[string][]float64{
+			// Index 0 = raw initial tally (skipped by counterTotal);
+			// index 1 = per-sample delta (contributes to the rate).
+			"Innodb_buffer_pool_wait_free": {100, 50},
+		},
+		IsCounter:          map[string]bool{"Innodb_buffer_pool_wait_free": true},
+		SnapshotBoundaries: []int{0},
+	}
+
+	c := &model.Collection{
+		RootPath: "/tmp/example",
+		Hostname: "example-db-01",
+		Snapshots: []*model.Snapshot{
+			{
+				Timestamp: t0,
+				Prefix:    "2026_04_21_16_52_00",
+				SourceFiles: map[model.Suffix]*model.SourceFile{
+					model.SuffixMysqladmin: {
+						Suffix: model.SuffixMysqladmin,
+						Parsed: mysqladmin,
+					},
+				},
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	opts := render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}
+	if err := render.Render(&buf, c, opts); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	out := buf.String()
+
+	// Filter chips — all four must be emitted with data-sev attrs.
+	for _, sev := range []string{"crit", "warn", "info", "ok"} {
+		if !strings.Contains(out, `data-sev="`+sev+`"`) {
+			t.Errorf("missing severity filter chip data-sev=%q", sev)
+		}
+	}
+	// At least one Critical finding card must land in the output.
+	if !strings.Contains(out, `class="finding sev-crit"`) {
+		t.Errorf("output missing Critical finding card (class=\"finding sev-crit\")")
+	}
+	// And the severity pill inside the card summary.
+	if !strings.Contains(out, `class="sev-chip sev-crit"`) {
+		t.Errorf("output missing Critical severity pill (class=\"sev-chip sev-crit\")")
 	}
 }
 

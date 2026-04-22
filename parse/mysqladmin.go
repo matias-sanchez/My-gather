@@ -2,12 +2,16 @@ package parse
 
 import (
 	"bufio"
+	_ "embed"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/matias-sanchez/My-gather/model"
@@ -274,46 +278,99 @@ func splitTwoPipeFields(line string) (string, string, bool) {
 	return name, value, true
 }
 
-// classifyAsCounter returns true for variables whose values are
-// monotonic counters across samples. The allowlist is conservative —
-// only the well-known `Com_*`, `Bytes_*`, `Handler_*`, `Innodb_*`,
-// `Slow_queries`, `Questions`, etc. prefixes. Everything else is
-// treated as a gauge (raw value, not a delta).
+// classifyAsCounter decides whether `name` is a monotonically
+// increasing counter (true) or a point-in-time gauge (false).
 //
-// Based on MySQL's SHOW GLOBAL STATUS reference documentation.
+// The decision follows the same logic Percona's mysqld_exporter uses
+// to set prometheus.CounterValue vs GaugeValue on SHOW GLOBAL STATUS
+// scrapes (see mysqld_exporter/collector/global_status.go:37 for the
+// regex and lines 134-172 for the Innodb_buffer_pool_pages
+// sub-switch). Two layers:
+//
+//  1. Explicit JSON overrides from parse/mysql-status-types.json —
+//     used for variables that the exporter reports as Untyped (i.e.
+//     unmatched by its regex). The JSON encodes the MySQL reference
+//     manual's counter/gauge semantics for the variables we routinely
+//     see in pt-stalk captures.
+//  2. Ported regex + sub-switch — matches the exporter bit-for-bit.
+//  3. Default: gauge. Safer than a bogus delta if we don't know.
 func classifyAsCounter(name string) bool {
-	counterPrefixes := []string{
-		"Com_",
-		"Bytes_",
-		"Handler_",
-		"Innodb_buffer_pool_read",
-		"Innodb_buffer_pool_write",
-		"Innodb_buffer_pool_pages_flushed",
-		"Innodb_data_",
-		"Innodb_log_",
-		"Innodb_rows_",
-		"Innodb_pages_",
-		"Created_tmp_",
-		"Open_files",
-		"Opened_",
-		"Queries",
-		"Questions",
-		"Select_",
-		"Slow_queries",
-		"Sort_",
-		"Table_locks_",
-		"Aborted_",
-		"Access_denied_errors",
-		"Connections",
-		"Key_read_requests",
-		"Key_reads",
-		"Key_write_requests",
-		"Key_writes",
+	types := loadStatusTypes()
+	if types != nil {
+		if _, ok := types.counters[name]; ok {
+			return true
+		}
+		if _, ok := types.gauges[name]; ok {
+			return false
+		}
 	}
-	for _, p := range counterPrefixes {
-		if strings.HasPrefix(name, p) {
+	m := exporterStatusRE.FindStringSubmatch(strings.ToLower(name))
+	if m == nil {
+		return false
+	}
+	switch m[1] {
+	case "com", "handler", "connection_errors", "innodb_rows", "performance_schema":
+		return true
+	case "innodb_buffer_pool_pages":
+		switch m[2] {
+		case "data", "free", "misc", "old", "dirty", "total":
+			return false
+		default:
 			return true
 		}
 	}
 	return false
+}
+
+// exporterStatusRE mirrors mysqld_exporter's globalStatusRE (same
+// file, same line-number). Grouping:
+//
+//	m[1] -> family (com / handler / connection_errors /
+//	        innodb_buffer_pool_pages / innodb_rows / performance_schema)
+//	m[2] -> suffix the family didn't strip
+var exporterStatusRE = regexp.MustCompile(
+	`^(com|handler|connection_errors|innodb_buffer_pool_pages|innodb_rows|performance_schema)_(.*)$`,
+)
+
+//go:embed mysql-status-types.json
+var embeddedStatusTypesJSON []byte
+
+type statusTypeTables struct {
+	counters map[string]struct{}
+	gauges   map[string]struct{}
+}
+
+var (
+	statusTypes     *statusTypeTables
+	statusTypesOnce sync.Once
+)
+
+func loadStatusTypes() *statusTypeTables {
+	statusTypesOnce.Do(func() {
+		var raw struct {
+			ExplicitCounters []string `json:"explicit_counters"`
+			ExplicitGauges   []string `json:"explicit_gauges"`
+		}
+		if err := json.Unmarshal(embeddedStatusTypesJSON, &raw); err != nil {
+			// Malformed override file: fall back to regex-only
+			// classification rather than hard-failing the run.
+			statusTypes = &statusTypeTables{
+				counters: map[string]struct{}{},
+				gauges:   map[string]struct{}{},
+			}
+			return
+		}
+		t := &statusTypeTables{
+			counters: make(map[string]struct{}, len(raw.ExplicitCounters)),
+			gauges:   make(map[string]struct{}, len(raw.ExplicitGauges)),
+		}
+		for _, n := range raw.ExplicitCounters {
+			t.counters[n] = struct{}{}
+		}
+		for _, n := range raw.ExplicitGauges {
+			t.gauges[n] = struct{}{}
+		}
+		statusTypes = t
+	})
+	return statusTypes
 }

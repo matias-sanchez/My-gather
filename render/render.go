@@ -3,6 +3,7 @@ package render
 import (
 	"bytes"
 	"embed"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -10,8 +11,10 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/matias-sanchez/My-gather/findings"
 	"github.com/matias-sanchez/My-gather/model"
 )
 
@@ -36,6 +39,9 @@ var embeddedMySQLDefaultsJSON []byte
 //go:embed assets/mysqladmin-categories.json
 var embeddedMysqladminCategoriesJSON []byte
 
+//go:embed assets/logo.png
+var embeddedLogoPNG []byte
+
 type mysqladminCategoryDef struct {
 	Key             string   `json:"key"`
 	Label           string   `json:"label"`
@@ -47,20 +53,18 @@ type mysqladminCategoryDef struct {
 
 var (
 	mysqladminCategories     []mysqladminCategoryDef
-	mysqladminCategoriesOnce bool
+	mysqladminCategoriesOnce sync.Once
 )
 
 func loadMysqladminCategories() []mysqladminCategoryDef {
-	if mysqladminCategoriesOnce {
-		return mysqladminCategories
-	}
-	mysqladminCategoriesOnce = true
-	var v struct {
-		Categories []mysqladminCategoryDef `json:"categories"`
-	}
-	if err := json.Unmarshal(embeddedMysqladminCategoriesJSON, &v); err == nil {
-		mysqladminCategories = v.Categories
-	}
+	mysqladminCategoriesOnce.Do(func() {
+		var v struct {
+			Categories []mysqladminCategoryDef `json:"categories"`
+		}
+		if err := json.Unmarshal(embeddedMysqladminCategoriesJSON, &v); err == nil {
+			mysqladminCategories = v.Categories
+		}
+	})
 	return mysqladminCategories
 }
 
@@ -107,22 +111,20 @@ func classifyMysqladminCategory(cats []mysqladminCategoryDef, name string) []str
 // mysqlDefaults is the parsed default-values map, populated on first use.
 var (
 	mysqlDefaults     map[string]string
-	mysqlDefaultsOnce bool
+	mysqlDefaultsOnce sync.Once
 )
 
 func loadMySQLDefaults() map[string]string {
-	if mysqlDefaultsOnce {
-		return mysqlDefaults
-	}
-	mysqlDefaultsOnce = true
-	var v struct {
-		Defaults map[string]string `json:"defaults"`
-	}
-	if err := json.Unmarshal(embeddedMySQLDefaultsJSON, &v); err == nil {
-		mysqlDefaults = v.Defaults
-	} else {
-		mysqlDefaults = map[string]string{}
-	}
+	mysqlDefaultsOnce.Do(func() {
+		var v struct {
+			Defaults map[string]string `json:"defaults"`
+		}
+		if err := json.Unmarshal(embeddedMySQLDefaultsJSON, &v); err == nil {
+			mysqlDefaults = v.Defaults
+		} else {
+			mysqlDefaults = map[string]string{}
+		}
+	})
 	return mysqlDefaults
 }
 
@@ -712,27 +714,39 @@ func concatProcesslist(ins []*model.ProcesslistData) *model.ProcesslistData {
 	if len(nonNil) == 0 {
 		return nil
 	}
-	stateSet := map[string]bool{}
-	hasOther := false
-	for _, d := range nonNil {
-		for _, s := range d.States {
-			if s == "Other" {
-				hasOther = true
-			} else {
-				stateSet[s] = true
+
+	// Union every dimension's label set across Snapshots, preserving
+	// "Other last" semantics from the parser.
+	unionLabels := func(pick func(d *model.ProcesslistData) []string) []string {
+		set := map[string]bool{}
+		hasOther := false
+		for _, d := range nonNil {
+			for _, s := range pick(d) {
+				if s == "Other" {
+					hasOther = true
+				} else {
+					set[s] = true
+				}
 			}
 		}
-	}
-	states := make([]string, 0, len(stateSet)+1)
-	for s := range stateSet {
-		states = append(states, s)
-	}
-	sort.Strings(states)
-	if hasOther {
-		states = append(states, "Other")
+		out := make([]string, 0, len(set)+1)
+		for s := range set {
+			out = append(out, s)
+		}
+		sort.Strings(out)
+		if hasOther {
+			out = append(out, "Other")
+		}
+		return out
 	}
 
-	out := &model.ProcesslistData{States: states}
+	out := &model.ProcesslistData{
+		States:   unionLabels(func(d *model.ProcesslistData) []string { return d.States }),
+		Users:    unionLabels(func(d *model.ProcesslistData) []string { return d.Users }),
+		Hosts:    unionLabels(func(d *model.ProcesslistData) []string { return d.Hosts }),
+		Commands: unionLabels(func(d *model.ProcesslistData) []string { return d.Commands }),
+		Dbs:      unionLabels(func(d *model.ProcesslistData) []string { return d.Dbs }),
+	}
 	boundaries := make([]int, 0, len(nonNil))
 	cumulative := 0
 	for _, d := range nonNil {
@@ -784,8 +798,8 @@ func buildNavigation(r *model.Report) []model.NavEntry {
 	nav = append(nav, model.NavEntry{ID: "sub-db-mysqladmin", Title: "Counter deltas", Level: 2, ParentID: "sec-db"})
 	nav = append(nav, model.NavEntry{ID: "sub-db-processlist", Title: "Thread states", Level: 2, ParentID: "sec-db"})
 
-	// Diagnostics.
-	nav = append(nav, model.NavEntry{ID: "sec-diagnostics", Title: "Parser Diagnostics", Level: 1})
+	// Advisor section — rule-based findings, last in the report.
+	nav = append(nav, model.NavEntry{ID: "sec-advisor", Title: "Advisor", Level: 1})
 
 	return nav
 }
@@ -833,11 +847,17 @@ type reportView struct {
 	EmbeddedChartJS template.JS
 	EmbeddedAppJS   template.JS
 	DataPayload     template.JS // JSON, emitted inside <script type="application/json">
+	LogoDataURI     template.URL
 
-	OSBadge          string
-	VariablesBadge   string
-	DBBadge          string
-	DiagnosticsBadge string
+	AdvisorBadge   string
+	OSBadge        string
+	VariablesBadge string
+	DBBadge        string
+
+	// Advisor section payload.
+	Findings      []findingView
+	AdvisorCounts findingCountsView
+	HasFindings   bool
 
 	// OS section payload
 	HasIostat     bool
@@ -858,10 +878,7 @@ type reportView struct {
 	MysqladminVariables []string
 	MysqladminCount     int
 	MysqladminSelectID  string
-	HasProcesslist      bool
-
-	// Diagnostics (flattened for template iteration).
-	Diagnostics []diagnosticView
+	HasProcesslist bool
 }
 
 type variableSnapshotView struct {
@@ -899,12 +916,35 @@ type navChildView struct {
 	Title string
 }
 
-type diagnosticView struct {
-	SourceFileDisplay string
-	Location          string
-	SeverityClass     string
-	SeverityLabel     string
-	Message           string
+// findingView is the template-facing shape of a findings.Finding.
+type findingView struct {
+	ID              string
+	Subsystem       string
+	Title           string
+	SeverityClass   string // "crit" | "warn" | "info" | "ok"
+	SeverityLabel   string // "Critical" | "Warning" | "Info" | "OK"
+	OpenByDefault   bool   // crit findings start expanded
+	Summary         string
+	Explanation     string
+	FormulaText     string
+	FormulaComputed string
+	Metrics         []findingMetricView
+	Recommendations []string
+}
+
+type findingMetricView struct {
+	Name  string
+	Value string
+	Unit  string
+	Note  string
+}
+
+type findingCountsView struct {
+	Crit int
+	Warn int
+	Info int
+	OK   int
+	Any  bool
 }
 
 type iostatSummaryView struct {
@@ -947,6 +987,7 @@ func buildView(r *model.Report, c *model.Collection) *reportView {
 		EmbeddedCSS:        template.CSS(embeddedChartCSS + "\n" + embeddedAppCSS),
 		EmbeddedChartJS:    template.JS(embeddedChartJS),
 		EmbeddedAppJS:      template.JS(embeddedAppJS),
+		LogoDataURI:        template.URL("data:image/png;base64," + base64.StdEncoding.EncodeToString(embeddedLogoPNG)),
 		MysqladminSelectID: "mysqladmin-select",
 	}
 
@@ -1025,14 +1066,12 @@ func buildView(r *model.Report, c *model.Collection) *reportView {
 	presentDB := boolToInt(v.HasInnoDB) + boolToInt(v.HasMysqladmin) + boolToInt(v.HasProcesslist)
 	v.DBBadge = fmt.Sprintf("%d / 3 subviews", presentDB)
 
-	// Diagnostics: collection-wide + per-SourceFile, sorted stably by
-	// (severity desc, source-file, location).
-	v.Diagnostics = flattenDiagnostics(c)
-	if len(v.Diagnostics) == 0 {
-		v.DiagnosticsBadge = "clean"
-	} else {
-		v.DiagnosticsBadge = fmt.Sprintf("%d entries", len(v.Diagnostics))
-	}
+	// Advisor: rule-based findings derived from the captured data.
+	fs := findings.Analyze(r)
+	v.Findings = buildFindingViews(fs)
+	v.AdvisorCounts = summariseFindings(fs)
+	v.HasFindings = len(v.Findings) > 0
+	v.AdvisorBadge = advisorBadge(v.AdvisorCounts)
 
 	// Build the embedded data payload. Per-chart series are populated
 	// by US2-US4 parser integration; for the MVP render skeleton we
@@ -1176,27 +1215,69 @@ func pickDefaultCounters(d *model.MysqladminData) []string {
 }
 
 func processlistChartPayload(d *model.ProcesslistData) map[string]any {
-	if len(d.ThreadStateSamples) == 0 {
+	n := len(d.ThreadStateSamples)
+	if n == 0 {
 		return nil
 	}
-	timestamps := make([]float64, len(d.ThreadStateSamples))
+	timestamps := make([]float64, n)
 	for i, s := range d.ThreadStateSamples {
 		timestamps[i] = float64(s.Timestamp.Unix())
 	}
-	var series []map[string]any
-	for _, state := range d.States {
-		vals := make([]float64, len(d.ThreadStateSamples))
-		for i, s := range d.ThreadStateSamples {
-			vals[i] = float64(s.StateCounts[state])
+
+	buildSeries := func(labels []string, pick func(s model.ThreadStateSample, label string) int) []map[string]any {
+		out := make([]map[string]any, 0, len(labels))
+		for _, lbl := range labels {
+			vals := make([]float64, n)
+			for i, s := range d.ThreadStateSamples {
+				vals[i] = float64(pick(s, lbl))
+			}
+			out = append(out, map[string]any{
+				"label":  lbl,
+				"values": vals,
+			})
 		}
-		series = append(series, map[string]any{
-			"label":  state,
-			"values": vals,
-		})
+		return out
 	}
+
+	dimensions := []map[string]any{
+		{
+			"key":    "state",
+			"label":  "State",
+			"unit":   "threads",
+			"series": buildSeries(d.States, func(s model.ThreadStateSample, l string) int { return s.StateCounts[l] }),
+		},
+		{
+			"key":    "user",
+			"label":  "User",
+			"unit":   "threads",
+			"series": buildSeries(d.Users, func(s model.ThreadStateSample, l string) int { return s.UserCounts[l] }),
+		},
+		{
+			"key":    "host",
+			"label":  "Host",
+			"unit":   "threads",
+			"series": buildSeries(d.Hosts, func(s model.ThreadStateSample, l string) int { return s.HostCounts[l] }),
+		},
+		{
+			"key":    "command",
+			"label":  "Command",
+			"unit":   "threads",
+			"series": buildSeries(d.Commands, func(s model.ThreadStateSample, l string) int { return s.CommandCounts[l] }),
+		},
+		{
+			"key":    "db",
+			"label":  "db",
+			"unit":   "threads",
+			"series": buildSeries(d.Dbs, func(s model.ThreadStateSample, l string) int { return s.DbCounts[l] }),
+		},
+	}
+
+	// Primary `series` stays pointed at the State dimension so the
+	// existing renderTimeSeries fallback path remains functional.
 	return map[string]any{
 		"timestamps":         timestamps,
-		"series":             series,
+		"series":             dimensions[0]["series"],
+		"dimensions":         dimensions,
 		"snapshotBoundaries": d.SnapshotBoundaries,
 	}
 }
@@ -1480,97 +1561,148 @@ func commaSetsEqual(a, b string) bool {
 	return true
 }
 
-func flattenDiagnostics(c *model.Collection) []diagnosticView {
-	var out []diagnosticView
-	add := func(d model.Diagnostic) {
-		out = append(out, diagnosticView{
-			SourceFileDisplay: shortPath(d.SourceFile),
-			Location:          d.Location,
-			SeverityClass:     severityClass(d.Severity),
-			SeverityLabel:     severityLabel(d.Severity),
-			Message:           d.Message,
-		})
-	}
-	for _, d := range c.Diagnostics {
-		add(d)
-	}
-	for _, snap := range c.Snapshots {
-		for _, suffix := range model.KnownSuffixes {
-			sf, ok := snap.SourceFiles[suffix]
-			if !ok {
-				continue
-			}
-			for _, d := range sf.Diagnostics {
-				add(d)
-			}
-		}
-	}
-	sort.SliceStable(out, func(i, j int) bool {
-		if out[i].SeverityClass != out[j].SeverityClass {
-			return severityRank(out[i].SeverityClass) > severityRank(out[j].SeverityClass)
-		}
-		if out[i].SourceFileDisplay != out[j].SourceFileDisplay {
-			return out[i].SourceFileDisplay < out[j].SourceFileDisplay
-		}
-		return out[i].Location < out[j].Location
-	})
-	return out
-}
-
-func severityClass(s model.Severity) string {
-	switch s {
-	case model.SeverityInfo:
-		return "info"
-	case model.SeverityWarning:
-		return "warn"
-	case model.SeverityError:
-		return "err"
-	default:
-		return "info"
-	}
-}
-
-func severityLabel(s model.Severity) string {
-	switch s {
-	case model.SeverityInfo:
-		return "info"
-	case model.SeverityWarning:
-		return "warn"
-	case model.SeverityError:
-		return "error"
-	default:
-		return "info"
-	}
-}
-
-func severityRank(cls string) int {
-	switch cls {
-	case "err":
-		return 3
-	case "warn":
-		return 2
-	default:
-		return 1
-	}
-}
-
-func shortPath(p string) string {
-	if p == "" {
-		return ""
-	}
-	// Strip leading directory components so diagnostics aren't cluttered
-	// with the full absolute path the user passed on the CLI.
-	for i := len(p) - 1; i >= 0; i-- {
-		if p[i] == '/' {
-			return p[i+1:]
-		}
-	}
-	return p
-}
-
 func boolToInt(b bool) int {
 	if b {
 		return 1
 	}
 	return 0
+}
+
+// --- Advisor / findings view helpers --------------------------------
+
+func buildFindingViews(fs []findings.Finding) []findingView {
+	out := make([]findingView, 0, len(fs))
+	for _, f := range fs {
+		class, label := severityUIFields(f.Severity)
+		metrics := make([]findingMetricView, 0, len(f.Metrics))
+		for _, m := range f.Metrics {
+			metrics = append(metrics, findingMetricView{
+				Name:  m.Name,
+				Value: advisorFormat(m.Value),
+				Unit:  m.Unit,
+				Note:  m.Note,
+			})
+		}
+		out = append(out, findingView{
+			ID:              f.ID,
+			Subsystem:       f.Subsystem,
+			Title:           f.Title,
+			SeverityClass:   class,
+			SeverityLabel:   label,
+			OpenByDefault:   f.Severity == findings.SeverityCrit,
+			Summary:         f.Summary,
+			Explanation:     f.Explanation,
+			FormulaText:     f.FormulaText,
+			FormulaComputed: f.FormulaComputed,
+			Metrics:         metrics,
+			Recommendations: f.Recommendations,
+		})
+	}
+	return out
+}
+
+func severityUIFields(s findings.Severity) (class, label string) {
+	switch s {
+	case findings.SeverityCrit:
+		return "crit", "Critical"
+	case findings.SeverityWarn:
+		return "warn", "Warning"
+	case findings.SeverityInfo:
+		return "info", "Info"
+	case findings.SeverityOK:
+		return "ok", "OK"
+	}
+	return "info", "Info"
+}
+
+func summariseFindings(fs []findings.Finding) findingCountsView {
+	c := findings.Summarise(fs)
+	return findingCountsView{
+		Crit: c.Crit,
+		Warn: c.Warn,
+		Info: c.Info,
+		OK:   c.OK,
+		Any:  (c.Crit + c.Warn + c.Info + c.OK) > 0,
+	}
+}
+
+func advisorBadge(c findingCountsView) string {
+	if !c.Any {
+		return "no findings"
+	}
+	parts := []string{}
+	if c.Crit > 0 {
+		parts = append(parts, fmt.Sprintf("%d critical", c.Crit))
+	}
+	if c.Warn > 0 {
+		parts = append(parts, fmt.Sprintf("%d warning", c.Warn))
+	}
+	if c.Info > 0 {
+		parts = append(parts, fmt.Sprintf("%d info", c.Info))
+	}
+	if c.OK > 0 {
+		parts = append(parts, fmt.Sprintf("%d ok", c.OK))
+	}
+	return strings.Join(parts, " · ")
+}
+
+// advisorFormat mirrors the findings package's formatNum logic for
+// template display — kept here (rather than re-imported) so the view
+// layer stays self-contained.
+func advisorFormat(v float64) string {
+	if math.IsNaN(v) {
+		return "NaN"
+	}
+	if math.IsInf(v, 0) {
+		if v > 0 {
+			return "∞"
+		}
+		return "-∞"
+	}
+	if v == 0 {
+		return "0"
+	}
+	abs := math.Abs(v)
+	if abs >= 1 && math.Abs(v-math.Round(v)) < 1e-9 {
+		return advisorHumanInt(int64(math.Round(v)))
+	}
+	if abs >= 1 {
+		return fmt.Sprintf("%.2f", v)
+	}
+	if abs >= 0.001 {
+		return fmt.Sprintf("%.4f", v)
+	}
+	return fmt.Sprintf("%.2e", v)
+}
+
+func advisorHumanInt(n int64) string {
+	neg := n < 0
+	if neg {
+		n = -n
+	}
+	s := fmt.Sprintf("%d", n)
+	if len(s) <= 3 {
+		if neg {
+			return "-" + s
+		}
+		return s
+	}
+	var buf strings.Builder
+	first := len(s) % 3
+	if first > 0 {
+		buf.WriteString(s[:first])
+		if len(s) > first {
+			buf.WriteByte(',')
+		}
+	}
+	for i := first; i < len(s); i += 3 {
+		buf.WriteString(s[i : i+3])
+		if i+3 < len(s) {
+			buf.WriteByte(',')
+		}
+	}
+	if neg {
+		return "-" + buf.String()
+	}
+	return buf.String()
 }

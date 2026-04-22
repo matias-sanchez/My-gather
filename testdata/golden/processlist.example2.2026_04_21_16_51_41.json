@@ -8,6 +8,25 @@
         "init": 1,
         "statistics": 8,
         "updating": 2
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 2,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 3
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 1,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 3,
+        "test": 10
       }
     },
     {
@@ -19,6 +38,25 @@
         "init": 1,
         "statistics": 7,
         "updating": 3
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 4,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 5
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 2,
+        "Sleep": 2
+      },
+      "DbCounts": {
+        "Other": 5,
+        "test": 10
       }
     },
     {
@@ -30,6 +68,25 @@
         "init": 1,
         "statistics": 7,
         "updating": 3
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 3,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 4
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 2,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 4,
+        "test": 10
       }
     },
     {
@@ -40,6 +97,25 @@
         "init": 1,
         "statistics": 6,
         "updating": 4
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 4,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 5
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 1,
+        "Sleep": 3
+      },
+      "DbCounts": {
+        "Other": 5,
+        "test": 10
       }
     },
     {
@@ -53,6 +129,25 @@
         "starting": 1,
         "statistics": 4,
         "updating": 5
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 5,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 6
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 4,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 6,
+        "test": 10
       }
     },
     {
@@ -65,6 +160,27 @@
         "statistics": 7,
         "update": 1,
         "updating": 2
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 2,
+        "sysbench": 10,
+        "unauthenticated user": 1
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 4
+      },
+      "CommandCounts": {
+        "Connect": 1,
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 1,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 4,
+        "test": 10
       }
     },
     {
@@ -77,6 +193,28 @@
         "statistics": 5,
         "update": 1,
         "updating": 4
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 4,
+        "sysbench": 10,
+        "unauthenticated user": 1
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "connecting host": 1,
+        "localhost": 5
+      },
+      "CommandCounts": {
+        "Connect": 1,
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 1,
+        "Sleep": 3
+      },
+      "DbCounts": {
+        "Other": 6,
+        "test": 10
       }
     },
     {
@@ -89,6 +227,27 @@
         "statistics": 6,
         "updating": 1,
         "waiting for handler commit": 3
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 3,
+        "sysbench": 10,
+        "unauthenticated user": 1
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 5
+      },
+      "CommandCounts": {
+        "Connect": 1,
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 1,
+        "Sleep": 2
+      },
+      "DbCounts": {
+        "Other": 5,
+        "test": 10
       }
     },
     {
@@ -100,6 +259,25 @@
         "init": 1,
         "starting": 2,
         "statistics": 10
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 5,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 6
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 4,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 6,
+        "test": 10
       }
     },
     {
@@ -110,6 +288,25 @@
         "init": 1,
         "statistics": 9,
         "updating": 1
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 2,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 3
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 1,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 3,
+        "test": 10
       }
     },
     {
@@ -121,6 +318,25 @@
         "statistics": 8,
         "update": 2,
         "updating": 1
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 3,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 4
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 2,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 4,
+        "test": 10
       }
     },
     {
@@ -132,6 +348,27 @@
         "init": 1,
         "login": 1,
         "statistics": 10
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 3,
+        "sysbench": 10,
+        "unauthenticated user": 1
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 5
+      },
+      "CommandCounts": {
+        "Connect": 1,
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 2,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 5,
+        "test": 10
       }
     },
     {
@@ -144,6 +381,25 @@
         "statistics": 3,
         "updating": 5,
         "waiting for handler commit": 2
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 3,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 4
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 2,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 4,
+        "test": 10
       }
     },
     {
@@ -156,6 +412,27 @@
         "statistics": 6,
         "updating": 2,
         "waiting for handler commit": 2
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 2,
+        "sysbench": 10,
+        "unauthenticated user": 1
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 4
+      },
+      "CommandCounts": {
+        "Connect": 1,
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 1,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 4,
+        "test": 10
       }
     },
     {
@@ -166,6 +443,25 @@
         "init": 1,
         "optimizing": 1,
         "statistics": 10
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 3,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 4
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 2,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 4,
+        "test": 10
       }
     },
     {
@@ -177,6 +473,27 @@
         "init": 1,
         "login": 1,
         "statistics": 10
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 2,
+        "sysbench": 10,
+        "unauthenticated user": 2
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 5
+      },
+      "CommandCounts": {
+        "Connect": 2,
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 1,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 5,
+        "test": 10
       }
     },
     {
@@ -188,6 +505,27 @@
         "init": 1,
         "login": 2,
         "statistics": 10
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 3,
+        "sysbench": 10,
+        "unauthenticated user": 2
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 6
+      },
+      "CommandCounts": {
+        "Connect": 2,
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 2,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 6,
+        "test": 10
       }
     },
     {
@@ -197,6 +535,25 @@
         "Waiting on empty queue": 1,
         "init": 1,
         "statistics": 10
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 2,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 3
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 1,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 3,
+        "test": 10
       }
     },
     {
@@ -208,6 +565,25 @@
         "init": 1,
         "statistics": 8,
         "updating": 2
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 3,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 4
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 2,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 4,
+        "test": 10
       }
     },
     {
@@ -219,6 +595,25 @@
         "executing": 1,
         "init": 1,
         "waiting for handler commit": 10
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 5,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 6
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 3,
+        "Sleep": 2
+      },
+      "DbCounts": {
+        "Other": 6,
+        "test": 10
       }
     },
     {
@@ -229,6 +624,25 @@
         "init": 2,
         "statistics": 8,
         "updating": 2
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 3,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 4
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 2,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 4,
+        "test": 10
       }
     },
     {
@@ -242,6 +656,25 @@
         "update": 2,
         "updating": 2,
         "waiting for handler commit": 1
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 5,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 6
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 3,
+        "Sleep": 2
+      },
+      "DbCounts": {
+        "Other": 6,
+        "test": 10
       }
     },
     {
@@ -253,6 +686,27 @@
         "login": 2,
         "statistics": 5,
         "updating": 5
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 2,
+        "sysbench": 10,
+        "unauthenticated user": 2
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 5
+      },
+      "CommandCounts": {
+        "Connect": 2,
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 1,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 5,
+        "test": 10
       }
     },
     {
@@ -265,6 +719,25 @@
         "init": 1,
         "statistics": 7,
         "updating": 1
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 4,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 5
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 2,
+        "Sleep": 2
+      },
+      "DbCounts": {
+        "Other": 5,
+        "test": 10
       }
     },
     {
@@ -274,6 +747,25 @@
         "Waiting on empty queue": 1,
         "init": 1,
         "statistics": 10
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 2,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 3
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 1,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 3,
+        "test": 10
       }
     },
     {
@@ -286,6 +778,25 @@
         "statistics": 5,
         "updating": 2,
         "waiting for handler commit": 1
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 2,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 3
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 1,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 3,
+        "test": 10
       }
     },
     {
@@ -299,6 +810,25 @@
         "statistics": 6,
         "update": 2,
         "updating": 2
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 4,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 5
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 3,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 5,
+        "test": 10
       }
     },
     {
@@ -315,6 +845,27 @@
         "statistics": 1,
         "updating": 2,
         "waiting for handler commit": 1
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 2,
+        "sysbench": 10,
+        "unauthenticated user": 1
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 4
+      },
+      "CommandCounts": {
+        "Connect": 1,
+        "Daemon": 1,
+        "Execute": 8,
+        "Query": 1,
+        "Sleep": 3
+      },
+      "DbCounts": {
+        "Other": 4,
+        "test": 10
       }
     },
     {
@@ -329,6 +880,25 @@
         "update": 1,
         "updating": 4,
         "waiting for handler commit": 2
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 4,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 5
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 3,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 5,
+        "test": 10
       }
     },
     {
@@ -340,6 +910,25 @@
         "init": 1,
         "statistics": 8,
         "updating": 2
+      },
+      "UserCounts": {
+        "event_scheduler": 1,
+        "root": 3,
+        "sysbench": 10
+      },
+      "HostCounts": {
+        "_gateway": 10,
+        "localhost": 4
+      },
+      "CommandCounts": {
+        "Daemon": 1,
+        "Execute": 10,
+        "Query": 2,
+        "Sleep": 1
+      },
+      "DbCounts": {
+        "Other": 4,
+        "test": 10
       }
     }
   ],
