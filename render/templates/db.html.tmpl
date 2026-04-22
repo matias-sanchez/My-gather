@@ -8,37 +8,16 @@
   <summary><span>InnoDB status</span><span class="badge">-innodbstatus1</span></summary>
   <div class="body">
     {{- if .HasInnoDB }}
-      {{- range .InnoDBSnapshots }}
-    <div class="snapshot-group">
-      <h4>{{.Title}}</h4>
-      {{- if .Data }}
-      <div class="callouts">
-        <div class="callout">
-          <p class="k">Semaphores</p>
-          <p class="v">{{.Data.SemaphoreCount}}</p>
-          <p class="sub">waiting / reserved</p>
-        </div>
-        <div class="callout">
-          <p class="k">Pending I/O</p>
-          <p class="v">{{.PendingTotal}}</p>
-          <p class="sub">reads {{.Data.PendingReads}} · writes {{.Data.PendingWrites}}</p>
-        </div>
-        <div class="callout">
-          <p class="k">AHI</p>
-          <p class="v">{{.AHISearchRate}}</p>
-          <p class="sub">searches/sec · hash tbl {{.Data.AHIActivity.HashTableSize}}</p>
-        </div>
-        <div class="callout">
-          <p class="k">History list</p>
-          <p class="v">{{.Data.HistoryListLength}}</p>
-          <p class="sub">HLL (undo depth)</p>
-        </div>
+    <div class="callouts">
+      {{- range .InnoDBMetrics }}
+      <div class="callout">
+        <p class="k">{{.Label}}</p>
+        <p class="v">{{.Worst}}</p>
+        {{- if .Hint }}<p class="sub">{{.Hint}}</p>{{- end }}
+        <p class="stats"><span>min {{.Min}}</span> · <span>avg {{.Avg}}</span> · <span>max {{.Max}}</span></p>
       </div>
-      {{- else }}
-      <p class="banner missing">Data not available for this snapshot.</p>
       {{- end }}
     </div>
-      {{- end }}
     {{- else }}
     <p class="banner missing">Data not available — no <code>-innodbstatus1</code> files were present in this collection.</p>
     {{- end }}

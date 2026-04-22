@@ -684,17 +684,18 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   color: var(--fg-dim);
   margin-top: 2px;
 }
-
-.snapshot-group {
-  margin: 0 0 12px 0;
-}
-.snapshot-group h4 {
-  margin: 0 0 6px 0;
-  font-size: 12px;
-  color: var(--fg-muted);
-  font-weight: 500;
+/* Smaller min/avg/max distribution footer under the main (worst) value.
+   Visually de-emphasised so the peak is what the reader lands on. */
+.callout .stats {
   font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  margin: 6px 0 0;
   letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+.callout .stats span {
+  white-space: nowrap;
 }
 
 /* ---------- Charts ---------- */

@@ -899,8 +899,8 @@ type reportView struct {
 	VariableSnapshots []variableSnapshotView
 
 	// DB section payload
-	HasInnoDB           bool
-	InnoDBSnapshots     []innoDBSnapshotView
+	HasInnoDB     bool
+	InnoDBMetrics []innoDBMetricView
 	HasMysqladmin       bool
 	MysqladminVariables []string
 	MysqladminCount     int
@@ -923,11 +923,18 @@ type variableRowView struct {
 	Status string // "default" | "modified" | "unknown"
 }
 
-type innoDBSnapshotView struct {
-	Title         string
-	Data          *model.InnodbStatusData
-	PendingTotal  int
-	AHISearchRate string
+// innoDBMetricView holds one row in the aggregated InnoDB status
+// callout grid: a single "worst" (max) value for the whole capture
+// window with a small min/avg/max line below. One view per metric
+// replaces the previous per-snapshot card repetition so the reader
+// lands on the peak pain point immediately.
+type innoDBMetricView struct {
+	Label string // "Semaphores" / "Pending I/O" / "AHI" / "History list"
+	Hint  string // tiny descriptor shown under Worst (optional)
+	Worst string
+	Min   string
+	Avg   string
+	Max   string
 }
 
 // navGroupView is the template-facing shape of one Level-1 nav entry
@@ -1073,18 +1080,8 @@ func buildView(r *model.Report, c *model.Collection) (*reportView, error) {
 	}
 
 	if r.DBSection != nil {
-		for _, si := range r.DBSection.InnoDBPerSnapshot {
-			iv := innoDBSnapshotView{
-				Title: fmt.Sprintf("Snapshot %s", si.SnapshotPrefix),
-				Data:  si.Data,
-			}
-			if si.Data != nil {
-				iv.PendingTotal = si.Data.PendingReads + si.Data.PendingWrites
-				iv.AHISearchRate = FormatFloat(si.Data.AHIActivity.SearchesPerSec, 2)
-				v.HasInnoDB = true
-			}
-			v.InnoDBSnapshots = append(v.InnoDBSnapshots, iv)
-		}
+		v.InnoDBMetrics = aggregateInnoDBMetrics(r.DBSection.InnoDBPerSnapshot)
+		v.HasInnoDB = len(v.InnoDBMetrics) > 0
 		v.HasMysqladmin = r.DBSection.Mysqladmin != nil
 		v.HasProcesslist = r.DBSection.Processlist != nil
 		if v.HasMysqladmin {
@@ -1504,6 +1501,80 @@ func summariseTop(d *model.TopData) *topSummaryView {
 		sum.MysqldExtra, sum.MysqldExtraAvg = labels[3], avgs[3]
 	}
 	return sum
+}
+
+// aggregateInnoDBMetrics rolls every per-snapshot InnoDB scalar up
+// into one "worst-plus-distribution" card per metric. Max is treated
+// as "worst" for all four metrics — for Semaphores, Pending I/O, and
+// History list, higher means more trouble; for AHI searches/sec we
+// also surface the peak because an unexplained spike or collapse is
+// what a reader would want to notice first. Snapshots whose Data is
+// nil (e.g. a missing -innodbstatus1 file) are simply skipped.
+func aggregateInnoDBMetrics(snaps []model.SnapshotInnoDB) []innoDBMetricView {
+	var sem, pio, hll []int
+	var ahi []float64
+	for _, si := range snaps {
+		if si.Data == nil {
+			continue
+		}
+		sem = append(sem, si.Data.SemaphoreCount)
+		pio = append(pio, si.Data.PendingReads+si.Data.PendingWrites)
+		ahi = append(ahi, si.Data.AHIActivity.SearchesPerSec)
+		hll = append(hll, si.Data.HistoryListLength)
+	}
+	if len(sem) == 0 {
+		return nil
+	}
+	return []innoDBMetricView{
+		innoDBIntMetric("Semaphores", "waiting", sem),
+		innoDBIntMetric("Pending I/O", "reads + writes", pio),
+		innoDBFloatMetric("AHI", "searches/sec", ahi, 2),
+		innoDBIntMetric("History list", "HLL (undo depth)", hll),
+	}
+}
+
+func innoDBIntMetric(label, hint string, vals []int) innoDBMetricView {
+	mn, mx, total := vals[0], vals[0], 0
+	for _, v := range vals {
+		if v < mn {
+			mn = v
+		}
+		if v > mx {
+			mx = v
+		}
+		total += v
+	}
+	avg := float64(total) / float64(len(vals))
+	return innoDBMetricView{
+		Label: label,
+		Hint:  hint,
+		Worst: fmt.Sprintf("%d", mx),
+		Min:   fmt.Sprintf("%d", mn),
+		Avg:   FormatFloat(avg, 1),
+		Max:   fmt.Sprintf("%d", mx),
+	}
+}
+
+func innoDBFloatMetric(label, hint string, vals []float64, precision int) innoDBMetricView {
+	mn, mx, total := vals[0], vals[0], 0.0
+	for _, v := range vals {
+		if v < mn {
+			mn = v
+		}
+		if v > mx {
+			mx = v
+		}
+		total += v
+	}
+	avg := total / float64(len(vals))
+	return innoDBMetricView{
+		Label: label,
+		Hint:  hint,
+		Worst: FormatFloat(mx, precision),
+		Min:   FormatFloat(mn, precision),
+		Avg:   FormatFloat(avg, precision),
+		Max:   FormatFloat(mx, precision),
+	}
 }
 
 // isMysqldCommand reports whether a top-process Command string refers
