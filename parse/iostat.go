@@ -48,8 +48,10 @@ func parseIostat(r io.Reader, snapshotStart time.Time, sourcePath string) (*mode
 		util  float64
 		aqusz float64
 	}
-	// device -> ordered list of samples. Device insertion order is
-	// captured separately so the final slice is deterministic.
+	// device -> ordered list of samples. Final device ordering is
+	// alphabetical (see sort.Strings below) — insertion order is
+	// intentionally not preserved, since stable-by-name matches what
+	// data-model.md promises to the render layer.
 	deviceSamples := map[string][]samplePoint{}
 
 	var (

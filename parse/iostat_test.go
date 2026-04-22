@@ -2,7 +2,6 @@ package parse
 
 import (
 	"bytes"
-	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -168,8 +167,3 @@ func TestIostatPartialRecovery(t *testing.T) {
 	}
 }
 
-// compile-time assurance that parseIostat still has the signature the
-// tests above rely on; cheap insurance against an accidental rename.
-var _ = func() (*model.IostatData, []model.Diagnostic) {
-	return parseIostat(io.Reader(bytes.NewReader(nil)), time.Time{}, "")
-}
