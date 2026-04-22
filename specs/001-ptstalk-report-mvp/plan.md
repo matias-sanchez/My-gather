@@ -113,7 +113,7 @@ Evaluated against `.specify/memory/constitution.md` v1.0.1.
 | VIII | Reference Fixtures & Golden Tests | ✅ PASS (design) / ⚠ partial (shipped) | Design provides for fixtures under `testdata/example1/` (reserved for the preceding pt-stalk version per FR-024) and `testdata/example2/` drawn from `_references/examples/`. Only `testdata/example2/` is committed in v1; `example1` is tracked by tasks.md T019 and the Reconciliation Summary. Build currently fails if a parser is added without a fixture (enforced by `tests/coverage/testdata_coverage_test.go`); golden outputs under `testdata/golden/` are generated via `go test ./... -update` once per-collector tests land, and full golden-coverage enforcement lands in T080. |
 | IX | Zero Network | ✅ PASS | `net/http`, `net`, and `net/url` (except `url.PathEscape`-style stdlib helpers) are banned in shipped code via a `go vet`-style linter check in CI. |
 | X | Minimal Dependencies | ✅ PASS | Zero direct Go module dependencies. One vendored JavaScript asset, justified in `research.md`. |
-| XI | Human Pressure Optimization | ✅ PASS | Section order in report hardcoded to OS → Variables → DB (spec FR-005); Parser Diagnostics panel is collapsible secondary section. No cluttering metric dumps. |
+| XI | Human Pressure Optimization | ✅ PASS | Section order in report hardcoded to OS → Variables → DB (spec FR-005); Parser Diagnostics panel is collapsible secondary section. No cluttering metric dumps. FR-038–FR-041 concretise this principle as no-duplication, consistent visual hierarchy, robust rendering across the data envelope, and a committed audit gate (SC-011, research R13). |
 | XII | Pinned Go Version | ✅ PASS | `go.mod` pins `go 1.24`; CI matrix uses exactly that version. |
 
 **Pre-design gate: PASS.** No violations requiring Complexity Tracking.
@@ -134,7 +134,10 @@ specs/001-ptstalk-report-mvp/
 │   ├── cli.md              # CLI surface contract
 │   └── packages.md         # parse/model/render public-API contracts
 ├── checklists/
-│   └── requirements.md     # From /speckit.specify
+│   ├── requirements.md     # From /speckit.specify
+│   └── ux-quality.md       # FR-038–FR-041 / SC-011 — structured UX audit
+├── ux-audits/              # Dated audit records (SC-011)
+│   └── <YYYY-MM-DD>-<label>.md
 └── tasks.md                # Phase 2 output (NOT created here)
 ```
 
@@ -289,7 +292,14 @@ Artifacts produced:
    godoc-style contracts.
 4. **`quickstart.md`** — developer setup: clone, Go install, test,
    build, run against `_references/examples/example2`, open the report.
-5. **Agent context update** — `CLAUDE.md` is updated to point to
+5. **`checklists/ux-quality.md`** — structured UX-quality audit
+   checklist (FR-038–FR-041, SC-011, research R13). Section-by-section
+   pass/fail criteria that gate every feature-001 release cut. Audit
+   runs are committed under
+   `specs/001-ptstalk-report-mvp/ux-audits/<YYYY-MM-DD>-<label>.md`.
+6. **`checklists/requirements.md`** — spec quality checklist from the
+   `/speckit-specify` pass (pre-existing).
+7. **Agent context update** — `CLAUDE.md` is updated to point to
    this plan between `<!-- SPECKIT START -->` and `<!-- SPECKIT END -->`
    markers.
 
@@ -310,7 +320,7 @@ Re-evaluated after completing Phase 1 artifacts (see `data-model.md`,
 | VIII | Reference Fixtures & Golden Tests | ✅ PASS (design) / ⚠ partial (shipped) | `testdata/example{1,2}/` structure locked in Project Structure; `testdata/example2/` committed; `testdata/example1/` reserved for the preceding pt-stalk version (tasks.md T019). Golden tests per collector; `testdata_coverage_test.go` guard documented in tasks. Goldens under `testdata/golden/` are generated incrementally as per-collector tests land (tasks.md T043–T070). |
 | IX | Zero Network | ✅ PASS | CI linter will reject any import of `net/http`, `net/rpc`, etc. in shipped packages. |
 | X | Minimal Dependencies | ✅ PASS | `go.mod` has zero direct non-stdlib dependencies. The one vendored JS asset is justified in `research.md` with size and license. |
-| XI | Human Pressure Optimization | ✅ PASS | Template order locked; Parser Diagnostics rendered as a collapsible `<details>` section at the bottom, not between primary views. |
+| XI | Human Pressure Optimization | ✅ PASS | Template order locked; Parser Diagnostics rendered as a collapsible `<details>` section at the bottom, not between primary views. FR-038–FR-041 + SC-011 + research R13 layer a structured audit gate on top: every release cut produces a dated checklist record under `specs/001-ptstalk-report-mvp/ux-audits/` enforcing no-duplication, consistent visual hierarchy, and robust rendering across the data envelope. |
 | XII | Pinned Go Version | ✅ PASS | `go 1.24` directive in `go.mod`; CI uses matching version. |
 
 **Post-design gate: PASS.** Ready to emit Phase 2 tasks via

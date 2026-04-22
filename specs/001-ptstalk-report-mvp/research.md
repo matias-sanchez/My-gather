@@ -664,6 +664,75 @@ through the toggle UI. Normative in spec FR-035.
 
 ---
 
+## R13. UX-quality audit via committed checklist + dated audit records
+
+**Decision**: Adopt a **checklist-driven audit gate** rather than
+ad-hoc review to guarantee the report's visual, compositional, and
+robustness quality. The checklist lives at
+`specs/001-ptstalk-report-mvp/checklists/ux-quality.md` and is
+structured section-by-section (Global · Header · Navigation · OS
+Usage · Variables · Database Usage · Parser Diagnostics · Print ·
+Robustness · No-duplication). Each audit run is committed as a
+dated Markdown file under
+`specs/001-ptstalk-report-mvp/ux-audits/` with one row per
+checklist item and PASS / FAIL / DEFERRED marks. Failing items
+block the cut until addressed. The approach is normative in
+spec FR-038–FR-041 and SC-011.
+
+**Rationale**:
+
+- **Reviewable over opinionated**: a written checklist externalises
+  the quality bar so every contributor sees the same criteria
+  and no single reviewer's taste drives acceptance.
+- **Constitution alignment**: Principle XI ("Reports Optimized for
+  Humans Under Pressure") is abstract; the checklist is the
+  operational concretisation. Every checklist item maps back to a
+  principle or an FR, so the audit does not invent fresh policy.
+- **No new runtime dependencies**: the audit is plain Markdown —
+  no visual-regression framework, no headless browser CI job, no
+  screenshot-diff harness. It is human review, but **structured**
+  human review. If richer automation is needed later (pixel-diff
+  goldens, axe-core a11y CI), it lands as a dedicated follow-up
+  research entry; v1 remains stdlib-only.
+- **Observable drift**: committed audit files serve as a time
+  series. Anyone can `git log specs/001-ptstalk-report-mvp/ux-audits/`
+  to see how the quality bar moved.
+- **Graceful triage**: the DEFERRED state lets an audit proceed
+  even when a fix is non-trivial, as long as a follow-up task
+  owns it. Unacknowledged failures never merge.
+
+**Alternatives considered**:
+
+- **Screenshot / pixel diffing as CI gate** — rejected for v1.
+  Requires a headless-browser runtime in CI (violates Principle X
+  minimalism without a justification entry), is flaky under chart
+  anti-aliasing differences across CI runners, and masks genuine
+  layout issues behind "same pixels" acceptance.
+- **No formal audit, rely on code review** — rejected because the
+  user explicitly called out that the current bar is too low and
+  needs an explicit, recurring gate rather than case-by-case
+  reviewer judgement.
+- **One-off audit recorded in the PR description only** — rejected
+  because PR descriptions are not grep-able history; committed
+  audit files are.
+- **Single monolithic audit item ("the report looks good")** —
+  rejected as unactionable. Each section-by-section checklist item
+  is independently testable and independently fixable.
+
+**Implementation notes**:
+
+- The v1 checklist is scoped to the current report surface; when
+  a future feature adds a new section or subview, adding the
+  corresponding checklist rows is part of that feature's scope
+  (same pattern as the fixture-coverage guard for parsers).
+- The audit gate is complementary to — not a replacement for —
+  Constitution Principle XI's general mandate, `go test ./...`,
+  the determinism CI job, and per-collector golden tests. It
+  catches a different class of failure (composition / robustness
+  / duplication) that unit tests cannot express.
+
+---
+
 ## Summary of decisions
 
 | ID | Decision |
@@ -680,5 +749,6 @@ through the toggle UI. Normative in spec FR-035.
 | R10 | Embed hand-curated MySQL 8.0 defaults asset for modified-vs-default badging in the Variables section. |
 | R11 | Embed hand-curated mysqladmin category taxonomy for one-click "load this class of counters" workflows. |
 | R12 | Renderer drops column 0 (raw initial tally) from the default counter-deltas chart view; model preserves it. |
+| R13 | UX-quality audit via committed checklist + dated audit records; no screenshot-diff CI; human review made structured. |
 
 All Phase 0 items resolved. Phase 1 artifacts proceed below.

@@ -16,6 +16,10 @@
 - Q: Does the MVP emit any machine-readable side-car output (JSON, CSV) alongside the HTML? → A: No. HTML is the only CLI output in this feature; no `--json`, no side-car files. The `model/` package remains importable (required by Principle VI) but is not advertised, stabilised, or documented for third-party consumers in v1.
 - Q: What is the normative algorithm for computing `-mysqladmin` deltas between samples? → A: The algorithm is **ported to native Go** inside `parse/mysqladmin.go`. The C++ reference at `_references/pt-mext/pt-mext-improved.cpp` is retained as the *behavioural specification source*: the worked example in its tail comments (input table lines 146–177 → expected output lines 181–189) is committed verbatim as a test fixture and golden file under `testdata/pt-mext/`. The Go implementation MUST reproduce that expected output for counter variables. Non-counter variables (e.g., `Threads_running`, `Uptime`) are classified as gauges and stored as raw values, not deltas — this is a deliberate improvement over the C++ reference, which treats everything as a counter.
 
+### Session 2026-04-22
+
+- Q: What is the acceptable baseline for the report's visual and compositional quality? → A: The baseline is set by **Constitution Principle XI** ("Reports Optimized for Humans Under Pressure") and enforced concretely by FR-038–FR-041: no accidental duplication of facts across sections, a consistent three-level visual hierarchy expressed via shared CSS custom properties, robust rendering across the full valid-data envelope (0 / 1 / typical / maximum samples), and a structured audit gate whose criteria live under `specs/001-ptstalk-report-mvp/checklists/ux-quality.md`. Any perceived "visual break" between sections, any duplicated data surface, any subview that renders an empty `<canvas>` or overflows its container under a legal input, is a spec-level failure — not a matter of taste. The audit is run before every release cut (SC-011).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - First-look triage report from a pt-stalk collection (Priority: P1)
@@ -462,6 +466,76 @@ matching their respective golden files.
   attach a PDF to a customer ticket without losing any collapsed
   content.
 
+- **FR-038**: The report MUST NOT render the same underlying
+  factual observation on more than one canonical data surface.
+  For the purposes of this rule, a **canonical data surface** is
+  one of: a chart, a data table, a scalar callout, or the Parser
+  Diagnostics list — i.e., any element that visualises sample
+  values, variable values, or diagnostic records. Repetition used
+  purely for **navigation or labelling** — section titles, ToC
+  and nav-rail entries, chart legends, axis labels, anchor
+  links, and tooltips that identify a series or variable without
+  re-rendering its values — does NOT count as duplication and is
+  explicitly permitted. The canonical data surfaces in v1 and
+  their homes are: `-iostat` samples → OS-Usage → Disk
+  utilization; `-top` samples → OS-Usage → Top CPU processes;
+  `-vmstat` samples → OS-Usage → vmstat saturation; `-variables`
+  global values → Variables; `-innodbstatus1` scalars → Database
+  Usage → InnoDB status; `-mysqladmin` deltas → Database Usage →
+  Counter deltas; `-processlist` thread-state samples → Database
+  Usage → Thread states; and every `Diagnostic` record → the
+  Parser Diagnostics panel. Any summary or overview widget
+  introduced by a future feature MUST source from and link to
+  its canonical subview rather than re-plot or re-tabulate the
+  underlying data.
+
+- **FR-039**: Every rendered section MUST follow a consistent
+  three-level visual hierarchy: `h2` section title → `h3` subview
+  title → content. Typography scale, spacing rhythm, axis and
+  legend formatting, colour accents (one primary accent, one
+  muted-text tone, one warning tone), and chart palette MUST be
+  identical across sections so that a viewer scrolling from OS
+  Usage to Database Usage does NOT perceive a stylistic break.
+  These invariants MUST be expressed as named CSS custom
+  properties on a single shared stylesheet (`render/assets/app.css`)
+  so that changes propagate globally; per-section `<style>` blocks
+  are prohibited.
+
+- **FR-040**: Every subview MUST render acceptably for every legal
+  point in the data envelope permitted by FR-025:
+  * **0 samples** (file present but empty or fully unparseable) →
+    the FR-007 "data not available" banner is rendered in the
+    subview's content area; no empty `<canvas>`, no bare header.
+  * **1 sample** → a single-value scalar callout (for time-series
+    subviews) or a single-row table (for tabular subviews); never
+    an empty plot area whose axes imply a time range.
+  * **Typical (10²–10³ samples)** → the normal rendering path.
+  * **Maximum (approaching the 1 GB / 200 MB envelope of FR-025)**
+    → the subview still renders without clipping axis labels,
+    collapsing the legend into the plot area, or producing a chart
+    whose plotted series overflow their container.
+  * **Multi-snapshot** (FR-018) → concatenated time series carry
+    the FR-030 vertical boundary marker; snapshot-scoped subviews
+    (Variables, InnoDB status) render one labelled sub-block per
+    snapshot.
+  No subview may ship HTML that visually breaks under any of the
+  above; failures are tracked per FR-041.
+
+- **FR-041**: Before any cut of feature 001 (and of any future
+  feature that changes the report), a structured UX-quality audit
+  MUST walk every section, subview, and shared surface against the
+  committed checklist at
+  `specs/001-ptstalk-report-mvp/checklists/ux-quality.md`. Each
+  checklist item carries a pass / fail criterion; the audit record
+  (a dated Markdown file under
+  `specs/001-ptstalk-report-mvp/ux-audits/`) captures per-item
+  status plus a short rationale or evidence link. Failing items
+  block the cut until fixed, unless the failure is deferred to a
+  tracked follow-up feature with explicit owner approval recorded
+  in the same audit document. The audit gate is complementary to —
+  not a replacement for — the Constitution Check (Principle XI) and
+  the existing test suite.
+
 ### Key Entities
 
 - **Collection**: A pt-stalk output directory. Attributes: root path,
@@ -548,6 +622,25 @@ matching their respective golden files.
   unit test against `render/assets/app.js` asserts the load/save
   round-trip using an in-memory localStorage stub and the
   `Report.ReportID` keying scheme.
+
+- **SC-011**: Every cut of feature 001 ships with a dated UX-quality
+  audit record at
+  `specs/001-ptstalk-report-mvp/ux-audits/<YYYY-MM-DD>-<label>.md`
+  whose every checklist item from `checklists/ux-quality.md` is
+  marked PASS — or carries an explicit DEFERRED status with a
+  follow-up task ID. Freshness is enforced by a **diff-based
+  invariant** (not by commit timestamps, which are unreliable
+  under rebase / cherry-pick): any PR or commit range that changes
+  a **report-shaping runtime file** — i.e. a non-test `.go` file
+  under `render/`, `model/`, or `parse/`, or any file under
+  `render/assets/` — MUST also add or modify at least one file
+  under `specs/001-ptstalk-report-mvp/ux-audits/`. Test files
+  (`*_test.go`) and other non-runtime artifacts are explicitly
+  **excluded** from the gate because they cannot change the
+  rendered output. A missing audit update blocks the cut. A `testdata_coverage`-style guard
+  (`tests/coverage/ux_audit_freshness_test.go` or equivalent,
+  T119) implements the check against the PR's diff; wiring it as
+  a regular Go test avoids introducing a new CI lane.
 
 ## Assumptions
 

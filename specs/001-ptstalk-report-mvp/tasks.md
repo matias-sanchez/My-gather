@@ -247,6 +247,49 @@ written.
 
 ---
 
+## Phase 8: UX Quality Audit (Priority: Release Gate) 🔒
+
+**Purpose**: Concretise Constitution Principle XI and the new FR-038–FR-041 / SC-011 via a structured, committed audit pass against `specs/001-ptstalk-report-mvp/checklists/ux-quality.md`. Phase 8 is a **release-cut gate**: a passing audit record (or explicit DEFERRED entries with owner approval) is the precondition for merging any feature-001 cut to `main`. Each section task below produces one reviewable deliverable; the pieces compose into a full audit record under `specs/001-ptstalk-report-mvp/ux-audits/<YYYY-MM-DD>-<label>.md`.
+
+**Independent Test**: After completing the audit, a reviewer can open the audit record and, from that document alone, reproduce every PASS / FAIL / DEFERRED decision against the same rendered report without consulting Slack, PR comments, or the auditor's memory.
+
+### Prerequisites for Phase 8
+
+- [x] T107 Commit the UX-quality audit checklist at `specs/001-ptstalk-report-mvp/checklists/ux-quality.md` (this branch). Normative reference for FR-038–FR-041 / SC-011 / research R13.
+
+### Shared stylesheet invariants (FR-039)
+
+- [ ] T108 Refactor `render/assets/app.css` to express the typography scale, spacing grid, colour palette, chart palette, and axis/legend rules as named CSS custom properties (`--fg`, `--accent`, `--muted`, `--warn`, `--ok`, `--grid`, `--font-h2`, `--font-h3`, `--font-body`, `--chart-series-1…N`). No per-template `<style>` blocks survive the refactor (FR-039). Covered by G-8 in the checklist.
+- [ ] T109 [P] `render/render_test.go::TestNoPerTemplateStyleBlocks` (FR-039 coverage): parse the rendered HTML; assert the document contains exactly one top-level `<style>` block (the existing `render.go` concatenation of `embeddedChartCSS + embeddedAppCSS` is acceptable), that the block contains the named CSS custom-property invariants introduced by T108 (`--fg`, `--accent`, `--muted`, `--warn`, `--ok`, `--grid`, `--font-h2`, `--font-h3`, `--font-body`, `--font-caption`), and that every `<section>` / `<details>` in the document is free of inline `<style>` children. The test does NOT prescribe the block's origin — only the invariant set it carries and the per-template absence.
+
+### Section audits (one audit item per subview; produces the per-section PASS/FAIL table for the audit record)
+
+- [ ] T110 OS Usage audit: walk § 3 of `checklists/ux-quality.md` (OS-1 through OS-7) against `testdata/example2/`. Produce a short Markdown fragment (`ux-audits/_pending-os.md` or inline in the audit PR) with per-item status. Fix any FAIL items inline or open a remediation task (TXXX with clear scope).
+- [ ] T111 Variables audit: walk § 4 (V-1 through V-6) against `testdata/example2/`; same deliverable shape.
+- [ ] T112 Database Usage audit: walk § 5 (DB-1 through DB-6) against `testdata/example2/`; same deliverable shape.
+- [ ] T113 [P] Navigation + Header + Banners audit: walk § 1 (H-1..H-5) + § 2 (N-1..N-6).
+- [ ] T114 [P] Parser Diagnostics audit: walk § 6 (PD-1..PD-5). Requires a fixture with at least one Warning and one Info diagnostic (e.g., a truncated source file + a multi-snapshot mysqladmin).
+- [ ] T115 [P] Print layout audit: walk § 7 (P-1..P-6). Uses the browser's print-preview; greyscale pass included.
+
+### Cross-cutting audits (the harder ones; run after § 3–7 are PASS)
+
+- [ ] T116 Robustness audit (§ 8, FR-040): build synthetic 0-sample, 1-sample, and "near the 1 GB envelope" fixtures and rerun the full checklist against each. Captures R-0, R-1, R-2, R-M, R-MS, R-PC, R-UV. Produces a sub-table of the audit record.
+- [ ] T117 No-duplication audit (§ 9, FR-038): grep-based spot-check plus a manual walk. For every canonical data surface, grep the rendered HTML for a distinctive value (a specific PID, a variable name, a counter name) and assert it appears in exactly one subview outside of the Parser Diagnostics panel. Produces D-1 / D-2 / D-3 rows of the audit record.
+
+### Synthesis + gate
+
+- [ ] T118 Commit the full audit record at `specs/001-ptstalk-report-mvp/ux-audits/<YYYY-MM-DD>-<label>.md` using the template at the bottom of `checklists/ux-quality.md`. Every checklist item is PASS or carries an explicit DEFERRED → T### link with owner approval recorded in the same file.
+- [ ] T119 CI gate for SC-011: implement a **diff-based** freshness check (not timestamp-based — commit times are unreliable under rebase / cherry-pick). Concretely: a `tests/coverage/ux_audit_freshness_test.go::TestUXAuditFreshness` test that resolves a base commit in the following priority order and fails only when the base is resolvable AND the diff violates the invariant:
+      1. `GITHUB_BASE_REF` env var (GitHub Actions sets this on PR builds to the target branch name — `main` in practice). The test runs `git rev-parse "origin/${GITHUB_BASE_REF}"` to get the base SHA.
+      2. `MYGATHER_UX_AUDIT_BASE` env var (developer-overridable for local runs).
+      3. `git merge-base HEAD origin/main` as a best-effort fallback.
+      If none of the above resolves to a valid commit (fork CI without the remote, a shallow clone missing the base, a local clone detached from any remote), the test **SKIPs with a logged reason** rather than failing — the gate is for PR / release contexts, not for every dev invocation.
+      When the base IS resolved, the test runs `git diff --name-only <base>..HEAD` and filters the diff to **report-shaping runtime files only**: a non-test `.go` file (i.e. NOT matching `*_test.go`) under `render/`, `model/`, or `parse/`, OR any file under `render/assets/`. If any such file changed, at least one file under `specs/001-ptstalk-report-mvp/ux-audits/` MUST also have changed. Test-only edits (`*_test.go`), `testdata/` additions, and `specs/` edits outside `ux-audits/` are explicitly **excluded** — they cannot change the rendered HTML so they don't need to refresh the audit. No new CI lane; the guard lives inside the regular `go test ./...` pass.
+
+**Checkpoint**: a clean Phase 8 pass means the report ships at a quality bar that any senior reviewer who just read the constitution and the checklist can independently confirm — not a matter of reviewer taste.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -256,6 +299,7 @@ written.
 - **US1 (Phase 3)** — depends on Phase 2; is the MVP; no cross-story dependency.
 - **US2 / US3 / US4 (Phases 4–6)** — each depends on Phase 2 and on US1's render skeleton (`Render`, template tree, asset loading). Can be developed in parallel by different contributors after US1 lands.
 - **Polish (Phase 7)** — depends on every user story that is targeted for the release.
+- **UX Quality Audit (Phase 8)** — depends on Phase 7 being substantively complete and on the UX checklist (T107) being committed. Phase 8 is a **release gate**: a clean or fully-DEFERRED audit record is the precondition for merging any feature-001 cut. Running Phase 8 mid-development (e.g., after US2 lands) is encouraged as a diagnostic, not a replacement for the release-cut audit.
 
 ### Within Each User Story
 
@@ -312,10 +356,11 @@ Task: "Write render/nav_test.go::TestNavCoverage"
 2. + US3 (7 tasks, T056–T062) → Variables section live.
 3. + US4 (15 tasks, T063–T077) → Database Usage section live.
 4. + Polish (29 tasks, T078–T106) → performance guarantees, a11y, docs, coverage gaps from analyze pass 3 (F27–F32, F36) plus the FR-033–FR-037 impl/test pairs added in the 2026-04-22 reconciliation (T097–T106).
+5. + UX Quality Audit (13 tasks, T107–T119) → release-gate audit pass covering FR-038–FR-041 / SC-011 / research R13. Produces a committed, structured audit record that blocks release cuts on any un-DEFERRED FAIL.
 
 ### Solo-developer strategy (current context)
 
-Serial execution by user-story priority: T001 → T106 (106 tasks total). Treat each `[P]`-marked group as "tasks you can draft in one sitting" rather than tasks to run in separate worktrees.
+Serial execution by user-story priority: T001 → T119 (119 tasks total). Treat each `[P]`-marked group as "tasks you can draft in one sitting" rather than tasks to run in separate worktrees.
 
 ---
 
@@ -333,7 +378,7 @@ Serial execution by user-story priority: T001 → T106 (106 tasks total). Treat 
 
 ## Reconciliation Summary (last updated 2026-04-22)
 
-A mechanical pass compared every task ID against the real repository state for the full current range, **T001–T106 (106 tasks total)**. `62 / 106 tasks (≈58 %) carry an [x] mark`. The pipeline builds, `go test ./...` is green, and the binary produces a deterministic three-section report against `testdata/example2/`. The 2026-04-22 spec-drift reconciliation added five new shipping features captured as FR-033–FR-037 (MySQL-defaults badging, mysqladmin category chooser, default-hidden initial-tally column, `Cmd/Ctrl+\` nav shortcut, `@media print` stylesheet); their implementation tasks (T097, T099, T101, T103, T105) are already live in `render/assets/` and `render/render.go` and carry `[x]` marks, while their paired tests (T098, T100, T102, T104, T106) are tracked `[ ]`. What remains across the whole feature is almost entirely **missing tests** plus a handful of documentation and coverage gaps — no core implementation is unshipped.
+A mechanical pass compared every task ID against the real repository state for the full current range, **T001–T119 (119 tasks total)**. `63 / 119 tasks (≈53 %) carry an [x] mark`. The pipeline builds, `go test ./...` is green, and the binary produces a deterministic three-section report against `testdata/example2/`. The 2026-04-22 spec-drift reconciliation added five shipping features captured as FR-033–FR-037 (MySQL-defaults badging, mysqladmin category chooser, default-hidden initial-tally column, `Cmd/Ctrl+\` nav shortcut, `@media print` stylesheet); their implementation tasks (T097, T099, T101, T103, T105) are already live in `render/assets/` and `render/render.go` and carry `[x]` marks, while their paired tests (T098, T100, T102, T104, T106) are tracked `[ ]`. The 2026-04-22 UX-quality reconciliation added FR-038–FR-041 + SC-011 (research R13) with a committed audit checklist (T107 `[x]`) and Phase 8 release-gate tasks T108–T119 `[ ]`, including a shared-stylesheet refactor (T108) that extracts typography / spacing / palette / chart invariants into named CSS custom properties. What remains across the whole feature is almost entirely **missing tests**, **the UX audit pass itself**, plus a handful of documentation and coverage gaps — no core implementation is unshipped.
 
 ### What's done
 
