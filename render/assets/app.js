@@ -344,7 +344,25 @@
         init:  [attachTooltip],
         setCursor: [updateTooltipOnCursor],
         drawAxes: [makeBoundaryDrawHook(boundaries, timestamps)],
+        ready: [makeUnitBadgeHook(unit)],
       },
+    };
+  }
+
+  // makeUnitBadgeHook returns a uPlot ready-hook that appends a small
+  // "unit" badge to the plot root. Kept as an overlay (absolute
+  // positioning) instead of a uPlot axis label so the axis stays
+  // narrow and the chart's rhythm isn't disturbed — a reader's eye
+  // can catch the unit in the corner without the tick column getting
+  // wider. No-op when unit is empty so mysqladmin counters with
+  // heterogeneous units don't get a misleading label.
+  function makeUnitBadgeHook(unit) {
+    return function (u) {
+      if (!unit) return;
+      var badge = document.createElement("span");
+      badge.className = "chart-unit";
+      badge.textContent = unit;
+      u.root.appendChild(badge);
     };
   }
 
@@ -743,7 +761,7 @@
   function unitForChart(name) {
     if (name === "top")         return "%CPU";
     if (name === "processlist") return "threads";
-    if (name === "vmstat")      return "mixed";
+    if (name === "vmstat")      return "runqueue · blocked · %iowait";
     return "";
   }
 
@@ -1630,7 +1648,7 @@
         values.push(deltaArr.slice(tStart));
       });
       var width = measureChartWidth(cs.plotEl);
-      var opts = basePlotOpts(width, 340, series, "", data.snapshotBoundaries, data.timestamps);
+      var opts = basePlotOpts(width, 340, series, "Δ / sample", data.snapshotBoundaries, data.timestamps);
       cs.plotEl.innerHTML = "";
       cs.plot = new uPlot(opts, values, cs.plotEl);
       registerChart(cs.plot, cs.plotEl, opts);

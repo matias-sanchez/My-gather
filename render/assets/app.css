@@ -809,10 +809,32 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
 
 /* uPlot theming overrides. uPlot's default legend is verbose; we hide
    it and render our own pill legend underneath. */
-.uplot { font-family: var(--mono) !important; }
+.uplot { font-family: var(--mono) !important; position: relative; }
 .uplot .u-title { display: none; }
 .uplot .u-legend { display: none; }
 .uplot .u-over { cursor: crosshair; }
+
+/* Y-axis unit badge: small overlay in the plot's top-left corner so a
+   reader can tell "20 40 60" means %CPU vs threads vs Δ/sample
+   without widening the axis gutter. Non-interactive (pointer-events:
+   none) so it never intercepts cursor moves or zoom drags. */
+.uplot .chart-unit {
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  z-index: 1;
+  pointer-events: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  border-radius: 999px;
+  padding: 1px 8px;
+  backdrop-filter: blur(4px);
+}
 
 /* Hover tooltip — rendered inside .u-over and position:absolute. */
 .chart-tooltip {
