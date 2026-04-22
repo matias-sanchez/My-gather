@@ -77,7 +77,7 @@ All tasks write paths relative to the repository root.
 - [x] T018 [P] Forbidden-import linter test at `tests/lint/imports_test.go` (research R7). Walks the import graph of `cmd/`, `parse/`, `model/`, `render/`; fails if any of `net/http`, `net`, `net/rpc`, `net/smtp`, `crypto/tls` appear. Stdlib-only via `go/parser` + `go/ast`.
 - [ ] T019 Commit anonymised fixtures under `testdata/example1/` and `testdata/example2/` produced by `scripts/anonymise-fixtures.sh` run against `_references/examples/example1/` and `_references/examples/example2/`. Only the seven source-file suffixes this feature supports need be committed (plus `pt-summary.out` / `pt-mysql-summary.out` for discovery tests).
 - [x] T020 Commit the pt-mext golden fixture under `testdata/pt-mext/`: `input.txt` is a verbatim copy of `_references/pt-mext/pt-mext-improved.cpp` comment lines 146–177; `expected.txt` is a verbatim copy of lines 181–189 with a `testdata/pt-mext/README.md` describing provenance (research R8).
-- [x] T021 Coverage guard test at `tests/coverage/testdata_coverage_test.go`: fails the build if any `model.Suffix` constant lacks a fixture under `testdata/example1/` or `testdata/example2/`, OR lacks an expected golden output file under `testdata/golden/`. Enforces Constitution Principle VIII and spec FR-021 / SC-006.
+- [x] T021 Coverage guard test at `tests/coverage/testdata_coverage_test.go`: fails the build if any `model.Suffix` constant lacks a fixture under `testdata/example1/` or `testdata/example2/`. Enforces the fixture-coverage half of Constitution Principle VIII / spec FR-021 / SC-006; golden-coverage enforcement lands in T080 once per-collector golden outputs are generated (`go test ./... -update`).
 - [x] T022 [P] godoc-coverage test at `tests/coverage/godoc_coverage_test.go`: walks AST of `model`, `parse`, `render` and asserts every exported identifier has a non-empty `//` doc comment (Constitution Principle VI).
 
 **Checkpoint**: `go test ./...` passes (lint and coverage guards pass over empty packages); CLI builds; an invocation against any test fixture prints exactly one HTML file whose sections all read "data not available".
@@ -88,7 +88,7 @@ All tasks write paths relative to the repository root.
 
 **Goal**: Prove the parse → model → render → embed-assets → byte-deterministic HTML pipeline end-to-end against a real pt-stalk directory. Every section shows "data not available" because no per-collector parsers are wired yet; this is intentional. The report, navigation, collapse behaviour, and determinism guarantees are all demonstrable against the empty report.
 
-**Independent Test**: Run `./bin/my-gather testdata/example2 -o /tmp/report.html`. The command exits 0, `/tmp/report.html` exists, opening it in an offline browser shows the three section headers (OS Usage, Variables, Database Usage), a nav index linking to each, all three collapsed/expanded correctly, the verbatim-passthrough banner at the top, and each section body reading "data not available". Running twice in a row produces byte-identical HTML except the `Report generated at` timestamp.
+**Independent Test**: Run `./bin/my-gather -o /tmp/report.html testdata/example2`. The command exits 0, `/tmp/report.html` exists, opening it in an offline browser shows the three section headers (OS Usage, Variables, Database Usage), a nav index linking to each, all three collapsed/expanded correctly, the verbatim-passthrough banner at the top, and each section body reading "data not available". Running twice in a row produces byte-identical HTML except the `Report generated at` timestamp.
 
 ### Tests for User Story 1 ⚠️ (Write first; implementation makes them pass)
 
@@ -114,9 +114,9 @@ All tasks write paths relative to the repository root.
 - [x] T039 [US1] Implement `render/assets/app.js` collapse-persistence module: read `Report.ReportID` from a JSON metadata block embedded into the HTML, key `localStorage` entries as `mygather:<reportID>:collapse:<sectionID>`, restore state on `DOMContentLoaded`, save on `<details>` `toggle` events. Degrade silently if `localStorage` is unavailable (F22: private browsing / disabled storage).
 - [x] T040 [US1] Implement `render/assets/app.css` sticky nav rail styles: CSS Grid layout with rail on the left, main content on the right, `position: sticky` on the nav element, `@media print { details { open: true } }` print rule (F23). `@media (max-width: 800px)` fallback to top-horizontal nav.
 - [x] T041 [US1] Wire `cmd/my-gather/main.go` end-to-end: resolve paths (with `filepath.EvalSymlinks`), run the output-inside-input guard (FR-029), call `parse.Discover`, map errors to exit codes per `contracts/cli.md` exit-code table, call `render.Render`, write atomically via `os.CreateTemp` + `Sync` + `os.Rename` in the output's parent directory, mirror `Diagnostic` warnings/errors to stderr per FR-027.
-- [x] T042 [US1] Implement `-v` / `--verbose` stderr progress lines (FR-027): per-file `[parse]` and `[render]` lines using the format in `contracts/cli.md`; also ensure `SeverityInfo` diagnostics do NOT mirror to stderr (F13 resolution — only `Warning` and `Error` do).
+- [x] T042 [US1] Implement `-v` / `--verbose` stderr progress lines (FR-027): emit the bracketed-tag lines defined as the minimum contract in `contracts/cli.md` (`[parse]` input path, `[parse]` snapshot/size summary, `[render]` output path, `[done]` bytes-written; elapsed-time suffix optional); also ensure `SeverityInfo` diagnostics do NOT mirror to stderr (F13 resolution — only `Warning` and `Error` do).
 
-**Checkpoint**: Running `./bin/my-gather testdata/example2 -o /tmp/report.html` produces a working, self-contained, deterministic HTML file with navigation, collapse, banner, and three empty sections. Every test T023–T035 passes.
+**Checkpoint**: Running `./bin/my-gather -o /tmp/report.html testdata/example2` produces a working, self-contained, deterministic HTML file with navigation, collapse, banner, and three empty sections. Tests T023–T029 pass today; T030–T035 are still pending test authorship and will go green once written.
 
 ---
 
@@ -311,7 +311,7 @@ Task: "Write render/nav_test.go::TestNavCoverage"
 1. + US2 (13 tasks, T043–T055) → OS Usage section live. Principle III, XI strengthened.
 2. + US3 (7 tasks, T056–T062) → Variables section live.
 3. + US4 (15 tasks, T063–T077) → Database Usage section live.
-4. + Polish (29 tasks, T078–T106) → performance guarantees, a11y, docs, coverage gaps from analyze pass 3 (F27–F32, F36) + FR-033–FR-037 test coverage.
+4. + Polish (29 tasks, T078–T106) → performance guarantees, a11y, docs, coverage gaps from analyze pass 3 (F27–F32, F36) plus the FR-033–FR-037 impl/test pairs added in the 2026-04-22 reconciliation (T097–T106).
 
 ### Solo-developer strategy (current context)
 
@@ -333,7 +333,7 @@ Serial execution by user-story priority: T001 → T106 (106 tasks total). Treat 
 
 ## Reconciliation Summary (last updated 2026-04-22)
 
-A mechanical pass compared every task ID against the real repository state. `62 / 106 tasks (≈58 %) carry an [x] mark`. The pipeline builds, `go test ./...` is green, and the binary produces a deterministic three-section report against `testdata/example2/`. The 2026-04-22 spec-drift reconciliation added five new shipping features captured as FR-033–FR-037 (MySQL-defaults badging, mysqladmin category chooser, default-hidden initial-tally column, Cmd/Ctrl+`\` nav shortcut, `@media print` stylesheet); their implementation tasks (T097, T099, T101, T103, T105) are already live in `render/assets/` and `render/render.go` and carry `[x]` marks, while their paired tests (T098, T100, T102, T104, T106) are tracked `[ ]`. What remains across the whole feature is almost entirely **missing tests** plus a handful of documentation and coverage gaps — no core implementation is unshipped.
+A mechanical pass compared every task ID against the real repository state for the full current range, **T001–T106 (106 tasks total)**. `62 / 106 tasks (≈58 %) carry an [x] mark`. The pipeline builds, `go test ./...` is green, and the binary produces a deterministic three-section report against `testdata/example2/`. The 2026-04-22 spec-drift reconciliation added five new shipping features captured as FR-033–FR-037 (MySQL-defaults badging, mysqladmin category chooser, default-hidden initial-tally column, `Cmd/Ctrl+\` nav shortcut, `@media print` stylesheet); their implementation tasks (T097, T099, T101, T103, T105) are already live in `render/assets/` and `render/render.go` and carry `[x]` marks, while their paired tests (T098, T100, T102, T104, T106) are tracked `[ ]`. What remains across the whole feature is almost entirely **missing tests** plus a handful of documentation and coverage gaps — no core implementation is unshipped.
 
 ### What's done
 

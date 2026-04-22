@@ -242,4 +242,4 @@ invocation via the Constitution Check gate. Runtime development guidance
 and feature-local `plan.md` / `quickstart.md` files and MUST defer to this
 constitution when conflicts arise.
 
-**Version**: 1.0.1 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-21
+**Version**: 1.0.1 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-22

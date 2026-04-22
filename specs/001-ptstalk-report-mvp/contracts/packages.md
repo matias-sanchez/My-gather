@@ -26,14 +26,9 @@ type MetricSeries struct { /* ... */ }
 type VariableEntry struct { /* ... */ }
 type Diagnostic struct { /* ... */ }
 type Report     struct {
-    // ... see data-model.md for the full set of fields. In addition
-    // to what data-model.md declares, Report also carries:
-    //   Title   string  // human-readable title (derived from hostname
-    //                   // + snapshot count by render.collectionTitle)
-    //   BuiltAt string  // tool build timestamp, injected via -ldflags
-    //                   // and surfaced in the report header
-    // These two fields are display-only and not part of the parsed
-    // Collection; they originate from RenderOptions.
+    // See data-model.md for the canonical, field-by-field definition
+    // (including the display-only `Title` and `BuiltAt` that originate
+    // from RenderOptions rather than from the parsed Collection).
 }
 
 // Per-collector payloads

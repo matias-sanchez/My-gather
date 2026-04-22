@@ -90,14 +90,17 @@ Per spec FR-027:
   [parse]  reading <absolute-input-path>
   [parse]  <N> snapshot(s), <T> MB total
   [render] writing <absolute-output-path>
-  [done]   <bytes> bytes written in <seconds>s
+  [done]   <bytes> bytes written
   ```
 
-  Richer per-file progress (for example, `[parse] 2026_04_21_16_52_11-iostat
-  (1.2 MB) -> 3421 samples, 8 devices`) is a permitted enhancement but
-  is not required by this contract. Any concrete format MUST keep
-  the `[tag] …` prefix shape so tests and operators can parse the
-  stream deterministically.
+  Implementations MAY append elapsed-time information to the `[done]`
+  line (for example, `in <seconds>s`), and MAY substitute richer
+  per-file progress (such as `[parse] 2026_04_21_16_52_11-iostat
+  (1.2 MB) -> 3421 samples, 8 devices`) for the `[parse] <N>
+  snapshot(s), <T> MB total` summary; neither is required by the
+  minimum contract. Any concrete format MUST keep the `[tag] …`
+  prefix shape so tests and operators can parse the stream
+  deterministically.
 
 - **Structural errors** (exit codes 2–6 and 70) always write exactly
   one line to stderr regardless of verbosity.

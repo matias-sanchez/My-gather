@@ -99,7 +99,7 @@ byte-identical output (spec SC-003).
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Evaluated against `.specify/memory/constitution.md` v1.0.0.
+Evaluated against `.specify/memory/constitution.md` v1.0.1.
 
 | # | Principle | Pre-design | Rationale |
 |---|-----------|------------|-----------|
@@ -110,7 +110,7 @@ Evaluated against `.specify/memory/constitution.md` v1.0.0.
 | V | Self-Contained HTML | ✅ PASS | Chart JS library + CSS + fonts inlined via `//go:embed` and rendered into a single `<script>` / `<style>` block. Data payload embedded as JSON in a `<script type="application/json">`. No CDN references. |
 | VI | Library-First | ✅ PASS | `parse/`, `model/`, `render/` are top-level packages with no `main` coupling. `cmd/my-gather/` is a thin orchestrator. Each package will carry godoc on every exported identifier per FR-024-era test. |
 | VII | Typed Errors | ✅ PASS | Sentinels `ErrNotAPtStalkDir`, `ErrSizeBoundExceeded`, `ErrOutputExists` in `parse/` and `render/`; `ParseError` struct with `File`, `Location`, `Underlying error` for branchable parser failures (spec Diagnostic entity maps 1:1). |
-| VIII | Reference Fixtures & Golden Tests | ✅ PASS (design) / ⚠ partial (shipped) | Design provides for fixtures under `testdata/example1/` (reserved for the preceding pt-stalk version per FR-024) and `testdata/example2/` drawn from `_references/examples/`. Only `testdata/example2/` is committed in v1; `example1` is tracked by tasks.md T019 and the Reconciliation Summary. Build fails if a parser is added without a fixture+golden (enforced by `tests/coverage/testdata_coverage_test.go`); `testdata/golden/` contents are generated via `go test ./... -update` once per-collector tests land. |
+| VIII | Reference Fixtures & Golden Tests | ✅ PASS (design) / ⚠ partial (shipped) | Design provides for fixtures under `testdata/example1/` (reserved for the preceding pt-stalk version per FR-024) and `testdata/example2/` drawn from `_references/examples/`. Only `testdata/example2/` is committed in v1; `example1` is tracked by tasks.md T019 and the Reconciliation Summary. Build currently fails if a parser is added without a fixture (enforced by `tests/coverage/testdata_coverage_test.go`); golden outputs under `testdata/golden/` are generated via `go test ./... -update` once per-collector tests land, and full golden-coverage enforcement lands in T080. |
 | IX | Zero Network | ✅ PASS | `net/http`, `net`, and `net/url` (except `url.PathEscape`-style stdlib helpers) are banned in shipped code via a `go vet`-style linter check in CI. |
 | X | Minimal Dependencies | ✅ PASS | Zero direct Go module dependencies. One vendored JavaScript asset, justified in `research.md`. |
 | XI | Human Pressure Optimization | ✅ PASS | Section order in report hardcoded to OS → Variables → DB (spec FR-005); Parser Diagnostics panel is collapsible secondary section. No cluttering metric dumps. |
