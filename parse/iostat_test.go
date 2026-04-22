@@ -60,11 +60,22 @@ func TestIostatGolden(t *testing.T) {
 	}
 	// Single-file parse: Utilization and AvgQueueSize Samples MUST
 	// share the same timestamp set per-device (iostat emits every
-	// device at the same intervals inside one file).
+	// device at the same intervals inside one file). Compare pairwise
+	// — length-equality alone would pass a bug that misaligned the two
+	// series by a constant offset.
 	for _, dev := range data.Devices {
 		if len(dev.Utilization.Samples) != len(dev.AvgQueueSize.Samples) {
 			t.Errorf("device %q has mismatched sample counts: util=%d avgqu=%d",
 				dev.Device, len(dev.Utilization.Samples), len(dev.AvgQueueSize.Samples))
+			continue
+		}
+		for i := range dev.Utilization.Samples {
+			if !dev.Utilization.Samples[i].Timestamp.Equal(dev.AvgQueueSize.Samples[i].Timestamp) {
+				t.Errorf("device %q sample %d: util timestamp %s != avgqu timestamp %s",
+					dev.Device, i,
+					dev.Utilization.Samples[i].Timestamp.Format(time.RFC3339Nano),
+					dev.AvgQueueSize.Samples[i].Timestamp.Format(time.RFC3339Nano))
+			}
 		}
 	}
 	if len(data.SnapshotBoundaries) > 1 {
@@ -102,12 +113,28 @@ func TestIostatPartialRecovery(t *testing.T) {
 	if len(full) < 200 {
 		t.Fatalf("fixture suspiciously small (%d bytes); cannot meaningfully truncate", len(full))
 	}
-	// Truncate at 50% so we cut cleanly inside a device row mid-way
-	// through the file — that row becomes malformed and the parser
-	// MUST emit a Warning, not give up.
-	truncated := full[:len(full)/2]
+	// Deterministic mid-line cut: find the line that contains the 50%
+	// byte mark and truncate to the middle of that line, so the cut is
+	// guaranteed to land strictly between two newlines regardless of
+	// fixture size or line distribution. A naive `full[:len(full)/2]`
+	// can land exactly on a newline — then the last surviving row is
+	// well-formed, no Warning fires, and the test passes for the wrong
+	// reason.
+	mid := len(full) / 2
+	lineStart := bytes.LastIndexByte(full[:mid], '\n') + 1 // index after prev '\n', or 0
+	lineEndRel := bytes.IndexByte(full[mid:], '\n')
+	if lineEndRel < 0 {
+		t.Fatalf("no newline found after byte %d in fixture; cannot compute mid-line cut", mid)
+	}
+	lineEnd := mid + lineEndRel
+	cut := (lineStart + lineEnd) / 2
+	if cut <= lineStart || cut >= lineEnd {
+		t.Fatalf("computed mid-line cut %d outside (%d, %d) — fixture has a zero-length line at the midpoint", cut, lineStart, lineEnd)
+	}
+	truncated := full[:cut]
+	truncatedSource := fixture + "(truncated)"
 
-	data, diags := parseIostat(bytes.NewReader(truncated), iostatSnapshotStart(), fixture+"(truncated)")
+	data, diags := parseIostat(bytes.NewReader(truncated), iostatSnapshotStart(), truncatedSource)
 	if data == nil {
 		t.Fatalf("parseIostat returned nil data on truncated input; Principle III requires graceful recovery with diagnostics")
 	}
@@ -124,11 +151,20 @@ func TestIostatPartialRecovery(t *testing.T) {
 			t.Errorf("Warning/Error diagnostic with empty Location: %+v (FR-008 requires file+location)", d)
 			continue
 		}
+		// FR-008 requires BOTH file attribution and a location; the
+		// Location check alone would let a parser bug that dropped
+		// SourceFile slip through (e.g., a refactor that reused a
+		// shared diag constructor without threading sourcePath).
+		if d.SourceFile != truncatedSource {
+			t.Errorf("Warning/Error diagnostic with wrong SourceFile: got %q want %q (FR-008 requires the parser to attribute every diagnostic to the input path it was handed)",
+				d.SourceFile, truncatedSource)
+			continue
+		}
 		hasWarningWithLocation = true
 	}
 	if !hasWarningWithLocation {
-		t.Fatalf("expected at least one SeverityWarning diagnostic with a non-empty Location; got %d diagnostics: %+v",
-			len(diags), diags)
+		t.Fatalf("expected at least one SeverityWarning diagnostic with SourceFile=%q and a non-empty Location; got %d diagnostics: %+v",
+			truncatedSource, len(diags), diags)
 	}
 }
 
