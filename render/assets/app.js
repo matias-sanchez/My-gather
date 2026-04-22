@@ -1221,7 +1221,10 @@
         catCurrentLabel = c.label;
         setCatLabel(c.key);
         closeCatPopup();
-        applyCategory(true);
+        // Picking a category now only filters the list below — it
+        // does NOT push those counters onto the chart. The user
+        // explicitly clicks "Load on chart" to apply the selection.
+        filterListToCategory();
       });
       catPopup.appendChild(li);
     });
@@ -1260,40 +1263,47 @@
     btnLoad.className = "ma-action ma-cat-load";
     btnLoad.textContent = "Load on chart";
     btnLoad.title = "Replace chart selection with the picked category";
-    var btnAdd = document.createElement("button");
-    btnAdd.type = "button";
-    btnAdd.className = "ma-action ma-cat-add";
-    btnAdd.textContent = "+ Add to chart";
-    btnAdd.title = "Add the picked category to the existing chart selection";
 
     catActions.appendChild(catDD);
     catActions.appendChild(btnLoad);
-    catActions.appendChild(btnAdd);
     catRow.appendChild(catLabel);
     catRow.appendChild(catActions);
     panel.appendChild(catRow);
 
-    function applyCategory(replace) {
+    // Picking a category updates the list filter only — the chart
+    // itself stays untouched until the user commits via "Load on
+    // chart". Splitting these two signals lets a reader browse
+    // what's in a category before deciding to blow away the current
+    // selection.
+    function filterListToCategory() {
+      if (!catCurrentKey) return;
+      Object.keys(chipButtons).forEach(function (k) { chipButtons[k].classList.remove("active"); });
+      state.category = "cat:" + catCurrentKey;
+      redrawList();
+    }
+
+    function loadCategoryOnChart() {
       if (!catCurrentKey) return;
       var fn = catFilterByKey[catCurrentKey];
       if (!fn) return;
       var active = getActive();
       if (!active) return;
-      if (replace) active.selected.clear();
+      active.selected.clear();
       data.variables.forEach(function (n) {
         if (fn(n)) active.selected.add(n);
       });
-      if (replace && catCurrentLabel) updateActiveTitle(catCurrentLabel);
+      if (catCurrentLabel) updateActiveTitle(catCurrentLabel);
       persistLayout();
-      // Filter the list to show the chosen category for context.
+      // After loading, switch the list filter to 'selected' so the
+      // reader immediately sees the counters that went onto the chart.
       Object.keys(chipButtons).forEach(function (k) { chipButtons[k].classList.remove("active"); });
-      state.category = "cat:" + catCurrentKey;
       if (chipButtons["selected"]) chipButtons["selected"].classList.add("active");
+      state.category = "selected";
       redrawList();
       scheduleActiveRedraw();
     }
-    btnLoad.addEventListener("click", function () { applyCategory(true); });
-    btnAdd.addEventListener("click", function () { applyCategory(false); });
+
+    btnLoad.addEventListener("click", loadCategoryOnChart);
 
     // Search row.
     var searchRow = document.createElement("div");

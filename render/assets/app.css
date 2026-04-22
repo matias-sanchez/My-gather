@@ -1166,10 +1166,9 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   text-align: center;
 }
 
-.ma-cat-load,
-.ma-cat-add {
+.ma-cat-load {
   background: var(--bg-elev-2);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
   color: var(--fg);
   font: inherit;
   font-size: 12px;
@@ -1177,9 +1176,7 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
-.ma-cat-load { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
 .ma-cat-load:hover { background: var(--accent-soft); border-color: var(--accent); }
-.ma-cat-add:hover  { color: var(--fg); border-color: var(--border-strong); }
 .ma-search {
   display: flex;
   align-items: center;
