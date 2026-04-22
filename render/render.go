@@ -456,6 +456,26 @@ func concatTop(ins []*model.TopData) *model.TopData {
 	for i := 0; i < limit; i++ {
 		out.Top3ByAverage = append(out.Top3ByAverage, *seriesByPID[pidsRanked[i]])
 	}
+	// Always surface mysqld, even when it isn't in the global top-3.
+	// Diagnosing a MySQL incident without seeing the mysqld curve is
+	// useless — we'd rather render 4 series than hide the one the
+	// reader actually came for. The mysqld series is appended after
+	// the top-3 so ranking-by-average still reads left to right.
+	mysqldAlreadyIn := false
+	for i := 0; i < limit; i++ {
+		if isMysqldCommand(seriesByPID[pidsRanked[i]].Command) {
+			mysqldAlreadyIn = true
+			break
+		}
+	}
+	if !mysqldAlreadyIn {
+		for _, pid := range pidsRanked[limit:] {
+			if isMysqldCommand(seriesByPID[pid].Command) {
+				out.Top3ByAverage = append(out.Top3ByAverage, *seriesByPID[pid])
+				break
+			}
+		}
+	}
 
 	// SnapshotBoundaries: sample indexes into tsList where each input's
 	// first sample sits.
@@ -970,7 +990,12 @@ type topSummaryView struct {
 	SecondAvg   string
 	Third       string
 	ThirdAvg    string
-	SampleCount int
+	// MysqldExtra is populated only when mysqld is NOT already one of
+	// the top-3 by average — rendering it as a 4th chip (and a 4th
+	// series in the chart) so the MySQL process is always visible.
+	MysqldExtra    string
+	MysqldExtraAvg string
+	SampleCount    int
 }
 
 type vmstatSummaryView struct {
@@ -1472,7 +1497,20 @@ func summariseTop(d *model.TopData) *topSummaryView {
 	if len(labels) > 2 {
 		sum.Third, sum.ThirdAvg = labels[2], avgs[2]
 	}
+	// concatTop appends mysqld as a 4th series when it isn't already
+	// in the top-3, so surface it as a 4th chip to keep the summary
+	// aligned with the chart.
+	if len(labels) > 3 {
+		sum.MysqldExtra, sum.MysqldExtraAvg = labels[3], avgs[3]
+	}
 	return sum
+}
+
+// isMysqldCommand reports whether a top-process Command string refers
+// to the mysqld server (not mysqld_safe or another wrapper). Matches
+// are case-insensitive and tolerant of leading/trailing whitespace.
+func isMysqldCommand(cmd string) bool {
+	return strings.EqualFold(strings.TrimSpace(cmd), "mysqld")
 }
 
 func summariseVmstat(d *model.VmstatData) *vmstatSummaryView {

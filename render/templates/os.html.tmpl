@@ -30,6 +30,7 @@
       <span class="stat"><span class="k">#1</span> <span class="v">{{.First}}</span> <span class="ctx">avg {{.FirstAvg}}%</span></span>
       {{- if .Second }}<span class="stat"><span class="k">#2</span> <span class="v">{{.Second}}</span> <span class="ctx">avg {{.SecondAvg}}%</span></span>{{- end }}
       {{- if .Third }}<span class="stat"><span class="k">#3</span> <span class="v">{{.Third}}</span> <span class="ctx">avg {{.ThirdAvg}}%</span></span>{{- end }}
+      {{- if .MysqldExtra }}<span class="stat"><span class="k">mysqld</span> <span class="v">{{.MysqldExtra}}</span> <span class="ctx">avg {{.MysqldExtraAvg}}%</span></span>{{- end }}
       <span class="stat"><span class="k">samples</span> <span class="v">{{.SampleCount}}</span></span>
     </div>
     {{- end }}
