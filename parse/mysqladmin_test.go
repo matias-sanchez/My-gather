@@ -48,7 +48,7 @@ func mysqladminSnapshotStartSecond() time.Time {
 //   - avg   = integer division of total by total-sample-count N
 //     (matches pt-mext line 53: `stats[vname][3] = stats[vname][0] / col`)
 func TestPtMextFixture(t *testing.T) {
-	root := findRepoRootFromTest(t)
+	root := goldens.RepoRoot(t)
 	inputPath := filepath.Join(root, "testdata", "pt-mext", "input.txt")
 	expectedPath := filepath.Join(root, "testdata", "pt-mext", "expected.txt")
 
@@ -193,21 +193,6 @@ func sortedKeys[V any](m map[string]V) []string {
 	}
 	sort.Strings(xs)
 	return xs
-}
-
-func findRepoRootFromTest(t *testing.T) string {
-	t.Helper()
-	wd, err := filepath.Abs(".")
-	if err != nil {
-		t.Fatalf("abs: %v", err)
-	}
-	for dir := wd; dir != "/" && dir != ""; dir = filepath.Dir(dir) {
-		if fi, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil && !fi.IsDir() {
-			return dir
-		}
-	}
-	t.Fatalf("no go.mod from %s", wd)
-	return ""
 }
 
 // TestMysqladminGolden: T064 / FR-028 / Principle VIII.
@@ -382,8 +367,11 @@ func TestMysqladminGolden(t *testing.T) {
 // This exercises the internal parser API
 // (newMysqladminParser + parseOneFile + ResetForNewSnapshot +
 // finish) because parseMysqladmin is a single-file convenience
-// wrapper. The render layer's concat code uses the same internal
-// API.
+// wrapper. Note the integration path in the MVP: render/concatMysqladmin
+// merges finished per-Snapshot *MysqladminData records rather than
+// calling the internal API, so this test is the direct coverage for
+// the ResetForNewSnapshot boundary-marking behaviour; concat's own
+// cross-Snapshot merge is covered by render-layer tests (T054).
 func TestSnapshotBoundaryReset(t *testing.T) {
 	root := goldens.RepoRoot(t)
 	first := filepath.Join(root, "testdata", "example2", "2026_04_21_16_51_41-mysqladmin")
@@ -482,37 +470,43 @@ func TestSnapshotBoundaryReset(t *testing.T) {
 
 // TestVariableDrift: T067 / research R8 improvement C / Principle VIII.
 //
-// A counter variable that appears in one snapshot but not the next
-// must (a) produce `math.NaN()` at the drift slot so the chart shows
-// a gap, and (b) emit exactly one SeverityWarning diagnostic naming
-// the variable.
+// A counter variable that appears in one snapshot block but not the
+// next must (a) produce `math.NaN()` at every drift slot so the chart
+// shows a visible gap, and (b) emit exactly one SeverityWarning
+// diagnostic naming the variable. The FR-028 / R8.C contract is
+// explicitly counter-specific — gauges carry raw values, so their
+// "missing sample" shape is trivially the same NaN pad but without
+// the counter-arithmetic hazard.
 //
 // The test builds two in-memory pt-stalk -mysqladmin blocks so the
 // drift condition is deterministic and independent of any fixture
-// refresh: the first block reports three counters (A, B, C); the
-// second block drops counter C entirely. After the concat, Deltas[C]
-// should be NaN at every post-drift column and one Warning should
-// name "C_missing".
+// refresh. The first block reports three variables — two surviving
+// (Com_select, Bytes_sent) and one drifter (Com_missing, which
+// matches the "Com_" prefix in classifyAsCounter and is therefore
+// classified as a counter). The second block drops Com_missing
+// entirely. After the concat, Deltas[Com_missing] should be NaN at
+// every post-drift column, IsCounter[Com_missing] should be true,
+// and one Warning should name "Com_missing".
 func TestVariableDrift(t *testing.T) {
 	// Two pt-stalk mysqladmin files. The first has headers (col 1,
-	// col 2), so we see the raw initial tally and one delta. The
-	// second block drops C_missing after ResetForNewSnapshot.
+	// col 2), so we see the raw initial tally (col 1) and one delta
+	// (col 2). The second block drops Com_missing after
+	// ResetForNewSnapshot, leaving it to be NaN-padded at finish()
+	// time.
 	firstBlock := strings.Join([]string{
 		"| Variable_name | Value |",
 		"| Com_select | 100 |",
 		"| Bytes_sent | 1000 |",
-		"| C_missing | 42 |",
+		"| Com_missing | 42 |",
 		"| Variable_name | Value |",
 		"| Com_select | 110 |",
 		"| Bytes_sent | 1200 |",
-		"| C_missing | 50 |",
+		"| Com_missing | 50 |",
 		"",
 	}, "\n")
-	// Second block: Com_select and Bytes_sent continue, but C_missing
-	// is absent from both its samples. Classified as a counter via the
-	// "Com_" / "Bytes_" prefixes — C_missing does not match any
-	// prefix, so it is a gauge in our classifier, but pt-mext-style
-	// NaN padding in `finish()` applies regardless.
+	// Second block: Com_select and Bytes_sent continue (both also
+	// counters, both kept present). Com_missing is absent — the
+	// drift scenario we want to exercise.
 	secondBlock := strings.Join([]string{
 		"| Variable_name | Value |",
 		"| Com_select | 200 |",
@@ -533,47 +527,56 @@ func TestVariableDrift(t *testing.T) {
 		t.Fatalf("finish returned nil data (diagnostics: %+v)", diags)
 	}
 
-	// Sanity: we expect four columns total (2 from first block + 2
-	// from second). If the parser miscounts, every downstream
-	// assertion is suspect — fail fast with a direct message.
+	// Sanity: four columns total (2 from first block + 2 from
+	// second). If the parser miscounts, every downstream assertion
+	// is suspect — fail fast with a direct message.
 	if data.SampleCount != 4 {
 		t.Fatalf("SampleCount = %d; expected 4 (2 + 2 columns across the two blocks)", data.SampleCount)
 	}
 
-	// Missing slots for C_missing must be NaN, not zero. Zero would
-	// be a perfectly plausible real value and silently under-report
-	// drift.
-	cSlots := data.Deltas["C_missing"]
+	// Guard the counter-classification premise: if a future
+	// classifyAsCounter refactor demotes Com_missing to a gauge, this
+	// test would silently fall back to exercising the generic
+	// missing-slot padding path (which applies to gauges too) and no
+	// longer cover R8.C's counter-specific contract. Fail loudly.
+	if !data.IsCounter["Com_missing"] {
+		t.Fatalf("IsCounter[\"Com_missing\"] = false; the R8.C counter-drift test requires Com_missing be classified as a counter (Com_ prefix matches classifyAsCounter)")
+	}
+
+	// Missing slots for Com_missing must be NaN, not zero. Zero would
+	// be a perfectly plausible real value and would silently
+	// under-report drift.
+	cSlots := data.Deltas["Com_missing"]
 	if len(cSlots) != 4 {
-		t.Fatalf("Deltas[C_missing] length = %d; want 4 (NaN-padded to SampleCount)", len(cSlots))
+		t.Fatalf("Deltas[Com_missing] length = %d; want 4 (NaN-padded to SampleCount)", len(cSlots))
 	}
 	// Columns 0 and 1 were the first block — finite values.
 	for i := 0; i < 2; i++ {
 		if math.IsNaN(cSlots[i]) {
-			t.Errorf("Deltas[C_missing][%d] = NaN; first block provided a value here", i)
+			t.Errorf("Deltas[Com_missing][%d] = NaN; first block provided a value here", i)
 		}
 	}
 	// Columns 2 and 3 were the second block — drift, must be NaN.
 	for i := 2; i < 4; i++ {
 		if !math.IsNaN(cSlots[i]) {
-			t.Errorf("Deltas[C_missing][%d] = %v; drift slot must be NaN (R8.C)", i, cSlots[i])
+			t.Errorf("Deltas[Com_missing][%d] = %v; drift slot must be NaN (R8.C)", i, cSlots[i])
 		}
 	}
 
-	// Exactly one SeverityWarning naming C_missing. The parser may
+	// Exactly one SeverityWarning naming Com_missing. The parser may
 	// emit additional Info diagnostics (the boundary reset), so we
-	// filter by severity AND content; other Warnings are fine as long
-	// as we hit our drift warning exactly once.
+	// filter by severity AND content; other Warnings are fine as
+	// long as we hit our drift warning exactly once.
 	driftWarnings := 0
 	for _, d := range diags {
 		if d.Severity != model.SeverityWarning {
 			continue
 		}
-		if strings.Contains(d.Message, "C_missing") {
+		if strings.Contains(d.Message, "Com_missing") {
 			driftWarnings++
 		}
 	}
 	if driftWarnings != 1 {
-		t.Errorf("expected exactly 1 SeverityWarning mentioning C_missing; got %d (diagnostics: %+v)", driftWarnings, diags)
+		t.Errorf("expected exactly 1 SeverityWarning mentioning Com_missing; got %d (diagnostics: %+v)", driftWarnings, diags)
 	}
 }

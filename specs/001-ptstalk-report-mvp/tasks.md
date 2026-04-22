@@ -128,7 +128,7 @@ All tasks write paths relative to the repository root.
 
 ### Tests for User Story 2
 
-- [x] T043 [P] [US2] `parse/iostat_test.go::TestIostatGolden`: parse `testdata/example2/2026_04_21_16_51_41-iostat` and compare resulting `IostatData` JSON-serialised against `testdata/golden/iostat.example2.2026_04_21_16_51_41.json`. Regenerate with `go test ./... -update`. Also asserts alphabetical device ordering, matched `Utilization`/`AvgQueueSize` sample counts per device, and single-file `SnapshotBoundaries ≤ 1`.
+- [x] T043 [P] [US2] `parse/iostat_test.go::TestIostatGolden`: parse `testdata/example2/2026_04_21_16_51_41-iostat` and compare resulting `IostatData` JSON-serialised against `testdata/golden/iostat.example2.2026_04_21_16_51_41.json`. Regenerate with `go test ./parse/... -update` (the `-update` flag is only registered in packages that import `tests/goldens`; see the package godoc for the scoping rule). Also asserts alphabetical device ordering, matched `Utilization`/`AvgQueueSize` sample counts per device, and single-file `SnapshotBoundaries ≤ 1`.
 - [x] T044 [P] [US2] `parse/top_test.go::TestTopGolden`: parse `-top` fixture; compare against golden. Also asserts `Top3ByAverage` is ranked with **average CPUPercent normalised over total batch count** (absent-in-batch counts as 0 — F7 resolution, aligning with spec FR-010 "aggregate"), with the (higher PID first) tiebreaker verified inline. Golden at `testdata/golden/top.example2.2026_04_21_16_51_41.json`; regenerate with `go test ./parse/... -update`.
 - [x] T045 [P] [US2] `parse/vmstat_test.go::TestVmstatGolden`: parse `-vmstat` fixture; compare against golden. Asserts the declared `Series` order is present (runqueue, blocked, free_kb, buff_kb, cache_kb, swap_in, swap_out, io_in, io_out, cpu_user, cpu_sys, cpu_idle, cpu_iowait) and that every non-empty Series shares the same sample count. Golden at `testdata/golden/vmstat.example2.2026_04_21_16_51_41.json`.
 - [ ] T046 [P] [US2] `render/os_test.go::TestOSGoldenHTML`: render a Collection with only OS parsers wired; compare the OS section's rendered HTML against `testdata/golden/example2.os.html`.
@@ -405,7 +405,7 @@ A mechanical pass compared every task ID against the real repository state for t
 **Fixture / golden gaps**:
 
 - **T019**: `testdata/example1/` was never committed — only `testdata/example2/` exists. Any test that keys off a distinct first example (or that asserts two format variants co-exist per FR-024) depends on this.
-- `testdata/golden/` holds **seven parser goldens** — one per collector: iostat, top, vmstat, innodbstatus, mysqladmin, processlist, variables. The remaining `*Golden*` tests are render-HTML goldens (T046, T057, T069, T096) which still need committed fixtures under `testdata/golden/` generated via `go test ./render/... -update` and reviewed. Parser-side golden coverage is complete.
+- `testdata/golden/` holds **seven parser goldens** — one per collector: iostat, top, vmstat, innodbstatus, mysqladmin, processlist, variables. The remaining `*Golden*` tests are render-HTML goldens (T046, T057, T069, T096) which still need committed fixtures under `testdata/golden/`. `go test ./render/... -update` will only become the right regeneration command once the render tests import `tests/goldens` (the `-update` flag is per-test-binary; see the package godoc's "Scope of the `-update` flag" note); until then, scope the regen command to the package(s) that actually wire up the flag. Parser-side golden coverage is complete.
 
 **Feature gap**:
 
