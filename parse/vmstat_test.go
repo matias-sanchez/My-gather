@@ -41,9 +41,11 @@ var vmstatExpectedSeries = []string{
 // Parse `testdata/example2/2026_04_21_16_51_41-vmstat` and
 // snapshot-compare the resulting *VmstatData plus diagnostics against
 // a committed golden. The declared 13-series order MUST be preserved
-// across vmstat version differences — missing columns render as
-// zero-length Samples with the canonical Metric name still set, not
-// as a reordered slice.
+// across vmstat version differences — missing columns still occupy
+// their canonical Metric slot and currently produce a full-length
+// zero-valued Samples series for the parsed rows (the parser
+// substitutes 0 for an absent column value, so every Series has the
+// same length as the number of data rows), not a reordered slice.
 func TestVmstatGolden(t *testing.T) {
 	root := goldens.RepoRoot(t)
 	fixture := filepath.Join(root, "testdata", "example2", "2026_04_21_16_51_41-vmstat")
@@ -73,26 +75,22 @@ func TestVmstatGolden(t *testing.T) {
 		}
 	}
 
-	// All present series must share the same sample count (one per
-	// vmstat row, since pt-stalk emits `vmstat 1`). A missing column
-	// reports as zero-length, which is the only legitimate mismatch.
-	// Anything else means a row was partially parsed — worth failing
-	// early with a direct message.
-	var nonEmpty []int
-	for i, s := range data.Series {
-		if len(s.Samples) > 0 {
-			nonEmpty = append(nonEmpty, i)
-		}
+	// Every Series has the same sample count by construction — the
+	// parser appends one value to each of the 13 per-column buffers
+	// per data row (missing columns get zero-substituted). Assert
+	// that invariant anyway: a future refactor that changes the
+	// accumulation to be column-conditional (so a missing column
+	// produces a shorter series) would be a visible contract change
+	// worth catching here, not silently in a golden diff.
+	if len(data.Series[0].Samples) == 0 {
+		t.Fatalf("Series[0] (%q) has zero samples — vmstat fixture should contain data rows", data.Series[0].Metric)
 	}
-	if len(nonEmpty) < 2 {
-		t.Fatalf("expected at least two non-empty Series (vmstat fixture has data); got %d", len(nonEmpty))
-	}
-	ref := len(data.Series[nonEmpty[0]].Samples)
-	for _, i := range nonEmpty[1:] {
+	ref := len(data.Series[0].Samples)
+	for i := 1; i < len(data.Series); i++ {
 		if got := len(data.Series[i].Samples); got != ref {
-			t.Errorf("Series[%d] (%q) has %d samples; Series[%d] (%q) has %d — present-column sample counts must match (partial-row parse?)",
+			t.Errorf("Series[%d] (%q) has %d samples; Series[0] (%q) has %d — every Series must share the row count the parser observes",
 				i, data.Series[i].Metric, got,
-				nonEmpty[0], data.Series[nonEmpty[0]].Metric, ref)
+				data.Series[0].Metric, ref)
 		}
 	}
 

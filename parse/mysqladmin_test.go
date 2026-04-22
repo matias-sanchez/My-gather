@@ -347,11 +347,16 @@ func TestMysqladminGolden(t *testing.T) {
 
 // TestSnapshotBoundaryReset: T066 / FR-030 / Principle VIII.
 //
-// Multi-snapshot mysqladmin parses concatenate pt-stalk snapshots on a
-// single time axis. The delta arithmetic MUST reset at every snapshot
-// boundary — carrying the previous snapshot's final counter value
-// into the next snapshot's first sample would produce a nonsense
-// delta (often enormous) that would distort every counter chart.
+// Multi-snapshot mysqladmin parses concatenate pt-stalk snapshots
+// into one sample stream for boundary handling. The delta arithmetic
+// MUST reset at every snapshot boundary — carrying the previous
+// snapshot's final counter value into the next snapshot's first
+// sample would produce a nonsense delta (often enormous) that would
+// distort every counter chart. (The merged Timestamps slice is not
+// part of this test's contract: the internal parser's `finish`
+// synthesises 1-second-spaced timestamps from its most recently
+// installed `timestampBase`, so a true cross-snapshot wall-clock
+// merge is the render layer's responsibility — T054 covers that.)
 //
 // Assertions (per FR-030):
 //   - SnapshotBoundaries contains 0 plus every additional boundary
