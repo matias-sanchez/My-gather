@@ -1,12 +1,14 @@
 package render_test
 
 import (
+	"bytes"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/render"
 	"github.com/matias-sanchez/My-gather/tests/goldens"
 )
 
@@ -117,4 +119,113 @@ func truncateForError(s string, n int) string {
 		return s
 	}
 	return s[:n] + "…"
+}
+
+// TestDefaultsBadges: T098 / FR-033 / Principle VIII.
+//
+// FR-033 requires the Variables table to distinguish values that
+// match the documented MySQL 8.0 default from values that have been
+// changed, and to surface "unknown" when no default is documented.
+// The shipped implementation classifies each row via
+// `classifyVariable(defaults, name, value)` in render/render.go; the
+// template emits `data-status="default" | "modified" | "unknown"`
+// on each `<tr>` and a corresponding status-label cell.
+//
+// This test synthesises a VariablesData with three rows covering
+// the three branches of the classifier, renders the document, and
+// asserts the rendered HTML carries the expected `data-status` for
+// each row. A regression in the classifier (e.g., `unknown` silently
+// becoming `default`) would fail here with a direct message.
+//
+// Uses a hand-built Collection rather than example2 because example2
+// has ~1,164 rows and the test needs the three specific classifier
+// branches guaranteed present — impossible to promise from the
+// shipped fixture without adding extra parsing.
+func TestDefaultsBadges(t *testing.T) {
+	// Pick variable names that the curated mysql-defaults.json is
+	// known to include. `max_connections` and `innodb_buffer_pool_size`
+	// are among the most common tuning knobs in that defaults map;
+	// use one at its documented default and one clearly modified.
+	// `DefinitelyNotAMySQLVariable_2026` has no default entry so it
+	// falls through classifyVariable's `unknown` branch.
+	atDefault := model.VariableEntry{Name: "max_connections", Value: "151"}
+	modified := model.VariableEntry{Name: "max_connections", Value: "4096"}
+	unknown := model.VariableEntry{Name: "DefinitelyNotAMySQLVariable_2026", Value: "42"}
+
+	// Build a minimal Collection with one Snapshot carrying a
+	// VariablesData whose Entries list includes all three rows.
+	// max_connections appears twice under different snapshots so the
+	// "default" + "modified" halves of the classifier both exercise.
+	c := &model.Collection{
+		RootPath: "/tmp/fr033",
+		Hostname: "example-db-01",
+		Snapshots: []*model.Snapshot{
+			{
+				Timestamp: fixedTime(),
+				Prefix:    "snap-atdefault",
+				SourceFiles: map[model.Suffix]*model.SourceFile{
+					model.SuffixVariables: {
+						Suffix: model.SuffixVariables,
+						Parsed: &model.VariablesData{Entries: []model.VariableEntry{atDefault, unknown}},
+					},
+				},
+			},
+			{
+				Timestamp: fixedTime().Add(30),
+				Prefix:    "snap-modified",
+				SourceFiles: map[model.Suffix]*model.SourceFile{
+					model.SuffixVariables: {
+						Suffix: model.SuffixVariables,
+						Parsed: &model.VariablesData{Entries: []model.VariableEntry{modified}},
+					},
+				},
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	opts := render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}
+	if err := render.Render(&buf, c, opts); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	html := buf.String()
+
+	// max_connections appears once as "default" (value 151) and once
+	// as "modified" (value 4096). Assert both statuses appear at
+	// least once in the document paired with the row's name; this is
+	// stronger than just checking the strings exist anywhere because
+	// we also require the `data-variable-name="max_connections"`
+	// attribute on the same row.
+	wantDefaultRow := `data-variable-name="max_connections" data-status="default"`
+	wantModifiedRow := `data-variable-name="max_connections" data-status="modified"`
+	if !strings.Contains(html, wantDefaultRow) {
+		t.Errorf("expected a row with %q (max_connections at its documented default value 151); rendered HTML does not contain it",
+			wantDefaultRow)
+	}
+	if !strings.Contains(html, wantModifiedRow) {
+		t.Errorf("expected a row with %q (max_connections clearly changed from default); rendered HTML does not contain it",
+			wantModifiedRow)
+	}
+
+	// DefinitelyNotAMySQLVariable_2026 must carry data-status="unknown"
+	// because no default is documented. A regression where "unknown"
+	// silently degraded to "default" would be invisible to a casual
+	// glance at the HTML but would break the FR-033 contract.
+	wantUnknownRow := `data-variable-name="DefinitelyNotAMySQLVariable_2026" data-status="unknown"`
+	if !strings.Contains(html, wantUnknownRow) {
+		t.Errorf("expected a row with %q; rendered HTML does not contain it", wantUnknownRow)
+	}
+
+	// Belt-and-suspenders: the status cells render a visible label
+	// ("default" / "modified" / "–") so reviewers can tell the badge
+	// wiring survived. Assert both the default and modified labels
+	// appear in the rendered document. The "–" unknown label is
+	// weaker to check (appears in many contexts), so we rely on the
+	// data-status assertion above for the unknown branch.
+	if !strings.Contains(html, `<td class="status-label mono">default</td>`) {
+		t.Errorf("rendered HTML missing the visible `default` status-label cell")
+	}
+	if !strings.Contains(html, `<td class="status-label mono">modified</td>`) {
+		t.Errorf("rendered HTML missing the visible `modified` status-label cell")
+	}
 }
