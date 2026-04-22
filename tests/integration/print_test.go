@@ -106,7 +106,14 @@ func TestPrintStylesheetPresent(t *testing.T) {
 	if depth != 0 {
 		t.Fatalf("@media print block is unterminated (depth=%d)", depth)
 	}
-	printBody := combined[openIdx+1 : i-1]
+	// Strip CSS block comments before running selector assertions.
+	// Without this, a `/* details > .body { display: block } */`
+	// comment inside the @media print block would satisfy a bare
+	// `\bdetails\b` substring/word check, leaving a real stylesheet
+	// regression (e.g. the `details` rule deleted but a comment
+	// left behind) invisible to this test.
+	rawBody := combined[openIdx+1 : i-1]
+	printBody := regexp.MustCompile(`(?s)/\*.*?\*/`).ReplaceAllString(rawBody, "")
 
 	// Selectors the shipped app.css emits inside @media print.
 	// FR-037 mandates the first two (details + nav rail hide);

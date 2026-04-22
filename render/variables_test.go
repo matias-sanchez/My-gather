@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/matias-sanchez/My-gather/model"
 	"github.com/matias-sanchez/My-gather/render"
@@ -171,7 +172,7 @@ func TestDefaultsBadges(t *testing.T) {
 				},
 			},
 			{
-				Timestamp: fixedTime().Add(30),
+				Timestamp: fixedTime().Add(30 * time.Second),
 				Prefix:    "snap-modified",
 				SourceFiles: map[model.Suffix]*model.SourceFile{
 					model.SuffixVariables: {

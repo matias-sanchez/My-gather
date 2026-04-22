@@ -212,7 +212,11 @@ func TestMysqladminCategoryMap(t *testing.T) {
 	memberOverride := "Innodb_rows_inserted"
 
 	md := &model.MysqladminData{
-		VariableNames: []string{matcherHit, matcherHitExcluded, memberOverride},
+		// MysqladminData.VariableNames is documented as sorted
+		// alphabetically (model/model.go). Respect that invariant in
+		// the synthetic fixture so the test exercises the render
+		// layer against the same shape it sees in production.
+		VariableNames: sortStrings([]string{matcherHit, matcherHitExcluded, memberOverride}),
 		SampleCount:   1,
 		Timestamps:    []time.Time{fixedTime()},
 		Deltas: map[string][]float64{
@@ -365,7 +369,12 @@ func TestDefaultVisibleSkipsInitialTally(t *testing.T) {
 	md := &model.MysqladminData{
 		VariableNames:      sortStrings(names),
 		SampleCount:        3,
-		Timestamps:         []time.Time{fixedTime(), fixedTime().Add(1), fixedTime().Add(2)},
+		// Per-sample timestamps at one-second cadence. Using explicit
+		// `time.Second` (rather than a bare int, which Go's type-
+		// inference interprets as nanoseconds) keeps the fixture
+		// aligned with the real mysqladmin sample cadence that the
+		// render layer's `t.Unix()` serialisation cares about.
+		Timestamps: []time.Time{fixedTime(), fixedTime().Add(1 * time.Second), fixedTime().Add(2 * time.Second)},
 		Deltas:             deltas,
 		IsCounter:          isCounter,
 		SnapshotBoundaries: []int{0},
@@ -435,6 +444,34 @@ func TestDefaultVisibleSkipsInitialTally(t *testing.T) {
 		if strings.Contains(strings.ToLower(v), "initial") {
 			t.Errorf("defaultVisible contains a suspicious pseudo-name %q; FR-035 stores the initial-tally data inside each counter's Deltas[0] rather than as a separate variable", v)
 		}
+	}
+
+	// Invariant 1d: defaultVisible MUST contain at least one of the
+	// curated counter names the fixture provides. FR-035's core
+	// requirement is "boot with a curated visible set"; an empty
+	// defaultVisible array would silently pass the loops above (they
+	// iterate over it) while breaking the user-facing contract.
+	// pickDefaultCounters prefers Com_select / Com_insert /
+	// Com_update / Questions / Bytes_received / Bytes_sent — every
+	// one of those is in the fixture, so at least one MUST land in
+	// defaultVisible.
+	if len(m.DefaultVisible) == 0 {
+		t.Errorf("defaultVisible is empty; FR-035 requires a curated visible set to boot the chart")
+	}
+	curatedPresent := false
+	curated := map[string]struct{}{
+		"Com_select": {}, "Com_insert": {}, "Com_update": {},
+		"Questions": {}, "Bytes_received": {}, "Bytes_sent": {},
+	}
+	for _, v := range m.DefaultVisible {
+		if _, ok := curated[v]; ok {
+			curatedPresent = true
+			break
+		}
+	}
+	if !curatedPresent {
+		t.Errorf("defaultVisible %v contains none of the curated counter names (Com_select, Com_insert, Com_update, Questions, Bytes_received, Bytes_sent) that pickDefaultCounters prefers; FR-035 expects at least one of these to anchor the default view",
+			m.DefaultVisible)
 	}
 
 	// Invariant 2: every counter's Deltas[0] is present and not null

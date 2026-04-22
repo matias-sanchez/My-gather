@@ -81,10 +81,16 @@ func TestKeyboardShortcutWiring(t *testing.T) {
 	// split across two functions, which breaks behaviour because
 	// preventDefault runs on a different event object than the
 	// toggle logic.
-	handlerRE := regexp.MustCompile(`addEventListener\(\s*"keydown",\s*function\s*\([^)]*\)\s*\{([^{}]|\{[^{}]*\})*\}`)
+	//
+	// Accept either callback shape — `function (…) { … }` or an
+	// arrow `(…) => { … }` — so a behaviour-preserving refactor to
+	// arrow syntax (or single-quoted event names) doesn't false-fail
+	// this test. Both forms still enclose a `{ … }` body which the
+	// regex captures via one-level brace nesting.
+	handlerRE := regexp.MustCompile(`addEventListener\(\s*["']keydown["']\s*,\s*(?:function\s*\([^)]*\)|\([^)]*\)\s*=>)\s*\{([^{}]|\{[^{}]*\})*\}`)
 	handlers := handlerRE.FindAllString(js, -1)
 	if len(handlers) == 0 {
-		t.Fatalf("no keydown addEventListener handler bodies extracted from app.js")
+		t.Fatalf("no keydown addEventListener handler bodies extracted from app.js (accepted shapes: function-expression or arrow)")
 	}
 	coLocated := false
 	for _, body := range handlers {
@@ -106,7 +112,10 @@ func TestKeyboardShortcutWiring(t *testing.T) {
 	// stops propagation. Check the raw source for the exact
 	// `document.addEventListener("keydown"` prefix and that at
 	// least ONE such binding lives reasonably close to a
-	// `"nav-hidden"` reference (same 200-char window).
+	// `"nav-hidden"` reference (500-char window — wide enough to
+	// absorb additional comments or `var` declarations a future
+	// refactor might insert, tight enough to fail if the handler
+	// lives in a completely unrelated part of the file).
 	idx := strings.Index(js, `document.addEventListener("keydown"`)
 	for idx != -1 {
 		end := idx + 500
