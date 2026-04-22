@@ -1,0 +1,14 @@
+{
+  "data": {
+    "SemaphoreCount": 2,
+    "PendingReads": 1,
+    "PendingWrites": 12,
+    "AHIActivity": {
+      "HashTableSize": 138401,
+      "SearchesPerSec": 2.73,
+      "NonHashSearchesPerSec": 11292.91
+    },
+    "HistoryListLength": 133
+  },
+  "diagnostics": null
+}

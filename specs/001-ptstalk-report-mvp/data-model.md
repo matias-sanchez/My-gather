@@ -227,9 +227,16 @@ type ProcessSeries struct {
 }
 ```
 
-Derived invariant: `Top3ByAverage` is computed at parse time using
-average `CPUPercent` across all samples in which the PID appears;
-ties are broken deterministically by (higher PID first).
+Derived invariant: `Top3ByAverage` is computed at parse time ranking
+by `sum(CPUPercent) / totalBatchCount` — i.e., a PID that appears in
+only half the `-top` batches is penalised for the missing half
+(absent-in-batch contributes 0 to the numerator). This matches spec
+FR-010 "aggregate across the collection window" with the F7 remediation
+and the implementation in `parse/top.go`. Each returned
+`ProcessSeries.CPU.Samples` holds only the observed samples (not
+zero-padded to `totalBatchCount`) — the zero-fill is an averaging
+convention, not a storage shape. Ties are broken deterministically by
+(higher PID first).
 
 ### `VariablesData`
 
@@ -264,9 +271,19 @@ Invariants:
 
 - `Series` is in a fixed declared order (documented in
   `parse/vmstat.go`) so the rendered chart is deterministic even when
-  some measurements are absent in an older `vmstat` version (those
-  slots are empty-Samples series, and render shows a greyed legend
-  entry with "n/a").
+  some measurements are absent in an older `vmstat` version. A column
+  absent from the source does not drop its slot: the parser
+  zero-substitutes the missing value per row, so every MetricSeries
+  ends up with the same sample count as the number of parsed data
+  rows. The canonical Metric name is always set so the renderer can
+  keep a stable legend, and a per-column absence is represented by
+  those zero-substituted samples — the parser does NOT emit a
+  diagnostic and does NOT produce a zero-length Samples slice for
+  missing columns. No committed fixture currently exercises a
+  missing column, so that behaviour is specified here but not pinned
+  by fixture coverage today; `parse/vmstat_test.go`'s
+  length-equality invariant only asserts equal Series lengths for
+  the exercised fully-populated input.
 - `SnapshotBoundaries` indexes into `Series[0].Samples` — the primary
   timestamp axis the renderer uses. Same semantics as
   IostatData.SnapshotBoundaries.
