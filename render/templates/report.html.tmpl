@@ -67,7 +67,7 @@
   <main class="content">
 
     {{/* OS Usage section */}}
-    <details id="sec-os" class="section" open>
+    <details id="sec-os" class="section">
       <summary>
         <span>OS Usage</span>
         <span class="badge">{{.OSBadge}}</span>
@@ -78,7 +78,7 @@
     </details>
 
     {{/* Variables section */}}
-    <details id="sec-variables" class="section" open>
+    <details id="sec-variables" class="section">
       <summary>
         <span>Variables</span>
         <span class="badge">{{.VariablesBadge}}</span>
@@ -89,7 +89,7 @@
     </details>
 
     {{/* Database Usage section */}}
-    <details id="sec-db" class="section" open>
+    <details id="sec-db" class="section">
       <summary>
         <span>Database Usage</span>
         <span class="badge">{{.DBBadge}}</span>
@@ -100,38 +100,13 @@
     </details>
 
     {{/* Advisor section — rule-based findings, rendered at the end. */}}
-    <details id="sec-advisor" class="section" open>
+    <details id="sec-advisor" class="section">
       <summary>
         <span>Advisor</span>
         <span class="badge">{{.AdvisorBadge}}</span>
       </summary>
       <div class="body">
         {{template "advisor" .}}
-      </div>
-    </details>
-
-    {{/* Parser Diagnostics — collapsed by default per Principle XI so
-         the signal isn't drowned out, but always surfaced so incomplete
-         or partially-parsed source files are visible to the reader. */}}
-    <details id="sec-diagnostics" class="diagnostics">
-      <summary>
-        <span>Parser Diagnostics</span>
-        <span class="badge">{{.DiagnosticsBadge}}</span>
-      </summary>
-      <div class="body">
-        {{- if .Diagnostics }}
-        <ul>
-          {{- range .Diagnostics }}
-          <li>
-            <span class="sev {{.SeverityClass}}">{{.SeverityLabel}}</span>
-            <span class="loc">{{if .SourceFileDisplay}}{{.SourceFileDisplay}}{{end}}{{if .Location}} · {{.Location}}{{end}}</span>
-            <span class="msg">{{.Message}}</span>
-          </li>
-          {{- end }}
-        </ul>
-        {{- else }}
-        <p class="banner" style="margin:12px 14px;">No parser diagnostics — the collection parsed without warnings or errors.</p>
-        {{- end }}
       </div>
     </details>
 
