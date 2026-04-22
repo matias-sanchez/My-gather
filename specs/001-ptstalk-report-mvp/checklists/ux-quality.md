@@ -35,16 +35,19 @@ Applies to every rendered surface, independent of section.
 - [ ] **G-1** Every font size on every rendered surface MUST be
       expressed via one of the four named CSS custom properties
       `var(--font-h2)`, `var(--font-h3)`, `var(--font-body)`, or
-      `var(--font-caption)`. No literal `font-size:` declaration
-      appears in `render/assets/app.css` outside the `:root`-level
-      custom property definitions. Auditable by grep against the
-      shipped stylesheet; reviewer taste is not in scope.
+      `var(--font-caption)`. Check is performed **against the
+      embedded stylesheet in the rendered HTML** (the single
+      top-level `<style>` block the report ships, not the source
+      file): extract that block and assert no literal `font-size:`
+      declaration appears outside the `:root`-level custom property
+      definitions. Fully auditable from the shipped report alone.
 - [ ] **G-2** Spacing rhythm is pinned to a single `8px` base grid
       exposed as `var(--grid)` on `:root`. Every margin, padding,
-      and gap value in `render/assets/app.css` MUST be either
-      `0`, `var(--grid)`, or `calc(var(--grid) * N)` for an integer
-      `N`. Grep confirms no literal non-zero `px` spacing values
-      outside the `:root` declaration of `--grid`.
+      and gap value in the rendered report's embedded `<style>`
+      block MUST be either `0`, `var(--grid)`, or
+      `calc(var(--grid) * N)` for an integer `N`. Same extraction
+      method as G-1; the audit does not require access to
+      `render/assets/app.css` in source form.
 - [ ] **G-3** Colour palette: one primary accent, one muted-text
       tone, one warning tone, one success tone. Charts use the same
       named palette across all sections.

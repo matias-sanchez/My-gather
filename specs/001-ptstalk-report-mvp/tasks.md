@@ -279,7 +279,12 @@ written.
 ### Synthesis + gate
 
 - [ ] T118 Commit the full audit record at `specs/001-ptstalk-report-mvp/ux-audits/<YYYY-MM-DD>-<label>.md` using the template at the bottom of `checklists/ux-quality.md`. Every checklist item is PASS or carries an explicit DEFERRED → T### link with owner approval recorded in the same file.
-- [ ] T119 CI gate for SC-011: implement a **diff-based** freshness check (not timestamp-based — commit times are unreliable under rebase / cherry-pick). Concretely: a `tests/coverage/ux_audit_freshness_test.go::TestUXAuditFreshness` test that, given the merge-base against `origin/main`, asserts that any change in the PR's diff under `render/`, `render/assets/`, `model/`, or `parse/` is accompanied by at least one change under `specs/001-ptstalk-report-mvp/ux-audits/`. Implementation runs `git diff --name-only $(git merge-base HEAD origin/main)..HEAD` — or the equivalent env-provided PR-base in CI — and enforces the invariant. No new CI lane; the guard lives inside the regular `go test ./...` pass.
+- [ ] T119 CI gate for SC-011: implement a **diff-based** freshness check (not timestamp-based — commit times are unreliable under rebase / cherry-pick). Concretely: a `tests/coverage/ux_audit_freshness_test.go::TestUXAuditFreshness` test that resolves a base commit in the following priority order and fails only when the base is resolvable AND the diff violates the invariant:
+      1. `GITHUB_BASE_REF` env var (GitHub Actions sets this on PR builds to the target branch name — `main` in practice). The test runs `git rev-parse "origin/${GITHUB_BASE_REF}"` to get the base SHA.
+      2. `MYGATHER_UX_AUDIT_BASE` env var (developer-overridable for local runs).
+      3. `git merge-base HEAD origin/main` as a best-effort fallback.
+      If none of the above resolves to a valid commit (fork CI without the remote, a shallow clone missing the base, a local clone detached from any remote), the test **SKIPs with a logged reason** rather than failing — the gate is for PR / release contexts, not for every dev invocation.
+      When the base IS resolved, the test runs `git diff --name-only <base>..HEAD` and asserts that any diff under `render/`, `render/assets/`, `model/`, or `parse/` is accompanied by at least one diff under `specs/001-ptstalk-report-mvp/ux-audits/`. No new CI lane; the guard lives inside the regular `go test ./...` pass.
 
 **Checkpoint**: a clean Phase 8 pass means the report ships at a quality bar that any senior reviewer who just read the constitution and the checklist can independently confirm — not a matter of reviewer taste.
 
