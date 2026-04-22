@@ -1351,8 +1351,146 @@
     list.className = "ma-list";
     panel.appendChild(list);
 
-    // Insert panel BEFORE the chart host container.
-    hostEl.parentNode.insertBefore(panel, hostEl);
+    // Insert panel BEFORE the chart host container, wrapped inside a
+    // .ma-panel-host that also carries the always-visible sticky
+    // strip. The strip is the "quick access" summary; the full panel
+    // floats as an overlay anchored to the host when expanded.
+    var panelHost = document.createElement("div");
+    panelHost.className = "ma-panel-host";
+
+    var strip = document.createElement("button");
+    strip.type = "button";
+    strip.className = "ma-strip";
+    strip.setAttribute("aria-expanded", "false");
+    strip.setAttribute("aria-controls", "ma-panel-" + Math.random().toString(36).slice(2, 8));
+    panel.id = strip.getAttribute("aria-controls");
+    strip.innerHTML =
+      '<span class="ma-strip-pencil" aria-hidden="true">✎</span>' +
+      '<span class="ma-strip-editing"><span class="k">editing</span><span class="v">—</span></span>' +
+      '<span class="ma-strip-sep" aria-hidden="true">·</span>' +
+      '<span class="ma-strip-count">0 selected</span>' +
+      '<span class="ma-strip-hint" aria-hidden="true">press <kbd>E</kbd> to toggle</span>';
+    var stripValueEl = strip.querySelector(".ma-strip-editing .v");
+    var stripCountEl = strip.querySelector(".ma-strip-count");
+
+    // Pin + close controls injected into the floating panel header.
+    // The pin lives flush-right inside the editing badge row so it's
+    // easy to find without cluttering the strip.
+    var panelControls = document.createElement("div");
+    panelControls.className = "ma-panel-controls";
+    var pinBtn = document.createElement("button");
+    pinBtn.type = "button";
+    pinBtn.className = "ma-panel-pin";
+    pinBtn.setAttribute("aria-label", "Pin panel open");
+    pinBtn.setAttribute("title", "Keep the panel open (ignore outside-clicks and Esc)");
+    pinBtn.innerHTML = "📌";
+    var closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "ma-panel-close";
+    closeBtn.setAttribute("aria-label", "Close panel");
+    closeBtn.setAttribute("title", "Close (Esc)");
+    closeBtn.innerHTML = "×";
+    panelControls.appendChild(pinBtn);
+    panelControls.appendChild(closeBtn);
+    // Insert controls as the very first child of the panel so they
+    // overlay the top-right corner without reshuffling existing rows.
+    panel.insertBefore(panelControls, panel.firstChild);
+
+    panelHost.appendChild(strip);
+    panelHost.appendChild(panel);
+    hostEl.parentNode.insertBefore(panelHost, hostEl);
+
+    // Open/close + pin state, persisted under the v2 namespace so
+    // reloading the same report remembers the reader's last choice.
+    var OPEN_KEY = "mygather:v2:" + REPORT_ID + ":ma:panel-open";
+    var PIN_KEY = "mygather:v2:" + REPORT_ID + ":ma:panel-pinned";
+    var isOpen = storageGet(OPEN_KEY) === "true";
+    var isPinned = storageGet(PIN_KEY) === "true";
+
+    function applyPanelState() {
+      panelHost.classList.toggle("is-open", isOpen);
+      panelHost.classList.toggle("is-pinned", isPinned);
+      strip.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      pinBtn.classList.toggle("active", isPinned);
+      pinBtn.setAttribute("aria-pressed", isPinned ? "true" : "false");
+    }
+
+    function setOpen(open) {
+      isOpen = !!open;
+      storageSet(OPEN_KEY, isOpen ? "true" : "false");
+      applyPanelState();
+      if (isOpen) {
+        // Autofocus the search input so keystrokes go straight into
+        // filtering without an extra click. Deferred to the next
+        // tick so the CSS transition starts first.
+        setTimeout(function () {
+          var s = panel.querySelector(".ma-search input[type='search']");
+          if (s) { try { s.focus({ preventScroll: true }); } catch (_) { s.focus(); } }
+        }, 60);
+      }
+    }
+    function setPinned(pinned) {
+      isPinned = !!pinned;
+      storageSet(PIN_KEY, isPinned ? "true" : "false");
+      applyPanelState();
+    }
+
+    strip.addEventListener("click", function () { setOpen(!isOpen); });
+    closeBtn.addEventListener("click", function () { setOpen(false); });
+    pinBtn.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      setPinned(!isPinned);
+    });
+
+    // Click-outside-to-close: listens at document level, ignores
+    // clicks inside the panel itself or on the strip. Skipped when
+    // pinned.
+    document.addEventListener("click", function (ev) {
+      if (!isOpen || isPinned) return;
+      if (panelHost.contains(ev.target)) return;
+      setOpen(false);
+    });
+
+    // Hotkey `E` toggles the panel, but only when the mysqladmin
+    // subview is actually in the viewport — so pressing `e` while
+    // reading the OS section doesn't silently pop open a panel off
+    // screen. IntersectionObserver tracks visibility; if no subview
+    // ancestor can be found we fall back to always-active.
+    var subviewEl = hostEl.closest("details.subview") || hostEl.closest("section") || hostEl;
+    var subviewVisible = true;
+    if (window.IntersectionObserver && subviewEl) {
+      subviewVisible = false;
+      var io = new IntersectionObserver(function (entries) {
+        for (var i = 0; i < entries.length; i++) {
+          subviewVisible = entries[i].isIntersecting;
+        }
+      }, { rootMargin: "0px 0px -20% 0px", threshold: 0.01 });
+      io.observe(subviewEl);
+    }
+    document.addEventListener("keydown", function (ev) {
+      if (ev.defaultPrevented) return;
+      // Don't intercept keys while typing in an input / contenteditable.
+      var t = ev.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) {
+        // Exception: Esc inside the panel's search still closes.
+        if (ev.key === "Escape" && isOpen && !isPinned && panel.contains(t)) {
+          setOpen(false);
+          ev.preventDefault();
+        }
+        return;
+      }
+      if (ev.key === "Escape" && isOpen && !isPinned) {
+        setOpen(false);
+        ev.preventDefault();
+        return;
+      }
+      if ((ev.key === "e" || ev.key === "E") && subviewVisible && !ev.metaKey && !ev.ctrlKey && !ev.altKey) {
+        setOpen(!isOpen);
+        ev.preventDefault();
+      }
+    });
+
+    applyPanelState();
 
     // List-filter state (shared across charts; the list grid itself
     // only reflects the *active* chart's selection state).
@@ -1576,6 +1714,8 @@
       });
       var active = getActive();
       editingValueEl.textContent = active ? active.title : "—";
+      stripValueEl.textContent = active ? active.title : "—";
+      if (active) refreshStripCount(active);
       redrawList();
     }
 
@@ -1586,11 +1726,18 @@
       active.titleEl.textContent = newTitle;
       active.titleEl.title = newTitle;
       editingValueEl.textContent = newTitle;
+      stripValueEl.textContent = newTitle;
     }
 
     function updateCardCount(cs) {
       var n = cs.selected.size;
       cs.countEl.textContent = n === 0 ? "empty" : (n + " selected");
+      if (cs.id === activeChartId) refreshStripCount(cs);
+    }
+
+    function refreshStripCount(cs) {
+      var n = cs.selected.size;
+      stripCountEl.textContent = n === 0 ? "empty" : (n + " selected");
     }
 
     function updateActiveCount() {

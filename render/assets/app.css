@@ -1211,12 +1211,144 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
 
 /* ---------- Mysqladmin filter panel ---------- */
 
-.ma-panel {
+/* Floating counter-selection panel.
+   .ma-panel-host is a positioning shell that holds the always-visible
+   sticky strip + the (normally hidden) full panel. The panel pops
+   open as a backdrop-blurred overlay anchored below the strip so it
+   never pushes the chart stack down — charts always own the full
+   vertical real estate. */
+.ma-panel-host {
+  position: relative;
+  margin-bottom: 12px;
+}
+.ma-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding: 8px 14px;
+  background: color-mix(in srgb, var(--bg-elev-2) 78%, transparent);
+  backdrop-filter: blur(6px);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  color: var(--fg);
+  cursor: pointer;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 12px;
+  transition: border-color 180ms ease, background 180ms ease;
+  text-align: left;
+}
+.ma-strip:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--bg-elev) 90%, transparent);
+}
+.ma-panel-host.is-open .ma-strip {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent) inset;
+}
+.ma-strip-pencil {
+  color: var(--accent);
+  font-size: 13px;
+}
+.ma-strip-editing { display: inline-flex; align-items: baseline; gap: 6px; }
+.ma-strip-editing .k {
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+}
+.ma-strip-editing .v { color: var(--accent); font-weight: 600; }
+.ma-strip-sep { color: var(--fg-dim); }
+.ma-strip-count { color: var(--fg-muted); }
+.ma-strip-hint {
+  margin-left: auto;
+  color: var(--fg-dim);
+  font-size: 10.5px;
+}
+.ma-strip-hint kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
   background: var(--bg);
-  padding: 10px;
-  margin-bottom: 12px;
+  color: var(--fg-muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  margin: 0 2px;
+  text-align: center;
+}
+
+.ma-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg-elev) 82%, transparent);
+  backdrop-filter: blur(12px) saturate(120%);
+  box-shadow:
+    0 24px 60px -20px rgba(0, 0, 0, 0.55),
+    0 4px 14px rgba(0, 0, 0, 0.3);
+  padding: 12px 14px;
+  max-height: min(72vh, 620px);
+  overflow-y: auto;
+  display: none;
+  transform-origin: top center;
+}
+.ma-panel-host.is-open .ma-panel {
+  display: block;
+  animation: ma-panel-drop 200ms cubic-bezier(.22, 1, .36, 1);
+}
+@keyframes ma-panel-drop {
+  from { opacity: 0; transform: scaleY(.94) translateY(-6px); }
+  to   { opacity: 1; transform: scaleY(1)   translateY(0); }
+}
+.ma-panel-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+.ma-panel-pin,
+.ma-panel-close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  padding: 0;
+  line-height: 1;
+}
+.ma-panel-pin:hover,
+.ma-panel-close:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+.ma-panel-pin.active {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-color: var(--accent);
+  color: var(--fg);
+}
+.ma-panel-close { font-size: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ma-panel-host.is-open .ma-panel { animation: none; }
 }
 /* Two-row labelled chip layout. */
 .ma-chip-row {
