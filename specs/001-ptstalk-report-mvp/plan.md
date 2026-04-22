@@ -34,6 +34,14 @@ Principle XII.
   lightweight time-series chart library (decision in `research.md`).
   This is a client-side asset bundled via `//go:embed`, **not a Go
   dependency**; `go.mod` remains empty beyond the Go version directive.
+- **Two hand-curated JSON data assets** committed at
+  `render/assets/mysql-defaults.json` (MySQL 8.0 compiled-in defaults
+  used by FR-033's modified-vs-default badging; research R10) and
+  `render/assets/mysqladmin-categories.json` (mysqladmin counter
+  taxonomy used by FR-034's category chooser; research R11). Both
+  ship inside the binary via `//go:embed` and carry `_source` /
+  `_updated` metadata at the top of the document for curation
+  provenance. Neither introduces a Go dependency.
 - **Dev-only** (`testing` package only): `go test` with `-update`
   convention for regenerating golden files; no `testify`, no `gomock`.
 - **Historical reference** (not shipped, not a dependency, not built):
@@ -91,7 +99,7 @@ byte-identical output (spec SC-003).
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Evaluated against `.specify/memory/constitution.md` v1.0.0.
+Evaluated against `.specify/memory/constitution.md` v1.0.1.
 
 | # | Principle | Pre-design | Rationale |
 |---|-----------|------------|-----------|
@@ -102,7 +110,7 @@ Evaluated against `.specify/memory/constitution.md` v1.0.0.
 | V | Self-Contained HTML | ✅ PASS | Chart JS library + CSS + fonts inlined via `//go:embed` and rendered into a single `<script>` / `<style>` block. Data payload embedded as JSON in a `<script type="application/json">`. No CDN references. |
 | VI | Library-First | ✅ PASS | `parse/`, `model/`, `render/` are top-level packages with no `main` coupling. `cmd/my-gather/` is a thin orchestrator. Each package will carry godoc on every exported identifier per FR-024-era test. |
 | VII | Typed Errors | ✅ PASS | Sentinels `ErrNotAPtStalkDir`, `ErrSizeBoundExceeded`, `ErrOutputExists` in `parse/` and `render/`; `ParseError` struct with `File`, `Location`, `Underlying error` for branchable parser failures (spec Diagnostic entity maps 1:1). |
-| VIII | Reference Fixtures & Golden Tests | ✅ PASS | Fixtures under `testdata/example1/` and `testdata/example2/` drawn from `_references/examples/`; one golden per supported version per collector. Build fails if a parser is added without a fixture+golden (enforced by a `testdata_coverage_test.go` guard). |
+| VIII | Reference Fixtures & Golden Tests | ✅ PASS (design) / ⚠ partial (shipped) | Design provides for fixtures under `testdata/example1/` (reserved for the preceding pt-stalk version per FR-024) and `testdata/example2/` drawn from `_references/examples/`. Only `testdata/example2/` is committed in v1; `example1` is tracked by tasks.md T019 and the Reconciliation Summary. Build currently fails if a parser is added without a fixture (enforced by `tests/coverage/testdata_coverage_test.go`); golden outputs under `testdata/golden/` are generated via `go test ./... -update` once per-collector tests land, and full golden-coverage enforcement lands in T080. |
 | IX | Zero Network | ✅ PASS | `net/http`, `net`, and `net/url` (except `url.PathEscape`-style stdlib helpers) are banned in shipped code via a `go vet`-style linter check in CI. |
 | X | Minimal Dependencies | ✅ PASS | Zero direct Go module dependencies. One vendored JavaScript asset, justified in `research.md`. |
 | XI | Human Pressure Optimization | ✅ PASS | Section order in report hardcoded to OS → Variables → DB (spec FR-005); Parser Diagnostics panel is collapsible secondary section. No cluttering metric dumps. |
@@ -171,10 +179,21 @@ render/
 │   ├── variables.html.tmpl
 │   └── db.html.tmpl
 └── assets/
-    ├── chart.min.js        # Vendored chart library (decision in research.md)
-    ├── app.js              # Small glue script: mysqladmin toggle UI, variables
-    │                       # search box, and collapse-state persistence (FR-032)
-    └── app.css             # Including sticky nav rail styles (FR-031)
+    ├── chart.min.js                  # Vendored chart library (research R1)
+    ├── chart.min.css                 # Chart library stylesheet
+    ├── NOTICE                        # Upstream chart library license
+    ├── app.js                        # Glue: mysqladmin toggle UI + category
+    │                                 # chooser (FR-034) + variables search
+    │                                 # + collapse-state persistence (FR-032)
+    │                                 # + keyboard shortcut (FR-036) + initial-
+    │                                 # tally-hidden default (FR-035)
+    ├── app.css                       # Sticky nav rail (FR-031) + @media print
+    │                                 # stylesheet (FR-037) + modified/default
+    │                                 # variable badges (FR-033)
+    ├── mysql-defaults.json           # Hand-curated MySQL 8.0 defaults (FR-033,
+    │                                 # research R10)
+    └── mysqladmin-categories.json    # Counter-category taxonomy (FR-034,
+                                      # research R11)
 
 testdata/
 ├── example1/               # Anonymised subset of _references/examples/example1
@@ -288,7 +307,7 @@ Re-evaluated after completing Phase 1 artifacts (see `data-model.md`,
 | V | Self-Contained HTML | ✅ PASS | `render/assets/` + `//go:embed` pattern enumerated in `research.md`. |
 | VI | Library-First | ✅ PASS | Public API in `contracts/packages.md` has `parse`, `model`, `render` as separate importable packages; `cmd/my-gather` exists only to wire them. |
 | VII | Typed Errors | ✅ PASS | Sentinels + `ParseError` enumerated in `contracts/packages.md`. |
-| VIII | Reference Fixtures & Golden Tests | ✅ PASS | `testdata/example{1,2}/` structure locked in Project Structure; golden tests per collector; `testdata_coverage_test.go` guard documented in tasks. |
+| VIII | Reference Fixtures & Golden Tests | ✅ PASS (design) / ⚠ partial (shipped) | `testdata/example{1,2}/` structure locked in Project Structure; `testdata/example2/` committed; `testdata/example1/` reserved for the preceding pt-stalk version (tasks.md T019). Golden tests per collector; `testdata_coverage_test.go` guard documented in tasks. Goldens under `testdata/golden/` are generated incrementally as per-collector tests land (tasks.md T043–T070). |
 | IX | Zero Network | ✅ PASS | CI linter will reject any import of `net/http`, `net/rpc`, etc. in shipped packages. |
 | X | Minimal Dependencies | ✅ PASS | `go.mod` has zero direct non-stdlib dependencies. The one vendored JS asset is justified in `research.md` with size and license. |
 | XI | Human Pressure Optimization | ✅ PASS | Template order locked; Parser Diagnostics rendered as a collapsible `<details>` section at the bottom, not between primary views. |

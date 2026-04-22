@@ -25,7 +25,11 @@ type Sample     struct { /* ... */ }
 type MetricSeries struct { /* ... */ }
 type VariableEntry struct { /* ... */ }
 type Diagnostic struct { /* ... */ }
-type Report     struct { /* ... */ }
+type Report     struct {
+    // See data-model.md for the canonical, field-by-field definition
+    // (including the display-only `Title` and `BuiltAt` that originate
+    // from RenderOptions rather than from the parsed Collection).
+}
 
 // Per-collector payloads
 type IostatData       struct { /* ... */ }
@@ -39,7 +43,7 @@ type InnodbStatusData struct { /* ... */ }
 type AHIActivity      struct { /* ... */ }
 type MysqladminData   struct { /* ... */ }
 type ProcesslistData  struct { /* ... */ }
-type StateSample      struct { /* ... */ }
+type ThreadStateSample struct { /* ... */ }
 
 // Section views
 type OSSection        struct { /* ... */ }
@@ -246,7 +250,7 @@ func Render(w io.Writer, c *model.Collection, opts RenderOptions) error
 
 ```go
 // RenderOptions controls optional aspects of rendering. Zero value is
-// valid and uses tool defaults (current UTC time, empty Version/GitCommit).
+// valid and uses tool defaults (current UTC time, empty Version/GitCommit/BuiltAt).
 type RenderOptions struct {
     // GeneratedAt is rendered into the report header as the sole
     // explicitly non-deterministic field. Tests pass a fixed value to
@@ -258,6 +262,11 @@ type RenderOptions struct {
 
     // GitCommit is the short commit hash.
     GitCommit string
+
+    // BuiltAt is the tool's build timestamp (ISO-8601 UTC), injected
+    // via -ldflags at link time. Surfaced in the report header and in
+    // `--version` output. Empty at dev-build time is acceptable.
+    BuiltAt string
 }
 ```
 

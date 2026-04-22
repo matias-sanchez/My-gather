@@ -9,10 +9,10 @@
 
 ### Session 2026-04-21
 
-- Q: Which pt-stalk release formats must the parsers accept? → A: Latest Percona Toolkit `pt-stalk` stable plus one major version back. Each supported version ships its own fixture under `testdata/` and its own golden file, per Principle VIII.
+- Q: Which pt-stalk release formats must the parsers accept? → A: The current/latest Percona Toolkit `pt-stalk` stable release plus the immediately preceding minor release within the same major version line (MAJOR.MINOR.PATCH versioning; see FR-024 for the normative wording). Each supported version ships its own fixture under `testdata/` and its own golden file, per Principle VIII.
 - Q: What is the upper bound on input size the tool must survive? → A: ≤ 1 GB total collection size; any single source file up to 200 MB. Streaming parsing where cheap, buffered where simpler. Beyond 1 GB is out of scope for the MVP.
 - Q: Does the MVP redact sensitive data (hostnames, IPs, query text, user names) from the rendered HTML? → A: No. The report passes pt-stalk content through verbatim; redaction is the engineer's responsibility before sharing. Documented in the README and in a visible banner on the report.
-- Q: What does the tool write to stderr during a run? → A: Silent on success by default; parser diagnostics are mirrored to stderr as one-line warnings as they are emitted; `-v` / `--verbose` streams per-file progress lines. Structural errors (bad input path, size-bound exceeded) always go to stderr.
+- Q: What does the tool write to stderr during a run? → A: On a clean success (no diagnostics, no verbose) stderr is empty. Parser diagnostics of `Severity=Warning` or `Severity=Error` are always mirrored to stderr as one-line entries at the moment they are emitted, including on otherwise-successful runs (exit 0). `-v` / `--verbose` additionally streams per-file progress lines. Structural errors (bad input path, size-bound exceeded, unrecognised directory) always go to stderr. `Severity=Info` diagnostics never surface on stderr — they live only in the report's Parser Diagnostics panel. See FR-027 for the normative rule.
 - Q: Does the MVP emit any machine-readable side-car output (JSON, CSV) alongside the HTML? → A: No. HTML is the only CLI output in this feature; no `--json`, no side-car files. The `model/` package remains importable (required by Principle VI) but is not advertised, stabilised, or documented for third-party consumers in v1.
 - Q: What is the normative algorithm for computing `-mysqladmin` deltas between samples? → A: The algorithm is **ported to native Go** inside `parse/mysqladmin.go`. The C++ reference at `_references/pt-mext/pt-mext-improved.cpp` is retained as the *behavioural specification source*: the worked example in its tail comments (input table lines 146–177 → expected output lines 181–189) is committed verbatim as a test fixture and golden file under `testdata/pt-mext/`. The Go implementation MUST reproduce that expected output for counter variables. Non-counter variables (e.g., `Threads_running`, `Uptime`) are classified as gauges and stored as raw values, not deltas — this is a deliberate improvement over the C++ reference, which treats everything as a counter.
 
@@ -265,8 +265,11 @@ matching their respective golden files.
   vs. sampled values vs. cumulative counters).
 - **FR-015**: The Database Usage section MUST include an interactive
   time-series chart derived from the `-mysqladmin` file that plots
-  per-sample deltas (not absolute counter values) and allows the user to
-  toggle which variables are plotted.
+  per-sample deltas (not absolute counter values) and allows the user
+  to toggle which variables are plotted. The toggle UI is
+  implementation-agnostic (native `<select multiple>`, a custom
+  dropdown, checkbox list, etc. all satisfy this requirement) provided
+  it is keyboard-accessible and operates entirely offline.
 - **FR-016**: The interactive toggle UI for FR-015 MUST operate entirely
   on the embedded data with no network access at view-time.
 - **FR-017**: The Database Usage section MUST include a time-series chart
@@ -277,9 +280,14 @@ matching their respective golden files.
   snapshot (side-by-side or tab-switched), and time-series collectors
   MUST concatenate samples on a single time axis with a visible boundary
   marker between snapshots.
-- **FR-019**: If the input path does not exist, is unreadable, or is a
-  non-directory, the tool MUST exit with a distinct non-zero exit code
-  and a one-line error; no report file MUST be written in that case.
+- **FR-019**: If the input path does not exist, is unreadable, is a
+  non-directory, OR is a directory that is not recognised as a pt-stalk
+  collection (no timestamped pt-stalk files AND no `pt-summary.out` /
+  `pt-mysql-summary.out` — surfaced by the parser as
+  `ErrNotAPtStalkDir`), the tool MUST exit with a distinct non-zero
+  exit code and a one-line error; no report file MUST be written in
+  that case. The unrecognised-directory case MUST use exit code 4 to
+  distinguish it from the other structural errors covered here.
 - **FR-020**: If the input directory is recognised as a pt-stalk
   collection (contains at least one timestamped pt-stalk file OR a
   `pt-summary.out` / `pt-mysql-summary.out` file) but contains none of
@@ -301,13 +309,19 @@ matching their respective golden files.
   minimum the release version string and the short git commit.
 - **FR-024**: The tool MUST accept pt-stalk output produced by the
   current Percona Toolkit stable release and by the immediately
-  preceding major version, and MUST commit a distinct fixture and
-  golden file per supported version per collector (per Principle VIII).
-  Output produced by older/forked `pt-stalk` variants MAY be parsed
-  opportunistically but is not a supported guarantee; when a file's
-  format cannot be recognised by any supported parser the tool MUST
-  render the corresponding subview with an "unsupported pt-stalk
-  version" banner naming the file, and MUST NOT abort.
+  preceding minor release in the same major line (Percona Toolkit
+  uses `MAJOR.MINOR.PATCH` versioning; "immediately preceding" means
+  `N` and `N-1` by MINOR, e.g. `3.6.x` plus `3.5.x` while `3.6` is
+  current stable). The concrete pair of supported versions at MVP
+  release time is enumerated in `research.md` (R2) and MUST be
+  updated there — not here — when a new stable ships. The tool MUST
+  commit a distinct fixture and golden file per supported version per
+  collector (per Principle VIII). Output produced by older/forked
+  `pt-stalk` variants MAY be parsed opportunistically but is not a
+  supported guarantee; when a file's format cannot be recognised by
+  any supported parser the tool MUST render the corresponding subview
+  with an "unsupported pt-stalk version" banner naming the file, and
+  MUST NOT abort.
 - **FR-025**: The tool MUST support collections up to 1 GB total size,
   with any individual source file up to 200 MB, without exhausting
   memory or running longer than SC-007 allows. If the input directory
@@ -398,6 +412,56 @@ matching their respective golden files.
   clutter"). When JavaScript is disabled, all sections MUST be
   rendered expanded — collapse is progressive enhancement only.
 
+- **FR-033**: The Variables section MUST visually distinguish each
+  global variable whose value differs from its MySQL 8.0 compiled-in
+  default from variables that are at their default. The default set
+  is a hand-curated embedded subset of the MySQL 8.0 Server System
+  Variable Reference shipped inside the binary at
+  `render/assets/mysql-defaults.json` (no network fetch at build or
+  run time). Variables absent from the embedded defaults map MUST
+  render without either "modified" or "default" badge — the absence
+  is explicit, not a guess. The defaults map is a reviewed, versioned
+  asset; staleness against upstream MySQL is acceptable at v1 and is
+  documented in the asset header.
+
+- **FR-034**: The `-mysqladmin` toggle UI (FR-015) MUST group
+  variables into named categories (e.g., "Buffer Pool", "Redo Log",
+  "Pending I/O", "InnoDB Reads", "InnoDB Writes", "Replication",
+  "Query Cache", "Temporary Tables", …) to support one-click "load
+  this category of counters" workflows during incident triage. The
+  category taxonomy is a reviewed, embedded asset
+  (`render/assets/mysqladmin-categories.json`) shipped inside the
+  binary; no network call. The category for each variable is
+  computed at render time from `matchers` / `exclude_matchers` prefix
+  rules plus explicit `members` overrides, and emitted into the
+  embedded JSON payload so the client-side toggle can render the
+  category chooser without round-tripping to any server.
+
+- **FR-035**: The `-mysqladmin` chart's first column (the initial
+  raw-tally slot that the pt-mext algorithm stores as the first
+  "delta" per research R8) MUST NOT be plotted by default in the
+  Database Usage counter-deltas chart — its magnitude would crush
+  the Y-axis scale of real per-sample deltas to a visually-unreadable
+  flatline. The underlying model (`MysqladminData.Deltas[v][0]`)
+  still carries the raw initial tally as captured by the parser
+  (Principle IV / test fixture parity with pt-mext is preserved);
+  only the chart's default series selection drops column 0. A
+  viewer MAY explicitly opt into showing the initial tally via the
+  toggle UI.
+
+- **FR-036**: The report's navigation index (FR-031) MUST support
+  keyboard-driven show/hide via a platform-idiomatic accelerator
+  (Cmd/Ctrl + `\`). The accelerator is progressive enhancement only
+  — with JavaScript disabled the nav remains visible via the
+  `<noscript>` / degraded-anchor-list path declared in FR-031.
+
+- **FR-037**: The rendered HTML MUST include a `@media print`
+  stylesheet that expands every `<details>` section, suppresses the
+  sticky nav rail, and lays out the content as a single scrolling
+  column so an engineer can print the report for offline review or
+  attach a PDF to a customer ticket without losing any collapsed
+  content.
+
 ### Key Entities
 
 - **Collection**: A pt-stalk output directory. Attributes: root path,
@@ -448,11 +512,17 @@ matching their respective golden files.
 - **SC-004**: When exactly one source file is missing from a pt-stalk
   directory, 100% of the remaining subviews still render their data, and
   the missing one shows a "data not available" banner naming the file.
-- **SC-005**: Within 30 seconds of opening the report, a support
-  engineer reviewing an incident can name (a) which disks showed
-  pressure, (b) which processes consumed the most CPU, and (c) whether
-  the system was swapping, without scrolling beyond the OS Usage
-  section.
+- **SC-005**: The three OS-Usage subviews — disk utilisation, top-CPU
+  processes, and vmstat resource-saturation (including swap in/out) —
+  MUST all be rendered within the OS Usage section, each reachable in
+  a single click from the navigation index (see SC-009), and each
+  visible in the default-expanded state on first load (FR-032). An
+  automated rendering test asserts the three subview anchors
+  (`os-disk-util`, `os-top-cpu`, `os-vmstat`) are present in the
+  rendered HTML and belong to the OS Usage section. The "engineer can
+  name the problem in 30 seconds" UX goal that motivated this
+  criterion is an outcome metric, not a build-time assertion, and is
+  tracked outside this spec.
 - **SC-006**: Every pt-stalk source-file suffix the tool advertises
   support for has a committed real-world fixture and a passing golden
   round-trip test; CI fails if any advertised format lacks either.
@@ -485,8 +555,8 @@ matching their respective golden files.
   are representative of the formats the tool must parse. Fixtures for
   golden tests will be drawn from these (or equivalent anonymised)
   samples. Supported pt-stalk formats are limited to the current
-  Percona Toolkit stable release and the immediately preceding major
-  version (see FR-024); other forks are best-effort only.
+  Percona Toolkit stable release and the immediately preceding minor
+  release in the same major line (see FR-024); other forks are best-effort only.
 - The MVP supports only the seven source-file suffixes listed here
   (`-iostat`, `-top`, `-variables`, `-vmstat`, `-innodbstatus1`,
   `-mysqladmin`, `-processlist`). Other pt-stalk collectors (e.g.,

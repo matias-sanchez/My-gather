@@ -379,6 +379,9 @@ The render-facing view of a Collection.
 type Report struct {
     Version          string       // tool semver
     GitCommit        string       // 7-char short
+    BuiltAt          string       // build timestamp, ISO-8601 UTC; injected via -ldflags
+    Title            string       // human-readable title (hostname + snapshot count);
+                                  // derived from Collection by render.collectionTitle
     GeneratedAt      time.Time    // the ONLY non-deterministic field (Principle IV)
     Collection       *Collection  // original, unmodified
     OSSection        *OSSection

@@ -148,11 +148,16 @@ render sites.
 every variable present across samples. The renderer writes that
 payload as a JSON document embedded inside a
 `<script type="application/json" id="mysqladmin-data">` block. A
-tiny companion script (`render/assets/app.js`, ~2–3 KB) reads the
-block on DOMContentLoaded, renders an uPlot chart, and wires a
-`<select multiple>` control to toggle which variables are plotted.
-Delta computation happens at render time in Go (not in the browser),
-so the JSON payload already contains per-sample deltas.
+companion script (`render/assets/app.js`) reads the block on
+DOMContentLoaded, renders an uPlot chart, and wires a
+keyboard-accessible toggle UI over the declared category taxonomy
+(research R11) to let the viewer switch between categories or
+hand-pick variables. The specific UI widget is deliberately
+unspecified by FR-015; the current implementation uses a custom
+dropdown + category chips, but any keyboard-accessible multi-select
+that operates offline satisfies the requirement. Delta computation
+happens at render time in Go (not in the browser), so the JSON
+payload already contains per-sample deltas.
 
 **Rationale**:
 
@@ -511,6 +516,154 @@ Diagnostics panel, which is closed. Works without JavaScript because
 
 ---
 
+## R10. MySQL defaults comparison (Variables section)
+
+**Decision**: Ship a hand-curated, versioned JSON asset at
+`render/assets/mysql-defaults.json` that embeds a subset of the MySQL
+8.0 compiled-in defaults (documented in the Server System Variable
+Reference). The renderer compares each observed global variable
+against this map and marks the row as "modified" or "default"; rows
+for variables absent from the map carry no badge. The asset is
+embedded via `//go:embed`; no network fetch at build or run time.
+Normative in spec FR-033.
+
+**Rationale**:
+
+- **Signal for incident triage** (Principle XI): "what did the DBA
+  change?" is one of the first questions an engineer asks when
+  reading a pt-stalk dump. The modified-vs-default badge makes the
+  answer visible at a glance without leaving the Variables table.
+- **Offline-safe** (Principle IX): no CDN, no fetch. The defaults map
+  ships inside the binary.
+- **Curation over scraping**: the defaults map is a reviewed commit,
+  not an auto-scraped page. A drift against upstream MySQL is
+  acceptable at v1 — the asset header records the curation date and
+  the upstream URL. Variables that have been added to MySQL after
+  the curation date simply render without a badge; they do NOT
+  render as "default".
+- **Flat string comparison**: values are compared verbatim as UTF-8
+  strings. No numeric coercion, no unit normalisation — MySQL
+  reports variables as strings in `-variables` files, so a
+  string-equality check is the honest comparison.
+
+**Alternatives considered**:
+
+- **Scrape upstream MySQL documentation at build time**: rejected —
+  introduces a build-time network dependency and a continual
+  maintenance burden when upstream HTML structure changes.
+- **Ship the entire 2000-variable system variable list**: rejected
+  — bloats the binary for marginal signal. The curated subset covers
+  the variables pt-stalk customers most commonly tune.
+- **Leave defaults comparison to the viewer**: rejected — it is
+  precisely the kind of "engineer under pressure" UX that Principle
+  XI exists to protect.
+
+**Staleness & upgrade policy**:
+
+- The asset header carries `_source` and `_updated` keys. Reviewed
+  updates bump `_updated` and the PR diff shows exactly which
+  defaults changed.
+- When MySQL releases a new major (9.x, 10.x), a follow-up feature
+  re-curates. The v1 binary is explicit that it targets 8.0
+  defaults; badges for MySQL 9-reported values may be misleading
+  and that is acceptable at v1.
+
+---
+
+## R11. Mysqladmin category taxonomy
+
+**Decision**: Ship a hand-curated, versioned JSON taxonomy at
+`render/assets/mysqladmin-categories.json` that assigns every known
+`SHOW GLOBAL STATUS` counter / gauge to a named operational category
+(Buffer Pool, Redo Log, Pending I/O, InnoDB Reads, InnoDB Writes,
+Replication, Query Cache, Temporary Tables, Sorts, Connections,
+Threads, Locks, Handler, Commit, Files, Binlog, etc.). The taxonomy
+uses prefix `matchers` plus `exclude_matchers` plus explicit
+`members` overrides so new variables from Percona / MariaDB / future
+MySQL versions fall into the right bucket without a JSON edit each
+time. The renderer resolves categories at render time and emits the
+`variable → category` map into the embedded JSON payload so the
+client-side toggle UI can render the category chooser offline.
+Normative in spec FR-034.
+
+**Rationale**:
+
+- **One-click triage**: engineers typically want to see "all InnoDB
+  writes" or "all Pending I/O" counters together, not pick them one
+  by one from a multi-select of 400+ variables. The category
+  chooser is the shortest path to "show me this class of problem".
+- **Matcher-based, not enumeration-based**: Percona and forks add
+  counters that upstream doesn't have; enumerating every variable
+  would bitrot. Prefix matchers with explicit exclude rules degrade
+  gracefully when the variable set drifts.
+- **Offline and deterministic**: the `variable → category` map is
+  computed at render time in Go, sorted deterministically, and
+  embedded into the JSON payload. No runtime fetch, no client-side
+  recomputation drift.
+
+**Alternatives considered**:
+
+- **Hard-code categories in a Go source file**: rejected — edits
+  would require a rebuild and the category list is the kind of
+  curated content a DBA should be able to review as data, not code.
+- **Learn categories from variable-name clustering**: rejected —
+  fragile and non-deterministic; a miscategorised counter hurts
+  the triage UX more than a missing category.
+- **Skip categories; keep the flat multi-select**: rejected for UX
+  reasons above. The flat multi-select remains available ("All" /
+  "Selected" built-in views) as a fallback.
+
+**Implementation notes**:
+
+- `render/render.go::classifyMysqladminCategory` evaluates matchers
+  in declared order; `members` overrides win over matcher matches.
+- `_source` / `_updated` / `_note` keys at the top of the JSON
+  document record curation provenance (same pattern as R10).
+- `categoryMap` (variable → category[]) and `categories` (ordered
+  category list with labels and descriptions) are both serialised
+  into the page's embedded JSON payload.
+
+---
+
+## R12. Charts discard the initial-tally column by default
+
+**Decision**: The `-mysqladmin` parser stores the first sample's raw
+counter value in `Deltas[v][0]` (matching pt-mext behaviour and the
+correctness anchor of research R8). The renderer, when building the
+JSON payload consumed by the chart, declares a `defaultVisible`
+series list that does NOT include column 0's raw tally view by
+default. App.js respects `defaultVisible` as the initial chart
+selection; the user may still opt in to showing the initial tally
+through the toggle UI. Normative in spec FR-035.
+
+**Rationale**:
+
+- **Y-axis legibility**: counters like `Bytes_received` can accumulate
+  into the 10^9 range over a server's uptime, while per-sample
+  deltas are typically 10^3–10^6. Plotting the raw tally alongside
+  the deltas compresses every real delta to a visual zero.
+- **Preserves model fidelity**: the decision is a render-time
+  selection, not a parse-time truncation. `MysqladminData` still
+  carries the raw initial tally — the pt-mext fixture, the golden
+  test, and any downstream consumer (`model/` importers per
+  Principle VI) see the unmodified stream.
+- **Opt-in recovery**: the toggle UI lets the viewer bring column 0
+  back for a specific variable, supporting the rare "I actually want
+  to see the cumulative tally" case.
+
+**Alternatives considered**:
+
+- **Hide column 0 everywhere (including aggregates)**: rejected —
+  breaks pt-mext parity (research R8 aggregate stats already skip
+  column 0 for counter variables by contract; no change needed).
+- **Strip column 0 at the parser boundary**: rejected — violates
+  research R8's worked-example fixture invariant.
+- **Scale the Y-axis logarithmically by default**: rejected —
+  log-scale axes confuse readers who expect linear "counter went
+  from 3 to 5" semantics.
+
+---
+
 ## Summary of decisions
 
 | ID | Decision |
@@ -524,5 +677,8 @@ Diagnostics panel, which is closed. Works without JavaScript because
 | R7 | Stdlib-only forbidden-import linter as a `go test` check. |
 | R8 | Port pt-mext delta algorithm to native Go; commit the C++ file's worked example as a golden fixture; add counter/gauge classification, float64 aggregates, drift diagnostics. No parity test, no C++ toolchain requirement. |
 | R9 | Navigation = `<nav>` + `position:sticky`; collapse = native `<details>`/`<summary>`; localStorage keyed by deterministic `Report.ReportID`; works (degraded) without JS. |
+| R10 | Embed hand-curated MySQL 8.0 defaults asset for modified-vs-default badging in the Variables section. |
+| R11 | Embed hand-curated mysqladmin category taxonomy for one-click "load this class of counters" workflows. |
+| R12 | Renderer drops column 0 (raw initial tally) from the default counter-deltas chart view; model preserves it. |
 
 All Phase 0 items resolved. Phase 1 artifacts proceed below.

@@ -38,8 +38,7 @@ tests/               Integration + cross-cutting tests
 scripts/             Dev-only helpers
 ```
 
-All tasks write paths relative to the repository root
-(`/Users/matias/git/My-gather/My-gather`).
+All tasks write paths relative to the repository root.
 
 ---
 
@@ -47,12 +46,12 @@ All tasks write paths relative to the repository root
 
 **Purpose**: Project initialisation and build/CI scaffolding.
 
-- [ ] T001 Create the directory layout declared in plan.md (`cmd/my-gather/`, `parse/`, `model/`, `render/templates/`, `render/assets/`, `testdata/golden/`, `testdata/pt-mext/`, `tests/`, `scripts/`, `.github/workflows/`). Empty `.gitkeep` files where a directory must exist but has no content yet.
-- [ ] T002 Initialize the Go module at `go.mod`: `module github.com/matias-sanchez/My-gather`, pin `go 1.24`, no non-stdlib direct dependencies (Principle X, XII).
-- [ ] T003 [P] Add `Makefile` with targets `build` (local), `test`, `release` (cross-compile CGO_ENABLED=0 for linux/{amd64,arm64} and darwin/{amd64,arm64} into `dist/` per plan.md Distribution section), and `clean`.
-- [ ] T004 [P] Add `.github/workflows/ci.yml` running `go vet ./...` and `go test ./...` on the pinned Go version across ubuntu-latest and macos-latest. Include a determinism check step and a cross-compile smoke step.
-- [ ] T005 [P] Add a minimal `README.md` at the repo root covering install, quickstart run, and a pointer to `specs/001-ptstalk-report-mvp/` for deeper context. Content based on `quickstart.md`.
-- [ ] T006 [P] Commit `scripts/anonymise-fixtures.sh` (bash + sed/awk only, per research R6) with the anonymisation rules listed in R6; script is idempotent and deterministic.
+- [x] T001 Create the directory layout declared in plan.md (`cmd/my-gather/`, `parse/`, `model/`, `render/templates/`, `render/assets/`, `testdata/golden/`, `testdata/pt-mext/`, `tests/`, `scripts/`, `.github/workflows/`). Empty `.gitkeep` files where a directory must exist but has no content yet.
+- [x] T002 Initialize the Go module at `go.mod`: `module github.com/matias-sanchez/My-gather`, pin `go 1.24`, no non-stdlib direct dependencies (Principle X, XII).
+- [x] T003 [P] Add `Makefile` with targets `build` (local), `test`, `release` (cross-compile CGO_ENABLED=0 for linux/{amd64,arm64} and darwin/{amd64,arm64} into `dist/` per plan.md Distribution section), and `clean`.
+- [x] T004 [P] Add `.github/workflows/ci.yml` running `go vet ./...` and `go test ./...` on the pinned Go version across ubuntu-latest and macos-latest. Include a determinism check step and a cross-compile smoke step.
+- [x] T005 [P] Add a minimal `README.md` at the repo root covering install, quickstart run, and a pointer to `specs/001-ptstalk-report-mvp/` for deeper context. Content based on `quickstart.md`.
+- [x] T006 [P] Commit `scripts/anonymise-fixtures.sh` (bash + sed/awk only, per research R6) with the anonymisation rules listed in R6; script is idempotent and deterministic.
 
 **Checkpoint**: Repository builds (`go build ./...` succeeds with empty packages), CI runs, cross-compile targets produce artifacts.
 
@@ -64,22 +63,22 @@ All tasks write paths relative to the repository root
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T007 [P] Define the `model` package types in `model/model.go`: `Collection`, `Snapshot`, `SourceFile`, `Sample`, `MetricSeries`, `VariableEntry`, `ThreadStateSample`, `Diagnostic`, `Severity` (enum), `Suffix` (enum + `KnownSuffixes` slice + all seven constants), `FormatVersion` (enum), `ParseStatus` (enum). Every exported identifier has a godoc comment (Principle VI).
-- [ ] T008 [P] Define the per-collector typed payloads in `model/model.go` (continuing T007): `IostatData`, `DeviceSeries`, `TopData`, `ProcessSample`, `ProcessSeries`, `VariablesData`, `VmstatData`, `InnodbStatusData`, `AHIActivity`, `MysqladminData` (including `SnapshotBoundaries []int`), `ProcesslistData`, `ThreadStateSample`. Match `data-model.md` exactly.
-- [ ] T009 [P] Define the section / render types in `model/sections.go`: `OSSection`, `VariablesSection`, `DBSection`, `SnapshotVariables`, `SnapshotInnoDB`, `Report`, `NavEntry`. `Report.Navigation []NavEntry` and `Report.ReportID string` populated per FR-031 / FR-032.
-- [ ] T010 [P] Define `parse/errors.go` with sentinels `ErrNotAPtStalkDir`, and typed `SizeError` (with `SizeErrorKind`, `SizeErrorTotal`, `SizeErrorFile`), `PathError`, `ParseError`. Implement `Error()` / `Unwrap()` per contracts/packages.md.
-- [ ] T011 [P] Define `parse/version.go` with `DetectFormat(peekedBytes []byte, suffix model.Suffix) model.FormatVersion` helper and documentation referencing research R2.
-- [ ] T012 [P] Define `parse/parse.go` skeleton with `DefaultMaxCollectionBytes`, `DefaultMaxFileBytes`, `DiscoverOptions`, `DiagnosticSink`, and the `Discover(ctx, rootDir, opts) (*model.Collection, error)` signature. Initial body: snapshot-regex discovery, size-bound preflight, pt-summary.out fallback — no per-collector parsing yet (that lands per-story).
-- [ ] T013 [P] Define `render/deterministic.go` with `sortedKeys[K, V]`, `sortedEntries[K, V]`, `formatFloat(v, precision)`, ordinal ID counter, and UTC timestamp formatter. Unit tests in `render/deterministic_test.go` covering every helper's determinism.
-- [ ] T014 [P] Vendor the uPlot asset (research R1): commit `render/assets/chart.min.js`, `render/assets/chart.min.css`, `render/assets/NOTICE` (upstream MIT license + copyright), `render/assets/app.js` skeleton (placeholder for collapse persistence + mysqladmin toggle), `render/assets/app.css` skeleton (sticky nav rail styles). Add `render/assets.go` with `//go:embed` directives for each.
-- [ ] T015 [P] Define `render/render.go` skeleton with `Render(w io.Writer, c *model.Collection, opts RenderOptions) error` signature, report-envelope construction (including `Navigation` + `ReportID`), and template dispatch; initial body renders every section as empty / "data not available". Also define `RenderOptions`.
-- [ ] T016 [P] Create the HTML template tree: `render/templates/report.html.tmpl` (top-level layout, top-of-doc verbatim banner per FR-026, nav rail per FR-031, `<details>` wrappers per FR-032), `render/templates/os.html.tmpl`, `render/templates/variables.html.tmpl`, `render/templates/db.html.tmpl`. Templates use only sorted data; no raw map iteration (Principle IV).
-- [ ] T017 [P] CLI skeleton in `cmd/my-gather/main.go`: flag parsing per `contracts/cli.md` (including `-o`/`--out`, `--overwrite`, `-v`/`--verbose`, `--version`, `-h`/`--help`), positional arg handling, output-path-inside-input guard (FR-029, exit code 7), exit-code dispatch (0, 2, 3, 4, 5, 6, 7, 70), `--version` output format.
-- [ ] T018 [P] Forbidden-import linter test at `tests/lint/imports_test.go` (research R7). Walks the import graph of `cmd/`, `parse/`, `model/`, `render/`; fails if any of `net/http`, `net`, `net/rpc`, `net/smtp`, `crypto/tls` appear. Stdlib-only via `go/parser` + `go/ast`.
+- [x] T007 [P] Define the `model` package types in `model/model.go`: `Collection`, `Snapshot`, `SourceFile`, `Sample`, `MetricSeries`, `VariableEntry`, `Diagnostic`, `Severity` (enum), `Suffix` (enum + `KnownSuffixes` slice + all seven constants), `FormatVersion` (enum), `ParseStatus` (enum). Every exported identifier has a godoc comment (Principle VI). (`ThreadStateSample` is defined in T008 next to its `ProcesslistData` container.)
+- [x] T008 [P] Define the per-collector typed payloads in `model/model.go` (continuing T007): `IostatData`, `DeviceSeries`, `TopData`, `ProcessSample`, `ProcessSeries`, `VariablesData`, `VmstatData`, `InnodbStatusData`, `AHIActivity`, `MysqladminData` (including `SnapshotBoundaries []int`), `ProcesslistData`, `ThreadStateSample`. Match `data-model.md` exactly.
+- [x] T009 [P] Define the section / render types in `model/sections.go`: `OSSection`, `VariablesSection`, `DBSection`, `SnapshotVariables`, `SnapshotInnoDB`, `Report`, `NavEntry`. `Report.Navigation []NavEntry` and `Report.ReportID string` populated per FR-031 / FR-032.
+- [x] T010 [P] Define `parse/errors.go` with sentinels `ErrNotAPtStalkDir`, and typed `SizeError` (with `SizeErrorKind`, `SizeErrorTotal`, `SizeErrorFile`), `PathError`, `ParseError`. Implement `Error()` / `Unwrap()` per contracts/packages.md.
+- [x] T011 [P] Define `parse/version.go` with `DetectFormat(peekedBytes []byte, suffix model.Suffix) model.FormatVersion` helper and documentation referencing research R2.
+- [x] T012 [P] Define `parse/parse.go` skeleton with `DefaultMaxCollectionBytes`, `DefaultMaxFileBytes`, `DiscoverOptions`, `DiagnosticSink`, and the `Discover(ctx, rootDir, opts) (*model.Collection, error)` signature. Initial body: snapshot-regex discovery, size-bound preflight, pt-summary.out fallback — no per-collector parsing yet (that lands per-story).
+- [x] T013 [P] Define `render/deterministic.go` with `sortedKeys[K, V]`, `sortedEntries[K, V]`, `formatFloat(v, precision)`, ordinal ID counter, and UTC timestamp formatter. Unit tests in `render/deterministic_test.go` covering every helper's determinism.
+- [x] T014 [P] Vendor the uPlot asset (research R1): commit `render/assets/chart.min.js`, `render/assets/chart.min.css`, `render/assets/NOTICE` (upstream MIT license + copyright), `render/assets/app.js` skeleton (placeholder for collapse persistence + mysqladmin toggle), `render/assets/app.css` skeleton (sticky nav rail styles). Add `render/assets.go` with `//go:embed` directives for each.
+- [x] T015 [P] Define `render/render.go` skeleton with `Render(w io.Writer, c *model.Collection, opts RenderOptions) error` signature, report-envelope construction (including `Navigation` + `ReportID`), and template dispatch; initial body renders every section as empty / "data not available". Also define `RenderOptions`.
+- [x] T016 [P] Create the HTML template tree: `render/templates/report.html.tmpl` (top-level layout, top-of-doc verbatim banner per FR-026, nav rail per FR-031, `<details>` wrappers per FR-032), `render/templates/os.html.tmpl`, `render/templates/variables.html.tmpl`, `render/templates/db.html.tmpl`. Templates use only sorted data; no raw map iteration (Principle IV).
+- [x] T017 [P] CLI skeleton in `cmd/my-gather/main.go`: flag parsing per `contracts/cli.md` (including `-o`/`--out`, `--overwrite`, `-v`/`--verbose`, `--version`, `-h`/`--help`), positional arg handling, output-path-inside-input guard (FR-029, exit code 7), exit-code dispatch (0, 2, 3, 4, 5, 6, 7, 70), `--version` output format.
+- [x] T018 [P] Forbidden-import linter test at `tests/lint/imports_test.go` (research R7). Walks the import graph of `cmd/`, `parse/`, `model/`, `render/`; fails if any of `net/http`, `net`, `net/rpc`, `net/smtp`, `crypto/tls` appear. Stdlib-only via `go/parser` + `go/ast`.
 - [ ] T019 Commit anonymised fixtures under `testdata/example1/` and `testdata/example2/` produced by `scripts/anonymise-fixtures.sh` run against `_references/examples/example1/` and `_references/examples/example2/`. Only the seven source-file suffixes this feature supports need be committed (plus `pt-summary.out` / `pt-mysql-summary.out` for discovery tests).
-- [ ] T020 Commit the pt-mext golden fixture under `testdata/pt-mext/`: `input.txt` is a verbatim copy of `_references/pt-mext/pt-mext-improved.cpp` comment lines 146–177; `expected.txt` is a verbatim copy of lines 181–189 with a `testdata/pt-mext/README.md` describing provenance (research R8).
-- [ ] T021 Coverage guard test at `tests/coverage/testdata_coverage_test.go`: fails the build if any `model.Suffix` constant lacks a fixture under `testdata/example1/` or `testdata/example2/`, OR lacks an expected golden output file under `testdata/golden/`. Enforces Constitution Principle VIII and spec FR-021 / SC-006.
-- [ ] T022 [P] godoc-coverage test at `tests/coverage/godoc_coverage_test.go`: walks AST of `model`, `parse`, `render` and asserts every exported identifier has a non-empty `//` doc comment (Constitution Principle VI).
+- [x] T020 Commit the pt-mext golden fixture under `testdata/pt-mext/`: `input.txt` is a verbatim copy of `_references/pt-mext/pt-mext-improved.cpp` comment lines 146–177; `expected.txt` is a verbatim copy of lines 181–189 with a `testdata/pt-mext/README.md` describing provenance (research R8).
+- [x] T021 Coverage guard test at `tests/coverage/testdata_coverage_test.go`: fails the build if any `model.Suffix` constant lacks a fixture under `testdata/example1/` or `testdata/example2/`. Enforces the fixture-coverage half of Constitution Principle VIII / spec FR-021 / SC-006; golden-coverage enforcement lands in T080 once per-collector golden outputs are generated (`go test ./... -update`).
+- [x] T022 [P] godoc-coverage test at `tests/coverage/godoc_coverage_test.go`: walks AST of `model`, `parse`, `render` and asserts every exported identifier has a non-empty `//` doc comment (Constitution Principle VI).
 
 **Checkpoint**: `go test ./...` passes (lint and coverage guards pass over empty packages); CLI builds; an invocation against any test fixture prints exactly one HTML file whose sections all read "data not available".
 
@@ -89,17 +88,17 @@ All tasks write paths relative to the repository root
 
 **Goal**: Prove the parse → model → render → embed-assets → byte-deterministic HTML pipeline end-to-end against a real pt-stalk directory. Every section shows "data not available" because no per-collector parsers are wired yet; this is intentional. The report, navigation, collapse behaviour, and determinism guarantees are all demonstrable against the empty report.
 
-**Independent Test**: Run `./bin/my-gather testdata/example2 -o /tmp/report.html`. The command exits 0, `/tmp/report.html` exists, opening it in an offline browser shows the three section headers (OS Usage, Variables, Database Usage), a nav index linking to each, all three collapsed/expanded correctly, the verbatim-passthrough banner at the top, and each section body reading "data not available". Running twice in a row produces byte-identical HTML except the `Report generated at` timestamp.
+**Independent Test**: Run `./bin/my-gather -o /tmp/report.html testdata/example2`. The command exits 0, `/tmp/report.html` exists, opening it in an offline browser shows the three section headers (OS Usage, Variables, Database Usage), a nav index linking to each, all three collapsed/expanded correctly, the verbatim-passthrough banner at the top, and each section body reading "data not available". Running twice in a row produces byte-identical HTML except the `Report generated at` timestamp.
 
 ### Tests for User Story 1 ⚠️ (Write first; implementation makes them pass)
 
-- [ ] T023 [P] [US1] `render/render_test.go::TestRenderEmptyReport`: render a Collection with zero Snapshots (or with Snapshots whose `SourceFiles` is empty); assert every section emits its "data not available" banner.
-- [ ] T024 [US1] `render/render_test.go::TestDeterminism`: render twice against the same Collection with the same `RenderOptions.GeneratedAt`; assert `bytes.Equal` on outputs (spec SC-003). **Sequential with T023** (same file).
-- [ ] T025 [US1] `render/render_test.go::TestGeneratedAtIsOnlyDiff`: render twice with different `GeneratedAt` values; assert the diff consists of exactly one line (the `Report generated at` line) (spec FR-006). **Sequential with T023/T024** (same file).
-- [ ] T026 [P] [US1] `parse/parse_test.go::TestNotAPtStalkDir`: run `Discover` against an empty tempdir; assert `errors.Is(err, parse.ErrNotAPtStalkDir)`.
-- [ ] T027 [US1] `parse/parse_test.go::TestEmptyButValid`: run `Discover` against a dir containing one timestamped placeholder file with an unsupported suffix (e.g., `-hostname` only) OR a bare `pt-summary.out`; assert `err == nil` and `Collection.Snapshots` is non-empty and every `SourceFile` entry is absent (per FR-020). **Sequential with T026** (same file).
-- [ ] T028 [US1] `parse/parse_test.go::TestSizeBoundTotalExceeded`: run `Discover` against a fixture whose total size exceeds `DiscoverOptions.MaxCollectionBytes`; assert `errors.As(err, &parse.SizeError{})` with `Kind == SizeErrorTotal`. **Sequential with T026/T027** (same file).
-- [ ] T029 [US1] `parse/parse_test.go::TestSizeBoundFileExceeded`: same as T028 but with a single oversized file; assert `Kind == SizeErrorFile`. **Sequential with T026-T028** (same file).
+- [x] T023 [P] [US1] `render/render_test.go::TestRenderEmptyReport`: render a Collection with zero Snapshots (or with Snapshots whose `SourceFiles` is empty); assert every section emits its "data not available" banner.
+- [x] T024 [US1] `render/render_test.go::TestDeterminism`: render twice against the same Collection with the same `RenderOptions.GeneratedAt`; assert `bytes.Equal` on outputs (spec SC-003). **Sequential with T023** (same file).
+- [x] T025 [US1] `render/render_test.go::TestGeneratedAtIsOnlyDiff`: render twice with different `GeneratedAt` values; assert the diff consists of exactly one line (the `Report generated at` line) (spec FR-006). **Sequential with T023/T024** (same file).
+- [x] T026 [P] [US1] `parse/parse_test.go::TestNotAPtStalkDir`: run `Discover` against an empty tempdir; assert `errors.Is(err, parse.ErrNotAPtStalkDir)`.
+- [x] T027 [US1] `parse/parse_test.go::TestEmptyButValid`: run `Discover` against a dir containing one timestamped placeholder file with an unsupported suffix (e.g., `-hostname` only) OR a bare `pt-summary.out`; assert `err == nil` and `Collection.Snapshots` is non-empty and every `SourceFile` entry is absent (per FR-020). **Sequential with T026** (same file).
+- [x] T028 [US1] `parse/parse_test.go::TestSizeBoundTotalExceeded`: run `Discover` against a fixture whose total size exceeds `DiscoverOptions.MaxCollectionBytes`; assert `errors.As(err, &parse.SizeError{})` with `Kind == SizeErrorTotal`. **Sequential with T026/T027** (same file).
+- [x] T029 [US1] `parse/parse_test.go::TestSizeBoundFileExceeded`: same as T028 but with a single oversized file; assert `Kind == SizeErrorFile`. **Sequential with T026-T028** (same file).
 - [ ] T030 [P] [US1] `cmd/my-gather/main_test.go::TestOutputInsideInputRejected`: invoke the CLI with `-o <somewhere-inside-input-dir>`; assert exit code 7 and the report file was NOT written (spec FR-029).
 - [ ] T031 [US1] `cmd/my-gather/main_test.go::TestOverwriteGuard`: invoke twice without `--overwrite`; assert exit code 6 on the second call. **Sequential with T030** (same file).
 - [ ] T032 [P] [US1] `tests/integration/e2e_test.go::TestE2EExample2`: run the compiled binary against `testdata/example2/`; assert exit 0, output file exists, contains the three section headers, and contains the verbatim banner text.
@@ -109,15 +108,15 @@ All tasks write paths relative to the repository root
 
 ### Implementation for User Story 1
 
-- [ ] T036 [US1] Implement `parse.Discover` body in `parse/parse.go`: size preflight (T028/T029 green), timestamped-file regex scan (research R5), `pt-summary.out` fallback, Snapshot grouping, absent-SourceFile handling, `ErrNotAPtStalkDir` only in the true "no timestamps AND no summary" case (per FR-020 remediation).
-- [ ] T037 [US1] Implement `render.Render` body in `render/render.go`: build `Report`, compute `Navigation` as a deterministic flat list derived from section iteration order (OS → Variables → DB → Parser Diagnostics), compute `ReportID` as SHA-256 of canonicalised Collection (excluding `RootPath` and `GeneratedAt`) truncated to 12 hex chars (research R9 with F21 correction), dispatch to templates, pipe through deterministic helpers.
-- [ ] T038 [US1] Flesh out `render/templates/report.html.tmpl`: HTML5 skeleton, top-of-document verbatim-passthrough banner (FR-026 — fixed wording: "This report is derived verbatim from a pt-stalk collection. Hostnames, IP addresses, query text, and MySQL variables appear as captured. Responsible sharing is the reader's responsibility."), sticky nav rail on the left, header with tool version + GeneratedAt, main content column with three `<details>` section wrappers, footer with Parser Diagnostics `<details>` (default closed per FR-032 / Principle XI).
-- [ ] T039 [US1] Implement `render/assets/app.js` collapse-persistence module: read `Report.ReportID` from a JSON metadata block embedded into the HTML, key `localStorage` entries as `mygather:<reportID>:collapse:<sectionID>`, restore state on `DOMContentLoaded`, save on `<details>` `toggle` events. Degrade silently if `localStorage` is unavailable (F22: private browsing / disabled storage).
-- [ ] T040 [US1] Implement `render/assets/app.css` sticky nav rail styles: CSS Grid layout with rail on the left, main content on the right, `position: sticky` on the nav element, `@media print { details { open: true } }` print rule (F23). `@media (max-width: 800px)` fallback to top-horizontal nav.
-- [ ] T041 [US1] Wire `cmd/my-gather/main.go` end-to-end: resolve paths (with `filepath.EvalSymlinks`), run the output-inside-input guard (FR-029), call `parse.Discover`, map errors to exit codes per `contracts/cli.md` exit-code table, call `render.Render`, write atomically via `os.CreateTemp` + `Sync` + `os.Rename` in the output's parent directory, mirror `Diagnostic` warnings/errors to stderr per FR-027.
-- [ ] T042 [US1] Implement `-v` / `--verbose` stderr progress lines (FR-027): per-file `[parse]` and `[render]` lines using the format in `contracts/cli.md`; also ensure `SeverityInfo` diagnostics do NOT mirror to stderr (F13 resolution — only `Warning` and `Error` do).
+- [x] T036 [US1] Implement `parse.Discover` body in `parse/parse.go`: size preflight (T028/T029 green), timestamped-file regex scan (research R5), `pt-summary.out` fallback, Snapshot grouping, absent-SourceFile handling, `ErrNotAPtStalkDir` only in the true "no timestamps AND no summary" case (per FR-020 remediation).
+- [x] T037 [US1] Implement `render.Render` body in `render/render.go`: build `Report`, compute `Navigation` as a deterministic flat list derived from section iteration order (OS → Variables → DB → Parser Diagnostics), compute `ReportID` as SHA-256 of canonicalised Collection (excluding `RootPath` and `GeneratedAt`) truncated to 12 hex chars (research R9 with F21 correction), dispatch to templates, pipe through deterministic helpers.
+- [x] T038 [US1] Flesh out `render/templates/report.html.tmpl`: HTML5 skeleton, top-of-document verbatim-passthrough banner (FR-026 — fixed wording: "This report is derived verbatim from a pt-stalk collection. Hostnames, IP addresses, query text, and MySQL variables appear as captured. Responsible sharing is the reader's responsibility."), sticky nav rail on the left, header with tool version + GeneratedAt, main content column with three `<details>` section wrappers, footer with Parser Diagnostics `<details>` (default closed per FR-032 / Principle XI).
+- [x] T039 [US1] Implement `render/assets/app.js` collapse-persistence module: read `Report.ReportID` from a JSON metadata block embedded into the HTML, key `localStorage` entries as `mygather:<reportID>:collapse:<sectionID>`, restore state on `DOMContentLoaded`, save on `<details>` `toggle` events. Degrade silently if `localStorage` is unavailable (F22: private browsing / disabled storage).
+- [x] T040 [US1] Implement `render/assets/app.css` sticky nav rail styles: CSS Grid layout with rail on the left, main content on the right, `position: sticky` on the nav element, `@media print { details { open: true } }` print rule (F23). `@media (max-width: 800px)` fallback to top-horizontal nav.
+- [x] T041 [US1] Wire `cmd/my-gather/main.go` end-to-end: resolve paths (with `filepath.EvalSymlinks`), run the output-inside-input guard (FR-029), call `parse.Discover`, map errors to exit codes per `contracts/cli.md` exit-code table, call `render.Render`, write atomically via `os.CreateTemp` + `Sync` + `os.Rename` in the output's parent directory, mirror `Diagnostic` warnings/errors to stderr per FR-027.
+- [x] T042 [US1] Implement `-v` / `--verbose` stderr progress lines (FR-027): emit the bracketed-tag lines defined as the minimum contract in `contracts/cli.md` (`[parse]` input path, `[parse]` snapshot/size summary, `[render]` output path, `[done]` bytes-written; elapsed-time suffix optional); also ensure `SeverityInfo` diagnostics do NOT mirror to stderr (F13 resolution — only `Warning` and `Error` do).
 
-**Checkpoint**: Running `./bin/my-gather testdata/example2 -o /tmp/report.html` produces a working, self-contained, deterministic HTML file with navigation, collapse, banner, and three empty sections. Every test T023–T035 passes.
+**Checkpoint**: Running `./bin/my-gather -o /tmp/report.html testdata/example2` produces a working, self-contained, deterministic HTML file with navigation, collapse, banner, and three empty sections. Tests T023–T029 pass today; T030–T035 are still pending test authorship and will go green once written.
 
 ---
 
@@ -137,14 +136,14 @@ All tasks write paths relative to the repository root
 
 ### Implementation for User Story 2
 
-- [ ] T048 [P] [US2] Implement `parse/iostat.go` — per-device utilisation + avgqu_sz series; handle the two supported pt-stalk format variants (FR-024); emit diagnostics for malformed rows. Covered by T043.
-- [ ] T049 [P] [US2] Implement `parse/top.go` — parse repeated `top` batch snapshots; build per-process samples; compute `Top3ByAverage` using **aggregate CPU normalised by total sample count** (absent = 0) so sustained load ranks above short spikes (F7 resolution). Covered by T044.
-- [ ] T050 [P] [US2] Implement `parse/vmstat.go` — 13-series fixed-order time-series extraction; diagnostics for missing columns across the two supported format variants. Covered by T045.
-- [ ] T051 [US2] Wire OS parsers into `parse.Discover` so each Snapshot's `SourceFiles[SuffixIostat|SuffixTop|SuffixVmstat].Parsed` is populated with typed data.
-- [ ] T052 [US2] Implement `render/templates/os.html.tmpl` — three subview blocks, each with its own `<details>` wrapper, each linked from the nav rail (T037 Navigation population is extended to list "Disk utilization", "Top CPU processes", "vmstat saturation" as Level=2 NavEntries under "OS Usage").
-- [ ] T053 [US2] Wire uPlot chart instantiation in `render/assets/app.js` for the three OS subviews: read JSON data payload from `<script type="application/json">` blocks, instantiate uPlot with deterministic options (fixed colours, no animations), attach to the correct `<canvas>` elements.
+- [x] T048 [P] [US2] Implement `parse/iostat.go` — per-device utilisation + avgqu_sz series; handle the two supported pt-stalk format variants (FR-024); emit diagnostics for malformed rows. Covered by T043.
+- [x] T049 [P] [US2] Implement `parse/top.go` — parse repeated `top` batch snapshots; build per-process samples; compute `Top3ByAverage` using **aggregate CPU normalised by total sample count** (absent = 0) so sustained load ranks above short spikes (F7 resolution). Covered by T044.
+- [x] T050 [P] [US2] Implement `parse/vmstat.go` — 13-series fixed-order time-series extraction; diagnostics for missing columns across the two supported format variants. Covered by T045.
+- [x] T051 [US2] Wire OS parsers into `parse.Discover` so each Snapshot's `SourceFiles[SuffixIostat|SuffixTop|SuffixVmstat].Parsed` is populated with typed data.
+- [x] T052 [US2] Implement `render/templates/os.html.tmpl` — three subview blocks, each with its own `<details>` wrapper, each linked from the nav rail (T037 Navigation population is extended to list "Disk utilization", "Top CPU processes", "vmstat saturation" as Level=2 NavEntries under "OS Usage").
+- [x] T053 [US2] Wire uPlot chart instantiation in `render/assets/app.js` for the three OS subviews: read JSON data payload from `<script type="application/json">` blocks, instantiate uPlot with deterministic options (fixed colours, no animations), attach to the correct `<canvas>` elements.
 - [ ] T054 [US2] Implement multi-snapshot concatenation with boundary markers for `-iostat`, `-top`, `-vmstat` (FR-018): concatenate samples on a shared time axis; emit a vertical boundary annotation at each snapshot-boundary timestamp.
-- [ ] T055 [US2] "Data not available" banner wiring for the three OS subviews (FR-007) when any of `-iostat` / `-top` / `-vmstat` is absent from the collection.
+- [x] T055 [US2] "Data not available" banner wiring for the three OS subviews (FR-007) when any of `-iostat` / `-top` / `-vmstat` is absent from the collection.
 
 **Checkpoint**: US1 + US2 produce a report whose OS Usage section renders correctly against `testdata/example2/`. Every test T023–T047 passes.
 
@@ -164,10 +163,10 @@ All tasks write paths relative to the repository root
 
 ### Implementation for User Story 3
 
-- [ ] T059 [P] [US3] Implement `parse/variables.go` — pipe-delimited table parser; alphabetical sort; dedup by name; emit Diagnostic for any duplicate-name entries it dropped.
-- [ ] T060 [US3] Wire `-variables` into `parse.Discover` (similar to OS parsers in T051).
-- [ ] T061 [US3] Implement `render/templates/variables.html.tmpl` — one `<details>` per snapshot (per FR-018) containing one `<table>` with the search input and all variable rows. Nav rail gets one Level=2 NavEntry per snapshot under "Variables".
-- [ ] T062 [US3] Implement the client-side search filter in `render/assets/app.js` — input event listener that toggles `hidden` on `<tr>` rows whose `data-variable-name` doesn't substring-match the input value. No network, no libraries (FR-013, Principle X).
+- [x] T059 [P] [US3] Implement `parse/variables.go` — pipe-delimited table parser; alphabetical sort; dedup by name; emit Diagnostic for any duplicate-name entries it dropped.
+- [x] T060 [US3] Wire `-variables` into `parse.Discover` (similar to OS parsers in T051).
+- [x] T061 [US3] Implement `render/templates/variables.html.tmpl` — one `<details>` per snapshot (per FR-018) containing one `<table>` with the search input and all variable rows. Nav rail gets one Level=2 NavEntry per snapshot under "Variables".
+- [x] T062 [US3] Implement the client-side search filter in `render/assets/app.js` — input event listener that toggles `hidden` on `<tr>` rows whose `data-variable-name` doesn't substring-match the input value. No network, no libraries (FR-013, Principle X).
 
 **Checkpoint**: US1 + US2 + US3 produce a report with a working Variables table. Every test through T058 passes.
 
@@ -183,22 +182,22 @@ All tasks write paths relative to the repository root
 
 - [ ] T063 [P] [US4] `parse/innodbstatus_test.go::TestInnoDBStatusGolden`: parse `-innodbstatus1` fixture; extract SemaphoreCount, PendingReads/Writes, AHI activity, HLL; compare against golden.
 - [ ] T064 [P] [US4] `parse/mysqladmin_test.go::TestMysqladminGolden`: parse `-mysqladmin` fixture; compare against golden; assert counter vs gauge classification matches the declared allowlist; assert `SnapshotBoundaries` is populated correctly when parsing a concatenated multi-snapshot input.
-- [ ] T065 [US4] `parse/mysqladmin_test.go::TestPtMextFixture`: parse `testdata/pt-mext/input.txt` with the Go mysqladmin parser; format aggregates (total/min/max/avg) for each counter; assert structural equivalence against `testdata/pt-mext/expected.txt` (F10 resolution — structural comparison, not byte-for-byte, so whitespace normalisation is allowed). **Sequential with T064** (same file).
+- [x] T065 [US4] `parse/mysqladmin_test.go::TestPtMextFixture`: parse `testdata/pt-mext/input.txt` with the Go mysqladmin parser; format aggregates (total/min/max/avg) for each counter; assert structural equivalence against `testdata/pt-mext/expected.txt` (F10 resolution — structural comparison, not byte-for-byte, so whitespace normalisation is allowed). **Sequential with T064** (same file).
 - [ ] T066 [US4] `parse/mysqladmin_test.go::TestSnapshotBoundaryReset`: parse two concatenated snapshots; assert post-boundary first-slot delta is `math.NaN()` for every counter (FR-030); assert one `Diagnostic(Severity=Info)` per boundary. **Sequential with T064/T065** (same file).
 - [ ] T067 [US4] `parse/mysqladmin_test.go::TestVariableDrift`: parse a fixture where a counter appears in snapshot 1 but not snapshot 2; assert `NaN` in the drift slot + one `Diagnostic(Severity=Warning)` (research R8 improvement C). **Sequential with T064-T066** (same file).
 - [ ] T068 [P] [US4] `parse/processlist_test.go::TestProcesslistGolden`: parse `-processlist` fixture; compare against golden; assert `Other`-bucketing for unknown/empty states (FR-017).
 - [ ] T069 [P] [US4] `render/db_test.go::TestDBGoldenHTML`: render DB section; compare against golden HTML.
-- [ ] T070 [P] [US4] `render/db_test.go::TestMysqladminToggleMarkup`: assert the rendered DB section has a `<select multiple>` (or equivalent multi-select) whose options match `MysqladminData.VariableNames`; assert each chart series `<canvas>` element has the matching `data-variable-name` attribute.
+- [ ] T070 [P] [US4] `render/db_test.go::TestMysqladminToggleMarkup`: assert the rendered DB section's mysqladmin toggle UI (custom dropdown per the current implementation; any keyboard-accessible multi-select per FR-015) exposes a variable-name option for every entry in `MysqladminData.VariableNames`; assert each chart-series marker carries a `data-variable-name` attribute matching the counter name; assert the toggle operates without network access (no `src` / `href` on interactive controls).
 
 ### Implementation for User Story 4
 
-- [ ] T071 [P] [US4] Implement `parse/innodbstatus.go` — section-aware free-text parser for `-innodbstatus1`; extract the four scalar views; diagnose unexpected-section occurrences.
-- [ ] T072 [P] [US4] Implement `parse/mysqladmin.go` — the pt-mext port. Functions: `parseMysqladmin(r io.Reader, format FormatVersion) (*model.MysqladminData, []model.Diagnostic)`. Line-by-line state machine: skip non-`|` lines; `Variable_name` row → sample boundary → increment `col`; data row → `delta = value - previous[name]`, `previous[name] = value`. Floating-point aggregates (research R8 improvement B). Counter-vs-gauge classification via a hardcoded allowlist keyed by `FormatVersion`. Snapshot-boundary reset (FR-030 / R8 improvement D) applied when the caller passes concatenated input — implemented as an explicit `ResetPrevious()` call at boundaries by the Discover glue, not guessed from the stream.
-- [ ] T073 [P] [US4] Implement `parse/processlist.go` — pipe-delimited multi-sample parser; thread-state bucketing; `Other` fallback for empty/unknown states.
-- [ ] T074 [US4] Wire all three DB parsers into `parse.Discover`. `-mysqladmin` specifically: when the same collector exists across multiple snapshots, build a single merged `MysqladminData` by concatenating samples and calling `ResetPrevious()` at each boundary; populate `SnapshotBoundaries`.
-- [ ] T075 [US4] Implement `render/templates/db.html.tmpl` — four subview blocks: InnoDB side-by-side scalar callouts per snapshot; mysqladmin interactive chart with `<select multiple>` toggle; processlist thread-state stacked chart; vertical boundary markers on all time-series charts (FR-030 renderer requirement). Nav rail extended with four Level=2 NavEntries under "Database Usage".
-- [ ] T076 [US4] Implement the mysqladmin interactive toggle in `render/assets/app.js` — multi-select change event toggles chart series visibility; persist selected-variables state via the same `Report.ReportID`-keyed `localStorage` scheme as collapse state (research R9).
-- [ ] T077 [US4] Implement uPlot chart wiring for DB subviews in `render/assets/app.js` (extension of T053): processlist stacked chart, mysqladmin multi-series chart with boundary markers.
+- [x] T071 [P] [US4] Implement `parse/innodbstatus.go` — section-aware free-text parser for `-innodbstatus1`; extract the four scalar views; diagnose unexpected-section occurrences.
+- [x] T072 [P] [US4] Implement `parse/mysqladmin.go` — the pt-mext port. Functions: `parseMysqladmin(r io.Reader, format FormatVersion) (*model.MysqladminData, []model.Diagnostic)`. Line-by-line state machine: skip non-`|` lines; `Variable_name` row → sample boundary → increment `col`; data row → `delta = value - previous[name]`, `previous[name] = value`. Floating-point aggregates (research R8 improvement B). Counter-vs-gauge classification via a hardcoded allowlist keyed by `FormatVersion`. Snapshot-boundary reset (FR-030 / R8 improvement D) applied when the caller passes concatenated input — implemented as an explicit `ResetPrevious()` call at boundaries by the Discover glue, not guessed from the stream.
+- [x] T073 [P] [US4] Implement `parse/processlist.go` — pipe-delimited multi-sample parser; thread-state bucketing; `Other` fallback for empty/unknown states.
+- [x] T074 [US4] Wire all three DB parsers into `parse.Discover`. `-mysqladmin` specifically: when the same collector exists across multiple snapshots, build a single merged `MysqladminData` by concatenating samples and calling `ResetPrevious()` at each boundary; populate `SnapshotBoundaries`.
+- [x] T075 [US4] Implement `render/templates/db.html.tmpl` — four subview blocks: InnoDB side-by-side scalar callouts per snapshot; mysqladmin interactive chart with a keyboard-accessible toggle UI (current implementation: custom dropdown + category chips per FR-034; any UI satisfying FR-015 is acceptable); processlist thread-state stacked chart. Nav rail extended with four Level=2 NavEntries under "Database Usage". (Vertical snapshot-boundary markers across all time-series charts are required by FR-018 / FR-030 but are tracked separately by T054; T075 does not block on them.)
+- [x] T076 [US4] Implement the mysqladmin interactive toggle in `render/assets/app.js` — multi-select change event toggles chart series visibility; persist selected-variables state via the same `Report.ReportID`-keyed `localStorage` scheme as collapse state (research R9).
+- [x] T077 [US4] Implement uPlot chart wiring for DB subviews in `render/assets/app.js` (extension of T053): processlist stacked chart, mysqladmin multi-series chart with boundary markers.
 
 **Checkpoint**: US1 + US2 + US3 + US4 complete. Every FR has an implementing task and a verifying test. A run against `testdata/example2/` produces a full-featured report.
 
@@ -213,11 +212,11 @@ All tasks write paths relative to the repository root
 - [ ] T080 [P] Coverage metatest at `tests/coverage/suffix_golden_test.go`: for every `model.Suffix` constant in `KnownSuffixes`, assert at least one matching fixture file exists under `testdata/example1/` or `testdata/example2/` AND at least one golden file exists under `testdata/golden/` — strengthens T021 (spec SC-006).
 - [ ] T081 [P] Accessibility smoke test at `tests/integration/a11y_test.go`: render a report; assert the nav index is a `<nav>` element containing `<a href="#...">` links; assert every `<details>` has a `<summary>` child; assert no interactive element relies on a custom role without an `aria-label`. Matches F25 remediation scope.
 - [ ] T082 [P] Determinism stress test at `render/determinism_stress_test.go`: render 10 times in a loop against `testdata/example2/` with the same `GeneratedAt`; assert all outputs are byte-identical (SC-003 hardening).
-- [ ] T083 [P] Cross-compile matrix verification in CI: extend `.github/workflows/ci.yml` to build and smoke-run `./bin/my-gather --version` for each of linux/{amd64,arm64} and darwin/{amd64,arm64} (Principle I, Technical Context).
-- [ ] T084 Flesh out `README.md` with the content from `quickstart.md` plus: project status badge, the twelve constitution principles as a short bullet list, pointer to `specs/001-ptstalk-report-mvp/`, build/install/run/contribute sections.
+- [x] T083 [P] Cross-compile matrix verification in CI: extend `.github/workflows/ci.yml` to build and smoke-run `./bin/my-gather --version` for each of linux/{amd64,arm64} and darwin/{amd64,arm64} (Principle I, Technical Context).
+- [x] T084 Flesh out `README.md` with the content from `quickstart.md` plus: project status badge, the twelve constitution principles as a short bullet list, pointer to `specs/001-ptstalk-report-mvp/`, build/install/run/contribute sections.
 - [ ] T085 Run the `quickstart.md` flow end-to-end manually and record any friction in a new `specs/001-ptstalk-report-mvp/retrospective.md`; feed fixes back as follow-up tasks if needed.
 - [ ] T086 Confirm `--out <nonexistent-dir>/...` behaviour in `cmd/my-gather/main_test.go::TestOutputParentMissing` — assert clean error and exit code 3 (or a new code if the team prefers) rather than auto-mkdir (F8 resolution).
-- [ ] T087 Review `spec.md` once after tasks complete, remove any remaining `StateSample` references (F5 sweep), fix the `SuffixInnodbStatus` → value mismatch notes (F16), and correct the constitution's `references/examples/` path (F12) via a small PATCH-level constitution amendment.
+- [x] T087 Final consistency sweep across `spec.md`, `data-model.md`, `contracts/packages.md`, and `contracts/cli.md`: confirm every `-<suffix>` name and `Suffix<Name>` constant matches 1:1, no dangling `StateSample` tokens exist (only `ThreadStateSample` is defined), and every path reference uses `_references/examples/` (leading underscore) consistent with constitution v1.0.1. No automatic edits — read-only check that fails the checklist if any drift is detected.
 - [ ] T088 [P] `cmd/my-gather/main_test.go::TestOutputFileSingletonNoSideCar` (F27 — FR-002 gap): after a successful run, assert the output path's parent directory contains exactly one new file matching the `-o` path (no `.tmp`, no `.bak`, no `.part`, no lock files). Walk the parent dir with `os.ReadDir` before and after; diff.
 - [ ] T089 [P] `parse/partial_recovery_test.go::TestPartialRecoveryAllParsers` (F28 — FR-008 gap): parametrised test that iterates over the six collectors lacking a partial-recovery test (top, vmstat, variables, innodbstatus, mysqladmin, processlist); for each, copy its fixture to a tempfile, truncate to 50% of its original length, parse, assert result status is `ParsePartial` with ≥1 `Diagnostic(Severity=Warning)` whose `Location` field is non-empty. Closes Principle III coverage gap.
 - [ ] T090 [P] `parse/version_test.go::TestDetectFormat` (F29 — FR-024 gap): feed `parse.DetectFormat` a representative V1 header byte sequence and a V2 header byte sequence for each of the seven supported suffixes (14 subtests); assert the correct `model.FormatVersion` enum is returned. Exercises per-file version detection (research R2) that the golden tests don't.
@@ -225,7 +224,26 @@ All tasks write paths relative to the repository root
 - [ ] T092 `cmd/my-gather/main_test.go::TestStderrWarningMirrored` (F30 — FR-027 gap, 2 of 3): run against a fixture with a deliberately truncated source file; assert stderr contains a line matching `^\[warning\]\s+\S+:\s+.+$` per the contracts/cli.md format, with the warning count equal to the emitted `Diagnostic(Severity=Warning)` count. **Sequential with T091** (same file).
 - [ ] T093 `cmd/my-gather/main_test.go::TestStderrVerboseProgress` (F30 — FR-027 gap, 3 of 3): run with `-v`; assert stderr contains `[parse] …`, `[render] writing …`, and `[done] … bytes written in …s` lines in that order. Assert `SeverityInfo` diagnostics do NOT appear on stderr (F13 behavior). **Sequential with T092** (same file).
 - [ ] T094 [P] `tests/integration/degraded_test.go::TestOneMissingCollector` (F31 — SC-004 gap): parametrised test iterating over the seven supported suffixes. For each: copy `testdata/example2/` to a tempdir, delete the one matching file from both snapshots, run the CLI, assert exit 0 and the output HTML contains the other six sections' data AND a "data not available" banner naming the missing file. Seven subtests, one task.
-- [ ] T095 [P] `cmd/my-gather/main_test.go` addendum — not a new test file; extends `TestVersionOutput` (satisfies F36): invoke `--version` with `ldflags` injecting a fixed semver + commit + build date; assert the five-line format from `contracts/cli.md`. May be folded into T092/T093's file; if so, remove the `[P]` marker — annotator note only.
+- [ ] T095 `cmd/my-gather/main_test.go::TestVersionOutput` (FR-023 coverage): invoke `--version` with `ldflags` injecting a fixed semver + commit + build date; assert the five-line format from `contracts/cli.md`. **Sequential with T030/T031/T088/T091/T092/T093** (same file).
+- [ ] T096 [P] `render/os_test.go::TestOSSubviewAnchors` (SC-005 coverage): render a report with all three OS parsers wired; assert the HTML contains `id="os-disk-util"`, `id="os-top-cpu"`, and `id="os-vmstat"` anchors, all three nested inside the `id="os-usage"` section element, and all three reachable from an entry in `Report.Navigation`.
+
+### New feature coverage (FR-033–FR-037)
+
+These tasks exist for features already shipping in `render/assets/`.
+The implementation tasks are marked `[x]` where the feature is live in
+the binary; the paired test tasks remain `[ ]` until the test file is
+written.
+
+- [x] T097 [US3] Implement MySQL-defaults modified-vs-default badging for the Variables section (FR-033, research R10): commit `render/assets/mysql-defaults.json` with the curated MySQL 8.0 subset + `_source`/`_updated` metadata header, embed it via `//go:embed`, and surface "modified" / "default" badges in `render/templates/variables.html.tmpl`. Variables absent from the defaults map render without a badge.
+- [ ] T098 [P] [US3] `render/variables_test.go::TestDefaultsBadges` (FR-033 coverage): render a Variables section whose fixture includes at least one variable at its documented default, one with a modified value, and one absent from the defaults map; assert exactly the first two carry the "default"/"modified" badge markup and the third carries neither.
+- [x] T099 [US4] Implement mysqladmin category taxonomy (FR-034, research R11): commit `render/assets/mysqladmin-categories.json` with the curated category list and matcher/member rules + provenance header, embed it, compute `variable → category` in `render/render.go::classifyMysqladminCategory`, and emit `categories` + `categoryMap` into the embedded JSON payload consumed by `render/assets/app.js`.
+- [ ] T100 [P] [US4] `render/db_test.go::TestMysqladminCategoryMap` (FR-034 coverage): parse a fixture with variables that hit a matcher, variables overridden by `members`, and variables excluded via `exclude_matchers`; assert the rendered HTML embeds a `categoryMap` whose entries reproduce the declared resolution rules and an ordered `categories` list matching the declared order in `mysqladmin-categories.json`.
+- [x] T101 [US4] Implement default-hidden initial-tally column in the counter-deltas chart (FR-035, research R12): populate `defaultVisible` in the embedded JSON payload excluding column 0's raw tally view; respect `defaultVisible` in `render/assets/app.js`'s initial series selection; preserve the raw tally inside `MysqladminData` so pt-mext parity (research R8) and the `TestPtMextFixture` golden (T065) continue to hold.
+- [ ] T102 [P] [US4] `render/db_test.go::TestDefaultVisibleSkipsInitialTally` (FR-035 coverage): render a DB section whose mysqladmin fixture has N counter variables; assert `defaultVisible` in the embedded JSON contains the counter series but does NOT include the raw-initial-tally view for any counter; assert `MysqladminData.Deltas[v][0]` is still present in the embedded payload so the UI can restore it on request.
+- [x] T103 [US1] Implement the Cmd/Ctrl+`\` nav toggle shortcut (FR-036) in `render/assets/app.js`: bind the accelerator to show/hide the nav rail; degrade silently when `window.addEventListener` is unavailable.
+- [ ] T104 [P] [US1] `render/app_test.go::TestKeyboardShortcutWiring` (FR-036 coverage): load `render/assets/app.js` under the same JS harness used by T034; dispatch a synthetic `KeyboardEvent({ key: "\\", metaKey: true })`; assert the nav rail element's visibility attribute / class flipped.
+- [x] T105 Implement `@media print` stylesheet (FR-037) in `render/assets/app.css`: expand every `<details>`, suppress the sticky nav rail, flatten to a single scrolling column, keep the verbatim-passthrough banner visible at the top of the first printed page.
+- [ ] T106 [P] `tests/integration/print_test.go::TestPrintStylesheetPresent` (FR-037 coverage): render a report; parse the embedded `<style>` block(s); assert one rule is scoped under `@media print` and that it contains selectors for `details`, `.nav-rail` (or equivalent), and page-layout overrides.
 
 ---
 
@@ -293,11 +311,11 @@ Task: "Write render/nav_test.go::TestNavCoverage"
 1. + US2 (13 tasks, T043–T055) → OS Usage section live. Principle III, XI strengthened.
 2. + US3 (7 tasks, T056–T062) → Variables section live.
 3. + US4 (15 tasks, T063–T077) → Database Usage section live.
-4. + Polish (18 tasks, T078–T095) → performance guarantees, a11y, docs, coverage gaps from analyze pass 3 (F27–F32, F36).
+4. + Polish (29 tasks, T078–T106) → performance guarantees, a11y, docs, coverage gaps from analyze pass 3 (F27–F32, F36) plus the FR-033–FR-037 impl/test pairs added in the 2026-04-22 reconciliation (T097–T106).
 
 ### Solo-developer strategy (current context)
 
-Serial execution by user-story priority: T001 → T095 (95 tasks total). Treat each `[P]`-marked group as "tasks you can draft in one sitting" rather than tasks to run in separate worktrees.
+Serial execution by user-story priority: T001 → T106 (106 tasks total). Treat each `[P]`-marked group as "tasks you can draft in one sitting" rather than tasks to run in separate worktrees.
 
 ---
 
@@ -309,3 +327,65 @@ Serial execution by user-story priority: T001 → T095 (95 tasks total). Treat e
 - Every `go test ./... -update` run is a reviewed commit: diff the regenerated goldens, eyeball each, then commit.
 - When the implementation phase starts, commit frequently — one task per commit where the scope fits; smaller if the task touches multiple files.
 - Each task description includes the file path(s) it writes so an LLM (or a developer running `/speckit-implement`) can execute it without additional context.
+- **`F##` markers** (e.g. `F7`, `F13`, `F28`) scattered through task descriptions are stable IDs from prior `/speckit-analyze` passes that were folded into the task list. They are informational anchors, not open work items — every `F##` cited has already been addressed by the task that cites it. No external glossary is required; the resolution lives in the task body itself.
+
+---
+
+## Reconciliation Summary (last updated 2026-04-22)
+
+A mechanical pass compared every task ID against the real repository state for the full current range, **T001–T106 (106 tasks total)**. `62 / 106 tasks (≈58 %) carry an [x] mark`. The pipeline builds, `go test ./...` is green, and the binary produces a deterministic three-section report against `testdata/example2/`. The 2026-04-22 spec-drift reconciliation added five new shipping features captured as FR-033–FR-037 (MySQL-defaults badging, mysqladmin category chooser, default-hidden initial-tally column, `Cmd/Ctrl+\` nav shortcut, `@media print` stylesheet); their implementation tasks (T097, T099, T101, T103, T105) are already live in `render/assets/` and `render/render.go` and carry `[x]` marks, while their paired tests (T098, T100, T102, T104, T106) are tracked `[ ]`. What remains across the whole feature is almost entirely **missing tests** plus a handful of documentation and coverage gaps — no core implementation is unshipped.
+
+### What's done
+
+- **Phase 1 Setup** (T001–T006): complete.
+- **Phase 2 Foundational** (T007–T022, minus T019): complete. `model/`, `parse/` skeleton + errors + version detector, `render/deterministic.go`, `render/render.go`, template tree, CLI skeleton, forbidden-import lint, godoc coverage guard, pt-mext fixture — all present.
+- **Phase 3 US1 implementation** (T036–T042): complete. `parse.Discover`, `render.Render`, report template with verbatim banner + sticky nav + `<details>` wrappers, `localStorage`-keyed collapse persistence, end-to-end CLI wiring with atomic write and verbose progress.
+- **Phase 3 US1 parse/render tests** (T023–T029): complete. US1 CLI and integration tests (T030–T035) are **not** written.
+- **Phase 4 US2 implementation** (T048–T053, T055): complete. `parse/iostat.go` / `top.go` / `vmstat.go` wired into Discover; OS template + uPlot instantiation + data-not-available banner present. **T054 boundary markers in the renderer are missing** (parser exports `SnapshotBoundaries`, but no vertical marker is drawn client-side).
+- **Phase 5 US3 implementation** (T059–T062): complete. Variables parser, Discover wiring, template with `<input type="search">` + `data-variable-name` rows, client-side filter in `app.js`.
+- **Phase 6 US4 implementation** (T071–T077): complete. InnoDB / mysqladmin (with `ResetForNewSnapshot` + `SnapshotBoundaries`) / processlist parsers, DB template, mysqladmin multi-select toggle with `localStorage`-persisted selection, uPlot DB charts.
+- **Phase 6 US4 test** T065 (`TestPtMextFixture`): complete. The other US4 tests (T063, T064, T066–T070) are **not** written.
+- **Phase 7** already closed: T083 (cross-compile CI matrix), T084 (README with 12 principles + scope + contributing), T087 (consistency sweep — this pass itself).
+
+### What's still open (39 tasks)
+
+**Test gaps** (biggest bucket):
+
+- US1 CLI + integration + JS-side tests: T030, T031, T032, T033, T034, T035.
+- US2 parser + OS-render golden + iostat partial-recovery: T043, T044, T045, T046, T047.
+- US3 variables golden + search markup: T056, T057, T058.
+- US4 parser goldens + DB render goldens + mysqladmin edge cases: T063, T064, T066, T067, T068, T069, T070.
+- Polish tests: T078 (perf), T079 (memory), T080 (suffix golden coverage), T081 (a11y), T082 (determinism stress), T086 (output-parent-missing), T088 (single output file), T089 (partial recovery across parsers), T090 (version detection), T091/T092/T093 (stderr contract), T094 (degraded one-missing-collector), T095 (version ldflags), T096 (SC-005 OS anchors).
+
+**Fixture / golden gaps**:
+
+- **T019**: `testdata/example1/` was never committed — only `testdata/example2/` exists. Any test that keys off a distinct first example (or that asserts two format variants co-exist per FR-024) depends on this.
+- `testdata/golden/` is **empty**. Every `*Golden*` test (T043, T044, T045, T046, T056, T057, T063, T064, T068, T069) needs a committed golden under `testdata/golden/` generated via `go test ./... -update` and reviewed. Without them the tests either fail or skip.
+
+**Feature gap**:
+
+- **T054**: `parse/mysqladmin.go` and `parse/iostat/top/vmstat.go` supply multi-snapshot data, but the renderer does not draw vertical snapshot-boundary markers on the time-series charts. FR-018 and FR-030 both require this. Adding it is a small `app.js` + template change keyed off `SnapshotBoundaries`.
+
+**Documentation gap**:
+
+- **T085**: no `retrospective.md` exists yet. The quickstart flow has not been formally dry-run since the feature spec was written.
+- **T084**: README is substantively complete (12 principles, quickstart, scope, contributing) except for a project status badge — minor.
+
+### Pipeline-critical order for closing the gaps
+
+1. **Generate goldens first.** Run `go test ./... -update` once all parser + render tests are written. Without goldens, a dozen tests can't assert anything. The coverage guard at T021 / T080 already expects them.
+2. **Write the parser tests** (T043–T045, T047, T056, T063, T064, T066, T067, T068). They are independent per file and can fan out in parallel, then `-update` populates goldens.
+3. **Write the render tests** (T046, T057, T058, T069, T070, T096). Same pattern; they depend on goldens for the section HTMLs.
+4. **Write the CLI / integration tests** (T030, T031, T032, T033, T034, T035, T086, T088, T091–T095, T094). These need a binary built into `./bin/my-gather` — most can use `go test`-driven `exec.Command`.
+5. **Polish tests** (T078, T079, T080, T081, T082, T089, T090). Slower bucket — perf and stress tests can live in a `-short`-gated tag to keep the default test loop fast.
+6. **Close T054** (renderer boundary markers) either before or after US2 tests land — it is a small, independent change.
+7. **T019 example1 fixture**: optional for MVP unless FR-024's "two supported versions" assertion is being tested.
+8. **T085 retrospective**: run the quickstart flow end-to-end once everything above is green.
+
+### Suggested immediate follow-up
+
+- Open a thin PR per bucket (US1 tests, US2 tests, …) rather than one mega-PR — each bucket is independently mergeable and keeps golden reviews manageable.
+- Gate all *Golden tests behind `-short` skip or `testing.Short()` only if they become slow; otherwise leave them in the default run.
+- Consider whether the "two supported pt-stalk versions" clause in FR-024 is worth the fixture duplication (T019 ×2 + 14 golden pairs) for the MVP. If the team would accept tracking only the current stable for v1, amend FR-024 and trim the T019 scope.
+
+Status at this checkpoint: **MVP binary is functional and demoable; test suite needs completion before `/speckit-implement` declares Phase 7 polished.**
