@@ -45,7 +45,6 @@ func parseIostat(r io.Reader, snapshotStart time.Time, sourcePath string) (*mode
 	}
 
 	type samplePoint struct {
-		t     time.Time
 		util  float64
 		aqusz float64
 	}
@@ -54,10 +53,9 @@ func parseIostat(r io.Reader, snapshotStart time.Time, sourcePath string) (*mode
 	deviceSamples := map[string][]samplePoint{}
 
 	var (
-		utilIdx   = -1
-		aqszIdx   = -1
-		inSample  = false
-		sampleIdx = 0
+		utilIdx  = -1
+		aqszIdx  = -1
+		inSample = false
 	)
 	lineNum := 0
 
@@ -95,9 +93,6 @@ func parseIostat(r io.Reader, snapshotStart time.Time, sourcePath string) (*mode
 				continue
 			}
 			inSample = true
-			if sampleIdx > 0 || len(deviceSamples) == 0 {
-				// start of the (sampleIdx+1)th sample
-			}
 			continue
 		}
 
@@ -121,20 +116,9 @@ func parseIostat(r io.Reader, snapshotStart time.Time, sourcePath string) (*mode
 		}
 
 		deviceSamples[device] = append(deviceSamples[device], samplePoint{
-			t:     snapshotStart.Add(time.Duration(sampleIdx) * time.Second),
 			util:  util,
 			aqusz: aqusz,
 		})
-
-		// Detect sample boundary by device repetition: when we see the
-		// same device again, it's a new sample. But since blank lines
-		// already bump inSample=false, the cleaner signal is the next
-		// "Device" header — but we already increment sampleIdx AFTER
-		// populating the row, so the FIRST device of the next sample
-		// correctly lands in the new slot. We need to bump the index
-		// when we enter a NEW sample, which happens when inSample flips
-		// false -> true. Handle that here by tracking device-seen-in-
-		// this-sample.
 	}
 	if err := scanner.Err(); err != nil {
 		diagnostics = append(diagnostics, model.Diagnostic{
@@ -144,14 +128,8 @@ func parseIostat(r io.Reader, snapshotStart time.Time, sourcePath string) (*mode
 		})
 	}
 
-	// Post-process: for each device, the samples were appended in order
-	// of encounter across ALL samples. But because our sampleIdx didn't
-	// actually advance per-sample, all samples got t = snapshotStart.
-	// Fix this by walking device samples and re-timestamping based on
-	// position.
-	//
-	// This is equivalent to: sample N is the N-th occurrence of any
-	// given device. For a well-formed iostat file every device appears
+	// Post-process: timestamp each sample by its position within its
+	// device's slice. For a well-formed iostat file every device appears
 	// in every sample in the same order, so re-indexing by position
 	// within each device's slice gives the correct sample index.
 	var devices []string
@@ -190,7 +168,6 @@ func parseIostat(r io.Reader, snapshotStart time.Time, sourcePath string) (*mode
 			},
 		})
 	}
-	_ = sampleIdx // silence unused; sampleIdx-based timing kept for future
 	return data, diagnostics
 }
 

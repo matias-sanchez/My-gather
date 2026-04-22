@@ -112,13 +112,7 @@ func TestIostatPartialRecovery(t *testing.T) {
 		t.Fatalf("parseIostat returned nil data on truncated input; Principle III requires graceful recovery with diagnostics")
 	}
 	if len(data.Devices) == 0 {
-		// Depending on where the 50% cut lands we may have zero
-		// *complete* samples; we still expect at least one device in
-		// the device list if the header survived. Tolerate the edge
-		// where even the first header got cut — in that case the
-		// parser's job is to emit a diagnostic and return empty
-		// data, which the banner path covers in the renderer.
-		t.Logf("truncated input produced zero devices (cut before the first header completed); relying on diagnostic assertion below")
+		t.Fatalf("parseIostat returned zero devices on 50%%-truncated input; 50%% of the fixture contains 15 complete Device headers, so Devices MUST be non-empty")
 	}
 
 	hasWarningWithLocation := false
