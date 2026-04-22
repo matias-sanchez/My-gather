@@ -398,7 +398,7 @@ A mechanical pass compared every task ID against the real repository state for t
 
 - US1 CLI + integration + JS-side tests: T030, T031, T032, T033, T034, T035.
 - US2 render golden: T046. (Parser goldens T043/T044/T045 and partial recovery T047 are now `[x]`.)
-- US3 variables golden + search markup: T056, T057, T058.
+- US3 variables render golden + search markup: T057, T058. (Parser golden T056 is now `[x]`.)
 - US4 DB render goldens + markup: T069, T070. (Parser goldens T063/T064/T068 and mysqladmin edge cases T066/T067 are now `[x]`.)
 - Polish tests: T078 (perf), T079 (memory), T080 (suffix golden coverage), T081 (a11y), T082 (determinism stress), T086 (output-parent-missing), T088 (single output file), T089 (partial recovery across parsers), T090 (version detection), T091/T092/T093 (stderr contract), T094 (degraded one-missing-collector), T095 (version ldflags), T096 (SC-005 OS anchors).
 
