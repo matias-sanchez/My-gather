@@ -9,7 +9,7 @@
 
 ### Session 2026-04-21
 
-- Q: Which pt-stalk release formats must the parsers accept? → A: Latest Percona Toolkit `pt-stalk` stable plus one major version back. Each supported version ships its own fixture under `testdata/` and its own golden file, per Principle VIII.
+- Q: Which pt-stalk release formats must the parsers accept? → A: Latest Percona Toolkit `pt-stalk` stable plus the immediately preceding minor release in the same major line (MAJOR.MINOR.PATCH versioning; see FR-024). Each supported version ships its own fixture under `testdata/` and its own golden file, per Principle VIII.
 - Q: What is the upper bound on input size the tool must survive? → A: ≤ 1 GB total collection size; any single source file up to 200 MB. Streaming parsing where cheap, buffered where simpler. Beyond 1 GB is out of scope for the MVP.
 - Q: Does the MVP redact sensitive data (hostnames, IPs, query text, user names) from the rendered HTML? → A: No. The report passes pt-stalk content through verbatim; redaction is the engineer's responsibility before sharing. Documented in the README and in a visible banner on the report.
 - Q: What does the tool write to stderr during a run? → A: On a clean success (no diagnostics, no verbose) stderr is empty. Parser diagnostics of `Severity=Warning` or `Severity=Error` are always mirrored to stderr as one-line entries at the moment they are emitted, including on otherwise-successful runs (exit 0). `-v` / `--verbose` additionally streams per-file progress lines. Structural errors (bad input path, size-bound exceeded, unrecognised directory) always go to stderr. `Severity=Info` diagnostics never surface on stderr — they live only in the report's Parser Diagnostics panel. See FR-027 for the normative rule.
@@ -555,8 +555,8 @@ matching their respective golden files.
   are representative of the formats the tool must parse. Fixtures for
   golden tests will be drawn from these (or equivalent anonymised)
   samples. Supported pt-stalk formats are limited to the current
-  Percona Toolkit stable release and the immediately preceding major
-  version (see FR-024); other forks are best-effort only.
+  Percona Toolkit stable release and the immediately preceding minor
+  release in the same major line (see FR-024); other forks are best-effort only.
 - The MVP supports only the seven source-file suffixes listed here
   (`-iostat`, `-top`, `-variables`, `-vmstat`, `-innodbstatus1`,
   `-mysqladmin`, `-processlist`). Other pt-stalk collectors (e.g.,

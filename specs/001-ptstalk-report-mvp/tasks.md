@@ -311,11 +311,11 @@ Task: "Write render/nav_test.go::TestNavCoverage"
 1. + US2 (13 tasks, T043–T055) → OS Usage section live. Principle III, XI strengthened.
 2. + US3 (7 tasks, T056–T062) → Variables section live.
 3. + US4 (15 tasks, T063–T077) → Database Usage section live.
-4. + Polish (18 tasks, T078–T095) → performance guarantees, a11y, docs, coverage gaps from analyze pass 3 (F27–F32, F36).
+4. + Polish (29 tasks, T078–T106) → performance guarantees, a11y, docs, coverage gaps from analyze pass 3 (F27–F32, F36) + FR-033–FR-037 test coverage.
 
 ### Solo-developer strategy (current context)
 
-Serial execution by user-story priority: T001 → T095 (95 tasks total). Treat each `[P]`-marked group as "tasks you can draft in one sitting" rather than tasks to run in separate worktrees.
+Serial execution by user-story priority: T001 → T106 (106 tasks total). Treat each `[P]`-marked group as "tasks you can draft in one sitting" rather than tasks to run in separate worktrees.
 
 ---
 
