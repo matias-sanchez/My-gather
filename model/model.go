@@ -243,11 +243,38 @@ type Diagnostic struct {
 	Message string
 }
 
-// IostatData is the typed payload for a -iostat SourceFile.
+// IostatData is the typed payload for a -iostat SourceFile (or, when
+// the render layer merges multiple -iostat files across Snapshots per
+// spec FR-018, a concatenation of them onto a single time axis).
+//
+// In the single-Snapshot case, every DeviceSeries shares the
+// Snapshot's iostat sample grid (pt-stalk reports every device at
+// the same intervals within one -iostat file). In the merged
+// multi-Snapshot case, `render.concatIostat` additionally NaN-pads
+// devices that were absent in some Snapshots so that every
+// DeviceSeries ends up the same length and aligned to a single,
+// shared timestamp axis — uPlot requires matched-length series on
+// a shared x-axis, and the chart payload treats
+// `Devices[0].Utilization.Samples` as authoritative.
 type IostatData struct {
-	// Devices is sorted alphabetically by Device name for deterministic
-	// rendering.
+	// Devices is sorted alphabetically by Device name for
+	// deterministic rendering. When multiple Snapshots contribute,
+	// Devices is the union of their device sets; within any given
+	// Snapshot window, every DeviceSeries carries exactly one sample
+	// per shared-axis timestamp. Samples that originate from a
+	// Snapshot where a device was absent carry a NaN
+	// `Measurements["util_percent"]` / `["avgqu_sz"]` value (the
+	// chart payload surfaces these as JSON null so the plot draws a
+	// visible gap).
 	Devices []DeviceSeries
+
+	// SnapshotBoundaries lists the sample indexes at which a new
+	// Snapshot's first sample sits within the shared axis (always
+	// includes 0 for the first sample). For single-Snapshot
+	// collections SnapshotBoundaries == [0]. See FR-018 / FR-030 and
+	// research R9 for the rendering semantics; the renderer draws a
+	// vertical boundary marker at each boundary's timestamp.
+	SnapshotBoundaries []int
 }
 
 // DeviceSeries is the per-device iostat time-series.
@@ -257,7 +284,9 @@ type DeviceSeries struct {
 	AvgQueueSize MetricSeries // metric "avgqu_sz", unit "count"
 }
 
-// TopData is the typed payload for a -top SourceFile.
+// TopData is the typed payload for a -top SourceFile (or, when the
+// render layer merges multiple -top files across Snapshots per spec
+// FR-018, a concatenation of them onto a single time axis).
 type TopData struct {
 	// ProcessSamples is every per-process observation across all top
 	// batches, in ascending Timestamp order then ascending PID order.
@@ -269,6 +298,11 @@ type TopData struct {
 	// spec FR-010 "aggregate across the collection window" and the
 	// F7 remediation in the analyze pass).
 	Top3ByAverage []ProcessSeries
+
+	// SnapshotBoundaries lists the sample indexes at which a new
+	// Snapshot's first sample sits within the concatenated time axis.
+	// Same semantics as IostatData.SnapshotBoundaries.
+	SnapshotBoundaries []int
 }
 
 // ProcessSample is one (timestamp, PID) row from a -top batch.
@@ -302,8 +336,15 @@ type VmstatData struct {
 	// particular vmstat version. See parse/vmstat.go for the full
 	// ordering. Missing series are zero-length Samples with the
 	// canonical Metric name still set, so the renderer can show a
-	// greyed legend entry.
+	// greyed legend entry. When multiple Snapshots contribute (spec
+	// FR-018) each Series.Samples is the concatenation of per-Snapshot
+	// samples in Snapshot order.
 	Series []MetricSeries
+
+	// SnapshotBoundaries lists the sample indexes at which a new
+	// Snapshot's first sample sits within the concatenated time axis.
+	// Same semantics as IostatData.SnapshotBoundaries.
+	SnapshotBoundaries []int
 }
 
 // InnodbStatusData is the typed payload for an -innodbstatus1
@@ -378,13 +419,20 @@ type ProcesslistData struct {
 	// ordered by Timestamp ascending. Each record has a per-state
 	// count bucket rather than per-thread rows (spec Key Entity
 	// "ThreadStateSample" and the F5 remediation in the analyze
-	// pass).
+	// pass). When multiple Snapshots contribute (spec FR-018) the
+	// slice concatenates per-Snapshot samples in Snapshot order.
 	ThreadStateSamples []ThreadStateSample
 
 	// States is the canonical rendering order of state labels across
 	// the collection: sorted alphabetically, with "Other" always last
-	// if present. Unknown or empty states parse into "Other".
+	// if present. Unknown or empty states parse into "Other". For
+	// multi-Snapshot collections States is the union across Snapshots.
 	States []string
+
+	// SnapshotBoundaries lists the sample indexes at which a new
+	// Snapshot's first sample sits within the concatenated time axis.
+	// Same semantics as IostatData.SnapshotBoundaries.
+	SnapshotBoundaries []int
 }
 
 // ThreadStateSample is one record per -processlist sample.
