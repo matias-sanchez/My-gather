@@ -7,14 +7,17 @@
 <details id="{{.DetailsID}}" class="subview" open>
   <summary><span>{{.Title}}</span><span class="badge">{{.Badge}}</span></summary>
   <div class="body">
+    {{- if .RangeNote }}
+    <p class="snapshot-range-note">{{.RangeNote}}</p>
+    {{- end }}
     {{- if .Entries }}
     <div class="search-row">
       <input type="search" class="variables-search"
              data-snapshot="{{.DetailsID}}"
              placeholder="Filter by name…" autocomplete="off" spellcheck="false">
       <div class="var-chips" role="tablist" aria-label="Variable filters">
-        <button class="var-chip active" data-filter="all"      data-snapshot="{{.DetailsID}}">All ({{.Count}})</button>
-        <button class="var-chip"        data-filter="modified" data-snapshot="{{.DetailsID}}">Modified ({{.ModifiedCount}})</button>
+        <button class="var-chip"        data-filter="all"      data-snapshot="{{.DetailsID}}">All ({{.Count}})</button>
+        <button class="var-chip active" data-filter="modified" data-snapshot="{{.DetailsID}}">Modified ({{.ModifiedCount}})</button>
         <button class="var-chip"        data-filter="default"  data-snapshot="{{.DetailsID}}">Default</button>
         <button class="var-chip"        data-filter="unknown"  data-snapshot="{{.DetailsID}}">Unknown</button>
       </div>

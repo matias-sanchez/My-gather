@@ -913,6 +913,20 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   font-weight: 700;
 }
 
+/* Dedup subtitle shown on a kept variables snapshot that represents
+   an identical run (e.g. "Identical values seen in snapshots #2–#10"). */
+.snapshot-range-note {
+  margin: 0 0 10px 0;
+  padding: 6px 10px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-left: 2px solid color-mix(in srgb, var(--accent) 60%, var(--border));
+  border-radius: 3px;
+  letter-spacing: 0.01em;
+}
+
 /* Clickable pill legend rendered by app.js directly after the chart. */
 .series-legend {
   display: flex;

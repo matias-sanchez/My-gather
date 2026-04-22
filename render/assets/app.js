@@ -89,7 +89,7 @@
         var chips = input.parentNode.querySelectorAll(
           '.var-chip[data-snapshot="' + cssEscape(snapshot) + '"]'
         );
-        var state = { needle: "", statusFilter: "all" };
+        var state = { needle: "", statusFilter: "modified" };
 
         function update() {
           var needle = state.needle;

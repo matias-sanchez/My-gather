@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"html/template"
 	"io"
 	"math"
@@ -808,16 +809,37 @@ func buildNavigation(r *model.Report) []model.NavEntry {
 	nav = append(nav, model.NavEntry{ID: "sub-os-top", Title: "Top CPU processes", Level: 2, ParentID: "sec-os"})
 	nav = append(nav, model.NavEntry{ID: "sub-os-vmstat", Title: "vmstat saturation", Level: 2, ParentID: "sec-os"})
 
-	// Variables section (one Level-2 per snapshot).
+	// Variables section (one Level-2 per *unique* snapshot — adjacent
+	// snapshots with identical variables are collapsed, matching the
+	// panels rendered in the Variables body). nil-Data snapshots
+	// always get their own entry so partial captures stay visible.
 	nav = append(nav, model.NavEntry{ID: "sec-variables", Title: "Variables", Level: 1})
 	if r.VariablesSection != nil {
+		var lastSig string
+		sigValid := false
 		for i, sv := range r.VariablesSection.PerSnapshot {
+			if sv.Data == nil {
+				nav = append(nav, model.NavEntry{
+					ID:       variablesSnapshotID(i),
+					Title:    sv.SnapshotPrefix,
+					Level:    2,
+					ParentID: "sec-variables",
+				})
+				sigValid = false
+				continue
+			}
+			sig := snapshotSignature(sv.Data.Entries)
+			if sigValid && sig == lastSig {
+				continue
+			}
 			nav = append(nav, model.NavEntry{
 				ID:       variablesSnapshotID(i),
 				Title:    sv.SnapshotPrefix,
 				Level:    2,
 				ParentID: "sec-variables",
 			})
+			lastSig = sig
+			sigValid = true
 		}
 	}
 
@@ -909,12 +931,28 @@ type reportView struct {
 }
 
 type variableSnapshotView struct {
-	DetailsID    string
-	Title        string
-	Badge        string
-	Count        int
+	DetailsID     string
+	Title         string
+	Badge         string
+	// RangeNote is the dedup subtitle shown inside the snapshot body
+	// when this kept snapshot represents a run of identical snapshots
+	// (e.g. "Identical values seen in snapshots #2–#10"). Empty for
+	// unique snapshots.
+	RangeNote     string
+	Count         int
 	ModifiedCount int
-	Entries      []variableRowView
+	Entries       []variableRowView
+}
+
+// volatileVariables are SHOW VARIABLES entries expected to drift
+// between snapshots on a busy server even when the operator has not
+// changed anything (e.g. gtid_executed advances on every commit).
+// Excluding them from the dedup signature keeps the "collapse
+// identical snapshots" behaviour useful on busy replicas. Matching
+// is case-insensitive.
+var volatileVariables = map[string]struct{}{
+	"gtid_executed": {},
+	"gtid_purged":   {},
 }
 
 type variableRowView struct {
@@ -1044,37 +1082,79 @@ func buildView(r *model.Report, c *model.Collection) (*reportView, error) {
 			v.VmstatSummary = summariseVmstat(r.OSSection.Vmstat)
 		}
 	}
+	totalSnaps := 0
 	if r.VariablesSection != nil {
+		totalSnaps = len(r.VariablesSection.PerSnapshot)
 		defaults := loadMySQLDefaults()
 		haveAny := false
+		// Dedup adjacent identical snapshots. For each captured
+		// snapshot compute a signature over the (name, value) pairs —
+		// skipping volatile variables that drift without meaningful
+		// change — and compare against the last KEPT snapshot. If
+		// identical, extend that snapshot's range; otherwise emit a
+		// new view. Nil-Data snapshots emit their own entry so
+		// partial captures remain visible.
+		lastKept := -1
+		var lastSig string
 		for i, sv := range r.VariablesSection.PerSnapshot {
+			if sv.Data == nil {
+				v.VariableSnapshots = append(v.VariableSnapshots, variableSnapshotView{
+					DetailsID: variablesSnapshotID(i),
+					Title:     fmt.Sprintf("Snapshot %s", sv.SnapshotPrefix),
+					Badge:     fmt.Sprintf("snap #%d", i+1),
+				})
+				lastKept = -1
+				lastSig = ""
+				continue
+			}
+			sig := snapshotSignature(sv.Data.Entries)
+			if lastKept >= 0 && sig == lastSig {
+				// Identical to the last kept snapshot — extend its range.
+				extendRange(&v.VariableSnapshots[lastKept], i+1)
+				continue
+			}
 			vv := variableSnapshotView{
 				DetailsID: variablesSnapshotID(i),
 				Title:     fmt.Sprintf("Snapshot %s", sv.SnapshotPrefix),
 				Badge:     fmt.Sprintf("snap #%d", i+1),
+				Count:     len(sv.Data.Entries),
 			}
-			if sv.Data != nil {
-				vv.Count = len(sv.Data.Entries)
-				vv.Entries = make([]variableRowView, 0, len(sv.Data.Entries))
-				for _, e := range sv.Data.Entries {
-					st := classifyVariable(defaults, e.Name, e.Value)
-					if st == "modified" {
-						vv.ModifiedCount++
-					}
-					vv.Entries = append(vv.Entries, variableRowView{
-						Name:   e.Name,
-						Value:  e.Value,
-						Status: st,
-					})
+			vv.Entries = make([]variableRowView, 0, len(sv.Data.Entries))
+			for _, e := range sv.Data.Entries {
+				st := classifyVariable(defaults, e.Name, e.Value)
+				if st == "modified" {
+					vv.ModifiedCount++
 				}
-				haveAny = true
+				vv.Entries = append(vv.Entries, variableRowView{
+					Name:   e.Name,
+					Value:  e.Value,
+					Status: st,
+				})
 			}
+			haveAny = true
 			v.VariableSnapshots = append(v.VariableSnapshots, vv)
+			lastKept = len(v.VariableSnapshots) - 1
+			lastSig = sig
+			// Seed the range tracker with the current snapshot number
+			// so extendRange can grow it later.
+			v.VariableSnapshots[lastKept].RangeNote = formatRangeNote(i+1, i+1)
 		}
 		v.HasVariables = haveAny
+		// RangeNote is only informative when the kept snapshot
+		// represents a range; clear the single-snapshot notes.
+		for idx := range v.VariableSnapshots {
+			if rangeIsSingle(v.VariableSnapshots[idx].RangeNote) {
+				v.VariableSnapshots[idx].RangeNote = ""
+			}
+		}
 	}
 	if v.HasVariables {
-		v.VariablesBadge = fmt.Sprintf("%d snapshots", len(v.VariableSnapshots))
+		unique := len(v.VariableSnapshots)
+		if unique < totalSnaps {
+			v.VariablesBadge = fmt.Sprintf("%d unique of %d", unique, totalSnaps)
+		} else {
+			v.VariablesBadge = fmt.Sprintf("%d snapshots", unique)
+		}
 	} else {
 		v.VariablesBadge = "missing"
 	}
@@ -1501,6 +1581,67 @@ func summariseTop(d *model.TopData) *topSummaryView {
 		sum.MysqldExtra, sum.MysqldExtraAvg = labels[3], avgs[3]
 	}
 	return sum
+}
+
+// snapshotSignature returns a stable hash of a snapshot's variable
+// entries (sorted by name, skipping the volatile set). Adjacent
+// snapshots with identical signatures are collapsed into a single
+// rendered panel.
+func snapshotSignature(entries []model.VariableEntry) string {
+	filtered := make([]string, 0, len(entries))
+	for _, e := range entries {
+		if _, skip := volatileVariables[strings.ToLower(e.Name)]; skip {
+			continue
+		}
+		filtered = append(filtered, e.Name+"\x00"+e.Value)
+	}
+	sort.Strings(filtered)
+	h := fnv.New64a()
+	for _, s := range filtered {
+		h.Write([]byte(s))
+		h.Write([]byte{'\n'})
+	}
+	return fmt.Sprintf("%016x", h.Sum64())
+}
+
+// extendRange grows the RangeNote on a kept snapshot view to cover
+// the given 1-based snapshot number. RangeNote is re-formatted each
+// call so the final text always reflects the full inclusive run.
+func extendRange(v *variableSnapshotView, snapNum int) {
+	lo, hi := parseRangeNote(v.RangeNote)
+	if hi < snapNum {
+		hi = snapNum
+	}
+	if lo > snapNum {
+		lo = snapNum
+	}
+	v.RangeNote = formatRangeNote(lo, hi)
+}
+
+func formatRangeNote(lo, hi int) string {
+	if lo == hi {
+		return fmt.Sprintf("Identical values seen in snapshot #%d", lo)
+	}
+	return fmt.Sprintf("Identical values seen in snapshots #%d–#%d", lo, hi)
+}
+
+// parseRangeNote recovers (lo, hi) from a formatRangeNote string.
+// When the note is missing or malformed (shouldn't happen) returns
+// (0, 0) and callers can recover gracefully.
+func parseRangeNote(note string) (int, int) {
+	var lo, hi int
+	if _, err := fmt.Sscanf(note, "Identical values seen in snapshot #%d", &lo); err == nil && lo > 0 {
+		return lo, lo
+	}
+	if _, err := fmt.Sscanf(note, "Identical values seen in snapshots #%d–#%d", &lo, &hi); err == nil {
+		return lo, hi
+	}
+	return 0, 0
+}
+
+func rangeIsSingle(note string) bool {
+	lo, hi := parseRangeNote(note)
+	return lo != 0 && lo == hi
 }
 
 // aggregateInnoDBMetrics rolls every per-snapshot InnoDB scalar up
