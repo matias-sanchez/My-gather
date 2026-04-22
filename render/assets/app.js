@@ -406,12 +406,13 @@
 
   // findFocusedSeriesIdx returns the uPlot series index that the
   // cursor is currently pointing at, or -1 when none applies. For
-  // stacked-bar plots (u.__rawData is set), it walks the visible
-  // series in draw order (bottommost band first) and returns the
-  // first one whose cumulative top (u.data[i][idx]) brackets the
-  // cursor's Y-value in data space. For line plots it picks the
-  // visible series whose painted Y at this x-index is closest to
-  // the cursor's pixel Y.
+  // stacked-bar plots (u.__rawData is set), it walks the series from
+  // last-to-first (visual bottom band → top band): the last series'
+  // u.data[i][idx] is the smallest cumulative sum (the bottom band's
+  // top edge), so we can walk upward through bands using each one's
+  // cumulative top as the next band's bottom. For line plots it
+  // picks the visible series whose painted pixel-Y at the cursor
+  // x-index is closest to the cursor pixel-Y.
   function findFocusedSeriesIdx(u) {
     var idx = u.cursor.idx;
     if (idx == null) return -1;
@@ -422,10 +423,12 @@
       var yVal = u.posToVal(topPx, "y");
       if (yVal == null || isNaN(yVal) || yVal < 0) return -1;
       var prevTop = 0;
-      for (var i = 1; i < u.series.length; i++) {
+      for (var i = u.series.length - 1; i >= 1; i--) {
         if (u.series[i].show === false) continue;
         var top = u.data[i][idx];
         if (top == null || isNaN(top)) continue;
+        // Hidden or zero-height bands have top == prevTop; skip them.
+        if (top <= prevTop) continue;
         if (yVal >= prevTop && yVal <= top) return i;
         prevTop = top;
       }
