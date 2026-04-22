@@ -72,8 +72,34 @@
       </div>
       <div class="callout">
         <p class="k">AHI</p>
-        <p class="v">2.73</p><p class="sub">searches/sec</p>
-        <p class="stats"><span>min 0.00</span> · <span>avg 1.36</span> · <span>max 2.73</span></p>
+        <p class="v">0.0%</p><p class="sub">hit ratio</p>
+        <p class="stats"><span>min 0.0%</span> · <span>avg 0.0%</span> · <span>max 0.0%</span></p>
+        <details class="ahi-formula">
+          <summary>Formula <span class="cb-chev" aria-hidden="true">▸</span></summary>
+          <div class="cb-body">
+            <p class="ahi-formula-line">
+              <span class="ahi-name">hit ratio</span>
+              <span class="ahi-eq">=</span>
+              <span class="ahi-expr">hash / (hash + non-hash)</span>
+            </p>
+            <p class="ahi-formula-line computed">
+              <span class="ahi-name">at worst</span>
+              <span class="ahi-eq">=</span>
+              <span class="ahi-expr mono">0.00 / (0.00 + 3689000.00)</span>
+              <span class="ahi-eq">=</span>
+              <span class="ahi-result mono">0.0%</span>
+            </p>
+            <p class="cb-caption">
+              worst snapshot <code>2026_04_21_16_52_11</code> · hash table size 138,401
+            </p>
+            <p class="cb-note">
+              A high hit ratio means most index lookups are served directly
+              from the adaptive hash index; a low one means InnoDB is
+              falling back to B-tree traversal — consider whether AHI's
+              memory is being paid for.
+            </p>
+          </div>
+        </details>
       </div>
       <div class="callout">
         <p class="k">History list</p>

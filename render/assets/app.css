@@ -715,6 +715,76 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   color: var(--fg-dim);
   margin-top: 2px;
 }
+/* AHI formula breakdown: expandable panel inside the AHI callout
+   that shows the hit-ratio formula literally and then re-renders it
+   with the worst-snapshot numbers substituted in, so a reader can
+   see WHY the hit ratio is what it is. */
+.ahi-formula {
+  margin-top: 10px;
+  border-top: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
+  padding-top: 8px;
+}
+.ahi-formula > summary {
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  user-select: none;
+}
+.ahi-formula > summary::-webkit-details-marker { display: none; }
+.ahi-formula[open] > summary { color: var(--fg); }
+.ahi-formula .cb-chev {
+  display: inline-block;
+  transition: transform 120ms ease;
+}
+.ahi-formula[open] > summary .cb-chev { transform: rotate(90deg); }
+.ahi-formula .cb-body { padding-top: 8px; }
+.ahi-formula-line {
+  margin: 2px 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+.ahi-formula-line.computed { color: var(--fg); }
+.ahi-formula-line .ahi-name {
+  color: var(--fg-muted);
+  min-width: 70px;
+}
+.ahi-formula-line.computed .ahi-name { color: var(--accent); font-weight: 600; }
+.ahi-formula-line .ahi-eq { color: var(--fg-dim); }
+.ahi-formula-line .ahi-expr { color: inherit; }
+.ahi-formula-line .ahi-result {
+  color: var(--fg);
+  font-weight: 700;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.ahi-formula .cb-caption {
+  margin: 4px 0 0;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+}
+.ahi-formula .cb-caption code {
+  background: transparent;
+  color: var(--fg-muted);
+  padding: 0;
+}
+.ahi-formula .cb-note {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--fg-muted);
+  line-height: 1.45;
+}
+
 /* Semaphore contention-breakdown: expandable panel inside the
    Semaphores callout listing the wait sites that produced the worst
    count, with optional switch to a summed-over-window view. Kept

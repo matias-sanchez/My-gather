@@ -994,6 +994,20 @@ type innoDBMetricView struct {
 	BreakdownPeakTotal    int
 	BreakdownTotal        []semaphoreSiteRow
 	BreakdownTotalTotal   int
+
+	// AHI-only: formula breakdown exposed when the card represents
+	// the Adaptive Hash Index hit ratio. The text fields are all
+	// pre-rendered so the template can concatenate them into a
+	// readable "hit ratio = hash / (hash + non-hash) = X / (X + Y)
+	// = Z%" line.
+	AHIFormula         bool
+	AHIFormulaText     string // "hash / (hash + non-hash)"
+	AHIWorstSnapshot   string
+	AHIWorstHash       string // "3901.21"
+	AHIWorstNonHash    string // "8669.42"
+	AHIWorstRatio      string // "31.0"
+	AHIHashTableSize   string // "34,679"
+	AHINoActivity      bool   // true when every snapshot had hash+non-hash == 0
 }
 
 // semaphoreSiteRow is one row in the contention-breakdown sub-panel.
@@ -1710,14 +1724,12 @@ func rangeIsSingle(note string) bool {
 // nil (e.g. a missing -innodbstatus1 file) are simply skipped.
 func aggregateInnoDBMetrics(snaps []model.SnapshotInnoDB) []innoDBMetricView {
 	var sem, pio, hll []int
-	var ahi []float64
 	for _, si := range snaps {
 		if si.Data == nil {
 			continue
 		}
 		sem = append(sem, si.Data.SemaphoreCount)
 		pio = append(pio, si.Data.PendingReads+si.Data.PendingWrites)
-		ahi = append(ahi, si.Data.AHIActivity.SearchesPerSec)
 		hll = append(hll, si.Data.HistoryListLength)
 	}
 	if len(sem) == 0 {
@@ -1728,9 +1740,110 @@ func aggregateInnoDBMetrics(snaps []model.SnapshotInnoDB) []innoDBMetricView {
 	return []innoDBMetricView{
 		semMetric,
 		innoDBIntMetric("Pending I/O", "reads + writes", pio),
-		innoDBFloatMetric("AHI", "searches/sec", ahi, 2),
+		buildAHIMetric(snaps),
 		innoDBIntMetric("History list", "HLL (undo depth)", hll),
 	}
+}
+
+// buildAHIMetric renders the AHI card as a hit-ratio view instead of
+// a raw "searches/sec" rate. The hit ratio is the fraction of index
+// lookups served directly from the adaptive hash index rather than
+// by walking the B-tree, so a low value is the interesting signal —
+// it means AHI is contributing little and the memory it occupies
+// might be better spent elsewhere. Worst = lowest ratio across
+// snapshots that had any activity; min/avg/max mirror that view.
+//
+// Formula: hit_ratio = hash_searches / (hash_searches + non_hash_searches)
+//
+// Snapshots with zero activity (hash + non-hash == 0) are skipped —
+// dividing 0/0 is meaningless and lets an idle capture collapse the
+// ratio to 0 which would misrepresent the server.
+func buildAHIMetric(snaps []model.SnapshotInnoDB) innoDBMetricView {
+	var ratios []float64
+	type active struct {
+		prefix        string
+		hash, nonHash float64
+		ratio         float64
+	}
+	var activeSnaps []active
+	hashTblSize := 0
+	for _, si := range snaps {
+		if si.Data == nil {
+			continue
+		}
+		if si.Data.AHIActivity.HashTableSize > 0 {
+			hashTblSize = si.Data.AHIActivity.HashTableSize
+		}
+		h := si.Data.AHIActivity.SearchesPerSec
+		nh := si.Data.AHIActivity.NonHashSearchesPerSec
+		if h+nh <= 0 {
+			continue
+		}
+		r := h * 100.0 / (h + nh)
+		ratios = append(ratios, r)
+		activeSnaps = append(activeSnaps, active{
+			prefix: si.SnapshotPrefix, hash: h, nonHash: nh, ratio: r,
+		})
+	}
+	if len(ratios) == 0 {
+		return innoDBMetricView{
+			Label: "AHI",
+			Hint:  "hit ratio",
+			Worst: "–",
+			Min:   "–",
+			Avg:   "–",
+			Max:   "–",
+			AHIFormula:       true,
+			AHIFormulaText:   "hash / (hash + non-hash)",
+			AHIHashTableSize: formatThousands(hashTblSize),
+			AHINoActivity:    true,
+		}
+	}
+	mn, mx, total := ratios[0], ratios[0], 0.0
+	worstIdx := 0
+	for i, r := range ratios {
+		if r < mn {
+			mn = r
+			worstIdx = i
+		}
+		if r > mx {
+			mx = r
+		}
+		total += r
+	}
+	avg := total / float64(len(ratios))
+	worst := activeSnaps[worstIdx]
+	return innoDBMetricView{
+		Label: "AHI",
+		Hint:  "hit ratio",
+		Worst: FormatFloat(mn, 1) + "%",
+		Min:   FormatFloat(mn, 1) + "%",
+		Avg:   FormatFloat(avg, 1) + "%",
+		Max:   FormatFloat(mx, 1) + "%",
+		AHIFormula:       true,
+		AHIFormulaText:   "hash / (hash + non-hash)",
+		AHIWorstSnapshot: worst.prefix,
+		AHIWorstHash:     FormatFloat(worst.hash, 2),
+		AHIWorstNonHash:  FormatFloat(worst.nonHash, 2),
+		AHIWorstRatio:    FormatFloat(worst.ratio, 1),
+		AHIHashTableSize: formatThousands(hashTblSize),
+	}
+}
+
+func formatThousands(n int) string {
+	if n == 0 {
+		return "–"
+	}
+	s := fmt.Sprintf("%d", n)
+	// Insert commas every 3 digits from the right.
+	var out []byte
+	for i, c := range []byte(s) {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			out = append(out, ',')
+		}
+		out = append(out, c)
+	}
+	return string(out)
 }
 
 // attachSemaphoreBreakdown populates the Semaphores card with two

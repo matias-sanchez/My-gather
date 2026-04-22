@@ -15,6 +15,39 @@
         <p class="v">{{.Worst}}</p>
         {{- if .Hint }}<p class="sub">{{.Hint}}</p>{{- end }}
         <p class="stats"><span>min {{.Min}}</span> · <span>avg {{.Avg}}</span> · <span>max {{.Max}}</span></p>
+        {{- if .AHIFormula }}
+        <details class="ahi-formula">
+          <summary>Formula <span class="cb-chev" aria-hidden="true">▸</span></summary>
+          <div class="cb-body">
+            <p class="ahi-formula-line">
+              <span class="ahi-name">hit ratio</span>
+              <span class="ahi-eq">=</span>
+              <span class="ahi-expr">hash / (hash + non-hash)</span>
+            </p>
+            {{- if .AHINoActivity }}
+            <p class="cb-caption">No index activity in any snapshot — hit ratio undefined (0 / 0).</p>
+            {{- else }}
+            <p class="ahi-formula-line computed">
+              <span class="ahi-name">at worst</span>
+              <span class="ahi-eq">=</span>
+              <span class="ahi-expr mono">{{.AHIWorstHash}} / ({{.AHIWorstHash}} + {{.AHIWorstNonHash}})</span>
+              <span class="ahi-eq">=</span>
+              <span class="ahi-result mono">{{.AHIWorstRatio}}%</span>
+            </p>
+            <p class="cb-caption">
+              worst snapshot <code>{{.AHIWorstSnapshot}}</code>
+              {{- if ne .AHIHashTableSize "–" }} · hash table size {{.AHIHashTableSize}}{{end}}
+            </p>
+            <p class="cb-note">
+              A high hit ratio means most index lookups are served directly
+              from the adaptive hash index; a low one means InnoDB is
+              falling back to B-tree traversal — consider whether AHI's
+              memory is being paid for.
+            </p>
+            {{- end }}
+          </div>
+        </details>
+        {{- end }}
         {{- if or .BreakdownPeak .BreakdownTotal }}
         <details class="semaphore-breakdown">
           <summary>Contention breakdown <span class="cb-chev" aria-hidden="true">▸</span></summary>
