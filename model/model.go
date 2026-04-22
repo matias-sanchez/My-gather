@@ -407,8 +407,12 @@ type MysqladminData struct {
 	// (research R8 improvement C).
 	Deltas map[string][]float64
 
-	// IsCounter classifies each variable. Keys are identical to the
-	// VariableNames set as a set.
+	// IsCounter classifies each variable as a monotonic counter
+	// (true) or a point-in-time gauge (false). Keys mirror the
+	// VariableNames set. Classification is decided by
+	// parse.classifyAsCounter, which follows Percona mysqld_exporter's
+	// rules (collector/global_status.go) augmented by an explicit
+	// overrides file at parse/mysql-status-types.json.
 	IsCounter map[string]bool
 
 	// SnapshotBoundaries lists the sample indexes at which a new
@@ -421,18 +425,24 @@ type MysqladminData struct {
 // ProcesslistData is the typed payload for a -processlist SourceFile.
 type ProcesslistData struct {
 	// ThreadStateSamples is one record per -processlist snapshot,
-	// ordered by Timestamp ascending. Each record has a per-state
-	// count bucket rather than per-thread rows (spec Key Entity
-	// "ThreadStateSample" and the F5 remediation in the analyze
-	// pass). When multiple Snapshots contribute (spec FR-018) the
-	// slice concatenates per-Snapshot samples in Snapshot order.
+	// ordered by Timestamp ascending. Each record carries per-state
+	// counts plus parallel buckets for other grouping dimensions
+	// (User / Host / Command / db). When multiple Snapshots contribute
+	// (spec FR-018) the slice concatenates per-Snapshot samples.
 	ThreadStateSamples []ThreadStateSample
 
 	// States is the canonical rendering order of state labels across
-	// the collection: sorted alphabetically, with "Other" always last
-	// if present. Unknown or empty states parse into "Other". For
-	// multi-Snapshot collections States is the union across Snapshots.
+	// the collection: sorted alphabetically with "Other" always last
+	// if present. For multi-Snapshot collections States is the union.
 	States []string
+
+	// Users / Hosts / Commands / Dbs are the canonical label orders
+	// for the matching grouping dimension. Same sorting semantics as
+	// States (alphabetical, "Other" last when present).
+	Users    []string
+	Hosts    []string
+	Commands []string
+	Dbs      []string
 
 	// SnapshotBoundaries lists the sample indexes at which a new
 	// Snapshot's first sample sits within the concatenated time axis.
@@ -440,13 +450,17 @@ type ProcesslistData struct {
 	SnapshotBoundaries []int
 }
 
-// ThreadStateSample is one record per -processlist sample.
+// ThreadStateSample is one record per -processlist sample. Each map
+// buckets the snapshot's threads by the named dimension. Buckets with
+// zero count may be omitted; the renderer fills zeros using the
+// canonical label lists on the parent ProcesslistData for
+// deterministic ordering.
 type ThreadStateSample struct {
 	Timestamp time.Time
 
-	// StateCounts maps state label -> thread count for this sample.
-	// Rendering iterates the parent ProcesslistData.States slice, not
-	// this map, for determinism. States with zero count may be
-	// omitted from the map; render fills in zeros.
-	StateCounts map[string]int
+	StateCounts   map[string]int
+	UserCounts    map[string]int
+	HostCounts    map[string]int
+	CommandCounts map[string]int
+	DbCounts      map[string]int
 }

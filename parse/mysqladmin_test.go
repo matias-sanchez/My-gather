@@ -299,16 +299,48 @@ func TestMysqladminGolden(t *testing.T) {
 		counter  bool
 		category string
 	}{
-		{"Com_select", true, "counter: Com_ prefix"},
-		{"Bytes_sent", true, "counter: Bytes_ prefix"},
-		{"Handler_read_key", true, "counter: Handler_ prefix"},
-		{"Questions", true, "counter: Questions explicit"},
-		{"Connections", true, "counter: Connections explicit"},
-		{"Slow_queries", true, "counter: Slow_queries explicit"},
-		{"Threads_running", false, "gauge: current count, not cumulative"},
-		{"Threads_connected", false, "gauge: current count, not cumulative"},
-		{"Uptime", false, "gauge: seconds, not a counter delta"},
-		{"Open_tables", false, "gauge: currently open tables"},
+		// Regex-matched families (mysqld_exporter global_status.go:37).
+		{"Com_select", true, "counter: com family"},
+		{"Handler_read_key", true, "counter: handler family"},
+		{"Connection_errors_accept", true, "counter: connection_errors family"},
+		{"Connection_errors_max_connections", true, "counter: connection_errors family"},
+		{"Performance_schema_accounts_lost", true, "counter: performance_schema family"},
+		{"Performance_schema_digest_lost", true, "counter: performance_schema family"},
+		{"Innodb_rows_read", true, "counter: innodb_rows family"},
+		{"Innodb_rows_inserted", true, "counter: innodb_rows family"},
+		// innodb_buffer_pool_pages sub-switch (mysqld_exporter
+		// global_status.go:147-163).
+		{"Innodb_buffer_pool_pages_flushed", true, "counter: innodb_buffer_pool_pages sub-switch default"},
+		{"Innodb_buffer_pool_pages_lru_flushed", true, "counter: innodb_buffer_pool_pages sub-switch default"},
+		{"Innodb_buffer_pool_pages_made_young", true, "counter: innodb_buffer_pool_pages sub-switch default"},
+		{"Innodb_buffer_pool_pages_made_not_young", true, "counter: innodb_buffer_pool_pages sub-switch default"},
+		{"Innodb_buffer_pool_pages_data", false, "gauge: innodb_buffer_pool_pages state"},
+		{"Innodb_buffer_pool_pages_dirty", false, "gauge: innodb_buffer_pool_pages state"},
+		{"Innodb_buffer_pool_pages_free", false, "gauge: innodb_buffer_pool_pages state"},
+		{"Innodb_buffer_pool_pages_misc", false, "gauge: innodb_buffer_pool_pages state"},
+		{"Innodb_buffer_pool_pages_old", false, "gauge: innodb_buffer_pool_pages state"},
+		{"Innodb_buffer_pool_pages_total", false, "gauge: buffer pool capacity (skipped by exporter)"},
+		// Explicit-override counters (JSON allowlist).
+		{"Bytes_sent", true, "counter: json override"},
+		{"Bytes_received", true, "counter: json override"},
+		{"Questions", true, "counter: json override"},
+		{"Queries", true, "counter: json override"},
+		{"Connections", true, "counter: json override"},
+		{"Slow_queries", true, "counter: json override"},
+		{"Threads_created", true, "counter: json override"},
+		{"Table_open_cache_misses", true, "counter: json override"},
+		{"Aborted_clients", true, "counter: json override"},
+		// Explicit-override gauges (JSON allowlist).
+		{"Threads_running", false, "gauge: json override"},
+		{"Threads_connected", false, "gauge: json override"},
+		{"Threads_cached", false, "gauge: json override"},
+		{"Uptime", false, "gauge: json override (monotonic but delta is meaningless)"},
+		{"Open_tables", false, "gauge: json override"},
+		{"Open_files", false, "gauge: json override (regression fix — was misclassified as counter)"},
+		{"Innodb_row_lock_current_waits", false, "gauge: json override"},
+		{"Innodb_num_open_files", false, "gauge: json override"},
+		{"Prepared_stmt_count", false, "gauge: json override"},
+		{"Max_used_connections", false, "gauge: json override (peak since reset)"},
 	}
 	for _, c := range classifierSpotCheck {
 		got, present := data.IsCounter[c.name]

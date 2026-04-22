@@ -89,3 +89,32 @@ func TestProcesslistGolden(t *testing.T) {
 	})
 	goldens.Compare(t, goldenPath, got)
 }
+
+func TestStripHostPort(t *testing.T) {
+	cases := []struct {
+		in, want string
+	}{
+		{"", ""},
+		// IPv4 + port.
+		{"10.0.0.1:53412", "10.0.0.1"},
+		// IPv4 bare (no port).
+		{"10.0.0.1", "10.0.0.1"},
+		// Hostname + port / bare.
+		{"localhost:3306", "localhost"},
+		{"localhost", "localhost"},
+		{"host.example.com:3306", "host.example.com"},
+		// Bracketed IPv6.
+		{"[::1]:53412", "[::1]"},
+		{"[2001:db8::5]:1234", "[2001:db8::5]"},
+		{"[2001:db8::5]", "[2001:db8::5]"},
+		// Unbracketed IPv6 (no port possible — keep intact).
+		{"::1", "::1"},
+		{"2001:db8::5", "2001:db8::5"},
+		{"fe80::1", "fe80::1"},
+	}
+	for _, tc := range cases {
+		if got := stripHostPort(tc.in); got != tc.want {
+			t.Errorf("stripHostPort(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}

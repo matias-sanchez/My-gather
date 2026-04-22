@@ -24,3 +24,18 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+----------------------------------------------------------------------
+Derived classification data: parse/mysql-status-types.json
+Source:   https://github.com/percona/mysqld_exporter
+          collector/global_status.go
+License:  Apache License 2.0
+
+Counter/gauge classification rules for SHOW GLOBAL STATUS variables
+are ported from Percona mysqld_exporter (Apache 2.0, Copyright The
+Prometheus Authors and Percona LLC). The ported rules include the
+regex match at global_status.go:37 and the Innodb_buffer_pool_pages
+sub-switch at lines 134-172. Explicit per-variable overrides in
+parse/mysql-status-types.json reflect MySQL's SHOW GLOBAL STATUS
+reference documentation for variables the exporter classifies as
+Untyped.

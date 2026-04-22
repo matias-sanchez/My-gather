@@ -14,6 +14,17 @@
 </head>
 <body>
 
+<button class="nav-toggle" id="nav-toggle" type="button"
+        aria-label="Toggle navigation drawer"
+        aria-controls="nav-drawer"
+        aria-expanded="false"
+        title="Toggle navigation (⌘/Ctrl+.)">
+  <img class="nav-toggle-logo" src="{{.LogoDataURI}}" alt="My-gather — Contents">
+  <span class="nav-toggle-ring" aria-hidden="true"></span>
+</button>
+
+<div class="nav-backdrop" id="nav-backdrop" aria-hidden="true"></div>
+
 <header class="app-header">
   <h1>pt-stalk diagnostic report <span class="sub">{{.Title}}</span></h1>
   <div class="meta">
@@ -24,29 +35,10 @@
   </div>
 </header>
 
-<p class="verbatim-banner">
-  <strong>Verbatim passthrough:</strong>
-  This report is derived verbatim from a pt-stalk collection.
-  Hostnames, IP addresses, query text, and MySQL variables appear as
-  captured. Responsible sharing is the reader's responsibility.
-</p>
-
-<button class="nav-expand-btn" type="button"
-        aria-label="Expand navigation panel"
-        title="Show navigation (⌘/Ctrl+\)"
-        hidden>
-  <span aria-hidden="true">▶ Contents</span>
-</button>
-
 <div class="layout" id="app-layout">
-  <nav class="index" aria-label="Report navigation">
+  <nav class="index" id="nav-drawer" aria-label="Report navigation" aria-hidden="true">
     <div class="nav-header">
       <h2>Contents</h2>
-      <button class="nav-collapse-btn" type="button"
-              aria-label="Collapse navigation panel"
-              title="Collapse navigation (⌘/Ctrl+\)">
-        <span aria-hidden="true">◀</span>
-      </button>
     </div>
     {{- /* NavGroups is the deterministic Level-1 + nested Level-2 shape
            computed by render.go. Each group renders as a native
@@ -55,13 +47,15 @@
     {{range .NavGroups}}
     <details class="nav-group" id="nav-{{.ID}}" open>
       <summary>
-        <span class="nav-title">{{.Title}}</span>
+        {{- /* The title is itself a link to the section so Level-1
+               groups with no Level-2 children (e.g. Advisor, Parser
+               Diagnostics) remain navigable from the drawer. Clicks
+               on this anchor don't toggle the disclosure — app.js
+               stops the event from reaching <summary>. Clicks on
+               other parts of the summary still toggle natively. */}}
+        <a class="nav-title" href="#{{.ID}}">{{.Title}}</a>
       </summary>
       <ul>
-        {{/* Self-link: first child row points at the section itself so
-             the group title isn't a dead end. The toggle-button handler
-             in app.js auto-opens the main-content <details> on click. */}}
-        <li class="self"><a href="#{{.ID}}">Jump to section</a></li>
         {{range .Children}}
         <li><a href="#{{.ID}}">{{.Title}}</a></li>
         {{end}}
@@ -105,7 +99,20 @@
       </div>
     </details>
 
-    {{/* Parser Diagnostics — collapsed by default per Principle XI. */}}
+    {{/* Advisor section — rule-based findings, rendered at the end. */}}
+    <details id="sec-advisor" class="section" open>
+      <summary>
+        <span>Advisor</span>
+        <span class="badge">{{.AdvisorBadge}}</span>
+      </summary>
+      <div class="body">
+        {{template "advisor" .}}
+      </div>
+    </details>
+
+    {{/* Parser Diagnostics — collapsed by default per Principle XI so
+         the signal isn't drowned out, but always surfaced so incomplete
+         or partially-parsed source files are visible to the reader. */}}
     <details id="sec-diagnostics" class="diagnostics">
       <summary>
         <span>Parser Diagnostics</span>

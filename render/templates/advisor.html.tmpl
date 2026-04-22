@@ -1,0 +1,92 @@
+{{- /* advisor.html.tmpl — Advisor / Findings subview.
+       Renders a deterministic list of severity-rated findings grouped
+       by subsystem. Each finding is a <details> card; critical ones
+       default to open. The counts strip at the top doubles as a
+       severity filter — each chip is a toggle; app.js wires clicks
+       to show/hide findings of that severity and to hide subsystem
+       groups that become empty. */ -}}
+{{ define "advisor" }}
+
+{{- if not .HasFindings }}
+<p class="banner">No findings triggered for this capture — every analytical rule either passed or had insufficient input. Capture a longer window with active workload to see more signal.</p>
+{{- else }}
+
+<div class="advisor-summary" role="group" aria-label="Severity filters">
+  <button type="button" class="advisor-count crit is-active" data-sev="crit"
+          aria-pressed="true" title="Toggle visibility of Critical findings">
+    <span class="n">{{.AdvisorCounts.Crit}}</span>
+    <span class="k">Critical</span>
+  </button>
+  <button type="button" class="advisor-count warn is-active" data-sev="warn"
+          aria-pressed="true" title="Toggle visibility of Warning findings">
+    <span class="n">{{.AdvisorCounts.Warn}}</span>
+    <span class="k">Warning</span>
+  </button>
+  <button type="button" class="advisor-count info is-active" data-sev="info"
+          aria-pressed="true" title="Toggle visibility of Info findings">
+    <span class="n">{{.AdvisorCounts.Info}}</span>
+    <span class="k">Info</span>
+  </button>
+  <button type="button" class="advisor-count ok is-active" data-sev="ok"
+          aria-pressed="true" title="Toggle visibility of OK findings">
+    <span class="n">{{.AdvisorCounts.OK}}</span>
+    <span class="k">OK</span>
+  </button>
+</div>
+
+{{- /* Group by Subsystem while preserving order. The template iterates
+       the already-sorted slice and injects a subhead whenever the
+       subsystem changes. The wrapping <section> lets app.js hide the
+       whole group (header + body) when every child finding is filtered
+       out by the severity chips above. */ -}}
+<div class="advisor-groups">
+{{- $lastSubsystem := "" -}}
+{{- range .Findings }}
+  {{- if ne .Subsystem $lastSubsystem }}
+    {{- if $lastSubsystem }}</div></section>{{- end }}
+    <section class="advisor-group" data-subsystem="{{.Subsystem}}">
+      <h3 class="advisor-group-title"><span class="rule" aria-hidden="true"></span>{{.Subsystem}}</h3>
+      <div class="advisor-group-body">
+    {{- $lastSubsystem = .Subsystem }}
+  {{- end }}
+  <details class="finding sev-{{.SeverityClass}}" data-sev="{{.SeverityClass}}" id="finding-{{.ID}}"{{if .OpenByDefault}} open{{end}}>
+    <summary>
+      <span class="sev-chip sev-{{.SeverityClass}}">{{.SeverityLabel}}</span>
+      <span class="finding-title">{{.Title}}</span>
+      <span class="finding-summary">{{.Summary}}</span>
+    </summary>
+    <div class="finding-body">
+      <div class="finding-formula">
+        <div class="row"><span class="k">Formula</span> <code>{{.FormulaText}}</code></div>
+        <div class="row"><span class="k">Computed</span> <code>{{.FormulaComputed}}</code></div>
+      </div>
+      {{- if .Metrics }}
+      <ul class="finding-metrics">
+        {{- range .Metrics }}
+        <li>
+          <span class="name">{{.Name}}</span>
+          <span class="value">{{.Value}}{{if .Unit}} <em class="unit">{{.Unit}}</em>{{end}}</span>
+          {{- if .Note }}<span class="note">{{.Note}}</span>{{end}}
+        </li>
+        {{- end }}
+      </ul>
+      {{- end }}
+      {{- if .Explanation }}
+      <p class="finding-explain">{{.Explanation}}</p>
+      {{- end }}
+      {{- if .Recommendations }}
+      <div class="finding-recs">
+        <div class="k">Recommendations</div>
+        <ul>
+          {{- range .Recommendations }}<li>{{.}}</li>{{ end }}
+        </ul>
+      </div>
+      {{- end }}
+    </div>
+  </details>
+{{- end }}
+{{- if $lastSubsystem }}</div></section>{{- end }}
+</div>
+
+{{- end }}
+{{ end }}
