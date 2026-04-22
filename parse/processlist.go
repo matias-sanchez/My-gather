@@ -235,9 +235,22 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 	}, diagnostics
 }
 
-// stripHostPort trims the ":port" suffix from a processlist Host value
-// ("10.0.0.1:53412" → "10.0.0.1", "localhost" → "localhost"). IPv6
-// addresses wrapped in brackets keep their bracketed form.
+// stripHostPort trims the ":port" suffix from a processlist Host value.
+// Accepted inputs:
+//
+//	"10.0.0.1:53412"         → "10.0.0.1"          (IPv4 with port)
+//	"localhost"              → "localhost"         (hostname, no port)
+//	"localhost:3306"         → "localhost"         (hostname with port)
+//	"[::1]:53412"            → "[::1]"             (bracketed IPv6 with port)
+//	"[2001:db8::5]"          → "[2001:db8::5]"     (bracketed IPv6, no port)
+//	"::1"                    → "::1"               (unbracketed IPv6, no port)
+//	"2001:db8::5"            → "2001:db8::5"       (unbracketed IPv6, no port)
+//
+// Bracketed hosts are always preserved in bracketed form. Non-bracketed
+// hosts are treated as having a port only when the colon-split form is
+// unambiguously host:port — i.e. exactly one colon in the string. Two
+// or more colons indicate an unbracketed IPv6 literal (MySQL cannot
+// encode a port on unbracketed IPv6, so no truncation is needed).
 func stripHostPort(h string) string {
 	if h == "" {
 		return ""
@@ -248,8 +261,9 @@ func stripHostPort(h string) string {
 		}
 		return h
 	}
-	if i := strings.LastIndex(h, ":"); i >= 0 {
-		return h[:i]
+	// Multiple ':' → unbracketed IPv6; there is no port suffix to trim.
+	if strings.Count(h, ":") != 1 {
+		return h
 	}
-	return h
+	return h[:strings.IndexByte(h, ':')]
 }
