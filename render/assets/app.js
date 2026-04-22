@@ -1689,6 +1689,18 @@
       })(groups[i]);
     }
 
+    // The summary-title anchor (<a class="nav-title">) is what makes
+    // Level-1 groups with no Level-2 children navigable. Clicking it
+    // would otherwise also toggle the parent <details>; stopPropagation
+    // keeps the semantics clean: anchor = navigate, rest of summary =
+    // expand/collapse.
+    var titleLinks = document.querySelectorAll("nav.index details.nav-group > summary > a.nav-title");
+    for (var t = 0; t < titleLinks.length; t++) {
+      titleLinks[t].addEventListener("click", function (ev) {
+        ev.stopPropagation();
+      });
+    }
+
     // Clicking a child link auto-opens its parent nav-group (in case
     // the user had it collapsed) and, for robustness, also opens the
     // target main-content <details> so jump-to-anchor scrolls land on

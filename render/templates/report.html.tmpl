@@ -47,7 +47,13 @@
     {{range .NavGroups}}
     <details class="nav-group" id="nav-{{.ID}}" open>
       <summary>
-        <span class="nav-title">{{.Title}}</span>
+        {{- /* The title is itself a link to the section so Level-1
+               groups with no Level-2 children (e.g. Advisor, Parser
+               Diagnostics) remain navigable from the drawer. Clicks
+               on this anchor don't toggle the disclosure — app.js
+               stops the event from reaching <summary>. Clicks on
+               other parts of the summary still toggle natively. */}}
+        <a class="nav-title" href="#{{.ID}}">{{.Title}}</a>
       </summary>
       <ul>
         {{range .Children}}
@@ -101,6 +107,31 @@
       </summary>
       <div class="body">
         {{template "advisor" .}}
+      </div>
+    </details>
+
+    {{/* Parser Diagnostics — collapsed by default per Principle XI so
+         the signal isn't drowned out, but always surfaced so incomplete
+         or partially-parsed source files are visible to the reader. */}}
+    <details id="sec-diagnostics" class="diagnostics">
+      <summary>
+        <span>Parser Diagnostics</span>
+        <span class="badge">{{.DiagnosticsBadge}}</span>
+      </summary>
+      <div class="body">
+        {{- if .Diagnostics }}
+        <ul>
+          {{- range .Diagnostics }}
+          <li>
+            <span class="sev {{.SeverityClass}}">{{.SeverityLabel}}</span>
+            <span class="loc">{{if .SourceFileDisplay}}{{.SourceFileDisplay}}{{end}}{{if .Location}} · {{.Location}}{{end}}</span>
+            <span class="msg">{{.Message}}</span>
+          </li>
+          {{- end }}
+        </ul>
+        {{- else }}
+        <p class="banner" style="margin:12px 14px;">No parser diagnostics — the collection parsed without warnings or errors.</p>
+        {{- end }}
       </div>
     </details>
 

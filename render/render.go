@@ -798,8 +798,11 @@ func buildNavigation(r *model.Report) []model.NavEntry {
 	nav = append(nav, model.NavEntry{ID: "sub-db-mysqladmin", Title: "Counter deltas", Level: 2, ParentID: "sec-db"})
 	nav = append(nav, model.NavEntry{ID: "sub-db-processlist", Title: "Thread states", Level: 2, ParentID: "sec-db"})
 
-	// Advisor section — rule-based findings, last in the report.
+	// Advisor section — rule-based findings.
 	nav = append(nav, model.NavEntry{ID: "sec-advisor", Title: "Advisor", Level: 1})
+
+	// Parser Diagnostics — always surfaced, at the very bottom.
+	nav = append(nav, model.NavEntry{ID: "sec-diagnostics", Title: "Parser Diagnostics", Level: 1})
 
 	return nav
 }
@@ -849,10 +852,11 @@ type reportView struct {
 	DataPayload     template.JS // JSON, emitted inside <script type="application/json">
 	LogoDataURI     template.URL
 
-	AdvisorBadge   string
-	OSBadge        string
-	VariablesBadge string
-	DBBadge        string
+	AdvisorBadge     string
+	OSBadge          string
+	VariablesBadge   string
+	DBBadge          string
+	DiagnosticsBadge string
 
 	// Advisor section payload.
 	Findings      []findingView
@@ -879,6 +883,9 @@ type reportView struct {
 	MysqladminCount     int
 	MysqladminSelectID  string
 	HasProcesslist bool
+
+	// Diagnostics (flattened for template iteration).
+	Diagnostics []diagnosticView
 }
 
 type variableSnapshotView struct {
@@ -914,6 +921,14 @@ type navGroupView struct {
 type navChildView struct {
 	ID    string
 	Title string
+}
+
+type diagnosticView struct {
+	SourceFileDisplay string
+	Location          string
+	SeverityClass     string
+	SeverityLabel     string
+	Message           string
 }
 
 // findingView is the template-facing shape of a findings.Finding.
@@ -1065,6 +1080,15 @@ func buildView(r *model.Report, c *model.Collection) *reportView {
 	}
 	presentDB := boolToInt(v.HasInnoDB) + boolToInt(v.HasMysqladmin) + boolToInt(v.HasProcesslist)
 	v.DBBadge = fmt.Sprintf("%d / 3 subviews", presentDB)
+
+	// Diagnostics: collection-wide + per-SourceFile, sorted stably by
+	// (severity desc, source-file, location).
+	v.Diagnostics = flattenDiagnostics(c)
+	if len(v.Diagnostics) == 0 {
+		v.DiagnosticsBadge = "clean"
+	} else {
+		v.DiagnosticsBadge = fmt.Sprintf("%d entries", len(v.Diagnostics))
+	}
 
 	// Advisor: rule-based findings derived from the captured data.
 	fs := findings.Analyze(r)
@@ -1566,6 +1590,96 @@ func boolToInt(b bool) int {
 		return 1
 	}
 	return 0
+}
+
+// --- Parser diagnostics view helpers --------------------------------
+
+func flattenDiagnostics(c *model.Collection) []diagnosticView {
+	var out []diagnosticView
+	add := func(d model.Diagnostic) {
+		out = append(out, diagnosticView{
+			SourceFileDisplay: shortPath(d.SourceFile),
+			Location:          d.Location,
+			SeverityClass:     severityClass(d.Severity),
+			SeverityLabel:     severityLabel(d.Severity),
+			Message:           d.Message,
+		})
+	}
+	for _, d := range c.Diagnostics {
+		add(d)
+	}
+	for _, snap := range c.Snapshots {
+		for _, suffix := range model.KnownSuffixes {
+			sf, ok := snap.SourceFiles[suffix]
+			if !ok {
+				continue
+			}
+			for _, d := range sf.Diagnostics {
+				add(d)
+			}
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].SeverityClass != out[j].SeverityClass {
+			return severityRank(out[i].SeverityClass) > severityRank(out[j].SeverityClass)
+		}
+		if out[i].SourceFileDisplay != out[j].SourceFileDisplay {
+			return out[i].SourceFileDisplay < out[j].SourceFileDisplay
+		}
+		return out[i].Location < out[j].Location
+	})
+	return out
+}
+
+func severityClass(s model.Severity) string {
+	switch s {
+	case model.SeverityInfo:
+		return "info"
+	case model.SeverityWarning:
+		return "warn"
+	case model.SeverityError:
+		return "err"
+	default:
+		return "info"
+	}
+}
+
+func severityLabel(s model.Severity) string {
+	switch s {
+	case model.SeverityInfo:
+		return "info"
+	case model.SeverityWarning:
+		return "warn"
+	case model.SeverityError:
+		return "error"
+	default:
+		return "info"
+	}
+}
+
+func severityRank(cls string) int {
+	switch cls {
+	case "err":
+		return 3
+	case "warn":
+		return 2
+	default:
+		return 1
+	}
+}
+
+func shortPath(p string) string {
+	if p == "" {
+		return ""
+	}
+	// Strip leading directory components so diagnostics aren't cluttered
+	// with the full absolute path the user passed on the CLI.
+	for i := len(p) - 1; i >= 0; i-- {
+		if p[i] == '/' {
+			return p[i+1:]
+		}
+	}
+	return p
 }
 
 // --- Advisor / findings view helpers --------------------------------
