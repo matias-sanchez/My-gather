@@ -42,15 +42,21 @@ All tests must pass. This exercises:
 ### Updating golden files
 
 When a deliberate change to the parsed-model JSON or the rendered
-HTML lands, regenerate the golden files in one step:
+HTML lands, regenerate the golden files with:
 
 ```bash
-go test ./... -update
+go test ./parse/... -update
 ```
 
-The `-update` flag is honoured by every golden-file test. Review the
-resulting diff carefully; a one-character rendering change can
-invalidate every golden file in the tree.
+The `-update` flag is honoured by every golden-file test, but Go's
+flag registration is per-test-binary: the flag is only recognised by
+packages that import `tests/goldens`. `go test ./... -update` fails
+with `flag provided but not defined: -update` in packages that do
+not use goldens (render, tests/lint, tests/coverage today). Scope
+the invocation to goldens-using packages and widen the scope as
+more adopt goldens. Review the resulting diff carefully; a
+one-character rendering change can invalidate every golden file in
+the tree.
 
 ## Build the binary
 

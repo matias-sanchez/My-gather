@@ -63,10 +63,10 @@ make release     # cross-compile linux/{amd64,arm64} + darwin/{amd64,arm64} -> d
 Goldens are regenerated with:
 
 ```bash
-go test ./... -update
+go test ./parse/... -update
 ```
 
-Review the resulting diff before committing.
+The `-update` flag is registered only in packages that import `tests/goldens`; scope the invocation to goldens-using packages (currently `./parse/...`) and widen it as more packages adopt goldens. Review the resulting diff before committing.
 
 ## Scope (v1)
 

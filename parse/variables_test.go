@@ -14,8 +14,10 @@ import (
 // and compare the resulting *VariablesData against a committed
 // golden JSON under testdata/golden/. Any drift in
 // deduplication / sort / value extraction fails the test with a
-// readable pointer to the first differing byte; `go test ./... -update`
-// rewrites the golden for human review.
+// readable pointer to the first differing byte;
+// `go test ./parse/... -update` rewrites the golden for human review
+// (the `-update` flag is registered only in goldens-using packages —
+// see the `tests/goldens` package godoc for the scoping rule).
 func TestVariablesGolden(t *testing.T) {
 	root := goldens.RepoRoot(t)
 	fixture := filepath.Join(root, "testdata", "example2", "2026_04_21_16_51_41-variables")
