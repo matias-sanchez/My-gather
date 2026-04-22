@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -497,15 +498,10 @@ func TestDefaultVisibleSkipsInitialTally(t *testing.T) {
 
 // sortStrings returns a sorted copy of its input (so callers can
 // build a VariableNames slice in arbitrary order and still satisfy
-// MysqladminData's "strictly sorted" invariant). Kept inline rather
-// than imported from sort because one line is smaller than an import.
+// MysqladminData's "strictly sorted" invariant).
 func sortStrings(in []string) []string {
 	out := make([]string, len(in))
 	copy(out, in)
-	for i := 1; i < len(out); i++ {
-		for j := i; j > 0 && out[j-1] > out[j]; j-- {
-			out[j-1], out[j] = out[j], out[j-1]
-		}
-	}
+	sort.Strings(out)
 	return out
 }

@@ -231,8 +231,9 @@ All tasks write paths relative to the repository root.
 
 These tasks exist for features already shipping in `render/assets/`.
 The implementation tasks are marked `[x]` where the feature is live in
-the binary; the paired test tasks remain `[ ]` until the test file is
-written.
+the binary. The paired test tasks (T098, T100, T102, T104, T106) were
+initially tracked `[ ]` until each test file landed; they are now all
+`[x]` as of the PR C bundle that introduced them.
 
 - [x] T097 [US3] Implement MySQL-defaults modified-vs-default badging for the Variables section (FR-033, research R10): commit `render/assets/mysql-defaults.json` with the curated MySQL 8.0 subset + `_source`/`_updated` metadata header, embed it via `//go:embed`, and surface "modified" / "default" badges in `render/templates/variables.html.tmpl`. Variables absent from the defaults map render without a badge.
 - [x] T098 [P] [US3] `render/variables_test.go::TestDefaultsBadges` (FR-033 coverage): builds a hand-crafted Collection with `max_connections=151` (documented default), `max_connections=4096` (modified), and `DefinitelyNotAMySQLVariable_2026` (absent from the defaults map) across two Snapshots. Asserts the rendered HTML carries `data-variable-name=… data-status="default"` for the at-default row, `data-status="modified"` for the changed row, and `data-status="unknown"` for the undocumented row; also asserts the visible `default` / `modified` status-label cells render.

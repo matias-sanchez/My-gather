@@ -193,28 +193,35 @@ func TestDefaultsBadges(t *testing.T) {
 
 	// max_connections appears once as "default" (value 151) and once
 	// as "modified" (value 4096). Assert both statuses appear at
-	// least once in the document paired with the row's name; this is
-	// stronger than just checking the strings exist anywhere because
-	// we also require the `data-variable-name="max_connections"`
-	// attribute on the same row.
-	wantDefaultRow := `data-variable-name="max_connections" data-status="default"`
-	wantModifiedRow := `data-variable-name="max_connections" data-status="modified"`
-	if !strings.Contains(html, wantDefaultRow) {
-		t.Errorf("expected a row with %q (max_connections at its documented default value 151); rendered HTML does not contain it",
-			wantDefaultRow)
+	// least once in the document paired with the row's name by
+	// matching a single `<tr …>` that carries BOTH attributes,
+	// regardless of attribute order, spacing, or unrelated
+	// attributes inserted between them. A strict adjacency /
+	// substring check would false-fail on a semantics-preserving
+	// attribute reorder.
+	rowPattern := func(variableName, status string) *regexp.Regexp {
+		nameAttr := `data-variable-name="` + regexp.QuoteMeta(variableName) + `"`
+		statusAttr := `data-status="` + regexp.QuoteMeta(status) + `"`
+		return regexp.MustCompile(
+			`<tr\b[^>]*(?:` + nameAttr + `[^>]*` + statusAttr + `|` + statusAttr + `[^>]*` + nameAttr + `)[^>]*>`,
+		)
 	}
-	if !strings.Contains(html, wantModifiedRow) {
-		t.Errorf("expected a row with %q (max_connections clearly changed from default); rendered HTML does not contain it",
-			wantModifiedRow)
+	if !rowPattern("max_connections", "default").MatchString(html) {
+		t.Errorf("expected a <tr> for max_connections with data-status=%q (max_connections at its documented default value 151); rendered HTML does not contain it",
+			"default")
+	}
+	if !rowPattern("max_connections", "modified").MatchString(html) {
+		t.Errorf("expected a <tr> for max_connections with data-status=%q (max_connections clearly changed from default); rendered HTML does not contain it",
+			"modified")
 	}
 
 	// DefinitelyNotAMySQLVariable_2026 must carry data-status="unknown"
 	// because no default is documented. A regression where "unknown"
 	// silently degraded to "default" would be invisible to a casual
 	// glance at the HTML but would break the FR-033 contract.
-	wantUnknownRow := `data-variable-name="DefinitelyNotAMySQLVariable_2026" data-status="unknown"`
-	if !strings.Contains(html, wantUnknownRow) {
-		t.Errorf("expected a row with %q; rendered HTML does not contain it", wantUnknownRow)
+	if !rowPattern("DefinitelyNotAMySQLVariable_2026", "unknown").MatchString(html) {
+		t.Errorf("expected a <tr> for DefinitelyNotAMySQLVariable_2026 with data-status=%q; rendered HTML does not contain it",
+			"unknown")
 	}
 
 	// Belt-and-suspenders: the status cells render a visible label
