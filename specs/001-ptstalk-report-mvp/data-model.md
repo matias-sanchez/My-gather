@@ -279,9 +279,11 @@ Invariants:
   keep a stable legend, and a per-column absence is represented by
   those zero-substituted samples — the parser does NOT emit a
   diagnostic and does NOT produce a zero-length Samples slice for
-  missing columns today. No committed fixture exercises a missing
-  column; the contract is pinned by `parse/vmstat_test.go`'s
-  length-equality invariant.
+  missing columns. No committed fixture currently exercises a
+  missing column, so that behaviour is specified here but not pinned
+  by fixture coverage today; `parse/vmstat_test.go`'s
+  length-equality invariant only asserts equal Series lengths for
+  the exercised fully-populated input.
 - `SnapshotBoundaries` indexes into `Series[0].Samples` — the primary
   timestamp axis the renderer uses. Same semantics as
   IostatData.SnapshotBoundaries.

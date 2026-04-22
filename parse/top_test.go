@@ -3,6 +3,7 @@ package parse
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -112,34 +113,22 @@ func TestTopGolden(t *testing.T) {
 		avgs[i] = sum / float64(batchCount)
 		pids[i] = ps.PID
 	}
-	// Factor the "desc by avg + PID-desc tiebreak" assertion so we can
-	// exercise it against both (a) the fixture-derived Top3 and (b) a
-	// deterministic synthetic slice that forces an equal-average tie.
-	// Floating-point averages from a real fixture rarely compare equal;
-	// without the synthetic case the tie branch is effectively dead
-	// code and a tiebreaker regression would not fail this test.
-	assertSortedByAverageWithPIDTiebreak := func(name string, avgs []float64, pids []int) {
-		t.Helper()
-		for i := 1; i < len(avgs); i++ {
-			if avgs[i-1] < avgs[i] {
-				t.Errorf("%s not sorted by average desc: idx %d avg=%.4f < idx %d avg=%.4f",
-					name, i-1, avgs[i-1], i, avgs[i])
-			}
-			if avgs[i-1] == avgs[i] && pids[i-1] < pids[i] {
-				t.Errorf("%s tie at avg=%.4f resolved to lower PID first: idx %d PID=%d < idx %d PID=%d",
-					name, avgs[i], i-1, pids[i-1], i, pids[i])
-			}
+	// Strictly non-increasing by average on the fixture-derived Top3.
+	// (The (higher PID first) tiebreaker contract is exercised against
+	// the parser itself in TestTopTiebreakerViaParser below; float
+	// averages from the committed fixture rarely compare exactly equal,
+	// so a tiebreaker check against this data alone would almost never
+	// execute the tie branch.)
+	for i := 1; i < len(avgs); i++ {
+		if avgs[i-1] < avgs[i] {
+			t.Errorf("Top3ByAverage not sorted by average desc: idx %d avg=%.4f < idx %d avg=%.4f",
+				i-1, avgs[i-1], i, avgs[i])
+		}
+		if avgs[i-1] == avgs[i] && pids[i-1] < pids[i] {
+			t.Errorf("Top3ByAverage tie at avg=%.4f resolved to lower PID first: idx %d PID=%d < idx %d PID=%d",
+				avgs[i], i-1, pids[i-1], i, pids[i])
 		}
 	}
-	assertSortedByAverageWithPIDTiebreak("Top3ByAverage", avgs, pids)
-	// Synthetic tie: pins the "higher PID first" contract
-	// deterministically so this test does not rely on the fixture
-	// happening to produce an exact floating-point tie.
-	assertSortedByAverageWithPIDTiebreak(
-		"Top3ByAverage synthetic tie",
-		[]float64{10, 10, 9},
-		[]int{200, 100, 50},
-	)
 
 	// Single-file parse MUST NOT emit multi-snapshot boundaries. The
 	// render layer owns concatenation (same ownership line as iostat
@@ -163,4 +152,65 @@ func TestTopGolden(t *testing.T) {
 		Diagnostics:        diags,
 	})
 	goldens.Compare(t, goldenPath, got)
+}
+
+// TestTopTiebreakerViaParser: T044 tiebreaker pin (companion to
+// TestTopGolden).
+//
+// parseTop's ranking contract (data-model.md §TopData): ties in
+// sum(CPUPercent) / totalBatchCount resolve to higher PID first.
+// TestTopGolden cannot reliably exercise the tie branch because the
+// committed fixture rarely produces exact float-equal averages. This
+// test drives `parseTop` on an in-memory minimal `top -b` fixture
+// whose two processes have identical CPUPercent across every batch,
+// so the averages compare exactly equal and the parser's tiebreaker
+// is the only thing that picks the order. A regression in
+// `parse/top.go` that swaps the comparator (e.g., sorts by PID ascending
+// on ties) would fail this test immediately with a specific message.
+//
+// Feeding literal pre-sorted arrays into the assertion helper — which
+// an earlier iteration of TestTopGolden did — only validates the
+// helper. Only a parser-driven assertion pins the parser's behaviour,
+// which is the invariant the data-model contract actually promises.
+func TestTopTiebreakerViaParser(t *testing.T) {
+	// Minimal two-batch `top -b` fixture. Both PIDs (100 and 200)
+	// appear in both batches with %CPU=50.0, so their averages are
+	// exactly equal and the tiebreaker alone decides the Top3 order.
+	fixture := strings.Join([]string{
+		"top - 00:00:00 up 1 day,  0:00,  0 users,  load average: 0,0,0",
+		"Tasks:   0 total",
+		"%Cpu(s):  0 us",
+		"MiB Mem :   0 total",
+		"MiB Swap:   0 total",
+		"",
+		"    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND",
+		"    100 root      20   0       0      0      0 S  50.0   0.0   0:00.00 procA",
+		"    200 root      20   0       0      0      0 S  50.0   0.0   0:00.00 procB",
+		"",
+		"top - 00:00:01 up 1 day,  0:00,  0 users,  load average: 0,0,0",
+		"Tasks:   0 total",
+		"%Cpu(s):  0 us",
+		"MiB Mem :   0 total",
+		"MiB Swap:   0 total",
+		"",
+		"    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND",
+		"    100 root      20   0       0      0      0 S  50.0   0.0   0:00.00 procA",
+		"    200 root      20   0       0      0      0 S  50.0   0.0   0:00.00 procB",
+		"",
+	}, "\n")
+
+	data, diags := parseTop(strings.NewReader(fixture), topSnapshotStart(), "synthetic-tie")
+	if data == nil {
+		t.Fatalf("parseTop returned nil data on tie fixture (diagnostics: %+v)", diags)
+	}
+	if len(data.Top3ByAverage) < 2 {
+		t.Fatalf("Top3ByAverage has %d entries; synthetic fixture defines 2 processes — expected at least 2", len(data.Top3ByAverage))
+	}
+
+	// Parser-contract assertion: equal averages → higher PID first.
+	// A regression that flipped the tie direction would fail here.
+	if data.Top3ByAverage[0].PID < data.Top3ByAverage[1].PID {
+		t.Errorf("parseTop tiebreaker regression: Top3ByAverage[0].PID=%d < [1].PID=%d; data-model.md specifies higher PID first on equal averages",
+			data.Top3ByAverage[0].PID, data.Top3ByAverage[1].PID)
+	}
 }
