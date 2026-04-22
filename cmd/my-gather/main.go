@@ -129,6 +129,21 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return exitOutputInsideIn
 	}
 
+	// F8 resolution: if the output parent directory does not exist,
+	// fail cleanly with exitInputPath rather than discovering the
+	// problem at write time (which would return the opaque
+	// exitInternal). Auto-mkdir is explicitly NOT done; the user
+	// gets a clear path error and decides whether to create the dir.
+	outParent := filepath.Dir(absOut)
+	if _, err := os.Stat(outParent); err != nil {
+		if os.IsNotExist(err) {
+			fmt.Fprintf(stderr, "my-gather: output directory %q does not exist; create it or choose a different --out path\n", outParent)
+			return exitInputPath
+		}
+		fmt.Fprintf(stderr, "my-gather: stat output directory %q: %v\n", outParent, err)
+		return exitInputPath
+	}
+
 	// Early existence check for the overwrite guard (FR-002 / exit 6).
 	if _, err := os.Stat(absOut); err == nil && !overwrite {
 		fmt.Fprintf(stderr, "my-gather: output %q already exists; pass --overwrite to replace\n", absOut)
