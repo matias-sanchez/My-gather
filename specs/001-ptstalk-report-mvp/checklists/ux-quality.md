@@ -56,15 +56,18 @@ Applies to every rendered surface, independent of section.
       axis falls back to raw `toLocaleString()`.
 - [ ] **G-5** Every rendered timestamp — including server-rendered
       header / banner / table text, chart tooltips and other
-      JavaScript-rendered timestamp labels, and timestamp fields
-      in the embedded JSON payload — uses the shared UTC ISO-8601
-      formatter (Principle IV). No rendered surface or payload
-      field uses locale-dependent (`toLocaleDateString`,
-      `toLocaleString`) or raw-epoch time. A grep of `app.js` for
-      `toLocaleDate`, `toLocaleString`, or `toLocaleTime` returns
-      no hits in rendering paths (note: `toLocaleString()` on
-      non-timestamp numeric values — e.g., integer formatting — is
-      still permitted and is governed by G-4, not G-5).
+      JavaScript-rendered timestamp labels, and timestamp fields in
+      the embedded JSON payload — uses the shared UTC ISO-8601
+      formatter (Principle IV). No timestamp-formatting call site
+      uses locale-dependent (`toLocaleDateString`, `toLocaleTime…`)
+      or raw-epoch time. Auditable via inspection of every function
+      in `app.js` that takes a timestamp or `Date` argument and
+      returns a human-readable string: each MUST route through the
+      shared UTC formatter helper. `toLocaleString()` is NOT
+      forbidden outright — it remains permitted for non-timestamp
+      numeric formatting (e.g., integer separators), which is
+      governed by G-4. The audit check is "no locale-dependent
+      timestamp formatting", not "no `toLocaleString` anywhere".
 - [ ] **G-6** Every interactive element (button, dropdown, chip,
       checkbox, search input) is reachable and operable by keyboard
       alone (FR-031, FR-036).

@@ -284,7 +284,7 @@ written.
       2. `MYGATHER_UX_AUDIT_BASE` env var (developer-overridable for local runs).
       3. `git merge-base HEAD origin/main` as a best-effort fallback.
       If none of the above resolves to a valid commit (fork CI without the remote, a shallow clone missing the base, a local clone detached from any remote), the test **SKIPs with a logged reason** rather than failing — the gate is for PR / release contexts, not for every dev invocation.
-      When the base IS resolved, the test runs `git diff --name-only <base>..HEAD` and asserts that any diff under `render/`, `render/assets/`, `model/`, or `parse/` is accompanied by at least one diff under `specs/001-ptstalk-report-mvp/ux-audits/`. No new CI lane; the guard lives inside the regular `go test ./...` pass.
+      When the base IS resolved, the test runs `git diff --name-only <base>..HEAD` and filters the diff to **report-shaping runtime files only**: a non-test `.go` file (i.e. NOT matching `*_test.go`) under `render/`, `model/`, or `parse/`, OR any file under `render/assets/`. If any such file changed, at least one file under `specs/001-ptstalk-report-mvp/ux-audits/` MUST also have changed. Test-only edits (`*_test.go`), `testdata/` additions, and `specs/` edits outside `ux-audits/` are explicitly **excluded** — they cannot change the rendered HTML so they don't need to refresh the audit. No new CI lane; the guard lives inside the regular `go test ./...` pass.
 
 **Checkpoint**: a clean Phase 8 pass means the report ships at a quality bar that any senior reviewer who just read the constitution and the checklist can independently confirm — not a matter of reviewer taste.
 

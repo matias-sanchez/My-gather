@@ -630,11 +630,14 @@ matching their respective golden files.
   marked PASS — or carries an explicit DEFERRED status with a
   follow-up task ID. Freshness is enforced by a **diff-based
   invariant** (not by commit timestamps, which are unreliable
-  under rebase / cherry-pick): any PR or commit range that
-  changes a report-shaping code path — `render/`, `render/assets/`,
-  `model/`, or `parse/` — MUST also add or modify at least one
-  file under `specs/001-ptstalk-report-mvp/ux-audits/`. A missing
-  audit update blocks the cut. A `testdata_coverage`-style guard
+  under rebase / cherry-pick): any PR or commit range that changes
+  a **report-shaping runtime file** — i.e. a non-test `.go` file
+  under `render/`, `model/`, or `parse/`, or any file under
+  `render/assets/` — MUST also add or modify at least one file
+  under `specs/001-ptstalk-report-mvp/ux-audits/`. Test files
+  (`*_test.go`) and other non-runtime artifacts are explicitly
+  **excluded** from the gate because they cannot change the
+  rendered output. A missing audit update blocks the cut. A `testdata_coverage`-style guard
   (`tests/coverage/ux_audit_freshness_test.go` or equivalent,
   T119) implements the check against the PR's diff; wiring it as
   a regular Go test avoids introducing a new CI lane.
