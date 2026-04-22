@@ -61,9 +61,13 @@ func loadMysqladminCategories() []mysqladminCategoryDef {
 		var v struct {
 			Categories []mysqladminCategoryDef `json:"categories"`
 		}
-		if err := json.Unmarshal(embeddedMysqladminCategoriesJSON, &v); err == nil {
-			mysqladminCategories = v.Categories
+		// Embedded at build time — a parse error is a programmer
+		// error, not a user-runtime condition. Fail loudly instead
+		// of silently producing an uncategorised chart view.
+		if err := json.Unmarshal(embeddedMysqladminCategoriesJSON, &v); err != nil {
+			panic(fmt.Sprintf("render/assets/mysqladmin-categories.json: malformed embedded JSON: %v", err))
 		}
+		mysqladminCategories = v.Categories
 	})
 	return mysqladminCategories
 }
@@ -119,11 +123,13 @@ func loadMySQLDefaults() map[string]string {
 		var v struct {
 			Defaults map[string]string `json:"defaults"`
 		}
-		if err := json.Unmarshal(embeddedMySQLDefaultsJSON, &v); err == nil {
-			mysqlDefaults = v.Defaults
-		} else {
-			mysqlDefaults = map[string]string{}
+		// Embedded at build time — a parse error is a programmer
+		// error. Fail loudly so the "non-default" badges can't
+		// silently lose their reference map.
+		if err := json.Unmarshal(embeddedMySQLDefaultsJSON, &v); err != nil {
+			panic(fmt.Sprintf("render/assets/mysql-defaults.json: malformed embedded JSON: %v", err))
 		}
+		mysqlDefaults = v.Defaults
 	})
 	return mysqlDefaults
 }

@@ -351,14 +351,15 @@ func loadStatusTypes() *statusTypeTables {
 			ExplicitCounters []string `json:"explicit_counters"`
 			ExplicitGauges   []string `json:"explicit_gauges"`
 		}
+		// The override file is embedded at build time (//go:embed).
+		// A parse error therefore means the JSON was broken at
+		// compile time — a programmer error, not a user-runtime
+		// condition. Panic loudly so the misclassification can't
+		// quietly ship; there is no safe fallback because silent
+		// degradation flips ~170 counters back to gauges and
+		// corrupts downstream advisor findings.
 		if err := json.Unmarshal(embeddedStatusTypesJSON, &raw); err != nil {
-			// Malformed override file: fall back to regex-only
-			// classification rather than hard-failing the run.
-			statusTypes = &statusTypeTables{
-				counters: map[string]struct{}{},
-				gauges:   map[string]struct{}{},
-			}
-			return
+			panic(fmt.Sprintf("parse/mysql-status-types.json: malformed embedded JSON: %v", err))
 		}
 		t := &statusTypeTables{
 			counters: make(map[string]struct{}, len(raw.ExplicitCounters)),

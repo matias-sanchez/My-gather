@@ -70,7 +70,17 @@ func ruleBPFreePagesLow(r *model.Report) Finding {
 		return Finding{Severity: SeveritySkip}
 	}
 	threshold := scanDepth * instances
-	if free > threshold || readsRate <= 0 {
+	// Canonical Rosetta Stone predicate is
+	//   (free <= threshold) AND (reads > 0)
+	// so each of the three outcomes gets its own branch with an
+	// accurate message — no branch claims a condition that wasn't
+	// actually checked.
+	if readsRate <= 0 {
+		// Idle window: without physical reads we can't evaluate
+		// whether the pool is under pressure. Drop the finding.
+		return Finding{Severity: SeveritySkip}
+	}
+	if free > threshold {
 		return Finding{
 			ID:        "bp.free_pages_low",
 			Subsystem: "Buffer Pool",

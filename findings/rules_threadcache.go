@@ -57,8 +57,13 @@ func ruleThreadCacheHitRatio(r *model.Report) Finding {
 		Explanation: "MySQL caches per-connection threads to avoid paying thread-creation cost on every new connection. " +
 			"If the cache is too small for the connection rate, every new connection pays the full create cost.",
 		FormulaText: "hit_ratio = 1 − Threads_created / Connections",
+		// FormulaComputed reports the REAL (unclamped) ratio. A
+		// negative number here signals short/reset windows where
+		// Threads_created > Connections — clamping that to 0 % would
+		// hide the anomaly. The Summary above still uses the clamped
+		// display value for human readability.
 		FormulaComputed: fmt.Sprintf("1 − %s / %s = %s",
-			formatNum(threadsCreated), formatNum(connections), formatPercent(display)),
+			formatNum(threadsCreated), formatNum(connections), formatPercent(ratio)),
 		Metrics: []MetricRef{
 			{Name: "Threads_created", Value: threadsCreated, Unit: "count"},
 			{Name: "Connections", Value: connections, Unit: "count"},
