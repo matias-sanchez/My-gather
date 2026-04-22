@@ -11,6 +11,7 @@
     <div class="search-row">
       <input type="search" class="variables-search"
              data-snapshot="{{.DetailsID}}"
+             aria-label="Filter {{.Title}} variables by name"
              placeholder="Filter by name…" autocomplete="off" spellcheck="false">
       <div class="var-chips" role="tablist" aria-label="Variable filters">
         <button class="var-chip active" data-filter="all"      data-snapshot="{{.DetailsID}}">All ({{.Count}})</button>
