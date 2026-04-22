@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
@@ -28,10 +29,28 @@ import (
 // runs compare against the committed golden and fail on any drift.
 var update = flag.Bool("update", false, "rewrite committed golden files under testdata/golden/ from the current parser / render output")
 
-// MarshalDeterministic renders v as indented JSON with sorted keys,
-// suitable for a human-reviewed golden file. Fails the test on any
-// marshalling error (that would indicate a non-serialisable shape
-// in the model, which is a bug we want to surface loudly).
+// MarshalDeterministic renders v as indented JSON suitable for a
+// human-reviewed golden file: two-space indent, HTML escaping
+// disabled (so `<` / `>` / `&` appear verbatim in rendered-HTML
+// goldens). String-keyed maps are sorted by key deterministically by
+// `encoding/json`, and our model types use struct fields in declared
+// order, so two invocations on the same value produce byte-identical
+// output.
+//
+// NaN handling. `encoding/json` rejects non-finite floats (NaN / Inf)
+// with an `UnsupportedValueError`. Parsers that deliberately emit
+// NaN — `parse/mysqladmin` at cross-Snapshot boundaries (FR-030) and
+// drift slots (research R8) — MUST scrub those slots BEFORE calling
+// this helper. Use `ScrubFloats` below, which rewrites NaN / ±Inf in
+// a `map[string][]float64` to JSON-encodable nulls. Keeping the
+// scrub as an opt-in helper (rather than baking it into
+// MarshalDeterministic) avoids a reflection walk that would change
+// struct field ordering in already-committed goldens.
+//
+// A marshalling error fails the test loudly — that indicates either
+// a missing ScrubFloats call or a non-serialisable shape in the
+// model, both of which we want to surface rather than silently
+// paper over.
 func MarshalDeterministic(t *testing.T, v any) []byte {
 	t.Helper()
 	var buf bytes.Buffer
@@ -39,9 +58,36 @@ func MarshalDeterministic(t *testing.T, v any) []byte {
 	enc.SetIndent("", "  ")
 	enc.SetEscapeHTML(false)
 	if err := enc.Encode(v); err != nil {
-		t.Fatalf("MarshalDeterministic: %v", err)
+		t.Fatalf("MarshalDeterministic: %v (if a NaN reached here, pass the offending map through ScrubFloats first)", err)
 	}
 	return buf.Bytes()
+}
+
+// ScrubFloats returns a copy of m in which every NaN / ±Inf value has
+// been rewritten to nil (`null` after JSON encoding). Finite values
+// pass through unchanged. The returned map is `map[string][]any`
+// because JSON's type system does not have `float64 | null`; slot-
+// level `any` is the shape MarshalDeterministic can encode.
+//
+// Typical use (mysqladmin): `ScrubFloats(data.Deltas)` before
+// including in the payload that feeds MarshalDeterministic.
+func ScrubFloats(m map[string][]float64) map[string][]any {
+	if m == nil {
+		return nil
+	}
+	out := make(map[string][]any, len(m))
+	for k, vs := range m {
+		scrubbed := make([]any, len(vs))
+		for i, v := range vs {
+			if math.IsNaN(v) || math.IsInf(v, 0) {
+				scrubbed[i] = nil
+			} else {
+				scrubbed[i] = v
+			}
+		}
+		out[k] = scrubbed
+	}
+	return out
 }
 
 // Compare reads the committed golden file at goldenPath and compares
@@ -88,16 +134,27 @@ func Compare(t *testing.T, goldenPath string, got []byte) {
 // golden test uses this to build deterministic paths to
 // `testdata/golden/*.json` regardless of what directory `go test`
 // happened to cd into.
+//
+// Terminates when `filepath.Dir(dir) == dir` rather than when the
+// string equals "/". Unix roots round-trip through Dir as "/", but on
+// Windows `filepath.Dir("C:\\") == "C:\\"` — a naive string compare
+// against "/" never terminates and the test hangs. The same equality
+// check covers both conventions.
 func RepoRoot(t *testing.T) string {
 	t.Helper()
 	wd, err := filepath.Abs(".")
 	if err != nil {
 		t.Fatalf("RepoRoot: abs cwd: %v", err)
 	}
-	for dir := wd; dir != "/" && dir != ""; dir = filepath.Dir(dir) {
+	for dir := wd; ; {
 		if fi, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil && !fi.IsDir() {
 			return dir
 		}
+		parent := filepath.Dir(dir)
+		if parent == dir || parent == "" {
+			break
+		}
+		dir = parent
 	}
 	t.Fatalf("RepoRoot: could not find go.mod starting from %s", wd)
 	return ""
