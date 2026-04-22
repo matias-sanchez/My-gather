@@ -87,13 +87,14 @@ func TestKeyboardShortcutWiring(t *testing.T) {
 	// here — the only way past is one document-bound handler that
 	// carries all four FR-036 content invariants inside its body.
 	//
-	// Accept either callback shape — `function (…) { … }` or an
-	// arrow `(…) => { … }` — so a behaviour-preserving refactor to
-	// arrow syntax (or single-quoted event names) doesn't false-fail
-	// this test. Both forms still enclose a `{ … }` body which the
-	// regex captures via one-level brace nesting (enough for the
-	// shipped handler's single nested `if` block).
-	docHandlerRE := regexp.MustCompile(`document\.addEventListener\(\s*["']keydown["']\s*,\s*(?:function\s*\([^)]*\)|\([^)]*\)\s*=>)\s*\{([^{}]|\{[^{}]*\})*\}`)
+	// Accept three callback shapes — `function (…) { … }`, a
+	// parenthesised arrow `(…) => { … }`, and a bare single-arg
+	// arrow `ident => { … }` — so a behaviour-preserving refactor
+	// to arrow syntax (or single-quoted event names) doesn't false-
+	// fail this test. All three forms still enclose a `{ … }` body
+	// which the regex captures via one-level brace nesting (enough
+	// for the shipped handler's single nested `if` block).
+	docHandlerRE := regexp.MustCompile(`document\.addEventListener\(\s*["']keydown["']\s*,\s*(?:function\s*\([^)]*\)|\([^)]*\)\s*=>|[a-zA-Z_$][\w$]*\s*=>)\s*\{([^{}]|\{[^{}]*\})*\}`)
 	docHandlers := docHandlerRE.FindAllString(js, -1)
 	if len(docHandlers) == 0 {
 		t.Fatalf("no `document.addEventListener(\"keydown\", …)` handler bodies extracted from app.js (accepted shapes: function-expression or arrow, single or double quotes); FR-036 requires a document-level listener")

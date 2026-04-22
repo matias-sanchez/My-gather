@@ -430,9 +430,33 @@ func TestDefaultVisibleSkipsInitialTally(t *testing.T) {
 	// Invariant 1b: defaultVisible contains only counter names. A
 	// gauge leaked in would produce a chart line from a gauge's raw
 	// reading — meaningless next to counter deltas.
+	//
+	// Two independent checks to prevent single-source-of-truth
+	// coupling:
+	//
+	//  1. Every defaultVisible entry must be a counter per
+	//     `m.IsCounter`. This catches a categoriser regression but
+	//     is INSUFFICIENT on its own: both `m.DefaultVisible` and
+	//     `m.IsCounter` are produced from `MysqladminData.IsCounter`
+	//     in render code, so a regression that misclassified a
+	//     gauge as a counter upstream (in the parser or in the
+	//     render pipeline's counter-vs-gauge pass) would corrupt
+	//     both fields identically and pass this check.
+	//  2. The known fixture gauge (`Threads_running`) must be
+	//     ABSENT from defaultVisible. Hard-coded against the
+	//     fixture so the assertion is independent of the render
+	//     payload's `IsCounter` map.
+	//
+	// Both must hold. A regression in either direction fails one
+	// of the two with a direct message.
 	for _, v := range m.DefaultVisible {
 		if !m.IsCounter[v] {
-			t.Errorf("defaultVisible includes gauge %q; FR-035 expects counters only (gauges belong to the raw-value chart family)", v)
+			t.Errorf("defaultVisible includes %q which payload.isCounter reports is a gauge; FR-035 expects counters only (gauges belong to the raw-value chart family)", v)
+		}
+	}
+	for _, v := range m.DefaultVisible {
+		if v == gauge {
+			t.Errorf("defaultVisible contains fixture gauge %q; FR-035 counters-only default view must exclude this known gauge regardless of payload.isCounter's classification", v)
 		}
 	}
 
