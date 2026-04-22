@@ -63,7 +63,7 @@ func ruleThreadCacheHitRatio(r *model.Report) Finding {
 		// hide the anomaly. The Summary above still uses the clamped
 		// display value for human readability.
 		FormulaComputed: fmt.Sprintf("1 − %s / %s = %s",
-			formatNum(threadsCreated), formatNum(connections), formatPercent(ratio)),
+			FormatNum(threadsCreated), FormatNum(connections), formatPercent(ratio)),
 		Metrics: []MetricRef{
 			{Name: "Threads_created", Value: threadsCreated, Unit: "count"},
 			{Name: "Connections", Value: connections, Unit: "count"},

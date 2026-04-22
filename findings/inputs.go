@@ -214,11 +214,12 @@ func variableRaw(r *model.Report, name string) (string, bool) {
 	return "", false
 }
 
-// formatNum renders a float with a sensible precision for display in
+// FormatNum renders a float with a sensible precision for display in
 // the FormulaComputed line. Integers print without decimals;
 // fractions get up to 2 decimal places; very small fractions use
-// scientific notation.
-func formatNum(v float64) string {
+// scientific notation. Exported so render-side callers (advisor
+// template data) share a single canonical formatter.
+func FormatNum(v float64) string {
 	if math.IsNaN(v) {
 		return "NaN"
 	}
@@ -233,7 +234,7 @@ func formatNum(v float64) string {
 	}
 	abs := math.Abs(v)
 	if abs >= 1 && math.Abs(v-math.Round(v)) < 1e-9 {
-		return humanInt(int64(math.Round(v)))
+		return HumanInt(int64(math.Round(v)))
 	}
 	if abs >= 1 {
 		return fmt.Sprintf("%.2f", v)
@@ -244,8 +245,9 @@ func formatNum(v float64) string {
 	return fmt.Sprintf("%.2e", v)
 }
 
-// humanInt prints a signed integer with thousand-separator commas.
-func humanInt(n int64) string {
+// HumanInt prints a signed integer with thousand-separator commas.
+// Exported alongside FormatNum so the render layer can reuse it.
+func HumanInt(n int64) string {
 	neg := n < 0
 	if neg {
 		n = -n

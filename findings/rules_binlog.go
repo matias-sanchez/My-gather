@@ -28,11 +28,11 @@ func ruleBinlogCacheDiskUse(r *model.Report) Finding {
 		Subsystem: "Binlog Cache",
 		Title:     "Binlog cache overflowing to disk",
 		Severity:  sev,
-		Summary:   fmt.Sprintf("%s transactions/s exceeded binlog_cache_size and spilled to disk.", formatNum(rate)),
+		Summary:   fmt.Sprintf("%s transactions/s exceeded binlog_cache_size and spilled to disk.", FormatNum(rate)),
 		Explanation: "Binlog_cache_disk_use counts transactions whose cached binlog data exceeded binlog_cache_size and " +
 			"had to be written to a temporary file. A steady increase indicates binlog_cache_size should be raised.",
 		FormulaText:     "Binlog_cache_disk_use/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Binlog_cache_disk_use/s", Value: rate, Unit: "/s"},
 			{Name: "binlog_cache_size", Value: cacheSize, Unit: "bytes"},
@@ -66,11 +66,11 @@ func ruleBinlogStmtCacheDiskUse(r *model.Report) Finding {
 		Subsystem: "Binlog Cache",
 		Title:     "Binlog statement cache overflowing to disk",
 		Severity:  sev,
-		Summary:   fmt.Sprintf("%s statements/s exceeded binlog_stmt_cache_size and spilled to disk.", formatNum(rate)),
+		Summary:   fmt.Sprintf("%s statements/s exceeded binlog_stmt_cache_size and spilled to disk.", FormatNum(rate)),
 		Explanation: "Binlog_stmt_cache_disk_use counts non-transactional statements whose binlog data exceeded " +
 			"binlog_stmt_cache_size and had to be written to a temporary file.",
 		FormulaText:     "Binlog_stmt_cache_disk_use/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Binlog_stmt_cache_disk_use/s", Value: rate, Unit: "/s"},
 			{Name: "binlog_stmt_cache_size", Value: stmtSize, Unit: "bytes"},

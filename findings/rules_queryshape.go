@@ -23,11 +23,11 @@ func ruleFullScanSelectScan(r *model.Report) Finding {
 		Subsystem: "Query Shape",
 		Title:     "Full table scans on the first join input",
 		Severity:  sev,
-		Summary:   fmt.Sprintf("Select_scan is incrementing at %s/s — queries are fully scanning their first table.", formatNum(rate)),
+		Summary:   fmt.Sprintf("Select_scan is incrementing at %s/s — queries are fully scanning their first table.", FormatNum(rate)),
 		Explanation: "Select_scan counts SELECTs that had to scan the entire first table in their plan, usually because the " +
 			"relevant column is not indexed (or the planner could not use the index). Deltas from this should be 0 in a healthy OLTP workload.",
 		FormulaText:     "Select_scan/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Select_scan/s", Value: rate, Unit: "/s"},
 		},
@@ -56,11 +56,11 @@ func ruleFullScanSelectFullJoin(r *model.Report) Finding {
 		Subsystem: "Query Shape",
 		Title:     "Joins without usable indexes",
 		Severity:  sev,
-		Summary:   fmt.Sprintf("Select_full_join is incrementing at %s/s — joins are running without a usable index.", formatNum(rate)),
+		Summary:   fmt.Sprintf("Select_full_join is incrementing at %s/s — joins are running without a usable index.", FormatNum(rate)),
 		Explanation: "Select_full_join counts the number of joins that performed full scans because no suitable index could be used. " +
 			"Even a low non-zero rate is cause for investigation — each full join multiplies the work across the join's cardinality.",
 		FormulaText:     "Select_full_join/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Select_full_join/s", Value: rate, Unit: "/s"},
 		},
@@ -86,14 +86,14 @@ func ruleFullScanHandlerRndNext(r *model.Report) Finding {
 		return Finding{Severity: SeveritySkip}
 	}
 	sev := SeverityOK
-	summary := fmt.Sprintf("Handler_read_rnd_next is %s/s — normal for this workload.", formatNum(rate))
+	summary := fmt.Sprintf("Handler_read_rnd_next is %s/s — normal for this workload.", FormatNum(rate))
 	switch {
 	case rate > critRate:
 		sev = SeverityCrit
-		summary = fmt.Sprintf("Handler_read_rnd_next at %s/s is very high — likely unindexed scans.", formatNum(rate))
+		summary = fmt.Sprintf("Handler_read_rnd_next at %s/s is very high — likely unindexed scans.", FormatNum(rate))
 	case rate > warnRate:
 		sev = SeverityWarn
-		summary = fmt.Sprintf("Handler_read_rnd_next at %s/s is high — investigate for unindexed scans.", formatNum(rate))
+		summary = fmt.Sprintf("Handler_read_rnd_next at %s/s is high — investigate for unindexed scans.", FormatNum(rate))
 	}
 	return Finding{
 		ID:        "queryshape.handler_read_rnd_next",
@@ -104,7 +104,7 @@ func ruleFullScanHandlerRndNext(r *model.Report) Finding {
 		Explanation: "Handler_read_rnd_next counts rows read by advancing through a table in storage order — the footprint of table scans. " +
 			"A high rate without the workload being explicitly analytical usually indicates missing or unused indexes.",
 		FormulaText:     "Handler_read_rnd_next/s",
-		FormulaComputed: fmt.Sprintf("%s /s", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s", FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Handler_read_rnd_next/s", Value: rate, Unit: "/s"},
 		},

@@ -44,7 +44,7 @@ func ruleBPHitRatio(r *model.Report) Finding {
 			"increasingly wait on disk I/O.",
 		FormulaText: "hit_ratio = 1 − Innodb_buffer_pool_reads / Innodb_buffer_pool_read_requests",
 		FormulaComputed: fmt.Sprintf("1 − %s / %s = %s",
-			formatNum(reads), formatNum(reqs), formatPercent(ratio)),
+			FormatNum(reads), FormatNum(reqs), formatPercent(ratio)),
 		Metrics: []MetricRef{
 			{Name: "Innodb_buffer_pool_reads", Value: reads, Unit: "count", Note: "physical reads during capture"},
 			{Name: "Innodb_buffer_pool_read_requests", Value: reqs, Unit: "count", Note: "logical reads during capture"},
@@ -86,10 +86,10 @@ func ruleBPFreePagesLow(r *model.Report) Finding {
 			Subsystem: "Buffer Pool",
 			Title:     "Buffer pool free pages headroom",
 			Severity:  SeverityOK,
-			Summary:   fmt.Sprintf("Free pages (%s) comfortably above the LRU-scan-depth threshold (%s).", formatNum(free), formatNum(threshold)),
+			Summary:   fmt.Sprintf("Free pages (%s) comfortably above the LRU-scan-depth threshold (%s).", FormatNum(free), FormatNum(threshold)),
 			FormulaText: "free_pages > innodb_lru_scan_depth × innodb_buffer_pool_instances",
 			FormulaComputed: fmt.Sprintf("%s > %s × %s = %s",
-				formatNum(free), formatNum(scanDepth), formatNum(instances), formatNum(threshold)),
+				FormatNum(free), FormatNum(scanDepth), FormatNum(instances), FormatNum(threshold)),
 			Metrics: []MetricRef{
 				{Name: "Innodb_buffer_pool_pages_free", Value: free, Unit: "pages", Note: "last sample"},
 				{Name: "innodb_lru_scan_depth", Value: scanDepth, Unit: "pages"},
@@ -101,7 +101,7 @@ func ruleBPFreePagesLow(r *model.Report) Finding {
 	}
 	sev := SeverityWarn
 	summary := fmt.Sprintf("Free pages (%s) have fallen below scan_depth × instances (%s) while physical reads continue at %s/s.",
-		formatNum(free), formatNum(threshold), formatNum(readsRate))
+		FormatNum(free), FormatNum(threshold), FormatNum(readsRate))
 	// Strong signal if we're also actively flushing via LRU
 	if v, ok := counterRatePerSec(r, "Innodb_buffer_pool_pages_LRU_flushed"); ok && v > 0 {
 		sev = SeverityCrit
@@ -117,7 +117,7 @@ func ruleBPFreePagesLow(r *model.Report) Finding {
 			"incoming read requests will stall waiting for a free page, and the page cleaner has to flush synchronously on the query path.",
 		FormulaText: "free_pages <= innodb_lru_scan_depth × innodb_buffer_pool_instances  AND  Innodb_buffer_pool_reads/s > 0",
 		FormulaComputed: fmt.Sprintf("%s <= %s × %s = %s  AND  %s /s > 0",
-			formatNum(free), formatNum(scanDepth), formatNum(instances), formatNum(threshold), formatNum(readsRate)),
+			FormatNum(free), FormatNum(scanDepth), FormatNum(instances), FormatNum(threshold), FormatNum(readsRate)),
 		Metrics: []MetricRef{
 			{Name: "Innodb_buffer_pool_pages_free", Value: free, Unit: "pages", Note: "last sample"},
 			{Name: "innodb_lru_scan_depth", Value: scanDepth, Unit: "pages"},
@@ -150,12 +150,12 @@ func ruleBPLRUFlushing(r *model.Report) Finding {
 		Subsystem: "Buffer Pool",
 		Title:     "LRU flushing active",
 		Severity:  SeverityWarn,
-		Summary:   fmt.Sprintf("Background LRU flushing observed at %s pages/s — the free list is not keeping up with demand.", formatNum(rate)),
+		Summary:   fmt.Sprintf("Background LRU flushing observed at %s pages/s — the free list is not keeping up with demand.", FormatNum(rate)),
 		Explanation: "LRU flushing is a secondary path the page cleaner takes when the free list is short: " +
 			"it evicts dirty pages from the LRU tail to replenish free pages. Regular activity here indicates " +
 			"the buffer pool is under steady-state pressure.",
 		FormulaText:     "Innodb_buffer_pool_pages_LRU_flushed/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Innodb_buffer_pool_pages_LRU_flushed/s", Value: rate, Unit: "/s"},
 		},
@@ -183,11 +183,11 @@ func ruleBPWaitFree(r *model.Report) Finding {
 		Subsystem: "Buffer Pool",
 		Title:     "Query threads waiting for free buffer pool pages",
 		Severity:  SeverityCrit,
-		Summary:   fmt.Sprintf("Innodb_buffer_pool_wait_free is incrementing at %s/s — user queries are stalling on buffer pool exhaustion.", formatNum(rate)),
+		Summary:   fmt.Sprintf("Innodb_buffer_pool_wait_free is incrementing at %s/s — user queries are stalling on buffer pool exhaustion.", FormatNum(rate)),
 		Explanation: "This counter increments every time a thread could not find a clean page in the buffer pool " +
 			"and had to wait for the page cleaner to produce one. Any non-zero rate is a red flag.",
 		FormulaText:     "Innodb_buffer_pool_wait_free/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Innodb_buffer_pool_wait_free/s", Value: rate, Unit: "/s"},
 		},
@@ -234,7 +234,7 @@ func ruleBPDirtyPct(r *model.Report) Finding {
 			"At that point the page cleaner consumes IO that would otherwise serve user queries, which can look like a latency spike.",
 		FormulaText: "dirty_pct = Innodb_buffer_pool_pages_dirty / Innodb_buffer_pool_pages_total × 100  vs  innodb_max_dirty_pages_pct",
 		FormulaComputed: fmt.Sprintf("%s / %s × 100 = %.2f %%  vs  %.0f %%",
-			formatNum(dirty), formatNum(total), pct, limit),
+			FormatNum(dirty), FormatNum(total), pct, limit),
 		Metrics: []MetricRef{
 			{Name: "Innodb_buffer_pool_pages_dirty (max)", Value: dirty, Unit: "pages"},
 			{Name: "Innodb_buffer_pool_pages_total", Value: total, Unit: "pages"},

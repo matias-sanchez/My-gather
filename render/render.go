@@ -1698,7 +1698,7 @@ func buildFindingViews(fs []findings.Finding) []findingView {
 		for _, m := range f.Metrics {
 			metrics = append(metrics, findingMetricView{
 				Name:  m.Name,
-				Value: advisorFormat(m.Value),
+				Value: findings.FormatNum(m.Value),
 				Unit:  m.Unit,
 				Note:  m.Note,
 			})
@@ -1766,63 +1766,3 @@ func advisorBadge(c findingCountsView) string {
 	return strings.Join(parts, " · ")
 }
 
-// advisorFormat mirrors the findings package's formatNum logic for
-// template display — kept here (rather than re-imported) so the view
-// layer stays self-contained.
-func advisorFormat(v float64) string {
-	if math.IsNaN(v) {
-		return "NaN"
-	}
-	if math.IsInf(v, 0) {
-		if v > 0 {
-			return "∞"
-		}
-		return "-∞"
-	}
-	if v == 0 {
-		return "0"
-	}
-	abs := math.Abs(v)
-	if abs >= 1 && math.Abs(v-math.Round(v)) < 1e-9 {
-		return advisorHumanInt(int64(math.Round(v)))
-	}
-	if abs >= 1 {
-		return fmt.Sprintf("%.2f", v)
-	}
-	if abs >= 0.001 {
-		return fmt.Sprintf("%.4f", v)
-	}
-	return fmt.Sprintf("%.2e", v)
-}
-
-func advisorHumanInt(n int64) string {
-	neg := n < 0
-	if neg {
-		n = -n
-	}
-	s := fmt.Sprintf("%d", n)
-	if len(s) <= 3 {
-		if neg {
-			return "-" + s
-		}
-		return s
-	}
-	var buf strings.Builder
-	first := len(s) % 3
-	if first > 0 {
-		buf.WriteString(s[:first])
-		if len(s) > first {
-			buf.WriteByte(',')
-		}
-	}
-	for i := first; i < len(s); i += 3 {
-		buf.WriteString(s[i : i+3])
-		if i+3 < len(s) {
-			buf.WriteByte(',')
-		}
-	}
-	if neg {
-		return "-" + buf.String()
-	}
-	return buf.String()
-}

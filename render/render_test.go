@@ -114,19 +114,52 @@ func TestAdvisorCardRenders(t *testing.T) {
 	}
 	out := buf.String()
 
-	// Filter chips — all four must be emitted with data-sev attrs.
+	// Filter chips — all four must be emitted as interactive toggles
+	// with data-sev + aria-pressed="true" default.
 	for _, sev := range []string{"crit", "warn", "info", "ok"} {
-		if !strings.Contains(out, `data-sev="`+sev+`"`) {
-			t.Errorf("missing severity filter chip data-sev=%q", sev)
+		want := `data-sev="` + sev + `"`
+		if !strings.Contains(out, want) {
+			t.Errorf("missing severity filter chip %s", want)
 		}
 	}
-	// At least one Critical finding card must land in the output.
+	// Each chip must carry aria-pressed so the filter state is
+	// announced to assistive tech.
+	if strings.Count(out, `aria-pressed="true"`) < 4 {
+		t.Errorf("expected ≥4 chips with aria-pressed=\"true\"; got %d", strings.Count(out, `aria-pressed="true"`))
+	}
+	// Chip count values must be numeric and match what findings.Summarise
+	// produced: exactly 1 Critical finding (bp.wait_free), 0 others.
+	if !strings.Contains(out, `<span class="n">1</span>`) {
+		t.Errorf("expected a chip with count=1 for the triggered Crit finding")
+	}
+
+	// Subsystem grouping: findings are wrapped in <section class=
+	// "advisor-group" data-subsystem="Buffer Pool"> and the group
+	// header carries the subsystem name.
+	if !strings.Contains(out, `data-subsystem="Buffer Pool"`) {
+		t.Errorf("output missing Buffer Pool advisor group")
+	}
+	if !strings.Contains(out, `class="advisor-group-title"`) {
+		t.Errorf("output missing .advisor-group-title (subsystem header)")
+	}
+
+	// At least one Critical finding card.
 	if !strings.Contains(out, `class="finding sev-crit"`) {
 		t.Errorf("output missing Critical finding card (class=\"finding sev-crit\")")
 	}
-	// And the severity pill inside the card summary.
+	// Each finding card exposes its severity via data-sev so the
+	// filter JS can hide/show it; ensure that's wired.
+	if !strings.Contains(out, `data-sev="crit"`) {
+		t.Errorf("output missing finding-card data-sev=\"crit\"")
+	}
+	// The severity pill in the card summary.
 	if !strings.Contains(out, `class="sev-chip sev-crit"`) {
 		t.Errorf("output missing Critical severity pill (class=\"sev-chip sev-crit\")")
+	}
+	// Specific Crit-rule identity: bp.wait_free's summary line names
+	// the metric by its canonical status variable.
+	if !strings.Contains(out, `Innodb_buffer_pool_wait_free`) {
+		t.Errorf("output missing canonical counter name in finding body")
 	}
 }
 

@@ -340,6 +340,110 @@ func TestFullScanSelectScan(t *testing.T) {
 	}
 }
 
+func TestBPFreePagesLow(t *testing.T) {
+	// Canonical paths: (1) idle reads → Skip; (2) free > threshold → OK;
+	// (3) free <= threshold AND reads > 0 → Warn; (4) also LRU flushing → Crit.
+	t.Run("skip_when_idle", func(t *testing.T) {
+		b := newBuilder().
+			gauge("Innodb_buffer_pool_pages_free", 10).
+			variable("innodb_lru_scan_depth", "1024").
+			variable("innodb_buffer_pool_instances", "8").
+			counter("Innodb_buffer_pool_reads", 0)
+		f := findByID(Analyze(b.build()), "bp.free_pages_low")
+		if f != nil {
+			t.Fatalf("expected Skip (no finding), got %+v", f)
+		}
+	})
+	t.Run("ok_when_headroom", func(t *testing.T) {
+		b := newBuilder().
+			gauge("Innodb_buffer_pool_pages_free", 50_000).
+			variable("innodb_lru_scan_depth", "1024").
+			variable("innodb_buffer_pool_instances", "8").
+			counter("Innodb_buffer_pool_reads", 30)
+		f := findByID(Analyze(b.build()), "bp.free_pages_low")
+		if f == nil || f.Severity != SeverityOK {
+			t.Fatalf("expected OK, got %+v", f)
+		}
+	})
+	t.Run("warn_when_pressured", func(t *testing.T) {
+		b := newBuilder().
+			gauge("Innodb_buffer_pool_pages_free", 100).
+			variable("innodb_lru_scan_depth", "1024").
+			variable("innodb_buffer_pool_instances", "8").
+			counter("Innodb_buffer_pool_reads", 30)
+		f := findByID(Analyze(b.build()), "bp.free_pages_low")
+		if f == nil || f.Severity != SeverityWarn {
+			t.Fatalf("expected Warn, got %+v", f)
+		}
+	})
+	t.Run("crit_when_pressured_and_lru_flushing", func(t *testing.T) {
+		b := newBuilder().
+			gauge("Innodb_buffer_pool_pages_free", 100).
+			variable("innodb_lru_scan_depth", "1024").
+			variable("innodb_buffer_pool_instances", "8").
+			counter("Innodb_buffer_pool_reads", 30).
+			counter("Innodb_buffer_pool_pages_LRU_flushed", 30)
+		f := findByID(Analyze(b.build()), "bp.free_pages_low")
+		if f == nil || f.Severity != SeverityCrit {
+			t.Fatalf("expected Crit, got %+v", f)
+		}
+	})
+}
+
+func TestBPDirtyPct(t *testing.T) {
+	// dirty/total > innodb_max_dirty_pages_pct → Crit when over, Warn at 90% of limit.
+	b := newBuilder().
+		gaugeMax("Innodb_buffer_pool_pages_dirty", 950).
+		gauge("Innodb_buffer_pool_pages_total", 1_000).
+		variable("innodb_max_dirty_pages_pct", "90")
+	f := findByID(Analyze(b.build()), "bp.dirty_pct")
+	if f == nil || f.Severity != SeverityCrit {
+		t.Fatalf("expected Crit (95%% of total vs 90%% limit), got %+v", f)
+	}
+}
+
+func TestBPLRUFlushing(t *testing.T) {
+	b := newBuilder().counter("Innodb_buffer_pool_pages_LRU_flushed", 60) // 2/s → Warn
+	f := findByID(Analyze(b.build()), "bp.lru_flushing")
+	if f == nil || f.Severity != SeverityWarn {
+		t.Fatalf("expected Warn, got %+v", f)
+	}
+}
+
+func TestBinlogStmtCacheDiskUse(t *testing.T) {
+	b := newBuilder().counter("Binlog_stmt_cache_disk_use", 6) // 0.2/s → Warn
+	f := findByID(Analyze(b.build()), "binlog.stmt_cache_disk_use")
+	if f == nil || f.Severity != SeverityWarn {
+		t.Fatalf("expected Warn, got %+v", f)
+	}
+}
+
+func TestFullScanSelectFullJoin(t *testing.T) {
+	b := newBuilder().counter("Select_full_join", 30) // 1/s → Warn
+	f := findByID(Analyze(b.build()), "queryshape.select_full_join")
+	if f == nil || f.Severity != SeverityWarn {
+		t.Fatalf("expected Warn, got %+v", f)
+	}
+}
+
+func TestFullScanHandlerReadRndNext(t *testing.T) {
+	// Crit threshold is 100_000 rows/s. 30-second window with total =
+	// 3.5M delta ⇒ 116_666/s, well above critRate.
+	b := newBuilder().counter("Handler_read_rnd_next", 3_500_000)
+	f := findByID(Analyze(b.build()), "queryshape.handler_read_rnd_next")
+	if f == nil || f.Severity != SeverityCrit {
+		t.Fatalf("expected Crit, got %+v", f)
+	}
+}
+
+func TestRedoPendingFsyncs(t *testing.T) {
+	b := newBuilder().gaugeMax("Innodb_os_log_pending_fsyncs", 2)
+	f := findByID(Analyze(b.build()), "redo.pending_fsyncs")
+	if f == nil || f.Severity != SeverityCrit {
+		t.Fatalf("expected Crit, got %+v", f)
+	}
+}
+
 func TestAnalyze_DeterministicOrder(t *testing.T) {
 	// Build a report that triggers multiple findings across subsystems.
 	b := newBuilder().
