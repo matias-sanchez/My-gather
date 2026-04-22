@@ -271,9 +271,16 @@ Invariants:
 
 - `Series` is in a fixed declared order (documented in
   `parse/vmstat.go`) so the rendered chart is deterministic even when
-  some measurements are absent in an older `vmstat` version (those
-  slots are empty-Samples series, and render shows a greyed legend
-  entry with "n/a").
+  some measurements are absent in an older `vmstat` version. A column
+  absent from the source does not drop its slot: the parser
+  zero-substitutes the missing value per row, so every MetricSeries
+  ends up with the same sample count as the number of parsed data
+  rows. The canonical Metric name is always set so the renderer can
+  keep a stable legend, and a per-column absence surfaces through the
+  parser's Diagnostic stream rather than via a zero-length Samples
+  slice. No committed fixture exercises a missing column today; the
+  contract is pinned by `parse/vmstat_test.go`'s length-equality
+  invariant.
 - `SnapshotBoundaries` indexes into `Series[0].Samples` — the primary
   timestamp axis the renderer uses. Same semantics as
   IostatData.SnapshotBoundaries.
