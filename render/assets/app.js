@@ -379,10 +379,52 @@
 
     u.over.addEventListener("mouseleave", function () {
       tt.style.display = "none";
+      if (typeof u.__setLegendFocus === "function") u.__setLegendFocus(-1, null);
     });
     u.over.addEventListener("mouseenter", function () {
       tt.style.display = "block";
     });
+  }
+
+  // findFocusedSeriesIdx returns the uPlot series index that the
+  // cursor is currently pointing at, or -1 when none applies. For
+  // stacked-bar plots (u.__rawData is set), it walks the visible
+  // series in draw order (bottommost band first) and returns the
+  // first one whose cumulative top (u.data[i][idx]) brackets the
+  // cursor's Y-value in data space. For line plots it picks the
+  // visible series whose painted Y at this x-index is closest to
+  // the cursor's pixel Y.
+  function findFocusedSeriesIdx(u) {
+    var idx = u.cursor.idx;
+    if (idx == null) return -1;
+    var topPx = u.cursor.top;
+    if (topPx == null || topPx < 0) return -1;
+    var stacked = !!u.__rawData;
+    if (stacked) {
+      var yVal = u.posToVal(topPx, "y");
+      if (yVal == null || isNaN(yVal) || yVal < 0) return -1;
+      var prevTop = 0;
+      for (var i = 1; i < u.series.length; i++) {
+        if (u.series[i].show === false) continue;
+        var top = u.data[i][idx];
+        if (top == null || isNaN(top)) continue;
+        if (yVal >= prevTop && yVal <= top) return i;
+        prevTop = top;
+      }
+      return -1;
+    }
+    var bestIdx = -1;
+    var bestDist = Infinity;
+    for (var j = 1; j < u.series.length; j++) {
+      if (u.series[j].show === false) continue;
+      var v = u.data[j][idx];
+      if (v == null || isNaN(v)) continue;
+      var yPx = u.valToPos(v, "y");
+      if (yPx == null || isNaN(yPx)) continue;
+      var d = Math.abs(yPx - topPx);
+      if (d < bestDist) { bestDist = d; bestIdx = j; }
+    }
+    return bestIdx;
   }
 
   // updateTooltipOnCursor runs on every uPlot setCursor, which fires
@@ -393,9 +435,16 @@
     var idx = u.cursor.idx;
     if (idx == null || u.cursor.left < 0) {
       tt.style.display = "none";
+      if (typeof u.__setLegendFocus === "function") u.__setLegendFocus(-1, null);
       return;
     }
     tt.style.display = "block";
+
+    var focusedIdx = findFocusedSeriesIdx(u);
+    var focusedColor = null;
+    if (focusedIdx >= 0 && u.series[focusedIdx]) {
+      focusedColor = u.series[focusedIdx].stroke || null;
+    }
 
     // Build rows: timestamp header + one row per visible series.
     var x = u.data[0][idx];
@@ -414,15 +463,18 @@
       if (s.show === false) continue;
       var v = (rawData && rawData[i]) ? rawData[i][idx] : u.data[i][idx];
       if (v == null || (typeof v === "number" && isNaN(v))) continue;
-      entries.push({ label: s.label, color: s.stroke, value: v });
+      entries.push({ idx: i, label: s.label, color: s.stroke, value: v });
     }
     entries.sort(function (a, b) { return Math.abs(b.value) - Math.abs(a.value); });
     if (entries.length === 0) {
       rows.push('<div class="tt-empty">no data at this point</div>');
     } else {
       entries.forEach(function (e) {
+        var focusCls = e.idx === focusedIdx ? " is-focused" : "";
+        var focusStyle = e.idx === focusedIdx
+          ? ' style="--focus-color:' + e.color + '"' : "";
         rows.push(
-          '<div class="tt-row">' +
+          '<div class="tt-row' + focusCls + '"' + focusStyle + ">" +
             '<span class="tt-sw" style="background:' + e.color + '"></span>' +
             '<span class="tt-label">' + escapeHTML(String(e.label)) + '</span>' +
             '<span class="tt-value">' + formatTooltipValue(e.value) + '</span>' +
@@ -431,6 +483,9 @@
       });
     }
     tt.innerHTML = rows.join("");
+    if (typeof u.__setLegendFocus === "function") {
+      u.__setLegendFocus(focusedIdx, focusedColor);
+    }
 
     // Position: offset +12 px right/below the cursor; flip to the
     // left if near the right edge.
@@ -631,6 +686,27 @@
       pills.push(btn);
     });
     containerEl.parentNode.insertBefore(legend, containerEl.nextSibling);
+    // Expose a handle the tooltip path uses to sync the "cursor is
+    // pointing at this series" state onto the matching pill. Focus
+    // is driven by the chart cursor, not by legend hover (which
+    // already fires uPlot's built-in alpha-fade focus), so these
+    // two signals stay independent.
+    if (plot) {
+      plot.__setLegendFocus = function (focusedIdx, focusedColor) {
+        for (var p = 0; p < pills.length; p++) {
+          var pillIdx = Number(pills[p].getAttribute("data-idx"));
+          if (pillIdx === focusedIdx) {
+            pills[p].classList.add("is-focused");
+            if (focusedColor) {
+              pills[p].style.setProperty("--pill-focus-color", focusedColor);
+            }
+          } else {
+            pills[p].classList.remove("is-focused");
+            pills[p].style.removeProperty("--pill-focus-color");
+          }
+        }
+      };
+    }
   }
 
   function escapeHTML(s) {

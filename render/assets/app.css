@@ -875,6 +875,21 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   color: var(--fg-dim);
   font-style: italic;
 }
+/* Focused row: the series the cursor is currently pointing at — the
+   band under Y in a stacked chart, or the line closest to the cursor
+   in a line chart. Bolded and accented with a 2 px bar in the series
+   color (set as a custom property from app.js). */
+.chart-tooltip .tt-row.is-focused {
+  border-left: 2px solid var(--focus-color, var(--fg));
+  padding-left: 6px;
+  margin-left: -2px;
+  font-weight: 700;
+}
+.chart-tooltip .tt-row.is-focused .tt-label,
+.chart-tooltip .tt-row.is-focused .tt-value {
+  color: var(--fg);
+  font-weight: 700;
+}
 
 /* Clickable pill legend rendered by app.js directly after the chart. */
 .series-legend {
@@ -907,6 +922,15 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
 .series-legend .series-pill.active { color: var(--fg); background: var(--bg-elev); }
 .series-legend .series-pill:not(.active) .swatch { opacity: 0.3; }
 .series-legend .series-pill:not(.active) .lbl { text-decoration: line-through; opacity: 0.55; }
+/* is-focused: the series the chart cursor is pointing at right now.
+   Driven live by app.js; independent of the persistent .active
+   (show/hide) state and the transient hover-to-focus alpha fade. */
+.series-legend .series-pill.is-focused {
+  background: color-mix(in srgb, var(--pill-focus-color, var(--accent)) 18%, var(--bg-elev-2));
+  border-color: var(--pill-focus-color, var(--accent));
+  color: var(--fg);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--pill-focus-color, var(--accent)) 45%, transparent) inset;
+}
 
 /* Chart view-toggle toolbar (used by iostat for util / aqu-sz). */
 .chart-view-toolbar {
