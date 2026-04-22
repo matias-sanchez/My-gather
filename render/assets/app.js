@@ -188,6 +188,57 @@
     } catch (_) { return fallback; }
   }
 
+  // Snapshot-boundary marker hook (T054 / FR-018 / FR-030).
+  //
+  // Every time-series chart payload carries `snapshotBoundaries`: a
+  // list of sample indexes at which a new pt-stalk Snapshot's first
+  // sample sits in the concatenated time axis. When the collection
+  // has more than one Snapshot this hook paints a dashed vertical
+  // line at each boundary's timestamp so a viewer reading the report
+  // sees where one Snapshot ends and the next begins. When the
+  // collection has a single Snapshot the list is [0] and no line is
+  // drawn (0 maps to the left edge of the plot and carries no signal).
+  function drawSnapshotBoundaries(u) {
+    var boundaries = u.__snapshotBoundaries;
+    var timestamps = u.__boundaryTimestamps;
+    if (!Array.isArray(boundaries) || !Array.isArray(timestamps)) return;
+    if (boundaries.length <= 1) return; // single-Snapshot case
+
+    var ctx = u.ctx;
+    var plotLeft = u.bbox.left;
+    var plotTop = u.bbox.top;
+    var plotHeight = u.bbox.height;
+    var stroke = cssVar("--fg-dim", "#6e7a8a");
+
+    ctx.save();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    // Skip index 0 — that's the chart's left edge, no visual needed.
+    for (var i = 1; i < boundaries.length; i++) {
+      var sampleIdx = boundaries[i];
+      if (sampleIdx < 0 || sampleIdx >= timestamps.length) continue;
+      var ts = timestamps[sampleIdx];
+      var x = Math.round(u.valToPos(ts, "x", true));
+      if (x < plotLeft || x > plotLeft + u.bbox.width) continue;
+      ctx.beginPath();
+      ctx.moveTo(x, plotTop);
+      ctx.lineTo(x, plotTop + plotHeight);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // attachBoundaryMarkers stashes the chart's boundary data on the
+  // uPlot instance so drawSnapshotBoundaries can reach it from the
+  // `draw` hook (uPlot passes only the instance to hooks). Call this
+  // once per chart from its render* function, AFTER the uPlot instance
+  // is constructed and the data is known.
+  function attachBoundaryMarkers(plot, boundaries, timestamps) {
+    plot.__snapshotBoundaries = Array.isArray(boundaries) ? boundaries : [];
+    plot.__boundaryTimestamps = Array.isArray(timestamps) ? timestamps : [];
+  }
+
   function basePlotOpts(width, height, labelSeries, unit) {
     return {
       width: width,
@@ -226,6 +277,10 @@
       hooks: {
         init:  [attachTooltip],
         setCursor: [updateTooltipOnCursor],
+        // drawAxes fires after uPlot renders axes/grid but before
+        // data points — perfect layer for boundary markers: they
+        // live on top of the grid and under the plotted series.
+        drawAxes: [drawSnapshotBoundaries],
       },
     };
   }
@@ -466,6 +521,7 @@
     var values = [data.timestamps.slice()].concat(data.series.map(function (s) { return s.values; }));
     var opts = basePlotOpts(width, 260, series, unit);
     var plot = new uPlot(opts, values, el);
+    attachBoundaryMarkers(plot, data.snapshotBoundaries, data.timestamps);
     registerChart(plot, el, opts);
     mountLegend(el, series, plot);
   }
@@ -530,6 +586,7 @@
       var w = measureChartWidth(el);
       var opts = basePlotOpts(w, 260, series, unit);
       plot = new uPlot(opts, values, el);
+      attachBoundaryMarkers(plot, data.snapshotBoundaries, data.timestamps);
       registerChart(plot, el, opts);
       mountLegend(el, series, plot);
       legendEl = el.nextSibling;
@@ -934,6 +991,12 @@
       // No rotated y-axis label — the chart's heading carries the unit.
       var opts = basePlotOpts(width, 300, series, "");
       chart = new uPlot(opts, values, el);
+      // Boundaries are indexes into the UN-truncated data.timestamps
+      // (server-side FR-018 / FR-030 semantics). We pass the
+      // un-truncated timestamps so the hook can look up boundary
+      // wall-clock times directly; any boundary whose timestamp is
+      // outside the plot's visible x-range is skipped by the hook.
+      attachBoundaryMarkers(chart, data.snapshotBoundaries, data.timestamps);
       registerChart(chart, el, opts);
       mountLegend(el, series, chart);
     }

@@ -216,45 +216,287 @@ func collectionTitle(c *model.Collection) string {
 	return "unknown-collection"
 }
 
-// buildOSSection pulls OS-related parsed payloads out of the Collection.
-// When a Snapshot is missing a collector, or Parsed is nil, we consider
-// the subview "missing" and render the banner.
+// buildOSSection pulls OS-related parsed payloads out of the
+// Collection and merges them across Snapshots onto a single time axis
+// per FR-018. SnapshotBoundaries on each returned *Data struct records
+// the sample indexes at which a new Snapshot's first sample sits; the
+// chart layer draws a vertical boundary marker at each corresponding
+// timestamp (FR-030 renderer requirement).
+//
+// A subview is "missing" only if EVERY Snapshot lacked that collector
+// (or every present file failed to parse).
 func buildOSSection(c *model.Collection) *model.OSSection {
 	sec := &model.OSSection{}
-	var io *model.IostatData
-	var tp *model.TopData
-	var vm *model.VmstatData
+	var ios []*model.IostatData
+	var tops []*model.TopData
+	var vms []*model.VmstatData
 	for _, snap := range c.Snapshots {
 		if sf, ok := snap.SourceFiles[model.SuffixIostat]; ok && sf.Parsed != nil {
-			if v, ok := sf.Parsed.(*model.IostatData); ok && io == nil {
-				io = v
+			if v, ok := sf.Parsed.(*model.IostatData); ok {
+				ios = append(ios, v)
 			}
 		}
 		if sf, ok := snap.SourceFiles[model.SuffixTop]; ok && sf.Parsed != nil {
-			if v, ok := sf.Parsed.(*model.TopData); ok && tp == nil {
-				tp = v
+			if v, ok := sf.Parsed.(*model.TopData); ok {
+				tops = append(tops, v)
 			}
 		}
 		if sf, ok := snap.SourceFiles[model.SuffixVmstat]; ok && sf.Parsed != nil {
-			if v, ok := sf.Parsed.(*model.VmstatData); ok && vm == nil {
-				vm = v
+			if v, ok := sf.Parsed.(*model.VmstatData); ok {
+				vms = append(vms, v)
 			}
 		}
 	}
-	sec.Iostat = io
-	sec.Top = tp
-	sec.Vmstat = vm
-	if io == nil {
+	sec.Iostat = concatIostat(ios)
+	sec.Top = concatTop(tops)
+	sec.Vmstat = concatVmstat(vms)
+	if sec.Iostat == nil {
 		sec.Missing = append(sec.Missing, "-iostat")
 	}
-	if tp == nil {
+	if sec.Top == nil {
 		sec.Missing = append(sec.Missing, "-top")
 	}
-	if vm == nil {
+	if sec.Vmstat == nil {
 		sec.Missing = append(sec.Missing, "-vmstat")
 	}
 	sort.Strings(sec.Missing)
 	return sec
+}
+
+// concatIostat merges multiple per-Snapshot *IostatData into one by
+// concatenating each device's Utilization and AvgQueueSize samples in
+// input order. The union of device names is preserved; a device absent
+// from a given input simply contributes no samples for that Snapshot's
+// window. SnapshotBoundaries indexes into the first sorted-by-name
+// device's Utilization.Samples slice, which is the primary timestamp
+// axis the renderer uses.
+func concatIostat(ins []*model.IostatData) *model.IostatData {
+	nonNil := ins[:0]
+	for _, d := range ins {
+		if d != nil && len(d.Devices) > 0 {
+			nonNil = append(nonNil, d)
+		}
+	}
+	if len(nonNil) == 0 {
+		return nil
+	}
+	// Union of device names, deterministically sorted.
+	nameSet := map[string]bool{}
+	for _, d := range nonNil {
+		for _, dev := range d.Devices {
+			nameSet[dev.Device] = true
+		}
+	}
+	names := make([]string, 0, len(nameSet))
+	for n := range nameSet {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+
+	devices := make(map[string]*model.DeviceSeries, len(names))
+	for _, n := range names {
+		devices[n] = &model.DeviceSeries{
+			Device:       n,
+			Utilization:  model.MetricSeries{Metric: "util_percent", Unit: "%", Subject: n},
+			AvgQueueSize: model.MetricSeries{Metric: "avgqu_sz", Unit: "count", Subject: n},
+		}
+	}
+
+	primary := names[0]
+	boundaries := make([]int, 0, len(nonNil))
+	cumulative := 0
+	for _, d := range nonNil {
+		boundaries = append(boundaries, cumulative)
+		primaryContribution := 0
+		for _, dev := range d.Devices {
+			m := devices[dev.Device]
+			m.Utilization.Samples = append(m.Utilization.Samples, dev.Utilization.Samples...)
+			m.AvgQueueSize.Samples = append(m.AvgQueueSize.Samples, dev.AvgQueueSize.Samples...)
+			if dev.Device == primary {
+				primaryContribution = len(dev.Utilization.Samples)
+			}
+		}
+		cumulative += primaryContribution
+	}
+
+	out := &model.IostatData{SnapshotBoundaries: boundaries}
+	for _, n := range names {
+		out.Devices = append(out.Devices, *devices[n])
+	}
+	return out
+}
+
+// concatTop merges multiple per-Snapshot *TopData by unioning
+// ProcessSamples across inputs, then recomputing Top3ByAverage over
+// the merged stream. SnapshotBoundaries indexes into the first
+// (post-recompute) Top3ByAverage series' CPU.Samples slice — the
+// primary timestamp axis the renderer uses.
+func concatTop(ins []*model.TopData) *model.TopData {
+	nonNil := ins[:0]
+	for _, d := range ins {
+		if d != nil && (len(d.ProcessSamples) > 0 || len(d.Top3ByAverage) > 0) {
+			nonNil = append(nonNil, d)
+		}
+	}
+	if len(nonNil) == 0 {
+		return nil
+	}
+
+	// Concatenate all process samples.
+	var all []model.ProcessSample
+	for _, d := range nonNil {
+		all = append(all, d.ProcessSamples...)
+	}
+
+	// Recompute top-3 by average CPUPercent over the merged window. A
+	// process absent from a sample contributes zero, matching T049's
+	// FR-010 aggregate semantics.
+	seriesByPID := map[int]*model.ProcessSeries{}
+	samplesAtTS := map[int64]map[int]float64{} // ts-unix -> pid -> cpu
+	timestamps := map[int64]time.Time{}
+	for _, s := range all {
+		ts := s.Timestamp.Unix()
+		if _, ok := samplesAtTS[ts]; !ok {
+			samplesAtTS[ts] = map[int]float64{}
+			timestamps[ts] = s.Timestamp
+		}
+		samplesAtTS[ts][s.PID] = s.CPUPercent
+		if _, ok := seriesByPID[s.PID]; !ok {
+			seriesByPID[s.PID] = &model.ProcessSeries{
+				PID:     s.PID,
+				Command: s.Command,
+				CPU:     model.MetricSeries{Metric: "cpu_percent", Unit: "%", Subject: fmt.Sprintf("pid=%d", s.PID)},
+			}
+		}
+	}
+	// Ordered timestamps.
+	tsList := make([]int64, 0, len(timestamps))
+	for ts := range timestamps {
+		tsList = append(tsList, ts)
+	}
+	sort.Slice(tsList, func(i, j int) bool { return tsList[i] < tsList[j] })
+
+	// For each PID, emit one Sample per timestamp (zero if absent).
+	pids := make([]int, 0, len(seriesByPID))
+	for pid := range seriesByPID {
+		pids = append(pids, pid)
+	}
+	sort.Ints(pids)
+	for _, pid := range pids {
+		series := seriesByPID[pid]
+		series.CPU.Samples = make([]model.Sample, 0, len(tsList))
+		for _, ts := range tsList {
+			series.CPU.Samples = append(series.CPU.Samples, model.Sample{
+				Timestamp:    timestamps[ts],
+				Measurements: map[string]float64{"cpu_percent": samplesAtTS[ts][pid]},
+			})
+		}
+	}
+
+	// Rank by average CPU, tie-break by higher PID first (matches T049 spec).
+	pidsRanked := make([]int, len(pids))
+	copy(pidsRanked, pids)
+	sort.SliceStable(pidsRanked, func(i, j int) bool {
+		ai := averageCPU(seriesByPID[pidsRanked[i]])
+		aj := averageCPU(seriesByPID[pidsRanked[j]])
+		if ai != aj {
+			return ai > aj
+		}
+		return pidsRanked[i] > pidsRanked[j]
+	})
+
+	out := &model.TopData{ProcessSamples: all}
+	limit := 3
+	if len(pidsRanked) < limit {
+		limit = len(pidsRanked)
+	}
+	for i := 0; i < limit; i++ {
+		out.Top3ByAverage = append(out.Top3ByAverage, *seriesByPID[pidsRanked[i]])
+	}
+
+	// SnapshotBoundaries: sample indexes into tsList where each input's
+	// first sample sits.
+	boundaries := make([]int, 0, len(nonNil))
+	cumulative := 0
+	for _, d := range nonNil {
+		boundaries = append(boundaries, cumulative)
+		seen := map[int64]bool{}
+		for _, s := range d.ProcessSamples {
+			ts := s.Timestamp.Unix()
+			if !seen[ts] {
+				seen[ts] = true
+				cumulative++
+			}
+		}
+	}
+	out.SnapshotBoundaries = boundaries
+	return out
+}
+
+func averageCPU(ps *model.ProcessSeries) float64 {
+	if len(ps.CPU.Samples) == 0 {
+		return 0
+	}
+	var sum float64
+	for _, s := range ps.CPU.Samples {
+		sum += s.Measurements["cpu_percent"]
+	}
+	return sum / float64(len(ps.CPU.Samples))
+}
+
+// concatVmstat merges multiple per-Snapshot *VmstatData by
+// concatenating each canonically-ordered Series' Samples in input
+// order. SnapshotBoundaries indexes into Series[0].Samples — the
+// primary timestamp axis the renderer uses.
+func concatVmstat(ins []*model.VmstatData) *model.VmstatData {
+	nonNil := ins[:0]
+	for _, d := range ins {
+		if d != nil && len(d.Series) > 0 {
+			nonNil = append(nonNil, d)
+		}
+	}
+	if len(nonNil) == 0 {
+		return nil
+	}
+	// All inputs SHOULD share the same declared Series order; preserve
+	// the first input's order and align by Metric name so a gap in a
+	// later input doesn't shift the axis.
+	metrics := make([]string, 0, len(nonNil[0].Series))
+	for _, s := range nonNil[0].Series {
+		metrics = append(metrics, s.Metric)
+	}
+	seriesByMetric := make(map[string]*model.MetricSeries, len(metrics))
+	for _, m := range metrics {
+		seriesByMetric[m] = &model.MetricSeries{Metric: m, Unit: "mixed"}
+	}
+
+	boundaries := make([]int, 0, len(nonNil))
+	cumulative := 0
+	for _, d := range nonNil {
+		boundaries = append(boundaries, cumulative)
+		primaryAdded := 0
+		for _, s := range d.Series {
+			m := seriesByMetric[s.Metric]
+			if m == nil {
+				continue // unknown metric in a later input — skip
+			}
+			m.Samples = append(m.Samples, s.Samples...)
+			if s.Metric == metrics[0] {
+				primaryAdded = len(s.Samples)
+			}
+			// Pick up the Unit from the first non-empty source.
+			if m.Unit == "mixed" && s.Unit != "" {
+				m.Unit = s.Unit
+			}
+		}
+		cumulative += primaryAdded
+	}
+
+	out := &model.VmstatData{SnapshotBoundaries: boundaries}
+	for _, m := range metrics {
+		out.Series = append(out.Series, *seriesByMetric[m])
+	}
+	return out
 }
 
 func buildVariablesSection(c *model.Collection) *model.VariablesSection {
@@ -276,6 +518,8 @@ func buildVariablesSection(c *model.Collection) *model.VariablesSection {
 
 func buildDBSection(c *model.Collection) *model.DBSection {
 	sec := &model.DBSection{}
+	var mas []*model.MysqladminData
+	var pls []*model.ProcesslistData
 	for _, snap := range c.Snapshots {
 		si := model.SnapshotInnoDB{
 			SnapshotPrefix: snap.Prefix,
@@ -287,27 +531,21 @@ func buildDBSection(c *model.Collection) *model.DBSection {
 			}
 		}
 		sec.InnoDBPerSnapshot = append(sec.InnoDBPerSnapshot, si)
+
+		if sf, ok := snap.SourceFiles[model.SuffixMysqladmin]; ok && sf.Parsed != nil {
+			if v, ok := sf.Parsed.(*model.MysqladminData); ok {
+				mas = append(mas, v)
+			}
+		}
+		if sf, ok := snap.SourceFiles[model.SuffixProcesslist]; ok && sf.Parsed != nil {
+			if v, ok := sf.Parsed.(*model.ProcesslistData); ok {
+				pls = append(pls, v)
+			}
+		}
 	}
 
-	// Mysqladmin and Processlist: use the first non-nil parsed payload
-	// encountered. US4 will extend this to merge-across-snapshots; for
-	// the MVP render skeleton the single-snapshot case is enough.
-	for _, snap := range c.Snapshots {
-		if sec.Mysqladmin == nil {
-			if sf, ok := snap.SourceFiles[model.SuffixMysqladmin]; ok && sf.Parsed != nil {
-				if v, ok := sf.Parsed.(*model.MysqladminData); ok {
-					sec.Mysqladmin = v
-				}
-			}
-		}
-		if sec.Processlist == nil {
-			if sf, ok := snap.SourceFiles[model.SuffixProcesslist]; ok && sf.Parsed != nil {
-				if v, ok := sf.Parsed.(*model.ProcesslistData); ok {
-					sec.Processlist = v
-				}
-			}
-		}
-	}
+	sec.Mysqladmin = concatMysqladmin(mas)
+	sec.Processlist = concatProcesslist(pls)
 
 	if allInnoDBNil(sec.InnoDBPerSnapshot) {
 		sec.Missing = append(sec.Missing, "-innodbstatus1")
@@ -320,6 +558,154 @@ func buildDBSection(c *model.Collection) *model.DBSection {
 	}
 	sort.Strings(sec.Missing)
 	return sec
+}
+
+// concatMysqladmin merges multiple per-Snapshot *MysqladminData onto
+// a single time axis. Counters reset at each Snapshot boundary per
+// FR-030: the first post-boundary sample's delta is NaN and an Info
+// diagnostic is emitted in the audit (the Diagnostic itself is
+// attached to the merged data's note stream; Discover-time diagnostics
+// already exist on the individual SourceFile records). Gauges just
+// concat raw values.
+//
+// SnapshotBoundaries indexes into the merged Timestamps slice — the
+// primary timestamp axis the renderer uses.
+func concatMysqladmin(ins []*model.MysqladminData) *model.MysqladminData {
+	nonNil := ins[:0]
+	for _, d := range ins {
+		if d != nil && d.SampleCount > 0 {
+			nonNil = append(nonNil, d)
+		}
+	}
+	if len(nonNil) == 0 {
+		return nil
+	}
+	if len(nonNil) == 1 {
+		// Trust the parser's own SnapshotBoundaries (which contains [0]
+		// for a single file, or more if the parser saw concatenated
+		// input — it already honours FR-030 in that path).
+		return nonNil[0]
+	}
+
+	// Union of variable names, sorted.
+	nameSet := map[string]bool{}
+	for _, d := range nonNil {
+		for _, n := range d.VariableNames {
+			nameSet[n] = true
+		}
+	}
+	names := make([]string, 0, len(nameSet))
+	for n := range nameSet {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+
+	// IsCounter: a variable is a counter iff at least one input flags
+	// it as such (pragmatic; conflicts are extremely rare and a
+	// per-version allowlist drives the flag deterministically).
+	isCounter := make(map[string]bool, len(names))
+	for _, n := range names {
+		for _, d := range nonNil {
+			if d.IsCounter[n] {
+				isCounter[n] = true
+				break
+			}
+		}
+	}
+
+	// Concatenate timestamps and deltas. Record boundaries as the
+	// cumulative sample index where each input starts.
+	var (
+		timestamps []time.Time
+		boundaries = make([]int, 0, len(nonNil))
+		cumulative int
+		deltas     = make(map[string][]float64, len(names))
+	)
+	for _, n := range names {
+		deltas[n] = make([]float64, 0)
+	}
+
+	for inputIdx, d := range nonNil {
+		boundaries = append(boundaries, cumulative)
+		timestamps = append(timestamps, d.Timestamps...)
+		for _, n := range names {
+			src, present := d.Deltas[n]
+			if !present {
+				// Variable absent from this input: fill with NaN so the
+				// chart shows a discontinuity rather than a misleading
+				// straight line through 0.
+				for i := 0; i < d.SampleCount; i++ {
+					deltas[n] = append(deltas[n], math.NaN())
+				}
+				continue
+			}
+			if inputIdx > 0 && isCounter[n] && len(src) > 0 {
+				// FR-030: counters reset at the boundary. The first
+				// post-boundary slot is NaN — cross-snapshot deltas are
+				// meaningless.
+				deltas[n] = append(deltas[n], math.NaN())
+				deltas[n] = append(deltas[n], src[1:]...)
+			} else {
+				deltas[n] = append(deltas[n], src...)
+			}
+		}
+		cumulative += d.SampleCount
+	}
+
+	return &model.MysqladminData{
+		VariableNames:      names,
+		SampleCount:        cumulative,
+		Timestamps:         timestamps,
+		Deltas:             deltas,
+		IsCounter:          isCounter,
+		SnapshotBoundaries: boundaries,
+	}
+}
+
+// concatProcesslist merges multiple per-Snapshot *ProcesslistData by
+// concatenating ThreadStateSamples in input order and unioning the
+// States slice. SnapshotBoundaries indexes into the merged
+// ThreadStateSamples slice.
+func concatProcesslist(ins []*model.ProcesslistData) *model.ProcesslistData {
+	nonNil := ins[:0]
+	for _, d := range ins {
+		if d != nil && len(d.ThreadStateSamples) > 0 {
+			nonNil = append(nonNil, d)
+		}
+	}
+	if len(nonNil) == 0 {
+		return nil
+	}
+	stateSet := map[string]bool{}
+	hasOther := false
+	for _, d := range nonNil {
+		for _, s := range d.States {
+			if s == "Other" {
+				hasOther = true
+			} else {
+				stateSet[s] = true
+			}
+		}
+	}
+	states := make([]string, 0, len(stateSet)+1)
+	for s := range stateSet {
+		states = append(states, s)
+	}
+	sort.Strings(states)
+	if hasOther {
+		states = append(states, "Other")
+	}
+
+	out := &model.ProcesslistData{States: states}
+	boundaries := make([]int, 0, len(nonNil))
+	cumulative := 0
+	for _, d := range nonNil {
+		boundaries = append(boundaries, cumulative)
+		out.ThreadStateSamples = append(out.ThreadStateSamples, d.ThreadStateSamples...)
+		cumulative += len(d.ThreadStateSamples)
+	}
+	out.SnapshotBoundaries = boundaries
+	return out
 }
 
 func allInnoDBNil(xs []model.SnapshotInnoDB) bool {
@@ -773,8 +1159,9 @@ func processlistChartPayload(d *model.ProcesslistData) map[string]any {
 		})
 	}
 	return map[string]any{
-		"timestamps": timestamps,
-		"series":     series,
+		"timestamps":         timestamps,
+		"series":             series,
+		"snapshotBoundaries": d.SnapshotBoundaries,
 	}
 }
 
@@ -818,8 +1205,9 @@ func iostatChartPayload(d *model.IostatData) map[string]any {
 		})
 	}
 	return map[string]any{
-		"timestamps": timestamps,
-		"series":     series,
+		"timestamps":         timestamps,
+		"series":             series,
+		"snapshotBoundaries": d.SnapshotBoundaries,
 	}
 }
 
@@ -841,8 +1229,9 @@ func topChartPayload(d *model.TopData) map[string]any {
 		})
 	}
 	return map[string]any{
-		"timestamps": timestamps,
-		"series":     series,
+		"timestamps":         timestamps,
+		"series":             series,
+		"snapshotBoundaries": d.SnapshotBoundaries,
 	}
 }
 
@@ -864,8 +1253,9 @@ func vmstatChartPayload(d *model.VmstatData) map[string]any {
 		})
 	}
 	return map[string]any{
-		"timestamps": timestamps,
-		"series":     series,
+		"timestamps":         timestamps,
+		"series":             series,
+		"snapshotBoundaries": d.SnapshotBoundaries,
 	}
 }
 

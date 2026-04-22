@@ -170,7 +170,8 @@ Invariants:
 
 ```go
 type IostatData struct {
-    Devices []DeviceSeries
+    Devices            []DeviceSeries
+    SnapshotBoundaries []int            // sample indexes at which a new Snapshot's first sample sits
 }
 
 type DeviceSeries struct {
@@ -185,13 +186,21 @@ Invariants:
 - `Devices` sorted alphabetically by `Device`.
 - For any given `Device`, `Utilization.Samples` and `AvgQueueSize.Samples`
   cover the same set of timestamps (per iostat's design).
+- `SnapshotBoundaries` indexes into the first sorted device's
+  `Utilization.Samples` slice (the primary timestamp axis the renderer
+  uses). Always includes `0`. For multi-Snapshot collections
+  (spec FR-018) the merger at `render.concatIostat` concatenates
+  samples across Snapshots and records a boundary at each Snapshot's
+  first sample index. The renderer draws a vertical boundary marker
+  at each corresponding timestamp (FR-030).
 
 ### `TopData`
 
 ```go
 type TopData struct {
-    ProcessSamples []ProcessSample
-    Top3ByAverage  []ProcessSeries  // length 0..3
+    ProcessSamples     []ProcessSample
+    Top3ByAverage      []ProcessSeries  // length 0..3
+    SnapshotBoundaries []int            // see IostatData.SnapshotBoundaries
 }
 
 type ProcessSample struct {
@@ -234,17 +243,23 @@ in), only the first global occurrence is retained and a
 
 ```go
 type VmstatData struct {
-    Series []MetricSeries  // ordered: [runqueue, blocked, free_kb, buff_kb, cache_kb,
-                           //          swap_in, swap_out, io_in, io_out, cpu_user,
-                           //          cpu_sys, cpu_idle, cpu_iowait]
+    Series             []MetricSeries  // ordered: [runqueue, blocked, free_kb, buff_kb, cache_kb,
+                                       //          swap_in, swap_out, io_in, io_out, cpu_user,
+                                       //          cpu_sys, cpu_idle, cpu_iowait]
+    SnapshotBoundaries []int           // see IostatData.SnapshotBoundaries
 }
 ```
 
-Invariant: `Series` is in a fixed declared order (documented in
-`parse/vmstat.go`) so the rendered chart is deterministic even when
-some measurements are absent in an older `vmstat` version (those
-slots are empty-Samples series, and render shows a greyed legend
-entry with "n/a").
+Invariants:
+
+- `Series` is in a fixed declared order (documented in
+  `parse/vmstat.go`) so the rendered chart is deterministic even when
+  some measurements are absent in an older `vmstat` version (those
+  slots are empty-Samples series, and render shows a greyed legend
+  entry with "n/a").
+- `SnapshotBoundaries` indexes into `Series[0].Samples` — the primary
+  timestamp axis the renderer uses. Same semantics as
+  IostatData.SnapshotBoundaries.
 
 ### `InnodbStatusData`
 
@@ -320,7 +335,8 @@ Snapshot-boundary handling is spec FR-030 (F4 remediation of the
 ```go
 type ProcesslistData struct {
     ThreadStateSamples []ThreadStateSample
-    States       []string  // sorted alphabetically; "Other" always last if present
+    States             []string  // sorted alphabetically; "Other" always last if present
+    SnapshotBoundaries []int     // see IostatData.SnapshotBoundaries
 }
 
 type ThreadStateSample struct {
@@ -331,9 +347,14 @@ type ThreadStateSample struct {
 
 Invariants:
 
-- `States` is the canonical rendering order.
+- `States` is the canonical rendering order. For multi-Snapshot
+  collections `States` is the union across Snapshots (plus `Other`
+  last when present).
 - `StateCounts` in each sample may omit states with count 0; render
   fills zeros.
+- `SnapshotBoundaries` indexes into the `ThreadStateSamples` slice —
+  the primary timestamp axis the renderer uses. Same semantics as
+  IostatData.SnapshotBoundaries.
 
 ---
 
