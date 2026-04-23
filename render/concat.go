@@ -421,28 +421,39 @@ func concatMysqladmin(ins []*model.MysqladminData) *model.MysqladminData {
 	for inputIdx, d := range nonNil {
 		boundaries = append(boundaries, cumulative)
 		timestamps = append(timestamps, d.Timestamps...)
-		for _, n := range names {
+
+		// First pass: owned-work — copy only variables this input
+		// actually declares, avoiding a per-variable map lookup for
+		// every name in the union.
+		for _, n := range d.VariableNames {
 			src, present := d.Deltas[n]
 			if !present {
-				// Variable absent from this input: fill with NaN so the
-				// chart shows a discontinuity rather than a misleading
-				// straight line through 0.
-				for i := 0; i < d.SampleCount; i++ {
-					deltas[n] = append(deltas[n], math.NaN())
-				}
 				continue
 			}
 			if inputIdx > 0 && isCounter[n] && len(src) > 0 {
 				// FR-030: counters reset at the boundary. The first
-				// post-boundary slot is NaN — cross-snapshot deltas are
-				// meaningless.
+				// post-boundary slot is NaN — cross-snapshot deltas
+				// are meaningless.
 				deltas[n] = append(deltas[n], math.NaN())
 				deltas[n] = append(deltas[n], src[1:]...)
 			} else {
 				deltas[n] = append(deltas[n], src...)
 			}
 		}
-		cumulative += d.SampleCount
+
+		// Second pass: NaN-pad any variable in the union that this
+		// input does NOT carry. A variable shows up here iff its
+		// current length is still at `cumulative` — variables the
+		// first pass wrote extended the slice past that.
+		targetLen := cumulative + d.SampleCount
+		for _, n := range names {
+			if len(deltas[n]) < targetLen {
+				for i := len(deltas[n]); i < targetLen; i++ {
+					deltas[n] = append(deltas[n], math.NaN())
+				}
+			}
+		}
+		cumulative = targetLen
 	}
 
 	return &model.MysqladminData{

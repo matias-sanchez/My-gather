@@ -19,14 +19,14 @@ func ruleAbortedConnectsRate(r *model.Report) Finding {
 		return Finding{Severity: SeveritySkip}
 	}
 	sev := SeverityOK
-	summary := fmt.Sprintf("Aborted_connects rate is %s/s — normal background noise.", FormatNum(rate))
+	summary := fmt.Sprintf("Aborted_connects rate is %s/s — normal background noise.", formatNum(rate))
 	switch {
 	case rate > critAbove:
 		sev = SeverityCrit
-		summary = fmt.Sprintf("Aborted_connects rate is very high at %s/s — possible DoS, auth failures, or misbehaving client.", FormatNum(rate))
+		summary = fmt.Sprintf("Aborted_connects rate is very high at %s/s — possible DoS, auth failures, or misbehaving client.", formatNum(rate))
 	case rate > warnAbove:
 		sev = SeverityWarn
-		summary = fmt.Sprintf("Aborted_connects rate is %s/s — worth investigating.", FormatNum(rate))
+		summary = fmt.Sprintf("Aborted_connects rate is %s/s — worth investigating.", formatNum(rate))
 	}
 	return Finding{
 		ID:        "connections.aborted_rate",
@@ -38,7 +38,7 @@ func ruleAbortedConnectsRate(r *model.Report) Finding {
 			"access to a database it lacks rights for, bad connection packet, wrong password, exceeded connect_timeout, " +
 			"or max_allowed_packet being exceeded before the handshake completed.",
 		FormulaText:     "Aborted_connects/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", FormatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Aborted_connects/s", Value: rate, Unit: "/s"},
 		},

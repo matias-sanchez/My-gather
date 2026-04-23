@@ -45,7 +45,7 @@ func ruleTmpDiskRatio(r *model.Report) Finding {
 			"High spill ratios indicate queries returning or sorting datasets larger than the configured in-memory limit.",
 		FormulaText: "disk_ratio = Created_tmp_disk_tables / Created_tmp_tables",
 		FormulaComputed: fmt.Sprintf("%s / %s = %s",
-			FormatNum(disk), FormatNum(total), formatPercent(ratio)),
+			formatNum(disk), formatNum(total), formatPercent(ratio)),
 		Metrics: []MetricRef{
 			{Name: "Created_tmp_disk_tables", Value: disk, Unit: "count"},
 			{Name: "Created_tmp_tables", Value: total, Unit: "count"},

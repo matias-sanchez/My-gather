@@ -40,9 +40,9 @@ func summariseIostat(d *model.IostatData) *iostatSummaryView {
 			}
 		}
 	}
-	sum.PeakUtil = FormatFloat(maxUtil, 1) + "%"
+	sum.PeakUtil = formatFloat(maxUtil, 1) + "%"
 	sum.PeakDevice = fallback(maxUtilDev, "–")
-	sum.PeakAqusz = FormatFloat(maxAqu, 2)
+	sum.PeakAqusz = formatFloat(maxAqu, 2)
 	sum.PeakAquszDevice = fallback(maxAquDev, "–")
 	sum.SampleCount = sampleCount
 	return sum
@@ -67,7 +67,7 @@ func summariseTop(d *model.TopData) *topSummaryView {
 			avg = total / float64(sum.SampleCount)
 		}
 		labels = append(labels, truncateCommand(ps.Command)+" (pid "+fmt.Sprintf("%d", ps.PID)+")")
-		avgs = append(avgs, FormatFloat(avg, 1))
+		avgs = append(avgs, formatFloat(avg, 1))
 	}
 	if len(labels) > 0 {
 		sum.First, sum.FirstAvg = labels[0], avgs[0]
@@ -105,9 +105,9 @@ func summariseVmstat(d *model.VmstatData) *vmstatSummaryView {
 		}
 		return 0
 	}
-	sum.PeakRunqueue = FormatFloat(peakForMetric("runqueue"), 0)
-	sum.PeakBlocked = FormatFloat(peakForMetric("blocked"), 0)
-	sum.PeakIowait = FormatFloat(peakForMetric("cpu_iowait"), 0)
+	sum.PeakRunqueue = formatFloat(peakForMetric("runqueue"), 0)
+	sum.PeakBlocked = formatFloat(peakForMetric("blocked"), 0)
+	sum.PeakIowait = formatFloat(peakForMetric("cpu_iowait"), 0)
 	return sum
 }
 
@@ -155,16 +155,16 @@ func summariseMeminfo(d *model.MeminfoData) *meminfoSummaryView {
 		return 0, false
 	}
 	if v, ok := minSeries("mem_available"); ok {
-		sum.MinAvailable = FormatFloat(v, 2)
+		sum.MinAvailable = formatFloat(v, 2)
 	}
 	if v, ok := maxSeries("anon_pages"); ok {
-		sum.MaxAnonPages = FormatFloat(v, 2)
+		sum.MaxAnonPages = formatFloat(v, 2)
 	}
 	if v, ok := maxSeries("dirty"); ok {
-		sum.MaxDirty = FormatFloat(v, 3)
+		sum.MaxDirty = formatFloat(v, 3)
 	}
 	if v, ok := maxSeries("swap_used"); ok {
-		sum.MaxSwapUsed = FormatFloat(v, 2)
+		sum.MaxSwapUsed = formatFloat(v, 2)
 	}
 	return sum
 }

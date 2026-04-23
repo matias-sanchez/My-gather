@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"math"
@@ -61,8 +60,7 @@ const kbPerGB = 1024.0 * 1024.0
 // returns one MeminfoData whose Series is built from meminfoSeries
 // in declared order. Values are in gigabytes.
 func parseMeminfo(r io.Reader, sourcePath string) (*model.MeminfoData, []model.Diagnostic) {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 64*1024), 32*1024*1024)
+	scanner := newLineScanner(r)
 
 	var diagnostics []model.Diagnostic
 

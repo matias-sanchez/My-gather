@@ -112,16 +112,16 @@ func buildAHIMetric(snaps []model.SnapshotInnoDB) innoDBMetricView {
 	return innoDBMetricView{
 		Label:            "AHI",
 		Hint:             "hit ratio",
-		Worst:            FormatFloat(mn, 1) + "%",
-		Min:              FormatFloat(mn, 1) + "%",
-		Avg:              FormatFloat(avg, 1) + "%",
-		Max:              FormatFloat(mx, 1) + "%",
+		Worst:            formatFloat(mn, 1) + "%",
+		Min:              formatFloat(mn, 1) + "%",
+		Avg:              formatFloat(avg, 1) + "%",
+		Max:              formatFloat(mx, 1) + "%",
 		AHIFormula:       true,
 		AHIFormulaText:   "hash / (hash + non-hash)",
 		AHIWorstSnapshot: worst.prefix,
-		AHIWorstHash:     FormatFloat(worst.hash, 2),
-		AHIWorstNonHash:  FormatFloat(worst.nonHash, 2),
-		AHIWorstRatio:    FormatFloat(worst.ratio, 1),
+		AHIWorstHash:     formatFloat(worst.hash, 2),
+		AHIWorstNonHash:  formatFloat(worst.nonHash, 2),
+		AHIWorstRatio:    formatFloat(worst.ratio, 1),
 		AHIHashTableSize: formatThousands(hashTblSize),
 		AHIHasHashTable:  hashTblSize > 0,
 	}
@@ -209,7 +209,7 @@ func buildSiteRows(sites []model.SemaphoreSite, total int) []semaphoreSiteRow {
 			Line:      s.Line,
 			MutexName: s.MutexName,
 			Count:     s.WaitCount,
-			Percent:   FormatFloat(pct, 1),
+			Percent:   formatFloat(pct, 1),
 		})
 	}
 	return out
@@ -232,7 +232,7 @@ func innoDBIntMetric(label, hint string, vals []int) innoDBMetricView {
 		Hint:  hint,
 		Worst: fmt.Sprintf("%d", mx),
 		Min:   fmt.Sprintf("%d", mn),
-		Avg:   FormatFloat(avg, 1),
+		Avg:   formatFloat(avg, 1),
 		Max:   fmt.Sprintf("%d", mx),
 	}
 }

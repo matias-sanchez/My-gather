@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"regexp"
@@ -34,8 +33,7 @@ var topHeaderLine = regexp.MustCompile(`^top - (\d{1,2}):(\d{2}):(\d{2})\b`)
 // always the 9th column (index 8). We preserve the command as written
 // by top — truncated commands end with "+".
 func parseTop(r io.Reader, snapshotStart time.Time, sourcePath string) (*model.TopData, []model.Diagnostic) {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 64*1024), 32*1024*1024)
+	scanner := newLineScanner(r)
 
 	var diagnostics []model.Diagnostic
 	addDiag := func(line int, sev model.Severity, msg string) {

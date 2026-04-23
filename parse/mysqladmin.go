@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"bufio"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -109,8 +108,7 @@ func (p *mysqladminParser) ResetForNewSnapshot(newSnapshotStart time.Time) {
 
 // parseOneFile consumes one file's worth of pipe-delimited rows.
 func (p *mysqladminParser) parseOneFile(r io.Reader) {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 64*1024), 32*1024*1024)
+	scanner := newLineScanner(r)
 	for scanner.Scan() {
 		raw := scanner.Text()
 		if len(raw) == 0 || raw[0] != '|' {
@@ -182,6 +180,13 @@ func (p *mysqladminParser) parseOneFile(r io.Reader) {
 			slots[targetLen-1] = out
 		}
 		p.values[name] = slots
+	}
+	if err := scanner.Err(); err != nil {
+		p.diagnostics = append(p.diagnostics, model.Diagnostic{
+			SourceFile: p.sourcePath,
+			Severity:   model.SeverityError,
+			Message:    fmt.Sprintf("mysqladmin read: %v", err),
+		})
 	}
 	// Capture the first sample's timestamp for this column block.
 	// (We synthesise 1-second spacing — mysqladmin samples are 1s apart.)

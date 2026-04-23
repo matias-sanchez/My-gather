@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"math"
@@ -40,17 +39,17 @@ var tsLine = regexp.MustCompile(`^TS\s+(\d+(?:\.\d+)?)\s+(\d{4}-\d{2}-\d{2}\s+\d
 //
 // Threads with an empty State or an unknown state bucket into "Other".
 func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, []model.Diagnostic) {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 64*1024), 32*1024*1024)
+	scanner := newLineScanner(r)
 
 	var diagnostics []model.Diagnostic
 
 	type rowBuild struct {
-		user    string
-		host    string
-		command string
-		db      string
-		state   string
+		user     string
+		host     string
+		command  string
+		db       string
+		state    string
+		anyField bool
 	}
 	type sampleBuild struct {
 		t       time.Time
@@ -76,7 +75,13 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		if current == nil {
 			return
 		}
-		if current.row == (rowBuild{}) {
+		if !current.row.anyField {
+			// Row-separator fired with none of the tracked fields
+			// populated — nothing to attribute. This is expected for
+			// the first `*** 1. row ***` marker in every sample (it
+			// delimits the start of the first row, not the end of a
+			// prior row), so skip quietly and do not emit a
+			// diagnostic.
 			return
 		}
 		label := current.row.state
@@ -159,14 +164,19 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		switch key {
 		case "State":
 			current.row.state = val
+			current.row.anyField = true
 		case "User":
 			current.row.user = val
+			current.row.anyField = true
 		case "Host":
 			current.row.host = val
+			current.row.anyField = true
 		case "Command":
 			current.row.command = val
+			current.row.anyField = true
 		case "db":
 			current.row.db = val
+			current.row.anyField = true
 		}
 	}
 	if err := scanner.Err(); err != nil {

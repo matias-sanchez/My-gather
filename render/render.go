@@ -2,6 +2,7 @@ package render
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -9,6 +10,11 @@ import (
 
 	"github.com/matias-sanchez/My-gather/model"
 )
+
+// ErrNilCollection is returned by Render when the supplied Collection
+// is nil. Exposed as a sentinel so callers can distinguish the bad-
+// input case from other rendering errors (e.g., via errors.Is).
+var ErrNilCollection = errors.New("render: nil Collection")
 
 // RenderOptions controls optional aspects of rendering. The zero value
 // is valid and uses the current UTC time and empty Version/GitCommit.
@@ -44,7 +50,7 @@ type RenderOptions struct {
 // renders its "data not available" banner.
 func Render(w io.Writer, c *model.Collection, opts RenderOptions) error {
 	if c == nil {
-		return fmt.Errorf("render: nil Collection")
+		return ErrNilCollection
 	}
 	if opts.GeneratedAt.IsZero() {
 		opts.GeneratedAt = time.Now().UTC()
@@ -86,7 +92,7 @@ func buildReport(c *model.Collection, opts RenderOptions) (*model.Report, []stri
 		BuiltAt:     opts.BuiltAt,
 		GeneratedAt: opts.GeneratedAt.UTC(),
 		Collection:  c,
-		ReportID:    CanonicalReportID(c),
+		ReportID:    canonicalReportID(c),
 	}
 	rpt.OSSection = buildOSSection(c)
 	rpt.VariablesSection = buildVariablesSection(c)

@@ -22,7 +22,7 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 		Hostname:           c.Hostname,
 		Version:            r.Version,
 		GitCommit:          r.GitCommit,
-		GeneratedAtDisplay: FormatTimestamp(r.GeneratedAt),
+		GeneratedAtDisplay: formatTimestamp(r.GeneratedAt),
 		SnapshotCount:      len(c.Snapshots),
 		Navigation:         r.Navigation,
 		NavGroups:          groupNavigation(r.Navigation),

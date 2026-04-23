@@ -17,7 +17,7 @@ func buildFindingViews(fs []findings.Finding) []findingView {
 		for _, m := range f.Metrics {
 			metrics = append(metrics, findingMetricView{
 				Name:  m.Name,
-				Value: findings.FormatNum(m.Value),
+				Value: formatNum(m.Value),
 				Unit:  m.Unit,
 				Note:  m.Note,
 			})

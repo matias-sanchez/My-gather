@@ -67,6 +67,31 @@
 /* Reset & base. */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+
+/* Focus-visible ring: every interactive element gets a consistent
+   accent ring when focused via keyboard. Applied via :focus-visible
+   so it doesn't fire on mouse clicks. */
+.var-chip:focus-visible,
+.series-pill:focus-visible,
+.ma-chip:focus-visible,
+.ma-action:focus-visible,
+.ma-action-primary:focus-visible,
+.ma-cat-dd-toggle:focus-visible,
+.ma-card-btn:focus-visible,
+.ma-strip:focus-visible,
+.ma-panel-pin:focus-visible,
+.ma-panel-close:focus-visible,
+.ma-cat-load:focus-visible,
+.chart-zoom-reset:focus-visible,
+.view-btn:focus-visible,
+.cb-tab:focus-visible,
+.cb-more:focus-visible,
+.nav-title:focus-visible,
+.advisor-count:focus-visible,
+.nav-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 body {
   background: var(--bg);
   color: var(--fg);
@@ -1357,6 +1382,12 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
 .ma-panel-close { font-size: 18px; }
 
 @media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
   .ma-panel-host.is-open .ma-panel { animation: none; }
 }
 /* Two-row labelled chip layout. */
@@ -1956,7 +1987,7 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
 }
 .sev-chip.sev-crit { color: var(--err);    background: color-mix(in srgb, var(--err)    18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--err)    30%, transparent); }
 .sev-chip.sev-warn { color: var(--warn);   background: color-mix(in srgb, var(--warn)   18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warn)   30%, transparent); }
-.sev-chip.sev-info { color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent); }
+.sev-chip.sev-info { color: var(--accent); background: color-mix(in srgb, var(--accent) 30%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); font-weight: 600; }
 .sev-chip.sev-ok   { color: var(--ok);     background: color-mix(in srgb, var(--ok)     18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ok)     30%, transparent); }
 
 .finding-title {

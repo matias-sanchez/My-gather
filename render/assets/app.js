@@ -731,7 +731,16 @@
     // already fires uPlot's built-in alpha-fade focus), so these
     // two signals stay independent.
     if (plot) {
+      // Cache the last focused index + color so per-mousemove updates
+      // are a no-op when the cursor stays over the same series band.
+      var lastFocusedIdx = -2;
+      var lastFocusedColor = null;
       plot.__setLegendFocus = function (focusedIdx, focusedColor) {
+        if (focusedIdx === lastFocusedIdx && focusedColor === lastFocusedColor) {
+          return;
+        }
+        lastFocusedIdx = focusedIdx;
+        lastFocusedColor = focusedColor;
         for (var p = 0; p < pills.length; p++) {
           var pillIdx = Number(pills[p].getAttribute("data-idx"));
           if (pillIdx === focusedIdx) {
@@ -1231,11 +1240,12 @@
       li.className = "ma-cat-dd-opt";
       li.setAttribute("role", "option");
       li.setAttribute("data-key", c.key);
+      li.setAttribute("tabindex", "0");
       li.title = c.description || c.label;
       li.innerHTML =
         '<span class="opt-lbl">' + escapeHTML(c.label) + '</span>' +
         '<span class="opt-ct">' + c.count + '</span>';
-      li.addEventListener("click", function () {
+      function activate() {
         catCurrentKey = c.key;
         catCurrentLabel = c.label;
         setCatLabel(c.key);
@@ -1244,6 +1254,13 @@
         // does NOT push those counters onto the chart. The user
         // explicitly clicks "Load on chart" to apply the selection.
         filterListToCategory();
+      }
+      li.addEventListener("click", activate);
+      li.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" || ev.key === " " || ev.key === "Spacebar") {
+          ev.preventDefault();
+          activate();
+        }
       });
       catPopup.appendChild(li);
     });
@@ -1425,6 +1442,7 @@
     }
 
     function setOpen(open) {
+      var wasOpen = isOpen;
       isOpen = !!open;
       storageSet(OPEN_KEY, isOpen ? "true" : "false");
       applyPanelState();
@@ -1436,6 +1454,11 @@
           var s = panel.querySelector(".ma-search input[type='search']");
           if (s) { try { s.focus({ preventScroll: true }); } catch (_) { s.focus(); } }
         }, 60);
+      } else if (wasOpen) {
+        // Restore focus to the strip so keyboard users aren't stranded.
+        try { strip.focus({ preventScroll: true }); } catch (_) {
+          if (typeof strip.focus === "function") strip.focus();
+        }
       }
     }
     function setPinned(pinned) {
@@ -1446,6 +1469,26 @@
 
     strip.addEventListener("click", function () { setOpen(!isOpen); });
     closeBtn.addEventListener("click", function () { setOpen(false); });
+
+    // Tab focus trap inside the floating panel while open and not
+    // pinned. When pinned the user explicitly opted into parallel
+    // navigation, so we leave Tab alone.
+    panel.addEventListener("keydown", function (ev) {
+      if (!isOpen || isPinned || ev.key !== "Tab") return;
+      var items = panel.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!items.length) return;
+      var first = items[0];
+      var last  = items[items.length - 1];
+      if (ev.shiftKey && document.activeElement === first) {
+        ev.preventDefault();
+        last.focus();
+      } else if (!ev.shiftKey && document.activeElement === last) {
+        ev.preventDefault();
+        first.focus();
+      }
+    });
     pinBtn.addEventListener("click", function (ev) {
       ev.stopPropagation();
       setPinned(!isPinned);
@@ -1922,17 +1965,42 @@
     var drawer   = document.getElementById("nav-drawer");
     var backdrop = document.getElementById("nav-backdrop");
     if (!toggle || !drawer || !backdrop) return;
+    var mainEl = document.querySelector("main.content");
 
     function isOpen() { return document.body.classList.contains("nav-open"); }
 
-    function setOpen(open) {
+    function focusables() {
+      return drawer.querySelectorAll(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+    }
+
+    function setOpen(open, opts) {
+      var wasOpen = isOpen();
       document.body.classList.toggle("nav-open", !!open);
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
       drawer.setAttribute("aria-hidden", open ? "false" : "true");
       backdrop.setAttribute("aria-hidden", open ? "false" : "true");
+      // a11y: make closed drawer non-interactive; when open, make main
+      // content inert so Tab stays trapped in the drawer.
+      drawer.inert = !open;
+      if (mainEl) mainEl.inert = !!open;
       // Prevent background scroll while the drawer is open so the
       // overlay reads as modal.
       document.documentElement.style.overflow = open ? "hidden" : "";
+      var manageFocus = !(opts && opts.silent);
+      if (manageFocus) {
+        if (open) {
+          // Move focus into the drawer so keyboard users don't stay
+          // stranded on the toggle.
+          var first = drawer.querySelector("a, button") || drawer;
+          if (first && typeof first.focus === "function") first.focus();
+        } else if (wasOpen) {
+          // Restore focus to the toggle so the user's keyboard context
+          // is preserved.
+          if (typeof toggle.focus === "function") toggle.focus();
+        }
+      }
       // Re-fit charts once the transition settles (content layout
       // doesn't reflow, but browser zoom + window size may have changed
       // while the drawer was open).
@@ -1952,6 +2020,23 @@
       }
     });
 
+    // Tab focus trap while the drawer is open. Wraps from last to
+    // first (Tab) and first to last (Shift+Tab).
+    drawer.addEventListener("keydown", function (e) {
+      if (!isOpen() || e.key !== "Tab") return;
+      var items = focusables();
+      if (items.length === 0) return;
+      var first = items[0];
+      var last  = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+
     document.addEventListener("keydown", function (e) {
       if (e.defaultPrevented) return;
       // Escape closes.
@@ -1968,8 +2053,9 @@
       }
     });
 
-    // Start closed every page-load.
-    setOpen(false);
+    // Start closed every page-load. Pass silent so we don't steal focus
+    // on the initial render.
+    setOpen(false, { silent: true });
   }
 
   function initNavGroups() {

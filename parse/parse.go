@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -14,6 +15,21 @@ import (
 
 	"github.com/matias-sanchez/My-gather/model"
 )
+
+// maxScanTokenBytes bounds a single scanner token (line) to 32 MiB.
+// Consolidates the magic number that used to appear verbatim in every
+// parser's bufio.Scanner setup.
+const maxScanTokenBytes = 32 << 20
+
+// newLineScanner returns a bufio.Scanner configured with the standard
+// line-buffer sizes used by every parser in this package. All callers
+// route through this helper so the buffer cap is enforced in one
+// place.
+func newLineScanner(r io.Reader) *bufio.Scanner {
+	s := bufio.NewScanner(r)
+	s.Buffer(make([]byte, 64*1024), maxScanTokenBytes)
+	return s
+}
 
 // DefaultMaxCollectionBytes is the default upper bound on total
 // collection size (spec FR-025). 1 GB.
@@ -171,6 +187,17 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 		// Recognise summary files.
 		for _, s := range summaryFiles {
 			if name == s {
+				// Apply the same per-file size cap as snapshot files so
+				// a pathological 500 MB summary doesn't slip past the
+				// guard a snapshot file would have triggered (FR-025).
+				if size > maxFile {
+					return nil, &SizeError{
+						Kind:  SizeErrorFile,
+						Path:  fullPath,
+						Bytes: size,
+						Limit: maxFile,
+					}
+				}
 				summaryPresent = true
 				break
 			}
@@ -266,8 +293,12 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 			synthTS = earliest.timestamp
 			synthPrefix = earliest.prefix
 		} else {
-			synthTS = time.Now().UTC()
-			synthPrefix = synthTS.Format("2006_01_02_15_04_05")
+			// Determinism (Principle IV): avoid time.Now() so a
+			// re-render of the same tarball produces byte-identical
+			// output. When only summary files exist we emit a fixed
+			// placeholder prefix instead.
+			synthTS = time.Time{}
+			synthPrefix = "unknown"
 		}
 		groups[synthPrefix] = &groupedSnapshot{
 			prefix:    synthPrefix,

@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"sort"
@@ -31,8 +30,7 @@ import (
 // and skipped; the parser continues with remaining samples. Returns
 // (nil, diagnostics) only when no usable samples are present at all.
 func parseIostat(r io.Reader, snapshotStart time.Time, sourcePath string) (*model.IostatData, []model.Diagnostic) {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 64*1024), 32*1024*1024)
+	scanner := newLineScanner(r)
 
 	var diagnostics []model.Diagnostic
 	addDiag := func(line int, msg string) {

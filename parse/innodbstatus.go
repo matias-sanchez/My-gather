@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"regexp"
@@ -9,6 +8,26 @@ import (
 	"strings"
 
 	"github.com/matias-sanchez/My-gather/model"
+)
+
+// Package-level regexes used by parseInnodbStatus. Lifted to avoid
+// re-compiling on every call (see parse/meminfo.go for the same
+// pattern).
+var (
+	reInnodbPendingReads     = regexp.MustCompile(`^Pending reads\s+(\d+)`)
+	reInnodbPendingWritesSum = regexp.MustCompile(`LRU (\d+), flush list (\d+), single page (\d+)`)
+	reInnodbHashRate         = regexp.MustCompile(`([\d.]+)\s+hash searches/s,\s+([\d.]+)\s+non-hash searches/s`)
+	reInnodbHashTblSize      = regexp.MustCompile(`^Hash table size\s+(\d+)`)
+	reInnodbHLL              = regexp.MustCompile(`^History list length (\d+)`)
+	// SEMAPHORES entry: "--Thread 140148200982272 has waited at
+	// ibuf0ibuf.cc line 3922 for 0 seconds the semaphore:" — capture
+	// <file> and <line>.
+	reInnodbThreadWaited = regexp.MustCompile(`^--Thread \d+ has waited at (\S+) line (\d+) `)
+	// Partner line following the thread line: "Mutex at 0x..., Mutex
+	// TRX_SYS created trx0sys.cc:599, locked by ...". We capture the
+	// mutex name (TRX_SYS) so the breakdown has a readable label next
+	// to the file:line key.
+	reInnodbMutexName = regexp.MustCompile(`^Mutex at 0x[0-9a-fA-F]+, Mutex ([^\s]+) created`)
 )
 
 // parseInnodbStatus reads the text of `SHOW ENGINE INNODB STATUS` as
@@ -27,28 +46,14 @@ import (
 // This is a targeted extractor rather than a full InnoDB status
 // parser; we only read what the report renders.
 func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData, []model.Diagnostic) {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 64*1024), 32*1024*1024)
+	scanner := newLineScanner(r)
 
 	var diagnostics []model.Diagnostic
 	data := &model.InnodbStatusData{}
 
 	var inSection string
+	anySectionSeen := false
 	threadWaited := 0
-	rePendingReads := regexp.MustCompile(`^Pending reads\s+(\d+)`)
-	rePendingWritesSum := regexp.MustCompile(`LRU (\d+), flush list (\d+), single page (\d+)`)
-	reHashRate := regexp.MustCompile(`([\d.]+)\s+hash searches/s,\s+([\d.]+)\s+non-hash searches/s`)
-	reHashTblSize := regexp.MustCompile(`^Hash table size\s+(\d+)`)
-	reHLL := regexp.MustCompile(`^History list length (\d+)`)
-	// SEMAPHORES entry: "--Thread 140148200982272 has waited at
-	// ibuf0ibuf.cc line 3922 for 0 seconds the semaphore:" — capture
-	// <file> and <line>.
-	reThreadWaited := regexp.MustCompile(`^--Thread \d+ has waited at (\S+) line (\d+) `)
-	// Partner line following the thread line: "Mutex at 0x..., Mutex
-	// TRX_SYS created trx0sys.cc:599, locked by ...". We capture the
-	// mutex name (TRX_SYS) so the breakdown has a readable label next
-	// to the file:line key.
-	reMutexName := regexp.MustCompile(`^Mutex at 0x[0-9a-fA-F]+, Mutex ([^\s]+) created`)
 
 	// Aggregation key for SemaphoreSites so we can group by
 	// (file, line, mutex) without another pass.
@@ -86,12 +91,13 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 				havePending = false
 			}
 			inSection = trimmed
+			anySectionSeen = true
 			continue
 		}
 
 		switch inSection {
 		case "SEMAPHORES":
-			if m := reThreadWaited.FindStringSubmatch(trimmed); m != nil {
+			if m := reInnodbThreadWaited.FindStringSubmatch(trimmed); m != nil {
 				threadWaited++
 				// Flush a previous unmatched pending record with no
 				// mutex name so consecutive thread lines (rare but
@@ -105,7 +111,7 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 				continue
 			}
 			if havePending {
-				if m := reMutexName.FindStringSubmatch(trimmed); m != nil {
+				if m := reInnodbMutexName.FindStringSubmatch(trimmed); m != nil {
 					siteCounts[siteKey{file: pendingFile, line: pendingLine, mutex: m[1]}]++
 					havePending = false
 					continue
@@ -123,17 +129,17 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 				havePending = false
 			}
 		case "TRANSACTIONS":
-			if m := reHLL.FindStringSubmatch(trimmed); m != nil {
+			if m := reInnodbHLL.FindStringSubmatch(trimmed); m != nil {
 				v, _ := strconv.Atoi(m[1])
 				data.HistoryListLength = v
 			}
 		case "BUFFER POOL AND MEMORY":
-			if m := rePendingReads.FindStringSubmatch(trimmed); m != nil {
+			if m := reInnodbPendingReads.FindStringSubmatch(trimmed); m != nil {
 				v, _ := strconv.Atoi(m[1])
 				data.PendingReads = v
 			}
 			if strings.HasPrefix(trimmed, "Pending writes:") {
-				if m := rePendingWritesSum.FindStringSubmatch(trimmed); m != nil {
+				if m := reInnodbPendingWritesSum.FindStringSubmatch(trimmed); m != nil {
 					lru, _ := strconv.Atoi(m[1])
 					fl, _ := strconv.Atoi(m[2])
 					sp, _ := strconv.Atoi(m[3])
@@ -143,11 +149,11 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 		case "INSERT BUFFER AND ADAPTIVE HASH INDEX":
 			// The first Hash table size line gives the configured size;
 			// overwrite on each so we end up with the last-seen value.
-			if m := reHashTblSize.FindStringSubmatch(trimmed); m != nil {
+			if m := reInnodbHashTblSize.FindStringSubmatch(trimmed); m != nil {
 				v, _ := strconv.Atoi(m[1])
 				data.AHIActivity.HashTableSize = v
 			}
-			if m := reHashRate.FindStringSubmatch(trimmed); m != nil {
+			if m := reInnodbHashRate.FindStringSubmatch(trimmed); m != nil {
 				h, _ := strconv.ParseFloat(m[1], 64)
 				nh, _ := strconv.ParseFloat(m[2], 64)
 				data.AHIActivity.SearchesPerSec = h
@@ -160,6 +166,18 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 			SourceFile: sourcePath,
 			Severity:   model.SeverityError,
 			Message:    fmt.Sprintf("innodbstatus read: %v", err),
+		})
+	}
+
+	// If the scan completed without encountering any recognised section
+	// header, the file is almost certainly malformed or truncated.
+	// Surface that so the reader doesn't silently see an empty InnoDB
+	// status card.
+	if !anySectionSeen {
+		diagnostics = append(diagnostics, model.Diagnostic{
+			SourceFile: sourcePath,
+			Severity:   model.SeverityWarning,
+			Message:    "innodbstatus: no recognised section headers; file may be malformed",
 		})
 	}
 
