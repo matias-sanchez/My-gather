@@ -1366,6 +1366,61 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
    and remove the duplicate-header effect. */
 .ma-panel .ma-editing { display: none; }
 
+/* Floating action button — a persistent pencil icon in the bottom-
+   right corner that opens the counter-deltas editor regardless of
+   where the user has scrolled. Mirrors the strip's toggle behaviour
+   and the ⌘⇧E hotkey. Visibility is JS-driven via .is-visible: only
+   shown when the mysqladmin section is in view AND the popover is
+   not already open. */
+.ma-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 90;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--bg-elev) 92%, transparent);
+  backdrop-filter: blur(12px) saturate(130%);
+  color: var(--accent);
+  font-size: 20px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow:
+    0 10px 24px -8px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent);
+  opacity: 0;
+  transform: translateY(8px) scale(0.9);
+  pointer-events: none;
+  transition:
+    opacity 220ms cubic-bezier(.2, .9, .2, 1),
+    transform 220ms cubic-bezier(.2, .9, .2, 1),
+    background 180ms ease,
+    border-color 180ms ease;
+}
+.ma-fab.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.ma-fab:hover {
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-elev));
+  border-color: var(--accent);
+}
+.ma-fab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.ma-fab-pencil {
+  display: inline-block;
+  transform: translateY(-1px);
+}
+
 /* Dim-blur backdrop behind the open popover. One instance per panel
    (JS appends / removes via a 'is-visible' class). Clicks on it close
    the panel (unless pinned) via the existing click-outside listener,

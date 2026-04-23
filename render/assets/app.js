@@ -1655,6 +1655,25 @@
     backdrop.setAttribute("aria-hidden", "true");
     document.body.appendChild(backdrop);
 
+    // Floating pencil FAB — a second, always-visible affordance that
+    // mirrors the strip's toggle behaviour. Useful when the user has
+    // scrolled far below the strip and wants to open the editor
+    // without hunting for the hotkey or scrolling back up.
+    // Visibility is tied to subviewVisible (computed below) so the
+    // FAB only appears while the mysqladmin section is in view; it
+    // doesn't intrude on OS or processlist sections.
+    var fab = document.createElement("button");
+    fab.type = "button";
+    fab.className = "ma-fab";
+    fab.setAttribute("aria-label", "Open counter-deltas editor");
+    fab.setAttribute("title", "Edit counters (⌘⇧E)");
+    fab.innerHTML = '<span class="ma-fab-pencil" aria-hidden="true">✎</span>';
+    document.body.appendChild(fab);
+    fab.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      setOpen(!isOpen);
+    });
+
     // Sync the fixed-position panel's rect to the strip's bounding box
     // so it visually drops from the strip. Called on open, on scroll,
     // on window resize, and (via ResizeObserver) whenever the strip
@@ -1711,37 +1730,19 @@
       pinBtn.classList.toggle("active", isPinned);
       pinBtn.setAttribute("aria-pressed", isPinned ? "true" : "false");
       if (isOpen) positionMaPanel();
+      if (typeof syncFabVisibility === "function") syncFabVisibility();
     }
 
     function setOpen(open) {
       var wasOpen = isOpen;
       isOpen = !!open;
       storageSet(OPEN_KEY, isOpen ? "true" : "false");
-      if (isOpen) {
-        // Anchor the popover to the active chart when the strip is no
-        // longer in the viewport (e.g. user added a chart and scrolled
-        // down to it). Scroll the strip back into view so the popover
-        // drops from its usual place at viewport top, reachable from
-        // wherever the user was reading. If the active chart is below
-        // the fold too, scroll it into view as well so the popover and
-        // the chart it edits are both visible after settling.
-        var sRect = strip.getBoundingClientRect();
-        var stripHidden = sRect.bottom < 0 || sRect.top > window.innerHeight;
-        if (stripHidden) {
-          var active = getActive && getActive();
-          var activeEl = active && active.cardEl;
-          // Prefer scrolling the active chart into view near the top so
-          // the sticky strip re-pins above it and the popover lands
-          // right next to the chart being edited. Fall back to the
-          // strip itself.
-          var target = activeEl || strip;
-          try { target.scrollIntoView({ block: "start", behavior: "smooth" }); }
-          catch (_) { target.scrollIntoView(true); }
-        }
-      }
+      // No scroll-into-view here: positionMaPanel() clamps the popover
+      // into the viewport regardless of where the strip has scrolled
+      // to, so the panel is always visible and the page doesn't need
+      // to move. Keeping the user's scroll position stable is the
+      // expected behaviour for a command-palette-style popover.
       applyPanelState();
-      // If we just scrolled, re-position after scroll animation settles.
-      if (isOpen) setTimeout(positionMaPanel, 360);
       if (isOpen) {
         // Autofocus the search input so keystrokes go straight into
         // filtering without an extra click. Deferred to the next
@@ -1814,15 +1815,23 @@
     // ancestor can be found we fall back to always-active.
     var subviewEl = hostEl.closest("details.subview") || hostEl.closest("section") || hostEl;
     var subviewVisible = true;
+    function syncFabVisibility() {
+      // Show the FAB while the mysqladmin section is in view AND the
+      // popover is not already open (no need for a second opener when
+      // the panel itself is visible).
+      fab.classList.toggle("is-visible", subviewVisible && !isOpen);
+    }
     if (window.IntersectionObserver && subviewEl) {
       subviewVisible = false;
       var io = new IntersectionObserver(function (entries) {
         for (var i = 0; i < entries.length; i++) {
           subviewVisible = entries[i].isIntersecting;
         }
+        syncFabVisibility();
       }, { rootMargin: "0px 0px -20% 0px", threshold: 0.01 });
       io.observe(subviewEl);
     }
+    syncFabVisibility();
     document.addEventListener("keydown", function (ev) {
       if (ev.defaultPrevented) return;
       var t = ev.target;
