@@ -810,7 +810,7 @@
   function unitForChart(name) {
     if (name === "top")         return "%CPU";
     if (name === "processlist") return "threads";
-    if (name === "vmstat")      return "runqueue · blocked · %iowait";
+    if (name === "vmstat")      return "";
     if (name === "meminfo")     return "GB";
     return "";
   }
