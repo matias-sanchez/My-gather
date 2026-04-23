@@ -1372,11 +1372,17 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
    and the ⌘⇧E hotkey. Visibility is JS-driven via .is-visible: only
    shown when the mysqladmin section is in view AND the popover is
    not already open. */
-.ma-fab {
+.ma-fab-stack {
   position: fixed;
   right: 24px;
   bottom: 24px;
   z-index: 1000;
+  display: flex;
+  flex-direction: column-reverse; /* edit-FAB at the bottom, add-FAB on top */
+  gap: 12px;
+  pointer-events: none; /* children re-enable */
+}
+.ma-fab {
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -1396,7 +1402,23 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
     0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
-.ma-fab.is-visible { display: inline-flex; }
+.ma-fab.is-visible { display: inline-flex; pointer-events: auto; }
+.ma-fab-add {
+  /* Secondary: glass background, accent outline + accent text, so the
+     two FABs are visually distinct at a glance. */
+  background: color-mix(in srgb, var(--bg-elev) 92%, transparent);
+  backdrop-filter: blur(12px) saturate(130%);
+  color: var(--accent);
+  font-size: 28px;
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--border));
+  box-shadow:
+    0 10px 24px -8px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.ma-fab-add:hover {
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-elev));
+}
 .ma-fab:hover {
   transform: translateY(-2px) scale(1.04);
   box-shadow:

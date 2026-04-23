@@ -1662,13 +1662,29 @@
     // Visibility is tied to subviewVisible (computed below) so the
     // FAB only appears while the mysqladmin section is in view; it
     // doesn't intrude on OS or processlist sections.
+    // FAB stack: "Add chart" (+) sits above the "Edit counters" pencil.
+    // Both live in a shared column-flex container at the bottom-right.
+    var fabStack = document.createElement("div");
+    fabStack.className = "ma-fab-stack";
+    document.body.appendChild(fabStack);
+
+    var fabAdd = document.createElement("button");
+    fabAdd.type = "button";
+    fabAdd.className = "ma-fab ma-fab-add";
+    fabAdd.setAttribute("aria-label", "Add new chart");
+    fabAdd.setAttribute("title", "Add a new chart");
+    fabAdd.innerHTML = '<span class="ma-fab-pencil" aria-hidden="true">+</span>';
+    fabStack.appendChild(fabAdd);
+    // Click handler attached later, after createChart / setActive /
+    // persistLayout are all defined — see end of renderMysqladmin.
+
     var fab = document.createElement("button");
     fab.type = "button";
     fab.className = "ma-fab";
     fab.setAttribute("aria-label", "Open counter-deltas editor");
     fab.setAttribute("title", "Edit counters (⌘⇧E)");
     fab.innerHTML = '<span class="ma-fab-pencil" aria-hidden="true">✎</span>';
-    document.body.appendChild(fab);
+    fabStack.appendChild(fab);
     fab.addEventListener("click", function (ev) {
       ev.stopPropagation();
       setOpen(!isOpen);
@@ -1819,10 +1835,14 @@
     // then narrows visibility when the user scrolls past the section.
     var subviewVisible = true;
     function syncFabVisibility() {
-      // Show the FAB while the mysqladmin section is in view AND the
-      // popover is not already open (no need for a second opener when
-      // the panel itself is visible).
-      fab.classList.toggle("is-visible", subviewVisible && !isOpen);
+      // Show both FABs (add-chart + edit-counters) while the mysqladmin
+      // section is in view. Hide the edit-counters pencil when the
+      // popover is already open (no need for a second opener). The
+      // add-chart (+) stays visible even while the editor is open —
+      // you might want to add a new chart and edit it in one flow.
+      var base = subviewVisible;
+      fab.classList.toggle("is-visible", base && !isOpen);
+      fabAdd.classList.toggle("is-visible", base);
     }
     if (window.IntersectionObserver && subviewEl) {
       var io = new IntersectionObserver(function (entries) {
@@ -1970,12 +1990,24 @@
     btnNew.className = "ma-action ma-action-primary";
     btnNew.textContent = "+ New chart";
     btnNew.title = "Add another chart below — pick counters or a category for it, while other charts stay untouched";
-    btnNew.addEventListener("click", function () {
+    function addNewChart() {
       var cs = createChart({ selection: [] });
       setActive(cs.id);
       // Persist immediately so a reload right after "+ New chart"
       // preserves the empty chart — matches duplicate/remove.
       persistLayout();
+      // Bring the freshly-added chart into view so the user sees
+      // what they just created (matters most when they clicked
+      // the floating-FAB equivalent from the bottom of the page).
+      if (cs.cardEl && typeof cs.cardEl.scrollIntoView === "function") {
+        try { cs.cardEl.scrollIntoView({ block: "center", behavior: "smooth" }); }
+        catch (_) { cs.cardEl.scrollIntoView(true); }
+      }
+    }
+    btnNew.addEventListener("click", addNewChart);
+    fabAdd.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      addNewChart();
     });
     toolbar.appendChild(toolbarHint);
     toolbar.appendChild(btnNew);
