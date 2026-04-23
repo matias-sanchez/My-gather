@@ -72,7 +72,7 @@
     <details id="sec-environment" class="section" open>
       <summary>
         <span>Environment</span>
-        <span class="badge">{{.EnvBadge}}</span>
+        {{- if .EnvBadge}}<span class="badge">{{.EnvBadge}}</span>{{end}}
       </summary>
       <div class="body">
         {{template "environment" .}}
