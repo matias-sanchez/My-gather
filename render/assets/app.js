@@ -1814,6 +1814,9 @@
     // screen. IntersectionObserver tracks visibility; if no subview
     // ancestor can be found we fall back to always-active.
     var subviewEl = hostEl.closest("details.subview") || hostEl.closest("section") || hostEl;
+    // Default to visible so the FAB appears on first paint even if
+    // IntersectionObserver hasn't fired its initial callback yet. IO
+    // then narrows visibility when the user scrolls past the section.
     var subviewVisible = true;
     function syncFabVisibility() {
       // Show the FAB while the mysqladmin section is in view AND the
@@ -1822,7 +1825,6 @@
       fab.classList.toggle("is-visible", subviewVisible && !isOpen);
     }
     if (window.IntersectionObserver && subviewEl) {
-      subviewVisible = false;
       var io = new IntersectionObserver(function (entries) {
         for (var i = 0; i < entries.length; i++) {
           subviewVisible = entries[i].isIntersecting;
