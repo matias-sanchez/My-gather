@@ -109,3 +109,46 @@ func TestResolveVersionFallback(t *testing.T) {
 		}
 	}
 }
+
+// TestMajorVersionMultiDigit guards against the naive raw[:3] slicing
+// that used to mis-parse multi-digit majors (10.x) and minors (8.10).
+func TestMajorVersionMultiDigit(t *testing.T) {
+	cases := []struct {
+		in, want string
+	}{
+		{"8.0.32-24", "8.0"},
+		{"5.7.44-48-log", "5.7"},
+		{"8.4.2", "8.4"},
+		{"10.4.32-MariaDB", "10.4"},
+		{"8.10.1", "8.10"},
+		{"11.4.5-LTS", "11.4"},
+		{"", ""},
+		{"Ver 8", ""},
+		{"x.y", ""},
+		{"8.", ""},
+		{".8", ""},
+	}
+	for _, c := range cases {
+		if got := majorVersion(c.in); got != c.want {
+			t.Errorf("majorVersion(%q) = %q; want %q", c.in, got, c.want)
+		}
+	}
+}
+
+// TestResolveVersionMultiDigitSort ensures resolveVersion sorts
+// numerically (not lexicographically) so "10.4" is later than "9.0".
+func TestResolveVersionMultiDigitSort(t *testing.T) {
+	supported := []string{"8.0", "8.4", "9.0", "10.0", "10.4"}
+	cases := []struct{ captured, want string }{
+		{"10.4.1", "10.4"},
+		{"10.5.0", "10.4"}, // fallback to latest ≤ captured
+		{"10.3.9", "10.0"}, // 10.3 < 10.4 so fall back to 10.0
+		{"9.5.2", "9.0"},
+		{"8.4.0", "8.4"},
+	}
+	for _, c := range cases {
+		if got := resolveVersion(c.captured, supported); got != c.want {
+			t.Errorf("resolveVersion(%q) = %q; want %q", c.captured, got, c.want)
+		}
+	}
+}

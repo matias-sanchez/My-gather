@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -140,23 +141,33 @@ func loadMySQLDefaults() (map[string]map[string]string, []string) {
 	return mysqlDefaults, mysqlDefaultsVersions
 }
 
-// majorVersion extracts the "5.7" / "8.0" / "8.4" short form from a
-// raw MySQL version string (e.g. "8.0.32-24", "5.7.44-48-log",
-// "8.4.2"). Returns "" if the input doesn't start with at least
-// "N.N".
+// majorVersion extracts the "<major>.<minor>" short form from a raw
+// MySQL version string (e.g. "8.0.32-24" → "8.0", "5.7.44-48-log" →
+// "5.7", "8.4.2" → "8.4", "10.4.32-MariaDB" → "10.4", "8.10.1" →
+// "8.10"). Returns "" when the input doesn't start with
+// digit(s)-dot-digit(s). Parses dotted components properly rather
+// than hard-coding a 3-character window, so multi-digit majors like
+// 10.x or multi-digit minors like 8.10 resolve correctly (the naive
+// raw[:3] slice would reduce "10.4" to "10." and "8.10" to "8.1").
 func majorVersion(raw string) string {
 	raw = strings.TrimSpace(raw)
-	if len(raw) < 3 {
+	// Walk leading digits as the major.
+	i := 0
+	for i < len(raw) && raw[i] >= '0' && raw[i] <= '9' {
+		i++
+	}
+	if i == 0 || i >= len(raw) || raw[i] != '.' {
 		return ""
 	}
-	// First three characters must be digit.dot.digit — anything else
-	// (e.g. "unknown", "Ver 8") is unresolvable so we return empty and
-	// the caller (classifyVariable) falls through to the "unknown"
-	// result.
-	if !(raw[0] >= '0' && raw[0] <= '9') || raw[1] != '.' || !(raw[2] >= '0' && raw[2] <= '9') {
+	// Walk digits after the dot as the minor.
+	j := i + 1
+	for j < len(raw) && raw[j] >= '0' && raw[j] <= '9' {
+		j++
+	}
+	if j == i+1 {
 		return ""
 	}
-	return raw[:3]
+	return raw[:j]
 }
 
 // resolveVersion picks which column of the defaults table to consult
@@ -180,17 +191,65 @@ func resolveVersion(captured string, supported []string) string {
 	}
 	// 2. Latest supported ≤ captured. Order of `supported` is
 	//    irrelevant — we scan all entries and keep the highest one
-	//    that is still ≤ the captured version. Comparison is
-	//    lexicographic on the 3-char form ("8.0" vs "8.4") which is
-	//    correct for the current range (all short forms are "N.N"
-	//    with single-digit components).
+	//    that is still ≤ the captured version. Comparison parses
+	//    each side into (major, minor) integers so multi-digit
+	//    components (10.x, 8.10) sort correctly — plain lexicographic
+	//    string comparison would put "10.4" before "9.0" and "8.10"
+	//    before "8.2".
 	best := ""
 	for _, v := range supported {
-		if v <= mv && v > best {
+		if cmpMajorMinor(v, mv) <= 0 && cmpMajorMinor(v, best) > 0 {
 			best = v
 		}
 	}
 	return best
+}
+
+// cmpMajorMinor compares two "<major>.<minor>" version strings
+// numerically. Returns -1 / 0 / +1. An empty or unparseable side is
+// treated as less than any parseable version so "best" starts at "" and
+// any real version beats it.
+func cmpMajorMinor(a, b string) int {
+	amaj, amin, aok := splitMajorMinor(a)
+	bmaj, bmin, bok := splitMajorMinor(b)
+	if !aok && !bok {
+		return 0
+	}
+	if !aok {
+		return -1
+	}
+	if !bok {
+		return 1
+	}
+	switch {
+	case amaj < bmaj:
+		return -1
+	case amaj > bmaj:
+		return 1
+	case amin < bmin:
+		return -1
+	case amin > bmin:
+		return 1
+	}
+	return 0
+}
+
+// splitMajorMinor parses "<maj>.<min>" into ints. Returns ok=false for
+// anything that isn't pure digits-dot-digits.
+func splitMajorMinor(s string) (int, int, bool) {
+	dot := strings.IndexByte(s, '.')
+	if dot <= 0 || dot == len(s)-1 {
+		return 0, 0, false
+	}
+	maj, err := strconv.Atoi(s[:dot])
+	if err != nil {
+		return 0, 0, false
+	}
+	min, err := strconv.Atoi(s[dot+1:])
+	if err != nil {
+		return 0, 0, false
+	}
+	return maj, min, true
 }
 
 // classifyVariable compares a captured variable value against the
