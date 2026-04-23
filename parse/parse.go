@@ -21,6 +21,16 @@ import (
 // parser's bufio.Scanner setup.
 const maxScanTokenBytes = 32 << 20
 
+// reTimestampLine matches the per-sample boundary marker pt-stalk
+// writes at the top of every TS-delimited collector capture:
+//
+//	TS 1776790303.009325313 2026-04-21 16:51:43
+//
+// The shape is identical across all TS-prefixed collectors; every
+// parser that consumes them MUST share this one compiled regex so a
+// format change gets a single edit site.
+var reTimestampLine = regexp.MustCompile(`^TS\s+(\d+(?:\.\d+)?)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})`)
+
 // newLineScanner returns a bufio.Scanner configured with the standard
 // line-buffer sizes used by every parser in this package. All callers
 // route through this helper so the buffer cap is enforced in one

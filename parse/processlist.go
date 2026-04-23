@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -12,12 +11,6 @@ import (
 
 	"github.com/matias-sanchez/My-gather/model"
 )
-
-// tsLine matches the sample-boundary marker pt-stalk writes at the top
-// of each processlist snapshot:
-//
-//	TS 1776790303.009325313 2026-04-21 16:51:43
-var tsLine = regexp.MustCompile(`^TS\s+(\d+(?:\.\d+)?)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})`)
 
 // parseProcesslist reads pt-stalk -processlist output (repeated
 // SHOW FULL PROCESSLIST \G captures) and returns one
@@ -139,7 +132,7 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 
 	for scanner.Scan() {
 		line := strings.TrimRight(scanner.Text(), "\r\n")
-		if m := tsLine.FindStringSubmatch(line); m != nil {
+		if m := reTimestampLine.FindStringSubmatch(line); m != nil {
 			epoch, _ := strconv.ParseFloat(m[1], 64)
 			t := time.Unix(int64(math.Floor(epoch)), 0).UTC()
 			startNewSample(t)
