@@ -88,12 +88,20 @@ func parseMeminfo(r io.Reader, sourcePath string) (*model.MeminfoData, []model.D
 			startNewSample(t)
 			continue
 		}
-		if current == nil {
-			// Data before the first TS marker — skip silently; pt-stalk
-			// always writes the TS header first in practice.
-			continue
-		}
 		if m := meminfoValueLine.FindStringSubmatch(line); m != nil {
+			if current == nil {
+				// Canonical pt-stalk writes a `TS <epoch> …` header
+				// before each /proc/meminfo dump. A value line before
+				// any TS means the file is truncated or corrupted;
+				// reject the whole input so the caller doesn't render
+				// misattributed data.
+				diagnostics = append(diagnostics, model.Diagnostic{
+					SourceFile: sourcePath,
+					Severity:   model.SeverityError,
+					Message:    "meminfo: value line before first TS marker; input is not canonical pt-stalk output",
+				})
+				return nil, diagnostics
+			}
 			v, err := strconv.ParseFloat(m[2], 64)
 			if err != nil {
 				continue
@@ -112,6 +120,11 @@ func parseMeminfo(r io.Reader, sourcePath string) (*model.MeminfoData, []model.D
 		samples = append(samples, *current)
 	}
 	if len(samples) == 0 {
+		diagnostics = append(diagnostics, model.Diagnostic{
+			SourceFile: sourcePath,
+			Severity:   model.SeverityError,
+			Message:    "meminfo: no samples found; input is empty or lacks any TS header",
+		})
 		return nil, diagnostics
 	}
 
