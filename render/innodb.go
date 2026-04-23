@@ -27,12 +27,19 @@ func aggregateInnoDBMetrics(snaps []model.SnapshotInnoDB) []innoDBMetricView {
 		return nil
 	}
 	semMetric := innoDBIntMetric("Semaphores", "waiting", sem)
+	semMetric.Key = "semaphores"
 	attachSemaphoreBreakdown(&semMetric, snaps)
+	pioMetric := innoDBIntMetric("Pending I/O", "reads + writes", pio)
+	pioMetric.Key = "pending_io"
+	ahiMetric := buildAHIMetric(snaps)
+	ahiMetric.Key = "ahi"
+	hllMetric := innoDBIntMetric("History list", "HLL (undo depth)", hll)
+	hllMetric.Key = "history_list"
 	return []innoDBMetricView{
 		semMetric,
-		innoDBIntMetric("Pending I/O", "reads + writes", pio),
-		buildAHIMetric(snaps),
-		innoDBIntMetric("History list", "HLL (undo depth)", hll),
+		pioMetric,
+		ahiMetric,
+		hllMetric,
 	}
 }
 
@@ -197,6 +204,13 @@ func attachSemaphoreBreakdown(m *innoDBMetricView, snaps []model.SnapshotInnoDB)
 	}
 }
 
+// buildSiteRows materialises every SemaphoreSite into its rendered row
+// form. The view caps what is *visible by default* via the template's
+// `cb-tail hidden` class (rows with index >= 10); the corresponding
+// "Show all (N sites)" button in db.html.tmpl + the initSemaphoreBreakdown
+// handler in app.js unhide the remainder. We intentionally do NOT
+// truncate here — high-cardinality contention captures still expose
+// the full list to the user, just behind one click.
 func buildSiteRows(sites []model.SemaphoreSite, total int) []semaphoreSiteRow {
 	out := make([]semaphoreSiteRow, 0, len(sites))
 	for _, s := range sites {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -103,16 +104,27 @@ func classifyMysqladminCategory(cats []mysqladminCategoryDef, name string) []str
 	return hits
 }
 
-// mysqlDefaults is the parsed default-values map, populated on first use.
+// mysqlDefaults holds the versioned defaults table parsed from the
+// embedded JSON. The outer map is variable-name → (major-version →
+// documented default). Major versions are the short form "5.7",
+// "8.0", "8.4" matching the "versions" list in the JSON.
+//
+// mysqlDefaultsVersions is the canonical chronological list used for
+// fallback resolution by resolveVersion: when a capture comes from a
+// version we don't have a column for, resolveVersion selects the
+// latest listed version that is still ≤ captured (e.g. captured "8.1"
+// → "8.0" when only "5.7"/"8.0"/"8.4" are listed).
 var (
-	mysqlDefaults     map[string]string
-	mysqlDefaultsOnce sync.Once
+	mysqlDefaults         map[string]map[string]string
+	mysqlDefaultsVersions []string
+	mysqlDefaultsOnce     sync.Once
 )
 
-func loadMySQLDefaults() map[string]string {
+func loadMySQLDefaults() (map[string]map[string]string, []string) {
 	mysqlDefaultsOnce.Do(func() {
 		var v struct {
-			Defaults map[string]string `json:"defaults"`
+			Versions  []string                     `json:"versions"`
+			Variables map[string]map[string]string `json:"variables"`
 		}
 		// Embedded at build time — a parse error is a programmer
 		// error. Fail loudly so the "non-default" badges can't
@@ -120,23 +132,154 @@ func loadMySQLDefaults() map[string]string {
 		if err := json.Unmarshal(embeddedMySQLDefaultsJSON, &v); err != nil {
 			panic(fmt.Sprintf("render/assets/mysql-defaults.json: malformed embedded JSON: %v", err))
 		}
-		mysqlDefaults = v.Defaults
+		if len(v.Versions) == 0 || len(v.Variables) == 0 {
+			panic("render/assets/mysql-defaults.json: missing versions or variables")
+		}
+		mysqlDefaults = v.Variables
+		mysqlDefaultsVersions = v.Versions
 	})
-	return mysqlDefaults
+	return mysqlDefaults, mysqlDefaultsVersions
+}
+
+// majorVersion extracts the "<major>.<minor>" short form from a raw
+// MySQL version string (e.g. "8.0.32-24" → "8.0", "5.7.44-48-log" →
+// "5.7", "8.4.2" → "8.4", "10.4.32-MariaDB" → "10.4", "8.10.1" →
+// "8.10"). Returns "" when the input doesn't start with
+// digit(s)-dot-digit(s). Parses dotted components properly rather
+// than hard-coding a 3-character window, so multi-digit majors like
+// 10.x or multi-digit minors like 8.10 resolve correctly (the naive
+// raw[:3] slice would reduce "10.4" to "10." and "8.10" to "8.1").
+func majorVersion(raw string) string {
+	raw = strings.TrimSpace(raw)
+	// Walk leading digits as the major.
+	i := 0
+	for i < len(raw) && raw[i] >= '0' && raw[i] <= '9' {
+		i++
+	}
+	if i == 0 || i >= len(raw) || raw[i] != '.' {
+		return ""
+	}
+	// Walk digits after the dot as the minor.
+	j := i + 1
+	for j < len(raw) && raw[j] >= '0' && raw[j] <= '9' {
+		j++
+	}
+	if j == i+1 {
+		return ""
+	}
+	return raw[:j]
+}
+
+// resolveVersion picks which column of the defaults table to consult
+// for a captured version string. Returns the chosen major-version key
+// or "" if no match is possible. Fallback order:
+//  1. Exact match on captured major version (e.g. "8.0" → "8.0").
+//  2. Latest supported version ≤ captured, walking
+//     mysqlDefaultsVersions in reverse so newer-but-≤-captured wins
+//     (e.g. captured "8.1" falls back to "8.0" when 8.1 isn't listed).
+//  3. "" when the captured version is older than every column.
+func resolveVersion(captured string, supported []string) string {
+	mv := majorVersion(captured)
+	if mv == "" {
+		return ""
+	}
+	// 1. Exact.
+	for _, v := range supported {
+		if v == mv {
+			return v
+		}
+	}
+	// 2. Latest supported ≤ captured. Order of `supported` is
+	//    irrelevant — we scan all entries and keep the highest one
+	//    that is still ≤ the captured version. Comparison parses
+	//    each side into (major, minor) integers so multi-digit
+	//    components (10.x, 8.10) sort correctly — plain lexicographic
+	//    string comparison would put "10.4" before "9.0" and "8.10"
+	//    before "8.2".
+	best := ""
+	for _, v := range supported {
+		if cmpMajorMinor(v, mv) <= 0 && cmpMajorMinor(v, best) > 0 {
+			best = v
+		}
+	}
+	return best
+}
+
+// cmpMajorMinor compares two "<major>.<minor>" version strings
+// numerically. Returns -1 / 0 / +1. An empty or unparseable side is
+// treated as less than any parseable version so "best" starts at "" and
+// any real version beats it.
+func cmpMajorMinor(a, b string) int {
+	amaj, amin, aok := splitMajorMinor(a)
+	bmaj, bmin, bok := splitMajorMinor(b)
+	if !aok && !bok {
+		return 0
+	}
+	if !aok {
+		return -1
+	}
+	if !bok {
+		return 1
+	}
+	switch {
+	case amaj < bmaj:
+		return -1
+	case amaj > bmaj:
+		return 1
+	case amin < bmin:
+		return -1
+	case amin > bmin:
+		return 1
+	}
+	return 0
+}
+
+// splitMajorMinor parses "<maj>.<min>" into ints. Returns ok=false for
+// anything that isn't pure digits-dot-digits.
+func splitMajorMinor(s string) (int, int, bool) {
+	dot := strings.IndexByte(s, '.')
+	if dot <= 0 || dot == len(s)-1 {
+		return 0, 0, false
+	}
+	maj, err := strconv.Atoi(s[:dot])
+	if err != nil {
+		return 0, 0, false
+	}
+	min, err := strconv.Atoi(s[dot+1:])
+	if err != nil {
+		return 0, 0, false
+	}
+	return maj, min, true
 }
 
 // classifyVariable compares a captured variable value against the
-// documented compiled-in default. Returns:
+// documented compiled-in default for the captured MySQL version.
+// `version` is the raw `version` variable as captured by pt-stalk
+// (e.g. "8.0.32-24"). Returns:
 //   - "default"  — value matches the documented default
 //   - "modified" — value differs from the documented default
-//   - "unknown"  — no default is documented for this variable
+//   - "unknown"  — no default is documented for this (variable,
+//     version) pair
 //
 // Matching is tolerant: whitespace-trimmed, case-insensitive, and
 // comma-separated values (e.g. sql_mode, tls_version) compared as
 // sets so member order does not flag a default as modified.
-func classifyVariable(defaults map[string]string, name, observed string) string {
-	def, ok := defaults[name]
+func classifyVariable(defaults map[string]map[string]string, supported []string, version, name, observed string) string {
+	perVersion, ok := defaults[name]
 	if !ok {
+		return "unknown"
+	}
+	col := resolveVersion(version, supported)
+	if col == "" {
+		return "unknown"
+	}
+	def, ok := perVersion[col]
+	if !ok {
+		// Variable is documented for some versions but not this one
+		// (e.g. innodb_log_file_size has no 8.4 entry because
+		// innodb_redo_log_capacity replaced it). Treat as unknown so
+		// the UI does not flag the capture as modified against a
+		// default that doesn't exist.
 		return "unknown"
 	}
 	if normalisedEqual(def, observed) {

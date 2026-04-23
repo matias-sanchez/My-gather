@@ -1317,32 +1317,185 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   text-align: center;
 }
 
+/* Option A: the panel is a viewport-fixed popover. JS (positionMaPanel)
+   syncs its top/left/width to the sticky strip on open + on scroll +
+   on resize so it visually "drops" from the strip without ever
+   entering document flow. Smooth open (220 ms) and close (160 ms)
+   transitions, no display:none swap — relies on opacity +
+   pointer-events instead so the close animation can run to
+   completion before the popover disappears. */
 .ma-panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  z-index: 50;
+  position: fixed;
+  z-index: 100;
   border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--bg-elev) 82%, transparent);
-  backdrop-filter: blur(12px) saturate(120%);
+  background: color-mix(in srgb, var(--bg-elev) 90%, transparent);
+  backdrop-filter: blur(14px) saturate(130%);
   box-shadow:
-    0 24px 60px -20px rgba(0, 0, 0, 0.55),
-    0 4px 14px rgba(0, 0, 0, 0.3);
+    0 30px 70px -18px rgba(0, 0, 0, 0.65),
+    0 6px 18px rgba(0, 0, 0, 0.35),
+    0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
   padding: 12px 14px;
   max-height: min(72vh, 620px);
   overflow-y: auto;
-  display: none;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
   transform-origin: top center;
+  pointer-events: none;
+  visibility: hidden;
+  /* Close: opacity + transform ease over 160 ms, then visibility flips
+     hidden (delayed so transforms finish first). */
+  transition:
+    opacity 160ms cubic-bezier(.4, 0, 1, 1),
+    transform 160ms cubic-bezier(.4, 0, 1, 1),
+    visibility 0s linear 160ms;
 }
-.ma-panel-host.is-open .ma-panel {
-  display: block;
-  animation: ma-panel-drop 200ms cubic-bezier(.22, 1, .36, 1);
+.ma-panel.ma-panel-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  visibility: visible;
+  /* Open: slightly longer + spring-y ease. */
+  transition:
+    opacity 220ms cubic-bezier(.2, .9, .2, 1),
+    transform 220ms cubic-bezier(.2, .9, .2, 1),
+    visibility 0s linear 0s;
 }
-@keyframes ma-panel-drop {
-  from { opacity: 0; transform: scaleY(.94) translateY(-6px); }
-  to   { opacity: 1; transform: scaleY(1)   translateY(0); }
+/* The in-panel "EDITING X" badge is redundant now that the strip is
+   always visible above the popover. Hide it to reclaim vertical space
+   and remove the duplicate-header effect. */
+.ma-panel .ma-editing { display: none; }
+
+/* Floating action button — a persistent pencil icon in the bottom-
+   right corner that opens the counter-deltas editor regardless of
+   where the user has scrolled. Mirrors the strip's toggle behaviour
+   and the ⌘⇧E hotkey. Visibility is JS-driven via .is-visible: only
+   shown when the mysqladmin section is in view AND the popover is
+   not already open. */
+.ma-fab-stack {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column-reverse; /* edit-FAB at the bottom, add-FAB on top */
+  gap: 12px;
+  pointer-events: none; /* children re-enable */
+}
+.ma-fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--accent);
+  color: #0b1220;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow:
+    0 12px 28px -8px rgba(0, 0, 0, 0.7),
+    0 4px 12px rgba(0, 0, 0, 0.45),
+    0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.ma-fab.is-visible { display: inline-flex; pointer-events: auto; }
+.ma-fab-add {
+  /* Secondary: glass background, accent outline + accent text, so the
+     two FABs are visually distinct at a glance. */
+  background: color-mix(in srgb, var(--bg-elev) 92%, transparent);
+  backdrop-filter: blur(12px) saturate(130%);
+  color: var(--accent);
+  font-size: 28px;
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--border));
+  box-shadow:
+    0 10px 24px -8px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.ma-fab-add:hover {
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-elev));
+}
+.ma-fab:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    0 16px 32px -8px rgba(0, 0, 0, 0.75),
+    0 6px 16px rgba(0, 0, 0, 0.5),
+    0 0 0 5px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.ma-fab:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+.ma-fab-pencil {
+  display: inline-block;
+  transform: translateY(-1px);
+}
+/* Custom tooltip for the FABs — renders to the LEFT of the button so
+   it doesn't slide off-screen near the page edge. Appears on hover
+   and on keyboard focus. */
+.ma-fab[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  padding: 6px 10px;
+  background: var(--bg-elev-2, #1a2131);
+  color: var(--fg, #e6ebf5);
+  border: 1px solid var(--border, #263047);
+  border-radius: 6px;
+  font: 500 12px/1.2 var(--mono, ui-monospace, Menlo, monospace);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+.ma-fab[data-tooltip]::before {
+  /* Little arrow pointing at the FAB. */
+  content: "";
+  position: absolute;
+  right: calc(100% + 6px);
+  top: 50%;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  border-left-color: var(--border, #263047);
+  transform: translateY(-50%) translateX(4px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+.ma-fab { position: relative; }
+.ma-fab:hover[data-tooltip]::after,
+.ma-fab:focus-visible[data-tooltip]::after,
+.ma-fab:hover[data-tooltip]::before,
+.ma-fab:focus-visible[data-tooltip]::before {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Dim-blur backdrop behind the open popover. One instance per panel
+   (JS appends / removes via a 'is-visible' class). Clicks on it close
+   the panel (unless pinned) via the existing click-outside listener,
+   which treats the backdrop as "outside". */
+.ma-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  background: rgba(8, 12, 22, 0.42);
+  backdrop-filter: blur(3px) saturate(110%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+.ma-backdrop.is-visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 .ma-panel-controls {
   position: absolute;
@@ -1388,7 +1541,8 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .ma-panel-host.is-open .ma-panel { animation: none; }
+  .ma-panel,
+  .ma-backdrop { transition: none !important; }
 }
 /* Two-row labelled chip layout. */
 .ma-chip-row {
@@ -1770,12 +1924,53 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   border-right: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
 }
 .ma-empty-chart {
-  padding: 40px 14px;
+  padding: 40px 14px 48px;
   color: var(--fg-muted);
   font-size: 13px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.ma-empty-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elev));
+  color: var(--fg);
+  font: 600 14px/1 inherit;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, transform 140ms ease;
+}
+.ma-empty-edit:hover {
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg-elev));
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.ma-empty-edit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.ma-empty-pencil {
+  font-size: 18px;
+  color: var(--accent);
+  line-height: 1;
+}
+.ma-empty-label { letter-spacing: 0.02em; }
+.ma-empty-hint {
+  color: var(--fg-dim);
+  font-size: 12px;
   font-style: italic;
 }
+/* Per-chart pencil in the header controls row — styled identically to
+   the other ma-card-btn icons so it reads as "just another control". */
+.ma-card-edit { color: var(--accent); }
+.ma-card-edit:hover { color: var(--fg); }
 
 /* ---------- Advisor / Findings ---------- */
 
@@ -2218,3 +2413,138 @@ details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
   details > summary::before { content: none; }
   main.content { padding: 0; }
 }
+
+/* ---------- vmstat category tablist ---------- */
+.vmstat-tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px 0;
+  padding: 0;
+}
+.vmstat-tab {
+  appearance: none;
+  border: 1px solid var(--border, #d0d6e0);
+  background: transparent;
+  color: var(--fg-muted, #6c7588);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font: 500 12px/1.4 inherit;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.vmstat-tab:hover {
+  color: var(--fg, #1b1f27);
+  border-color: var(--fg-muted, #9aa5b4);
+}
+.vmstat-tab.active,
+.vmstat-tab[aria-selected="true"] {
+  background: #6b8eff;
+  color: #fff;
+  border-color: #6b8eff;
+}
+.vmstat-tab:focus-visible {
+  outline: 2px solid #6b8eff;
+  outline-offset: 2px;
+}
+
+/* ---------- History list length sparkline ---------- */
+.hll-sparkline {
+  margin-top: 8px;
+  min-height: 48px;
+  position: relative;
+}
+.hll-sparkline .hll-spark-single {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--fg-muted, #6c7588);
+}
+.hll-sparkline .hll-spark-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6b8eff;
+}
+.hll-sparkline .hll-spark-label {
+  font: 500 11px/1 ui-monospace, Menlo, monospace;
+  color: var(--fg, #1b1f27);
+}
+.hll-sparkline .hll-spark-endpoints {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  padding: 0 6px;
+  font: 500 10px/1 ui-monospace, Menlo, monospace;
+  color: var(--fg-muted, #6c7588);
+}
+.hll-sparkline .hll-spark-refs {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  right: 4px;
+  height: calc(100% - 4px);
+  pointer-events: none;
+  font: 500 9px/1 ui-monospace, Menlo, monospace;
+  color: var(--fg-muted, #6c7588);
+  opacity: 0.78;
+}
+.hll-sparkline .hll-spark-refs .hll-spark-max {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.hll-sparkline .hll-spark-refs .hll-spark-min {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+.hll-sparkline .hll-spark-tip {
+  position: absolute;
+  top: -22px;
+  display: flex;
+  gap: 6px;
+  padding: 2px 6px;
+  background: var(--panel, #131824);
+  border: 1px solid var(--border, #263047);
+  border-radius: 4px;
+  font: 500 10px/1.2 ui-monospace, Menlo, monospace;
+  color: var(--fg, #e6ebf5);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.hll-sparkline .hll-spark-tip strong {
+  color: #6b8eff;
+  font-weight: 600;
+}
+.hll-sparkline .hll-spark-tip span {
+  color: var(--fg-muted, #6c7588);
+}
+
+/* ---------- Sticky mysqladmin editor panel ---------- */
+/* When the counter-deltas editor is open, the whole panel-host
+   (sticky strip + popped-open editor) follows the viewport while the
+   user scrolls through the charts. The sticky context is naturally
+   bounded by the surrounding details.subview body: once the user
+   scrolls past the mysqladmin section into OS or footer content, the
+   panel scrolls off with its container.
+
+   Scoped to .is-open so a closed (or just-pinned-away) editor never
+   anchors at the top and obstructs chart reading. Scoped further to
+   a data-mysqladmin-host body so the rule cannot accidentally affect
+   any future panel-host reuse elsewhere on the page.
+
+   Requirements: no overflow:hidden / overflow:auto on any ancestor
+   between here and the page scroll root (main.content, body). We
+   inspected details.subview, details.subview > .body, main.content
+   and body — all scroll-transparent, so CSS-only sticky is safe. */
+/* No sticky on the host itself — Option A makes the panel position:fixed,
+   so the host can stay a normal in-flow shell that holds only the
+   always-visible strip. The strip retains its own sticky rule. */

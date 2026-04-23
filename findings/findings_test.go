@@ -473,3 +473,167 @@ func TestAnalyze_DeterministicOrder(t *testing.T) {
 		}
 	}
 }
+
+func TestBPUndersized(t *testing.T) {
+	cases := []struct {
+		name       string
+		sizeBytes  string
+		threads    float64
+		uptime     float64
+		wantSev    Severity
+		wantInSumm string
+	}{
+		{"ok_large_pool", "17179869184", 200, 86400, SeverityOK, "sized for"},      // 16 GiB
+		{"warn_small", "536870912", 200, 86400, SeverityWarn, "under-provisioned"}, // 512 MiB
+		{"crit_tiny", "134217728", 622, 471062, SeverityCrit, "far too small"},     // 128 MiB — the fixture
+		{"skip_idle", "134217728", 5, 86400, SeveritySkip, ""},                     // low concurrency → skip
+		{"skip_young", "134217728", 200, 60, SeveritySkip, ""},                     // uptime < 1h
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			b := newBuilder().
+				variable("innodb_buffer_pool_size", tc.sizeBytes).
+				gauge("Threads_connected", tc.threads).
+				gauge("Uptime", tc.uptime)
+			got := Analyze(b.build())
+			f := findByID(got, "bp.undersized")
+			if tc.wantSev == SeveritySkip {
+				if f != nil {
+					t.Fatalf("expected skip; got %+v", f)
+				}
+				return
+			}
+			if f == nil {
+				t.Fatalf("bp.undersized missing")
+			}
+			if f.Severity != tc.wantSev {
+				t.Errorf("severity: got %v, want %v", f.Severity, tc.wantSev)
+			}
+			if !strings.Contains(f.Summary, tc.wantInSumm) {
+				t.Errorf("summary %q missing %q", f.Summary, tc.wantInSumm)
+			}
+		})
+	}
+}
+
+func TestConnectionsSaturation(t *testing.T) {
+	cases := []struct {
+		name      string
+		connected float64
+		running   float64
+		maxConns  string
+		wantSev   Severity
+	}{
+		{"ok_roomy", 50, 5, "500", SeverityOK},
+		{"warn_util_70", 360, 5, "500", SeverityWarn},
+		{"crit_util_90", 460, 5, "500", SeverityCrit},
+		{"warn_running", 50, 60, "500", SeverityWarn},
+		{"crit_running", 50, 150, "500", SeverityCrit},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			b := newBuilder().
+				gauge("Threads_connected", tc.connected).
+				gauge("Threads_running", tc.running).
+				variable("max_connections", tc.maxConns)
+			got := Analyze(b.build())
+			f := findByID(got, "connections.saturation")
+			if f == nil {
+				t.Fatalf("connections.saturation missing")
+			}
+			if f.Severity != tc.wantSev {
+				t.Errorf("severity: got %v, want %v (summary: %q)", f.Severity, tc.wantSev, f.Summary)
+			}
+		})
+	}
+}
+
+func TestHandlerRndNextPerSelect(t *testing.T) {
+	cases := []struct {
+		name    string
+		rnd     float64 // total across window
+		sels    float64 // total across window
+		wantSev Severity
+	}{
+		// window is 30s (default builder).
+		{"ok_low_ratio", 300, 300, SeverityOK},           // 1 row/SELECT
+		{"warn_ratio", 6_000, 30, SeverityWarn},          // 200 rows/SELECT; warn band
+		{"crit_ratio", 300_000, 30, SeverityCrit},        // 10 000 rows/SELECT
+		{"warn_absolute_only", 600_000, 0, SeverityWarn}, // 20 000/s, no selects measured
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			b := newBuilder().
+				counter("Handler_read_rnd_next", tc.rnd)
+			if tc.sels > 0 {
+				b = b.counter("Com_select", tc.sels)
+			}
+			got := Analyze(b.build())
+			f := findByID(got, "queryshape.handler_read_rnd_next")
+			if f == nil {
+				t.Fatalf("rule missing")
+			}
+			if f.Severity != tc.wantSev {
+				t.Errorf("severity: got %v, want %v (%q)", f.Severity, tc.wantSev, f.Summary)
+			}
+		})
+	}
+}
+
+func TestProcesslistAbuse(t *testing.T) {
+	cases := []struct {
+		total   float64
+		wantSev Severity
+	}{
+		{0, SeveritySkip},
+		{10, SeverityInfo},    // 10/30 = 0.33/s
+		{60, SeverityWarn},    // 2/s
+		{5_000, SeverityCrit}, // 166/s
+	}
+	for _, tc := range cases {
+		t.Run("", func(t *testing.T) {
+			b := newBuilder().counter("Deprecated_use_i_s_processlist_count", tc.total)
+			got := Analyze(b.build())
+			f := findByID(got, "queryshape.is_processlist")
+			if tc.wantSev == SeveritySkip {
+				if f != nil {
+					t.Fatalf("expected skip; got %+v", f)
+				}
+				return
+			}
+			if f == nil {
+				t.Fatalf("rule missing")
+			}
+			if f.Severity != tc.wantSev {
+				t.Errorf("severity: got %v, want %v", f.Severity, tc.wantSev)
+			}
+		})
+	}
+}
+
+func TestSlowLogDisabled(t *testing.T) {
+	// slow_query_log=OFF with activity → Warn
+	b := newBuilder().
+		variable("slow_query_log", "OFF").
+		variable("long_query_time", "10").
+		counter("Questions", 1000)
+	got := Analyze(b.build())
+	f := findByID(got, "config.slow_log_disabled")
+	if f == nil || f.Severity != SeverityWarn {
+		t.Fatalf("expected Warn; got %+v", f)
+	}
+	// slow_query_log=ON → Skip
+	b2 := newBuilder().
+		variable("slow_query_log", "ON").
+		counter("Questions", 1000)
+	got2 := Analyze(b2.build())
+	if findByID(got2, "config.slow_log_disabled") != nil {
+		t.Fatal("expected skip when slow_query_log=ON")
+	}
+	// No questions → Skip
+	b3 := newBuilder().variable("slow_query_log", "OFF")
+	got3 := Analyze(b3.build())
+	if findByID(got3, "config.slow_log_disabled") != nil {
+		t.Fatal("expected skip when no Questions activity")
+	}
+}

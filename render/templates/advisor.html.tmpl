@@ -12,6 +12,10 @@
 {{- else }}
 
 <div class="advisor-summary" role="group" aria-label="Severity filters">
+  {{- /* Default filter state: Critical + Warning on, Info + OK off.
+         app.js rehydrates from localStorage and may override; the
+         is-active / aria-pressed attributes below match that default
+         so first-paint (no-JS or pre-hydration) is consistent. */ -}}
   <button type="button" class="advisor-count crit is-active" data-sev="crit"
           aria-pressed="true" title="Toggle visibility of Critical findings">
     <span class="n">{{.AdvisorCounts.Crit}}</span>
@@ -22,13 +26,13 @@
     <span class="n">{{.AdvisorCounts.Warn}}</span>
     <span class="k">Warning</span>
   </button>
-  <button type="button" class="advisor-count info is-active" data-sev="info"
-          aria-pressed="true" title="Toggle visibility of Info findings">
+  <button type="button" class="advisor-count info" data-sev="info"
+          aria-pressed="false" title="Toggle visibility of Info findings">
     <span class="n">{{.AdvisorCounts.Info}}</span>
     <span class="k">Info</span>
   </button>
-  <button type="button" class="advisor-count ok is-active" data-sev="ok"
-          aria-pressed="true" title="Toggle visibility of OK findings">
+  <button type="button" class="advisor-count ok" data-sev="ok"
+          aria-pressed="false" title="Toggle visibility of OK findings">
     <span class="n">{{.AdvisorCounts.OK}}</span>
     <span class="k">OK</span>
   </button>

@@ -100,6 +100,12 @@ type variableRowView struct {
 // replaces the previous per-snapshot card repetition so the reader
 // lands on the peak pain point immediately.
 type innoDBMetricView struct {
+	// Key is a stable non-display identifier used by the template to
+	// branch on behaviour (e.g. render the history-list sparkline
+	// container) without depending on Label text that could be
+	// reworded or localized. Empty for metrics with no special
+	// template behaviour.
+	Key   string // "" | "semaphores" | "pending_io" | "ahi" | "history_list"
 	Label string // "Semaphores" / "Pending I/O" / "AHI" / "History list"
 	Hint  string // tiny descriptor shown under Worst (optional)
 	Worst string

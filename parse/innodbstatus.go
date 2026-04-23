@@ -63,15 +63,14 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 		mutex string
 	}
 	siteCounts := map[siteKey]int{}
-	// pendingFile / pendingLine buffer the current `--Thread ...` line
-	// until its paired `Mutex at ...` partner lands on a subsequent
-	// line. Canonical InnoDB output always emits the pair contiguously
-	// (whitespace lines allowed in between). Anything else — another
-	// thread before the partner, a section switch, or EOF mid-pair —
-	// drops the pending record; the `siteSum != threadWaited`
-	// diagnostic below reports the miss.
-	var pendingFile string
-	var pendingLine int
+	// pendingKey points at the most recently emitted orphan entry
+	// (file, line, mutex="") so that if its paired `Mutex at ...` partner
+	// lands on a subsequent line we can "upgrade" the entry by moving
+	// the count under the (file, line, mutex=NAME) key. Older Percona /
+	// MySQL captures sometimes omit the partner line entirely; we emit
+	// on the thread line first and only upgrade when the partner
+	// actually arrives, so orphans still appear in the breakdown.
+	var pendingKey siteKey
 	havePending := false
 
 	for scanner.Scan() {
@@ -96,22 +95,38 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 		case "SEMAPHORES":
 			if m := reInnodbThreadWaited.FindStringSubmatch(trimmed); m != nil {
 				threadWaited++
-				pendingFile = m[1]
-				pendingLine, _ = strconv.Atoi(m[2])
+				lineNo, _ := strconv.Atoi(m[2])
+				// Emit an orphan site immediately keyed on (file, line,
+				// mutex=""). If the paired `Mutex at ...` partner lands
+				// on a subsequent line we upgrade the entry below by
+				// moving its count under the (file, line, mutex=NAME)
+				// key. This guarantees every waited-at thread shows up
+				// in the breakdown even when the partner line is absent.
+				pendingKey = siteKey{file: m[1], line: lineNo, mutex: ""}
+				siteCounts[pendingKey]++
 				havePending = true
 				continue
 			}
 			if havePending {
 				if m := reInnodbMutexName.FindStringSubmatch(trimmed); m != nil {
-					siteCounts[siteKey{file: pendingFile, line: pendingLine, mutex: m[1]}]++
+					// Upgrade: move the count we stashed under the
+					// empty-mutex key to the named-mutex key so the
+					// two halves of the pair aggregate as one row.
+					if siteCounts[pendingKey] > 0 {
+						siteCounts[pendingKey]--
+						if siteCounts[pendingKey] == 0 {
+							delete(siteCounts, pendingKey)
+						}
+					}
+					siteCounts[siteKey{file: pendingKey.file, line: pendingKey.line, mutex: m[1]}]++
 					havePending = false
 					continue
 				}
 				if trimmed == "" {
 					continue
 				}
-				// Non-canonical: thread without its paired mutex. Drop
-				// the pending record.
+				// Non-canonical: thread without its paired mutex. Leave
+				// the orphan entry in place so it still renders.
 				havePending = false
 			}
 		case "TRANSACTIONS":
@@ -189,10 +204,10 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 	}
 
 	// Invariant check: threadWaited counts thread lines; siteSum counts
-	// successfully paired (file, line, mutex) entries. A mismatch means
-	// the SEMAPHORES section was not canonical and the breakdown is
-	// partial — surface that to the reader instead of silently showing
-	// incomplete rows.
+	// entries emitted into siteCounts (orphans under mutex="" plus
+	// paired entries under mutex=NAME). The parser now emits on every
+	// thread line, so these should always agree; a mismatch would
+	// indicate a bookkeeping bug — surface it so it can't go silent.
 	if siteSum != threadWaited {
 		diagnostics = append(diagnostics, model.Diagnostic{
 			SourceFile: sourcePath,

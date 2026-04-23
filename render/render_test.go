@@ -115,17 +115,26 @@ func TestAdvisorCardRenders(t *testing.T) {
 	out := buf.String()
 
 	// Filter chips — all four must be emitted as interactive toggles
-	// with data-sev + aria-pressed="true" default.
+	// with data-sev + aria-pressed present so filter state is
+	// announced to assistive tech.
 	for _, sev := range []string{"crit", "warn", "info", "ok"} {
 		want := `data-sev="` + sev + `"`
 		if !strings.Contains(out, want) {
 			t.Errorf("missing severity filter chip %s", want)
 		}
 	}
-	// Each chip must carry aria-pressed so the filter state is
-	// announced to assistive tech.
-	if strings.Count(out, `aria-pressed="true"`) < 4 {
-		t.Errorf("expected ≥4 chips with aria-pressed=\"true\"; got %d", strings.Count(out, `aria-pressed="true"`))
+	// Default filter state: Critical + Warning are pressed on first
+	// paint, Info + OK start off (folded behind a toggle). Total of
+	// aria-pressed attributes (both true and false) must still be 4,
+	// and aria-pressed="true" must appear exactly twice.
+	if got := strings.Count(out, `aria-pressed=`); got < 4 {
+		t.Errorf("expected 4 aria-pressed attributes across severity chips; got %d", got)
+	}
+	if got := strings.Count(out, `aria-pressed="true"`); got != 2 {
+		t.Errorf("expected exactly 2 chips with aria-pressed=\"true\" (Crit+Warn default); got %d", got)
+	}
+	if got := strings.Count(out, `aria-pressed="false"`); got != 2 {
+		t.Errorf("expected exactly 2 chips with aria-pressed=\"false\" (Info+OK default); got %d", got)
 	}
 	// Chip count values must be numeric and match what findings.Summarise
 	// produced: exactly 1 Critical finding (bp.wait_free), 0 others.

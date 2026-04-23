@@ -54,7 +54,7 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 	totalSnaps := 0
 	if r.VariablesSection != nil {
 		totalSnaps = len(r.VariablesSection.PerSnapshot)
-		defaults := loadMySQLDefaults()
+		defaults, supportedVersions := loadMySQLDefaults()
 		haveAny := false
 		// keptVariableRuns is the single source of truth for dedup;
 		// navigation and this body iterate the same runs so they can
@@ -79,9 +79,23 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 				rangeLo:   run.StartIdx + 1,
 				rangeHi:   run.EndIdx + 1,
 			}
+			// Pull the captured MySQL version out of this snapshot's
+			// own Entries so lookups against mysql-defaults.json can
+			// pick the right version column. pt-stalk writes the
+			// `version` system variable into the -variables file; if
+			// it's missing we pass an empty string and classifyVariable
+			// falls back to "unknown" for everything it couldn't match
+			// version-free.
+			capturedVersion := ""
+			for _, e := range startSV.Data.Entries {
+				if e.Name == "version" {
+					capturedVersion = e.Value
+					break
+				}
+			}
 			vv.Entries = make([]variableRowView, 0, len(startSV.Data.Entries))
 			for _, e := range startSV.Data.Entries {
-				st := classifyVariable(defaults, e.Name, e.Value)
+				st := classifyVariable(defaults, supportedVersions, capturedVersion, e.Name, e.Value)
 				if st == "modified" {
 					vv.ModifiedCount++
 				}

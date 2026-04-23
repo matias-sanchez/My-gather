@@ -1,6 +1,0 @@
-<image>
-on the counters i have the problem that one part of the counters has to remain absolute values and main of them has to be gauge, calculated as differences between the previous value and the current value. We have to correctly manage this in the tool generation to avoid mistakes.
-For this i need you to analyze the project on 
-/Users/matias/git/mysqld_exporter
-this contains the information about the counters type, so we can extract a solutiont to manage this in this tool to manage them correctly.
-Please analyze the project and extract the information about the counters type and plan for a correct implementation on this

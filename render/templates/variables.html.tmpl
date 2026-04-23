@@ -25,7 +25,6 @@
         <button type="button" role="tab" aria-selected="true"  class="var-chip active" data-filter="modified" data-snapshot="{{.DetailsID}}">Modified ({{.ModifiedCount}})</button>
         {{- end }}
         <button type="button" role="tab" aria-selected="false" class="var-chip"        data-filter="default"  data-snapshot="{{.DetailsID}}">Default</button>
-        <button type="button" role="tab" aria-selected="false" class="var-chip"        data-filter="unknown"  data-snapshot="{{.DetailsID}}">Unknown</button>
       </div>
       <span class="count">{{.Count}} variables · {{.ModifiedCount}} modified{{if gt .ChangedCount 0}} · {{.ChangedCount}} changed{{end}}</span>
     </div>

@@ -40,6 +40,12 @@
       <span class="stat"><span class="k">peak iowait</span> <span class="v">13%</span></span>
       <span class="stat"><span class="k">samples</span> <span class="v">60</span></span>
     </div>
+    <div class="vmstat-tablist" role="tablist" aria-label="vmstat category">
+      <button type="button" role="tab" class="vmstat-tab active" aria-selected="true"  tabindex="0"  data-vmstat-category="cpu">CPU</button>
+      <button type="button" role="tab" class="vmstat-tab"        aria-selected="false" tabindex="-1" data-vmstat-category="memory">Memory</button>
+      <button type="button" role="tab" class="vmstat-tab"        aria-selected="false" tabindex="-1" data-vmstat-category="io">IO</button>
+      <button type="button" role="tab" class="vmstat-tab"        aria-selected="false" tabindex="-1" data-vmstat-category="procs">Procs</button>
+    </div>
     <div class="chart" id="chart-vmstat" data-chart="vmstat" aria-label="System resource saturation over time"></div>
     <noscript><p class="banner">Charts require JavaScript. Raw vmstat data is embedded in the page.</p></noscript>
   </div>

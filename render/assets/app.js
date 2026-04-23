@@ -102,11 +102,19 @@
         // branches stay in sync.
         var initialChip = input.parentNode.querySelector(".var-chip.active");
         var initialFilter = (initialChip && initialChip.getAttribute("data-filter")) || "modified";
+        // Legacy "unknown" filter was removed — rows with unknown
+        // status now live under "All". If any prior session or stale
+        // DOM state still references it, fall back cleanly so nothing
+        // silently hides the table.
+        if (initialFilter === "unknown") initialFilter = "all";
         var state = { needle: "", statusFilter: initialFilter };
 
         function update() {
           var needle = state.needle;
           var sf = state.statusFilter;
+          // "All" always includes every row regardless of status
+          // (including unknown); other filters match row status
+          // exactly.
           var shown = 0, modified = 0, changed = 0;
           for (var r = 0; r < rows.length; r++) {
             var row = rows[r];
@@ -137,7 +145,11 @@
         });
         chips.forEach(function (c) {
           c.addEventListener("click", function () {
-            state.statusFilter = c.getAttribute("data-filter") || "all";
+            var f = c.getAttribute("data-filter") || "all";
+            // Defensive: "unknown" is no longer a valid filter; fold
+            // into "all" so a stale chip never blanks the table.
+            if (f === "unknown") f = "all";
+            state.statusFilter = f;
             chips.forEach(function (x) {
               var on = x === c;
               x.classList.toggle("active", on);
@@ -585,11 +597,6 @@
   function mountResetZoomButton(containerEl, getPlot) {
     // Don't double-mount.
     if (containerEl.querySelector(":scope > .chart-zoom-reset")) return;
-    // Advertise interaction hints on the chart container itself so
-    // hovering anywhere in the empty chart area reveals them.
-    if (!containerEl.title) {
-      containerEl.title = "Drag horizontally to zoom into a range · Double-click to reset · Hover a line to see values";
-    }
     var btn = document.createElement("button");
     btn.type = "button";
     btn.className = "chart-zoom-reset";
@@ -785,6 +792,12 @@
           renderIostat(containers[i], data);
         } else if (name === "processlist" && Array.isArray(data.dimensions) && data.dimensions.length > 1) {
           renderProcesslist(containers[i], data);
+        } else if (name === "top") {
+          renderTopChart(containers[i], data);
+        } else if (name === "vmstat") {
+          renderVmstatTabs(containers[i], data);
+        } else if (name === "innodb-hll") {
+          renderHLLSparkline(containers[i], data);
         } else {
           renderTimeSeries(containers[i], data, unitForChart(name));
         }
@@ -797,14 +810,17 @@
   function unitForChart(name) {
     if (name === "top")         return "%CPU";
     if (name === "processlist") return "threads";
-    if (name === "vmstat")      return "runqueue · blocked · %iowait";
+    if (name === "vmstat")      return "";
     if (name === "meminfo")     return "GB";
     return "";
   }
 
-  // renderTimeSeries: generic multi-line chart with the pill legend.
-  function renderTimeSeries(el, data, unit) {
-    if (!data || !Array.isArray(data.timestamps) || !Array.isArray(data.series)) return;
+  // buildLineChart: construct a multi-line uPlot on `el` and attach the
+  // pill legend. Returns the uPlot instance (so callers that compose
+  // this into a toolbar wrapper can re-mount a single reset-zoom
+  // button over the top of sequential rebuilds). Does NOT mount a
+  // reset button itself — that's the caller's responsibility.
+  function buildLineChart(el, data, unit) {
     var width = measureChartWidth(el);
     var series = [{ label: "time" }].concat(
       data.series.map(function (s, i) { return decorateSeries(s.label, i); })
@@ -814,7 +830,201 @@
     var plot = new uPlot(opts, values, el);
     registerChart(plot, el, opts);
     mountLegend(el, series, plot);
+    return plot;
+  }
+
+  // buildStackedChart: construct a smooth stacked bars uPlot with
+  // rounded top corners from a flat {timestamps, series[,
+  // snapshotBoundaries]} payload (the same shape renderTimeSeries
+  // consumes). Each series' cumulative value is drawn as a bar from
+  // 0 up to that cumulative height; uPlot draws series[1] first
+  // (the grand total, tallest) and each subsequent series paints on
+  // top — so each band's visible region is the strip between its
+  // stack-top and the next shorter series' stack-top. The rounded
+  // top-corner radius softens the sparse-column look that plain
+  // rectangular bars produce when samples are seconds apart.
+  //
+  // Hidden labels drive a zero-value substitution that keeps legend
+  // indexes stable while removing the bucket's contribution from the
+  // cumulative heights.
+  //
+  // hiddenLabels: mutable Set owned by the caller (we only read).
+  // onRebuild: callback fired when the user toggles legend visibility
+  //            so the caller can destroy + reconstruct with the new
+  //            hidden set.
+  function buildStackedChart(el, data, unit, hiddenLabels, onRebuild) {
+    var series = data.series;
+    var n = data.timestamps.length;
+    var stackedPath = uPlot.paths.bars({ size: [1.0, 64], align: 0, radius: 0.25 });
+
+    // Raw per-series values, zero'd when hidden.
+    var rawValues = series.map(function (s) {
+      var out = new Array(n);
+      var hidden = hiddenLabels.has(s.label);
+      for (var j = 0; j < n; j++) {
+        if (hidden) { out[j] = 0; continue; }
+        var v = +s.values[j];
+        out[j] = isNaN(v) ? 0 : v; // NaN→0 so the cumulative stays
+                                   // continuous across snapshot
+                                   // boundaries.
+      }
+      return out;
+    });
+
+    // Cumulative stacks — each index's value is the sum up to and
+    // including that index.
+    var stacked = rawValues.map(function () { return new Array(n); });
+    for (var j = 0; j < n; j++) {
+      var cum = 0;
+      for (var i = 0; i < rawValues.length; i++) {
+        cum += rawValues[i][j] || 0;
+        stacked[i][j] = cum;
+      }
+    }
+
+    // Raw (un-zeroed) values retained so the tooltip can show what a
+    // hidden bucket's value WOULD be.
+    var tooltipRaw = series.map(function (s) {
+      var out = new Array(n);
+      for (var j = 0; j < n; j++) {
+        var v = +s.values[j];
+        out[j] = isNaN(v) ? null : v;
+      }
+      return out;
+    });
+
+    // Push in REVERSE so uPlot paints the grand total first, then
+    // each smaller stack covers it — yielding the visual layering a
+    // reader expects and putting the legend in top→bottom stack order.
+    var plotSeries = [{ label: "time" }];
+    var plotData = [data.timestamps.slice()];
+    var plotRawByIdx = [null];
+    for (var k = series.length - 1; k >= 0; k--) {
+      var stroke = SERIES_COLORS[k % SERIES_COLORS.length];
+      plotSeries.push({
+        label: series[k].label,
+        stroke: stroke,
+        width: 0,
+        fill: hexToRgba(stroke, 0.85),
+        paths: stackedPath,
+        points: { show: false },
+        value: function (u, v) { return v == null ? "–" : v.toLocaleString(); },
+      });
+      plotData.push(stacked[k]);
+      plotRawByIdx.push(tooltipRaw[k]);
+    }
+
+    var w = measureChartWidth(el);
+    var opts = basePlotOpts(w, 320, plotSeries, unit, data.snapshotBoundaries, data.timestamps);
+    var plot = new uPlot(opts, plotData, el);
+    plot.__rawData = plotRawByIdx; // consumed by updateTooltipOnCursor
+    registerChart(plot, el, opts);
+    mountLegend(el, plotSeries, plot, {
+      initialVisible: function (idx) {
+        return !hiddenLabels.has(plotSeries[idx].label);
+      },
+      onVisibilityChange: function (visibleIdxs) {
+        var active = new Set(visibleIdxs);
+        hiddenLabels.clear();
+        for (var idx = 1; idx < plotSeries.length; idx++) {
+          if (!active.has(idx)) hiddenLabels.add(plotSeries[idx].label);
+        }
+        if (typeof onRebuild === "function") onRebuild();
+      },
+    });
+    return plot;
+  }
+
+  // renderTimeSeries: generic multi-line chart with the pill legend
+  // and an adjacent "reset zoom" button. Thin wrapper over
+  // buildLineChart for charts that don't need a style toggle.
+  function renderTimeSeries(el, data, unit) {
+    if (!data || !Array.isArray(data.timestamps) || !Array.isArray(data.series)) return;
+    var plot = buildLineChart(el, data, unit);
     mountResetZoomButton(el, function () { return plot; });
+  }
+
+  // renderTopChart: Top CPU processes chart with a segmented toolbar
+  // letting the reader toggle between line + stacked-bar views.
+  // Default is the line view; the choice persists per-report under
+  // the v2 localStorage namespace. Each mode fully rebuilds the uPlot
+  // instance (destroys + recreates); zoom state is intentionally not
+  // preserved across switches — the toggle is meant for "show me a
+  // different angle", not "keep my zoom".
+  function renderTopChart(el, data) {
+    if (!data || !Array.isArray(data.timestamps) || !Array.isArray(data.series)) return;
+
+    var STORAGE_KEY = "mygather:v2:" + REPORT_ID + ":chart-type:top";
+    var current = storageGet(STORAGE_KEY);
+    if (current !== "line" && current !== "stacked") current = "line";
+
+    var toolbar = document.createElement("div");
+    toolbar.className = "chart-view-toolbar";
+    toolbar.setAttribute("role", "tablist");
+    toolbar.setAttribute("aria-label", "Top CPU chart style");
+
+    function makeBtn(key, label, tooltip) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "view-btn";
+      b.setAttribute("role", "tab");
+      b.setAttribute("data-chart-type", key);
+      b.textContent = label;
+      b.title = tooltip;
+      return b;
+    }
+    var btnLine  = makeBtn("line",    "Lines",        "Plot each process as a separate smooth line — shows each one's curve over time");
+    var btnStack = makeBtn("stacked", "Stacked bars", "Stack per-process %CPU into smooth bars with rounded tops — shows composition and total load over time at a glance");
+    toolbar.appendChild(btnLine);
+    toolbar.appendChild(btnStack);
+    el.parentNode.insertBefore(toolbar, el);
+
+    // Stacked-mode hidden-label Set is preserved across rebuilds so
+    // toggling visibility of a process in stacked mode, then switching
+    // back to lines, then back to stacked, remembers the hidden set.
+    // Clearing on mode switch would be annoying for a reader iterating
+    // between views.
+    var stackedHidden = new Set();
+    var plot = null, legendEl = null;
+
+    function setAria() {
+      btnLine.classList.toggle("active",  current === "line");
+      btnStack.classList.toggle("active", current === "stacked");
+      btnLine.setAttribute("aria-selected",  current === "line"    ? "true" : "false");
+      btnStack.setAttribute("aria-selected", current === "stacked" ? "true" : "false");
+    }
+
+    function cleanup() {
+      if (plot) { unregisterChart(plot); plot.destroy(); plot = null; }
+      if (legendEl && legendEl.parentNode) {
+        legendEl.parentNode.removeChild(legendEl);
+        legendEl = null;
+      }
+    }
+
+    function draw() {
+      cleanup();
+      if (current === "stacked") {
+        plot = buildStackedChart(el, data, "%CPU", stackedHidden, draw);
+      } else {
+        plot = buildLineChart(el, data, "%CPU");
+      }
+      legendEl = el.nextSibling;
+    }
+
+    setAria();
+    draw();
+    mountResetZoomButton(el, function () { return plot; });
+
+    function switchTo(next) {
+      if (current === next) return;
+      current = next;
+      storageSet(STORAGE_KEY, current);
+      setAria();
+      draw();
+    }
+    btnLine.addEventListener("click",  function () { switchTo("line"); });
+    btnStack.addEventListener("click", function () { switchTo("stacked"); });
   }
 
   // renderIostat: split into two charts sharing the same pill legend —
@@ -1401,7 +1611,7 @@
       '<span class="ma-strip-editing"><span class="k">editing</span><span class="v">—</span></span>' +
       '<span class="ma-strip-sep" aria-hidden="true">·</span>' +
       '<span class="ma-strip-count">0 selected</span>' +
-      '<span class="ma-strip-hint" aria-hidden="true">press <kbd>E</kbd> to toggle</span>';
+      '<span class="ma-strip-hint" aria-hidden="true">press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>E</kbd> to toggle</span>';
     var stripValueEl = strip.querySelector(".ma-strip-editing .v");
     var stripCountEl = strip.querySelector(".ma-strip-count");
 
@@ -1429,8 +1639,84 @@
     panel.insertBefore(panelControls, panel.firstChild);
 
     panelHost.appendChild(strip);
+    // With Option A, the panel is a viewport-fixed popover. We lift it
+    // out of the panelHost and append it directly to <body> so its
+    // stacking context is independent of any ancestor overflow/transform
+    // (which would otherwise confine a position:fixed element).
     panelHost.appendChild(panel);
     hostEl.parentNode.insertBefore(panelHost, hostEl);
+    // Move panel to body now that host is in the DOM.
+    document.body.appendChild(panel);
+
+    // Dim-blur backdrop element (one per panel). Inserted on open,
+    // removed on close. Clicking it closes the panel unless pinned.
+    var backdrop = document.createElement("div");
+    backdrop.className = "ma-backdrop";
+    backdrop.setAttribute("aria-hidden", "true");
+    document.body.appendChild(backdrop);
+
+    // Floating pencil FAB — a second, always-visible affordance that
+    // mirrors the strip's toggle behaviour. Useful when the user has
+    // scrolled far below the strip and wants to open the editor
+    // without hunting for the hotkey or scrolling back up.
+    // Visibility is tied to subviewVisible (computed below) so the
+    // FAB only appears while the mysqladmin section is in view; it
+    // doesn't intrude on OS or processlist sections.
+    // FAB stack: "Add chart" (+) sits above the "Edit counters" pencil.
+    // Both live in a shared column-flex container at the bottom-right.
+    var fabStack = document.createElement("div");
+    fabStack.className = "ma-fab-stack";
+    document.body.appendChild(fabStack);
+
+    var fabAdd = document.createElement("button");
+    fabAdd.type = "button";
+    fabAdd.className = "ma-fab ma-fab-add";
+    fabAdd.setAttribute("aria-label", "Add new chart");
+    fabAdd.setAttribute("data-tooltip", "Add new chart");
+    fabAdd.innerHTML = '<span class="ma-fab-pencil" aria-hidden="true">+</span>';
+    fabStack.appendChild(fabAdd);
+    // Click handler attached later, after createChart / setActive /
+    // persistLayout are all defined — see end of renderMysqladmin.
+
+    // Per-chart pencils (in each card header + empty-state big button)
+    // have replaced the floating edit-pencil FAB. The add-chart FAB
+    // stays because 'new chart' is a section-level action.
+
+    // Sync the fixed-position panel's rect to the strip's bounding box
+    // so it visually drops from the strip. Called on open, on scroll,
+    // on window resize, and (via ResizeObserver) whenever the strip
+    // width changes (layout/column-width shifts).
+    function positionMaPanel() {
+      if (!isOpen) return;
+      var r = strip.getBoundingClientRect();
+      var margin = 16;
+      // Panel hangs off the strip's bottom-left, same width as the
+      // strip — BUT always clamped inside the viewport. When the
+      // user opened the panel from a chart far below the strip, the
+      // strip may have scrolled above the viewport top (its
+      // bounding rect.bottom is negative), in which case we pin the
+      // popover near the viewport top so it's visible instead of
+      // landing off-screen.
+      var width = r.width > 0 ? r.width : (window.innerWidth - 2 * margin);
+      if (width > window.innerWidth - 2 * margin) width = window.innerWidth - 2 * margin;
+      var left = r.width > 0 ? r.left : margin;
+      if (left < margin) left = margin;
+      if (left + width > window.innerWidth - margin) {
+        left = Math.max(margin, window.innerWidth - margin - width);
+      }
+      var top = r.bottom + 6;
+      if (top < margin)                    top = margin;
+      var maxTop = window.innerHeight - 120; // leave room for at least part of the panel
+      if (top > maxTop)                    top = maxTop;
+      panel.style.top   = top + "px";
+      panel.style.left  = left + "px";
+      panel.style.width = width + "px";
+    }
+    window.addEventListener("scroll",  positionMaPanel, { passive: true });
+    window.addEventListener("resize",  positionMaPanel);
+    if (typeof ResizeObserver === "function") {
+      new ResizeObserver(positionMaPanel).observe(strip);
+    }
 
     // Open/close + pin state, persisted under the v2 namespace so
     // reloading the same report remembers the reader's last choice.
@@ -1442,15 +1728,28 @@
     function applyPanelState() {
       panelHost.classList.toggle("is-open", isOpen);
       panelHost.classList.toggle("is-pinned", isPinned);
+      // The panel lives on <body>, so mirror the open flag onto it
+      // directly — CSS targets .ma-panel-host.is-open .ma-panel for the
+      // visual state, but since the panel is no longer a descendant of
+      // the host we add the matching class on the panel itself too.
+      panel.classList.toggle("ma-panel-open", isOpen);
+      backdrop.classList.toggle("is-visible", isOpen && !isPinned);
       strip.setAttribute("aria-expanded", isOpen ? "true" : "false");
       pinBtn.classList.toggle("active", isPinned);
       pinBtn.setAttribute("aria-pressed", isPinned ? "true" : "false");
+      if (isOpen) positionMaPanel();
+      if (typeof syncFabVisibility === "function") syncFabVisibility();
     }
 
     function setOpen(open) {
       var wasOpen = isOpen;
       isOpen = !!open;
       storageSet(OPEN_KEY, isOpen ? "true" : "false");
+      // No scroll-into-view here: positionMaPanel() clamps the popover
+      // into the viewport regardless of where the strip has scrolled
+      // to, so the panel is always visible and the page doesn't need
+      // to move. Keeping the user's scroll position stable is the
+      // expected behaviour for a command-palette-style popover.
       applyPanelState();
       if (isOpen) {
         // Autofocus the search input so keystrokes go straight into
@@ -1500,18 +1799,22 @@
       setPinned(!isPinned);
     });
 
-    // Click-outside-to-close: listens at document level, ignores
-    // clicks inside the panel itself or on the strip. Skipped when
-    // pinned. Guarded so repeated renderMysqladmin calls on the same
-    // host don't stack duplicate global listeners.
+    // Click-outside-to-close: the panel is now detached from panelHost
+    // (it lives on <body>), so the check also has to exclude the panel
+    // itself. Backdrop is treated as "outside" — clicking it closes.
+    // Skipped when pinned.
     if (!panelHost._clickOutsideInit) {
       panelHost._clickOutsideInit = true;
       document.addEventListener("click", function (ev) {
         if (!isOpen || isPinned) return;
         if (panelHost.contains(ev.target)) return;
+        if (panel.contains(ev.target)) return;
         setOpen(false);
       });
     }
+    backdrop.addEventListener("click", function () {
+      if (isOpen && !isPinned) setOpen(false);
+    });
 
     // Hotkey `E` toggles the panel, but only when the mysqladmin
     // subview is actually in the viewport — so pressing `e` while
@@ -1519,21 +1822,46 @@
     // screen. IntersectionObserver tracks visibility; if no subview
     // ancestor can be found we fall back to always-active.
     var subviewEl = hostEl.closest("details.subview") || hostEl.closest("section") || hostEl;
+    // Default to visible so the FAB appears on first paint even if
+    // IntersectionObserver hasn't fired its initial callback yet. IO
+    // then narrows visibility when the user scrolls past the section.
     var subviewVisible = true;
+    function syncFabVisibility() {
+      // Only the add-chart FAB remains — it shows while the counter-
+      // deltas section is in view, regardless of popover state.
+      fabAdd.classList.toggle("is-visible", subviewVisible);
+    }
     if (window.IntersectionObserver && subviewEl) {
-      subviewVisible = false;
       var io = new IntersectionObserver(function (entries) {
         for (var i = 0; i < entries.length; i++) {
           subviewVisible = entries[i].isIntersecting;
         }
+        syncFabVisibility();
       }, { rootMargin: "0px 0px -20% 0px", threshold: 0.01 });
       io.observe(subviewEl);
     }
+    syncFabVisibility();
     document.addEventListener("keydown", function (ev) {
       if (ev.defaultPrevented) return;
-      // Don't intercept keys while typing in an input / contenteditable.
       var t = ev.target;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) {
+      var typingInField = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      // Cmd/Ctrl+Shift+E is a modifier combo — never collides with
+      // typing, so we always let it toggle regardless of focus.
+      // Check this BEFORE the typing-in-field early-return so closing
+      // via the same hotkey works even when the panel's search input
+      // has focus.
+      if (
+        (ev.key === "e" || ev.key === "E") &&
+        ev.shiftKey &&
+        (ev.metaKey || ev.ctrlKey) &&
+        !ev.altKey &&
+        subviewVisible
+      ) {
+        setOpen(!isOpen);
+        ev.preventDefault();
+        return;
+      }
+      if (typingInField) {
         // Exception: Esc inside the panel's search still closes.
         if (ev.key === "Escape" && isOpen && !isPinned && panel.contains(t)) {
           setOpen(false);
@@ -1545,10 +1873,6 @@
         setOpen(false);
         ev.preventDefault();
         return;
-      }
-      if ((ev.key === "e" || ev.key === "E") && subviewVisible && !ev.metaKey && !ev.ctrlKey && !ev.altKey) {
-        setOpen(!isOpen);
-        ev.preventDefault();
       }
     });
 
@@ -1653,12 +1977,24 @@
     btnNew.className = "ma-action ma-action-primary";
     btnNew.textContent = "+ New chart";
     btnNew.title = "Add another chart below — pick counters or a category for it, while other charts stay untouched";
-    btnNew.addEventListener("click", function () {
+    function addNewChart() {
       var cs = createChart({ selection: [] });
       setActive(cs.id);
       // Persist immediately so a reload right after "+ New chart"
       // preserves the empty chart — matches duplicate/remove.
       persistLayout();
+      // Bring the freshly-added chart into view so the user sees
+      // what they just created (matters most when they clicked
+      // the floating-FAB equivalent from the bottom of the page).
+      if (cs.cardEl && typeof cs.cardEl.scrollIntoView === "function") {
+        try { cs.cardEl.scrollIntoView({ block: "center", behavior: "smooth" }); }
+        catch (_) { cs.cardEl.scrollIntoView(true); }
+      }
+    }
+    btnNew.addEventListener("click", addNewChart);
+    fabAdd.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      addNewChart();
     });
     toolbar.appendChild(toolbarHint);
     toolbar.appendChild(btnNew);
@@ -1689,6 +2025,20 @@
 
       var countEl = document.createElement("span");
       countEl.className = "ma-card-count";
+
+      // Per-chart pencil: activates this chart and opens the editor so
+      // the popover targets exactly this chart.
+      var btnEdit = document.createElement("button");
+      btnEdit.type = "button";
+      btnEdit.className = "ma-card-btn ma-card-edit";
+      btnEdit.innerHTML = "&#x270E;"; // pencil
+      btnEdit.title = "Edit this chart's counters";
+      btnEdit.setAttribute("aria-label", "Edit counters");
+      btnEdit.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        if (activeChartId !== id) setActive(id);
+        setOpen(true);
+      });
 
       var btnZoom = document.createElement("button");
       btnZoom.type = "button";
@@ -1728,6 +2078,7 @@
 
       head.appendChild(titleEl);
       head.appendChild(countEl);
+      head.appendChild(btnEdit);
       head.appendChild(btnZoom);
       head.appendChild(btnDup);
       head.appendChild(btnClose);
@@ -1862,7 +2213,22 @@
       if (picks.length === 0) {
         var msg = document.createElement("div");
         msg.className = "ma-empty-chart";
-        msg.textContent = "Pick counters from the list above to plot them here.";
+        var bigBtn = document.createElement("button");
+        bigBtn.type = "button";
+        bigBtn.className = "ma-empty-edit";
+        bigBtn.innerHTML = '<span class="ma-empty-pencil" aria-hidden="true">&#x270E;</span>' +
+                           '<span class="ma-empty-label">Pick counters</span>';
+        bigBtn.setAttribute("aria-label", "Pick counters for this chart");
+        bigBtn.addEventListener("click", function (ev) {
+          ev.stopPropagation();
+          if (activeChartId !== cs.id) setActive(cs.id);
+          setOpen(true);
+        });
+        msg.appendChild(bigBtn);
+        var hint = document.createElement("div");
+        hint.className = "ma-empty-hint";
+        hint.textContent = "or pick counters from the list above";
+        msg.appendChild(hint);
         cs.plotEl.innerHTML = "";
         cs.cardEl.appendChild(msg);
         updateCardCount(cs);
@@ -1988,13 +2354,19 @@
       // would strand a user-pinned panel inside an inert subtree (all
       // controls disabled) with no way to reach it.
       if (open) {
+        // Unpin first (active-state on pin lives on .ma-panel-host,
+        // but since Option A detached .ma-panel to <body> we target
+        // the pin button inside any open popover directly).
         var pinnedPanels = document.querySelectorAll(".ma-panel-host.is-pinned .ma-panel-pin");
         for (var pi = 0; pi < pinnedPanels.length; pi++) {
           pinnedPanels[pi].click();
         }
-        var openPanels = document.querySelectorAll(".ma-panel-host.is-open .ma-panel-close");
-        for (var ci = 0; ci < openPanels.length; ci++) {
-          openPanels[ci].click();
+        // Close any open popovers. After Option A the panel lives on
+        // <body> (no longer inside .ma-panel-host), so match on the
+        // .ma-panel.ma-panel-open selector we now apply on open.
+        var openPopovers = document.querySelectorAll(".ma-panel.ma-panel-open .ma-panel-close");
+        for (var ci = 0; ci < openPopovers.length; ci++) {
+          openPopovers[ci].click();
         }
       }
       document.body.classList.toggle("nav-open", !!open);
@@ -2181,9 +2553,14 @@
     var chips = summary.querySelectorAll(".advisor-count");
     if (!chips.length) return;
 
-    var STORAGE_KEY = "mygather:" + REPORT_ID + ":advisor:filter";
-    // Start with all severities active. Load persisted state if any.
-    var active = { crit: true, warn: true, info: true, ok: true };
+    // v2 key: new default (Crit + Warn only). The older v1 key used
+    // all-severities-on as default, so we bump the namespace rather
+    // than migrate silently — otherwise returning readers would see
+    // the legacy "everything on" state and never notice the new
+    // default-to-signal behaviour.
+    var STORAGE_KEY = "mygather:v2:" + REPORT_ID + ":advisor-filter";
+    // Default on first load: focus the reader on actionable severities.
+    var active = { crit: true, warn: true, info: false, ok: false };
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
@@ -2195,6 +2572,21 @@
         }
       }
     } catch (_) { /* ignore corrupt state */ }
+
+    // Empty-state banner shown when the active filter matches no
+    // findings — typically when the default (Crit+Warn) is applied
+    // to a capture where the only findings are Info/OK.
+    var groupsContainer = document.querySelector(".advisor-groups");
+    var emptyBanner = null;
+    if (groupsContainer) {
+      emptyBanner = document.createElement("p");
+      emptyBanner.className = "banner advisor-empty-filter";
+      emptyBanner.hidden = true;
+      emptyBanner.textContent =
+        "No Critical or Warning findings match the current filter — " +
+        "toggle Info or OK above to see other findings.";
+      groupsContainer.parentNode.insertBefore(emptyBanner, groupsContainer);
+    }
 
     function persist() {
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(active)); } catch (_) {}
@@ -2210,9 +2602,12 @@
       });
       // Show/hide findings by severity.
       var findings = document.querySelectorAll(".finding[data-sev]");
+      var visibleFindings = 0;
       findings.forEach(function (f) {
         var sev = f.getAttribute("data-sev");
-        f.classList.toggle("is-hidden", !active[sev]);
+        var hidden = !active[sev];
+        f.classList.toggle("is-hidden", hidden);
+        if (!hidden) visibleFindings++;
       });
       // Hide subsystem groups with no visible children.
       var groups = document.querySelectorAll(".advisor-group");
@@ -2220,6 +2615,9 @@
         var visible = g.querySelectorAll(".finding:not(.is-hidden)").length;
         g.classList.toggle("is-hidden", visible === 0);
       });
+      if (emptyBanner) {
+        emptyBanner.hidden = visibleFindings !== 0 || findings.length === 0;
+      }
     }
 
     chips.forEach(function (chip) {
@@ -2291,6 +2689,290 @@
   }
 
   // --- Boot -------------------------------------------------------
+
+  // --- vmstat category tabs ---------------------------------------
+  //
+  // The OS section renders a single uPlot for vmstat. Rather than
+  // cramming every column into one legend, the template ships a
+  // tablist above the chart container; clicking a tab tears down the
+  // existing plot and rebuilds it with only that category's series.
+  // Tab selection persists per-report under a stable v2 localStorage
+  // key so a reader's choice survives reloads. Category → series
+  // mapping is done client-side against the labels the Go payload
+  // already emits (e.g. "cpu_user", "free_kb"); unknown labels are
+  // ignored so the chart degrades cleanly if a future vmstat variant
+  // adds columns we don't classify.
+  var VMSTAT_CATEGORIES = {
+    // Series names here must match what vmstatChartPayload emits (see
+    // parse/vmstat.go's vmstatCols table). Any label listed that the
+    // parser doesn't emit is ignored at render time, so future columns
+    // just need to be added here AND to vmstatCols.
+    cpu:    ["cpu_user", "cpu_sys", "cpu_idle", "cpu_iowait"],
+    memory: ["free_kb", "buff_kb", "cache_kb"],
+    io:     ["io_in", "io_out", "swap_in", "swap_out"],
+    procs:  ["runqueue", "blocked"],
+  };
+  function vmstatCategoryKey() {
+    return "mygather:v2:" + REPORT_ID + ":vmstat-tab";
+  }
+  function filterVmstatByCategory(data, cat) {
+    var allow = VMSTAT_CATEGORIES[cat] || [];
+    var filtered = [];
+    for (var i = 0; i < data.series.length; i++) {
+      if (allow.indexOf(data.series[i].label) !== -1) {
+        filtered.push(data.series[i]);
+      }
+    }
+    return {
+      timestamps:         data.timestamps,
+      series:             filtered,
+      snapshotBoundaries: data.snapshotBoundaries,
+    };
+  }
+  function renderVmstatTabs(el, data) {
+    if (!data || !Array.isArray(data.timestamps) || !Array.isArray(data.series)) return;
+    // Locate the sibling tablist emitted deterministically by os.html.tmpl.
+    var tablist = el.parentNode && el.parentNode.querySelector
+      ? el.parentNode.querySelector(".vmstat-tablist[role=\"tablist\"]")
+      : null;
+    if (!tablist) {
+      // Fallback: no tablist markup present — behave like the old flat chart.
+      renderTimeSeries(el, data, unitForChart("vmstat"));
+      return;
+    }
+    var tabs = tablist.querySelectorAll("[role=\"tab\"][data-vmstat-category]");
+    var DEFAULT_CAT = "cpu";
+    var stored = storageGet(vmstatCategoryKey());
+    var initial = DEFAULT_CAT;
+    if (stored && VMSTAT_CATEGORIES[stored]) initial = stored;
+
+    var plot = null;
+    function cleanup() {
+      if (plot) { unregisterChart(plot); plot.destroy(); plot = null; }
+      // Legend is mounted as el's immediate next sibling by mountLegend.
+      var legendEl = el.nextSibling;
+      if (legendEl && legendEl.classList && legendEl.classList.contains("series-legend")) {
+        legendEl.parentNode.removeChild(legendEl);
+      }
+      // Also strip any prior reset-zoom button mount — mountResetZoomButton
+      // wraps the chart; if the wrapping moved, skip silently.
+    }
+    function draw(cat) {
+      cleanup();
+      var filtered = filterVmstatByCategory(data, cat);
+      if (filtered.series.length === 0) {
+        // Nothing to plot for this category (e.g. pt-stalk vmstat variant
+        // without `in`/`cs`). Leave the container empty with a caption.
+        var msg = document.createElement("p");
+        msg.className = "banner missing vmstat-empty";
+        msg.textContent = "No series available for this category in the captured vmstat.";
+        el.appendChild(msg);
+        return;
+      }
+      plot = buildLineChart(el, filtered, unitForChart("vmstat"));
+    }
+    function selectTab(cat, opts) {
+      if (!VMSTAT_CATEGORIES[cat]) cat = DEFAULT_CAT;
+      for (var i = 0; i < tabs.length; i++) {
+        var isActive = tabs[i].getAttribute("data-vmstat-category") === cat;
+        tabs[i].classList.toggle("active", isActive);
+        tabs[i].setAttribute("aria-selected", isActive ? "true" : "false");
+        tabs[i].setAttribute("tabindex", isActive ? "0" : "-1");
+        if (isActive && opts && opts.focus) tabs[i].focus();
+      }
+      storageSet(vmstatCategoryKey(), cat);
+      // Wipe any lingering empty-state banner before draw.
+      var empties = el.querySelectorAll(".vmstat-empty");
+      for (var k = 0; k < empties.length; k++) empties[k].parentNode.removeChild(empties[k]);
+      draw(cat);
+    }
+    for (var i = 0; i < tabs.length; i++) {
+      (function (btn) {
+        btn.addEventListener("click", function () {
+          selectTab(btn.getAttribute("data-vmstat-category"));
+        });
+      })(tabs[i]);
+    }
+    tablist.addEventListener("keydown", function (ev) {
+      var order = [];
+      for (var j = 0; j < tabs.length; j++) order.push(tabs[j]);
+      var idx = order.indexOf(document.activeElement);
+      if (idx < 0) idx = 0;
+      if (ev.key === "ArrowRight") {
+        ev.preventDefault();
+        selectTab(order[(idx + 1) % order.length].getAttribute("data-vmstat-category"), { focus: true });
+      } else if (ev.key === "ArrowLeft") {
+        ev.preventDefault();
+        selectTab(order[(idx - 1 + order.length) % order.length].getAttribute("data-vmstat-category"), { focus: true });
+      } else if (ev.key === "Home") {
+        ev.preventDefault();
+        selectTab(order[0].getAttribute("data-vmstat-category"), { focus: true });
+      } else if (ev.key === "End") {
+        ev.preventDefault();
+        selectTab(order[order.length - 1].getAttribute("data-vmstat-category"), { focus: true });
+      }
+    });
+    selectTab(initial);
+    mountResetZoomButton(el, function () { return plot; });
+  }
+
+  // --- History list length sparkline ------------------------------
+  //
+  // Small uPlot rendered directly under the "History list" InnoDB
+  // callout. 1-sample fallback shows a single centred dot with its
+  // formatted value; 2 samples draw a thin segment with start/end
+  // value labels; 3+ samples render a filled smooth spline. Reuses
+  // the bundled uPlot instance — no extra chart library.
+  function renderHLLSparkline(el, data) {
+    if (!data || !Array.isArray(data.values) || data.values.length === 0) return;
+    var vals = data.values;
+    var ts   = Array.isArray(data.timestamps) ? data.timestamps : null;
+    var W = 320, H = 64;
+    // Clear any prior render (idempotent if initCharts re-runs).
+    while (el.firstChild) el.removeChild(el.firstChild);
+    el.classList.add("hll-sparkline-ready");
+
+    function fmt(v) {
+      if (v == null || isNaN(v)) return "–";
+      v = +v;
+      if (v >= 1e6) return (v / 1e6).toFixed(1) + "M";
+      if (v >= 1e3) return (v / 1e3).toFixed(1) + "k";
+      return String(Math.round(v));
+    }
+
+    if (vals.length === 1) {
+      // Single sample: render a centred dot + label via plain DOM.
+      // Avoids inline SVG namespaces (render tests forbid any plain
+      // http-scheme substring in the output to guard against accidental
+      // network fetches).
+      var single = document.createElement("div");
+      single.className = "hll-spark-single";
+      single.style.width  = W + "px";
+      single.style.height = H + "px";
+      var dot = document.createElement("span");
+      dot.className = "hll-spark-dot";
+      single.appendChild(dot);
+      var lbl = document.createElement("span");
+      lbl.className = "hll-spark-label";
+      lbl.textContent = fmt(vals[0]);
+      single.appendChild(lbl);
+      el.appendChild(single);
+      return;
+    }
+
+    // Compute y range with a small pad so the line isn't flush with edges.
+    var mn = Infinity, mx = -Infinity;
+    for (var i = 0; i < vals.length; i++) {
+      var v = +vals[i];
+      if (!isNaN(v)) { if (v < mn) mn = v; if (v > mx) mx = v; }
+    }
+    if (mn === Infinity) { mn = 0; mx = 1; }
+    if (mn === mx) { mn -= 1; mx += 1; }
+
+    // Synthesize timestamps if missing (shouldn't happen, but safe).
+    var xs = ts && ts.length === vals.length
+      ? ts.slice()
+      : vals.map(function (_, idx) { return idx; });
+
+    var splinePath = (typeof uPlot !== "undefined" && uPlot.paths && uPlot.paths.spline)
+      ? uPlot.paths.spline()
+      : null;
+
+    // Tooltip element (shared for 2+ samples). Positioned absolutely
+    // inside the sparkline container and updated via cursor hook.
+    el.style.position = el.style.position || "relative";
+    var tip = document.createElement("div");
+    tip.className = "hll-spark-tip";
+    tip.style.display = "none";
+    el.appendChild(tip);
+
+    // Min / max reference labels (always visible, corner-anchored).
+    var refs = document.createElement("div");
+    refs.className = "hll-spark-refs";
+    refs.innerHTML =
+      '<span class="hll-spark-max">max ' + escapeHTML(fmt(mx)) + '</span>' +
+      '<span class="hll-spark-min">min ' + escapeHTML(fmt(mn)) + '</span>';
+    el.appendChild(refs);
+
+    function fmtTs(sec) {
+      if (!ts || sec == null) return "";
+      var d = new Date(sec * 1000);
+      var hh = String(d.getHours()).padStart(2, "0");
+      var mm = String(d.getMinutes()).padStart(2, "0");
+      var ss = String(d.getSeconds()).padStart(2, "0");
+      return hh + ":" + mm + ":" + ss;
+    }
+
+    var opts = {
+      width: W,
+      height: H,
+      padding: [6, 6, 6, 6],
+      cursor: {
+        show: true,
+        drag: { x: false, y: false },
+        points: { show: true, size: 7, stroke: "#6b8eff", fill: "#0b1220" },
+        y: false,
+      },
+      legend: { show: false },
+      scales: {
+        x: { time: ts != null },
+        y: { auto: false, range: [mn - (mx - mn) * 0.15, mx + (mx - mn) * 0.15] },
+      },
+      axes: [{ show: false }, { show: false }],
+      series: [
+        { label: "t" },
+        {
+          label: "HLL",
+          stroke: "#6b8eff",
+          width: 1.25,
+          fill:  "rgba(107, 142, 255, 0.18)",
+          paths: splinePath || undefined,
+          points: vals.length === 2 ? { show: true, size: 4 } : { show: false },
+        },
+      ],
+      hooks: {
+        setCursor: [
+          function (u) {
+            var idx = u.cursor.idx;
+            if (idx == null || idx < 0 || idx >= vals.length) {
+              tip.style.display = "none";
+              return;
+            }
+            var v = vals[idx];
+            var t = ts ? ts[idx] : null;
+            tip.innerHTML =
+              '<strong>' + escapeHTML(fmt(v)) + '</strong>' +
+              (t != null ? '<span>' + escapeHTML(fmtTs(t)) + '</span>' : '');
+            tip.style.display = "block";
+            // Position tip near cursor, clamped inside the sparkline rect.
+            var left = u.cursor.left;
+            var tipW = tip.offsetWidth || 80;
+            var maxLeft = W - tipW - 4;
+            if (left > maxLeft) left = maxLeft;
+            if (left < 4) left = 4;
+            tip.style.left = left + "px";
+          },
+        ],
+      },
+    };
+    var plot = new uPlot(opts, [xs, vals.map(function (v) { return +v; })], el);
+    // Hide tooltip when leaving the sparkline entirely.
+    el.addEventListener("mouseleave", function () { tip.style.display = "none"; });
+    // Do NOT registerChart — sparkline is fixed-width and should not
+    // participate in global resize/reset-zoom flows.
+    if (vals.length === 2) {
+      // Label the two endpoints with their values so a two-snapshot
+      // capture still reads as a trend rather than a bare stub.
+      var overlay = document.createElement("div");
+      overlay.className = "hll-spark-endpoints";
+      overlay.innerHTML =
+        '<span class="hll-spark-start">' + escapeHTML(fmt(vals[0])) + '</span>' +
+        '<span class="hll-spark-end">'   + escapeHTML(fmt(vals[vals.length - 1])) + '</span>';
+      el.appendChild(overlay);
+    }
+    // Prevent "unused plot" linter concerns — handle kept for future reuse.
+    void plot;
+  }
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot);
