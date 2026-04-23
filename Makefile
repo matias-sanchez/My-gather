@@ -40,6 +40,15 @@ test:
 vet:
 	$(GO) vet ./...
 
+lint:
+	@out=$$(gofmt -l .); \
+	  if [ -n "$$out" ]; then \
+	    echo "Files need formatting -- run 'gofmt -w .':"; \
+	    echo "$$out"; \
+	    exit 1; \
+	  fi
+	$(GO) vet ./...
+
 release: clean
 	@mkdir -p $(DIST)
 	@for target in $(TARGETS); do \

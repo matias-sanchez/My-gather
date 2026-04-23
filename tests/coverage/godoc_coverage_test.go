@@ -12,12 +12,14 @@ import (
 	"strings"
 	"testing"
 	"unicode"
+
+	"github.com/matias-sanchez/My-gather/tests/goldens"
 )
 
 var godocCheckedPackages = []string{"parse", "model", "render"}
 
 func TestEveryExportedIdentifierIsDocumented(t *testing.T) {
-	root := findRepoRoot(t)
+	root := goldens.RepoRoot(t)
 	fset := token.NewFileSet()
 
 	for _, pkg := range godocCheckedPackages {

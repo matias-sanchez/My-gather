@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/matias-sanchez/My-gather/parse"
+	"github.com/matias-sanchez/My-gather/tests/goldens"
 )
 
 // TestNotAPtStalkDir — FR-019 + research R5: a directory with no
@@ -119,7 +120,7 @@ func TestPathError(t *testing.T) {
 // committed anonymised fixture in testdata/example2/, assert we pick up
 // two snapshots and non-zero SourceFiles entries.
 func TestHappyPathAgainstFixtures(t *testing.T) {
-	root := findRepoRoot(t)
+	root := goldens.RepoRoot(t)
 	c, err := parse.Discover(context.Background(),
 		filepath.Join(root, "testdata", "example2"), parse.DiscoverOptions{})
 	if err != nil {
@@ -136,19 +137,4 @@ func TestHappyPathAgainstFixtures(t *testing.T) {
 	if c.Hostname == "" {
 		t.Errorf("Hostname empty; expected anonymised value")
 	}
-}
-
-func findRepoRoot(t *testing.T) string {
-	t.Helper()
-	wd, err := filepath.Abs(".")
-	if err != nil {
-		t.Fatalf("abs cwd: %v", err)
-	}
-	for dir := wd; dir != "/" && dir != ""; dir = filepath.Dir(dir) {
-		if fi, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil && !fi.IsDir() {
-			return dir
-		}
-	}
-	t.Fatalf("could not find go.mod starting from %s", wd)
-	return ""
 }

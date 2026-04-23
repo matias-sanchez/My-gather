@@ -567,6 +567,21 @@ details.subview > .body { padding: 10px 12px 14px; }
 .banner.err    { border-color: color-mix(in srgb, var(--err) 40%, var(--border)); color: var(--fg); }
 .banner code   { color: var(--fg); }
 
+/* Verbatim-passthrough banner (FR-026). Subtle by design: the reader
+   sees it once on open, then it scrolls away with the document. */
+.banner-verbatim {
+  margin: 0;
+  padding: 8px 104px 8px 24px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--warn) 6%, var(--bg-elev));
+  color: var(--fg-muted);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+@media (max-width: 800px) {
+  .banner-verbatim { padding-left: 14px; padding-right: 14px; }
+}
+
 /* ---------- Tables ---------- */
 
 table {

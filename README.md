@@ -70,7 +70,9 @@ The `-update` flag is registered only in packages that import `tests/goldens`; s
 
 ## Scope (v1)
 
-Supports seven pt-stalk collectors: `-iostat`, `-top`, `-variables`, `-vmstat`, `-innodbstatus1`, `-mysqladmin`, `-processlist`. Input collections up to 1 GB total / 200 MB per file. Output is HTML only (no JSON side-car in v1).
+Supports eight pt-stalk collectors: `-iostat`, `-top`, `-variables`, `-vmstat`, `-innodbstatus1`, `-mysqladmin`, `-processlist`, `-meminfo`. Input collections up to 1 GB total / 200 MB per file. Output is HTML only (no JSON side-car in v1).
+
+The rendered report has four top-level sections — OS Usage, Variables, Database Usage, and Advisor (rule-based findings derived from the parsed Collection). All four live in a single self-contained HTML file.
 
 Unsupported input (older/forked pt-stalk formats, oversize collections, or output paths inside the input tree) is refused cleanly with a distinct non-zero exit code rather than silently partially written.
 

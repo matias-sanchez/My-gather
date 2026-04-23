@@ -12,11 +12,12 @@ import (
 	"go/parser"
 	"go/token"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/matias-sanchez/My-gather/tests/goldens"
 )
 
 // bannedImports is the set of stdlib packages whose presence in the
@@ -40,7 +41,7 @@ var shippedDirs = []string{"cmd", "parse", "model", "render"}
 func TestNoForbiddenImports(t *testing.T) {
 	// Walk from repo root. The test binary's CWD is the package dir,
 	// so ascend until we find go.mod.
-	root := findRepoRoot(t)
+	root := goldens.RepoRoot(t)
 
 	offenders := map[string][]string{} // file -> list of bad imports
 
@@ -104,24 +105,6 @@ func TestNoForbiddenImports(t *testing.T) {
 func isExternalModule(pkg string) bool {
 	first, _, _ := strings.Cut(pkg, "/")
 	return strings.Contains(first, ".")
-}
-
-// findRepoRoot ascends from the test's working directory until it
-// finds a go.mod. Tests run with CWD == the package dir, which is
-// several levels under the repo root.
-func findRepoRoot(t *testing.T) string {
-	t.Helper()
-	wd, err := filepath.Abs(".")
-	if err != nil {
-		t.Fatalf("abs cwd: %v", err)
-	}
-	for dir := wd; dir != "/" && dir != ""; dir = filepath.Dir(dir) {
-		if fi, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil && !fi.IsDir() {
-			return dir
-		}
-	}
-	t.Fatalf("could not find go.mod starting from %s", wd)
-	return ""
 }
 
 // _ references fs to keep the import after edits; io/fs is needed by
