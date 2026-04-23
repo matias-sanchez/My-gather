@@ -102,11 +102,19 @@
         // branches stay in sync.
         var initialChip = input.parentNode.querySelector(".var-chip.active");
         var initialFilter = (initialChip && initialChip.getAttribute("data-filter")) || "modified";
+        // Legacy "unknown" filter was removed — rows with unknown
+        // status now live under "All". If any prior session or stale
+        // DOM state still references it, fall back cleanly so nothing
+        // silently hides the table.
+        if (initialFilter === "unknown") initialFilter = "all";
         var state = { needle: "", statusFilter: initialFilter };
 
         function update() {
           var needle = state.needle;
           var sf = state.statusFilter;
+          // "All" always includes every row regardless of status
+          // (including unknown); other filters match row status
+          // exactly.
           var shown = 0, modified = 0, changed = 0;
           for (var r = 0; r < rows.length; r++) {
             var row = rows[r];
@@ -137,7 +145,11 @@
         });
         chips.forEach(function (c) {
           c.addEventListener("click", function () {
-            state.statusFilter = c.getAttribute("data-filter") || "all";
+            var f = c.getAttribute("data-filter") || "all";
+            // Defensive: "unknown" is no longer a valid filter; fold
+            // into "all" so a stale chip never blanks the table.
+            if (f === "unknown") f = "all";
+            state.statusFilter = f;
             chips.forEach(function (x) {
               var on = x === c;
               x.classList.toggle("active", on);
@@ -585,11 +597,6 @@
   function mountResetZoomButton(containerEl, getPlot) {
     // Don't double-mount.
     if (containerEl.querySelector(":scope > .chart-zoom-reset")) return;
-    // Advertise interaction hints on the chart container itself so
-    // hovering anywhere in the empty chart area reveals them.
-    if (!containerEl.title) {
-      containerEl.title = "Drag horizontally to zoom into a range · Double-click to reset · Hover a line to see values";
-    }
     var btn = document.createElement("button");
     btn.type = "button";
     btn.className = "chart-zoom-reset";
@@ -787,6 +794,10 @@
           renderProcesslist(containers[i], data);
         } else if (name === "top") {
           renderTopChart(containers[i], data);
+        } else if (name === "vmstat") {
+          renderVmstatTabs(containers[i], data);
+        } else if (name === "innodb-hll") {
+          renderHLLSparkline(containers[i], data);
         } else {
           renderTimeSeries(containers[i], data, unitForChart(name));
         }
@@ -822,21 +833,16 @@
     return plot;
   }
 
-  // buildStackedChart: construct a stacked-AREA uPlot from a flat
-  // {timestamps, series[, snapshotBoundaries]} payload (the same
-  // shape renderTimeSeries consumes). Despite the name it now paints
-  // continuous stacked areas rather than discrete bars — the earlier
-  // bar geometry read as narrow columns with wide empty gaps when
-  // samples were seconds apart, while stacked areas are the classic
-  // "composition-over-time" rendering (à la Grafana / Datadog).
-  //
-  // Each series' cumulative value is painted as a spline area from 0
-  // up to that cumulative height. uPlot draws series[1] first (the
-  // grand total, tallest) and each subsequent series paints on top —
-  // so each band's visible region is the strip between its stack-top
-  // and the next shorter series' stack-top. The topmost stroke line
-  // gives each layer a crisp upper edge; the fill alpha stays near-
-  // opaque so bands don't muddy into each other when overlapping.
+  // buildStackedChart: construct a smooth stacked bars uPlot with
+  // rounded top corners from a flat {timestamps, series[,
+  // snapshotBoundaries]} payload (the same shape renderTimeSeries
+  // consumes). Each series' cumulative value is drawn as a bar from
+  // 0 up to that cumulative height; uPlot draws series[1] first
+  // (the grand total, tallest) and each subsequent series paints on
+  // top — so each band's visible region is the strip between its
+  // stack-top and the next shorter series' stack-top. The rounded
+  // top-corner radius softens the sparse-column look that plain
+  // rectangular bars produce when samples are seconds apart.
   //
   // Hidden labels drive a zero-value substitution that keeps legend
   // indexes stable while removing the bucket's contribution from the
@@ -849,7 +855,7 @@
   function buildStackedChart(el, data, unit, hiddenLabels, onRebuild) {
     var series = data.series;
     var n = data.timestamps.length;
-    var stackedPath = splinePaths();
+    var stackedPath = uPlot.paths.bars({ size: [0.9, Infinity], align: 0, radius: 0.3 });
 
     // Raw per-series values, zero'd when hidden.
     var rawValues = series.map(function (s) {
@@ -860,7 +866,7 @@
         var v = +s.values[j];
         out[j] = isNaN(v) ? 0 : v; // NaN→0 so the cumulative stays
                                    // continuous across snapshot
-                                   // boundaries; splines reject null.
+                                   // boundaries.
       }
       return out;
     });
@@ -898,7 +904,7 @@
       plotSeries.push({
         label: series[k].label,
         stroke: stroke,
-        width: 1.5,
+        width: 0,
         fill: hexToRgba(stroke, 0.85),
         paths: stackedPath,
         points: { show: false },
@@ -968,7 +974,7 @@
       return b;
     }
     var btnLine  = makeBtn("line",    "Lines",        "Plot each process as a separate smooth line — shows each one's curve over time");
-    var btnStack = makeBtn("stacked", "Stacked area", "Stack per-process %CPU into a continuous area — shows composition and total load over time at a glance");
+    var btnStack = makeBtn("stacked", "Stacked bars", "Stack per-process %CPU into smooth bars with rounded tops — shows composition and total load over time at a glance");
     toolbar.appendChild(btnLine);
     toolbar.appendChild(btnStack);
     el.parentNode.insertBefore(toolbar, el);
@@ -2385,9 +2391,14 @@
     var chips = summary.querySelectorAll(".advisor-count");
     if (!chips.length) return;
 
-    var STORAGE_KEY = "mygather:" + REPORT_ID + ":advisor:filter";
-    // Start with all severities active. Load persisted state if any.
-    var active = { crit: true, warn: true, info: true, ok: true };
+    // v2 key: new default (Crit + Warn only). The older v1 key used
+    // all-severities-on as default, so we bump the namespace rather
+    // than migrate silently — otherwise returning readers would see
+    // the legacy "everything on" state and never notice the new
+    // default-to-signal behaviour.
+    var STORAGE_KEY = "mygather:v2:" + REPORT_ID + ":advisor-filter";
+    // Default on first load: focus the reader on actionable severities.
+    var active = { crit: true, warn: true, info: false, ok: false };
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
@@ -2399,6 +2410,21 @@
         }
       }
     } catch (_) { /* ignore corrupt state */ }
+
+    // Empty-state banner shown when the active filter matches no
+    // findings — typically when the default (Crit+Warn) is applied
+    // to a capture where the only findings are Info/OK.
+    var groupsContainer = document.querySelector(".advisor-groups");
+    var emptyBanner = null;
+    if (groupsContainer) {
+      emptyBanner = document.createElement("p");
+      emptyBanner.className = "banner advisor-empty-filter";
+      emptyBanner.hidden = true;
+      emptyBanner.textContent =
+        "No Critical or Warning findings match the current filter — " +
+        "toggle Info or OK above to see other findings.";
+      groupsContainer.parentNode.insertBefore(emptyBanner, groupsContainer);
+    }
 
     function persist() {
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(active)); } catch (_) {}
@@ -2414,9 +2440,12 @@
       });
       // Show/hide findings by severity.
       var findings = document.querySelectorAll(".finding[data-sev]");
+      var visibleFindings = 0;
       findings.forEach(function (f) {
         var sev = f.getAttribute("data-sev");
-        f.classList.toggle("is-hidden", !active[sev]);
+        var hidden = !active[sev];
+        f.classList.toggle("is-hidden", hidden);
+        if (!hidden) visibleFindings++;
       });
       // Hide subsystem groups with no visible children.
       var groups = document.querySelectorAll(".advisor-group");
@@ -2424,6 +2453,9 @@
         var visible = g.querySelectorAll(".finding:not(.is-hidden)").length;
         g.classList.toggle("is-hidden", visible === 0);
       });
+      if (emptyBanner) {
+        emptyBanner.hidden = visibleFindings !== 0 || findings.length === 0;
+      }
     }
 
     chips.forEach(function (chip) {
@@ -2495,6 +2527,231 @@
   }
 
   // --- Boot -------------------------------------------------------
+
+  // --- vmstat category tabs ---------------------------------------
+  //
+  // The OS section renders a single uPlot for vmstat. Rather than
+  // cramming every column into one legend, the template ships a
+  // tablist above the chart container; clicking a tab tears down the
+  // existing plot and rebuilds it with only that category's series.
+  // Tab selection persists per-report under a stable v2 localStorage
+  // key so a reader's choice survives reloads. Category → series
+  // mapping is done client-side against the labels the Go payload
+  // already emits (e.g. "cpu_user", "free_kb"); unknown labels are
+  // ignored so the chart degrades cleanly if a future vmstat variant
+  // adds columns we don't classify.
+  var VMSTAT_CATEGORIES = {
+    cpu:    ["cpu_user", "cpu_sys", "cpu_idle", "cpu_iowait", "cpu_steal"],
+    memory: ["free_kb", "buff_kb", "cache_kb"],
+    io:     ["io_in", "io_out"],
+    system: ["interrupts", "ctx_switches", "in", "cs"],
+    procs:  ["runqueue", "blocked"],
+  };
+  function vmstatCategoryKey() {
+    return "mygather:v2:" + REPORT_ID + ":vmstat-tab";
+  }
+  function filterVmstatByCategory(data, cat) {
+    var allow = VMSTAT_CATEGORIES[cat] || [];
+    var filtered = [];
+    for (var i = 0; i < data.series.length; i++) {
+      if (allow.indexOf(data.series[i].label) !== -1) {
+        filtered.push(data.series[i]);
+      }
+    }
+    return {
+      timestamps:         data.timestamps,
+      series:             filtered,
+      snapshotBoundaries: data.snapshotBoundaries,
+    };
+  }
+  function renderVmstatTabs(el, data) {
+    if (!data || !Array.isArray(data.timestamps) || !Array.isArray(data.series)) return;
+    // Locate the sibling tablist emitted deterministically by os.html.tmpl.
+    var tablist = el.parentNode && el.parentNode.querySelector
+      ? el.parentNode.querySelector(".vmstat-tablist[role=\"tablist\"]")
+      : null;
+    if (!tablist) {
+      // Fallback: no tablist markup present — behave like the old flat chart.
+      renderTimeSeries(el, data, unitForChart("vmstat"));
+      return;
+    }
+    var tabs = tablist.querySelectorAll("[role=\"tab\"][data-vmstat-category]");
+    var DEFAULT_CAT = "cpu";
+    var stored = storageGet(vmstatCategoryKey());
+    var initial = DEFAULT_CAT;
+    if (stored && VMSTAT_CATEGORIES[stored]) initial = stored;
+
+    var plot = null;
+    function cleanup() {
+      if (plot) { unregisterChart(plot); plot.destroy(); plot = null; }
+      // Legend is mounted as el's immediate next sibling by mountLegend.
+      var legendEl = el.nextSibling;
+      if (legendEl && legendEl.classList && legendEl.classList.contains("series-legend")) {
+        legendEl.parentNode.removeChild(legendEl);
+      }
+      // Also strip any prior reset-zoom button mount — mountResetZoomButton
+      // wraps the chart; if the wrapping moved, skip silently.
+    }
+    function draw(cat) {
+      cleanup();
+      var filtered = filterVmstatByCategory(data, cat);
+      if (filtered.series.length === 0) {
+        // Nothing to plot for this category (e.g. pt-stalk vmstat variant
+        // without `in`/`cs`). Leave the container empty with a caption.
+        var msg = document.createElement("p");
+        msg.className = "banner missing vmstat-empty";
+        msg.textContent = "No series available for this category in the captured vmstat.";
+        el.appendChild(msg);
+        return;
+      }
+      plot = buildLineChart(el, filtered, unitForChart("vmstat"));
+    }
+    function selectTab(cat, opts) {
+      if (!VMSTAT_CATEGORIES[cat]) cat = DEFAULT_CAT;
+      for (var i = 0; i < tabs.length; i++) {
+        var isActive = tabs[i].getAttribute("data-vmstat-category") === cat;
+        tabs[i].classList.toggle("active", isActive);
+        tabs[i].setAttribute("aria-selected", isActive ? "true" : "false");
+        tabs[i].setAttribute("tabindex", isActive ? "0" : "-1");
+        if (isActive && opts && opts.focus) tabs[i].focus();
+      }
+      storageSet(vmstatCategoryKey(), cat);
+      // Wipe any lingering empty-state banner before draw.
+      var empties = el.querySelectorAll(".vmstat-empty");
+      for (var k = 0; k < empties.length; k++) empties[k].parentNode.removeChild(empties[k]);
+      draw(cat);
+    }
+    for (var i = 0; i < tabs.length; i++) {
+      (function (btn) {
+        btn.addEventListener("click", function () {
+          selectTab(btn.getAttribute("data-vmstat-category"));
+        });
+      })(tabs[i]);
+    }
+    tablist.addEventListener("keydown", function (ev) {
+      var order = [];
+      for (var j = 0; j < tabs.length; j++) order.push(tabs[j]);
+      var idx = order.indexOf(document.activeElement);
+      if (idx < 0) idx = 0;
+      if (ev.key === "ArrowRight") {
+        ev.preventDefault();
+        selectTab(order[(idx + 1) % order.length].getAttribute("data-vmstat-category"), { focus: true });
+      } else if (ev.key === "ArrowLeft") {
+        ev.preventDefault();
+        selectTab(order[(idx - 1 + order.length) % order.length].getAttribute("data-vmstat-category"), { focus: true });
+      } else if (ev.key === "Home") {
+        ev.preventDefault();
+        selectTab(order[0].getAttribute("data-vmstat-category"), { focus: true });
+      } else if (ev.key === "End") {
+        ev.preventDefault();
+        selectTab(order[order.length - 1].getAttribute("data-vmstat-category"), { focus: true });
+      }
+    });
+    selectTab(initial);
+    mountResetZoomButton(el, function () { return plot; });
+  }
+
+  // --- History list length sparkline ------------------------------
+  //
+  // Small uPlot rendered directly under the "History list" InnoDB
+  // callout. 1-sample fallback shows a single centred dot with its
+  // formatted value; 2 samples draw a thin segment with start/end
+  // value labels; 3+ samples render a filled smooth spline. Reuses
+  // the bundled uPlot instance — no extra chart library.
+  function renderHLLSparkline(el, data) {
+    if (!data || !Array.isArray(data.values) || data.values.length === 0) return;
+    var vals = data.values;
+    var ts   = Array.isArray(data.timestamps) ? data.timestamps : null;
+    var W = 240, H = 48;
+    // Clear any prior render (idempotent if initCharts re-runs).
+    while (el.firstChild) el.removeChild(el.firstChild);
+    el.classList.add("hll-sparkline-ready");
+
+    function fmt(v) {
+      if (v == null || isNaN(v)) return "–";
+      v = +v;
+      if (v >= 1e6) return (v / 1e6).toFixed(1) + "M";
+      if (v >= 1e3) return (v / 1e3).toFixed(1) + "k";
+      return String(Math.round(v));
+    }
+
+    if (vals.length === 1) {
+      // Single sample: render a centred dot + label via plain DOM.
+      // Avoids inline SVG namespaces (render tests forbid any plain
+      // http-scheme substring in the output to guard against accidental
+      // network fetches).
+      var single = document.createElement("div");
+      single.className = "hll-spark-single";
+      single.style.width  = W + "px";
+      single.style.height = H + "px";
+      var dot = document.createElement("span");
+      dot.className = "hll-spark-dot";
+      single.appendChild(dot);
+      var lbl = document.createElement("span");
+      lbl.className = "hll-spark-label";
+      lbl.textContent = fmt(vals[0]);
+      single.appendChild(lbl);
+      el.appendChild(single);
+      return;
+    }
+
+    // Compute y range with a small pad so the line isn't flush with edges.
+    var mn = Infinity, mx = -Infinity;
+    for (var i = 0; i < vals.length; i++) {
+      var v = +vals[i];
+      if (!isNaN(v)) { if (v < mn) mn = v; if (v > mx) mx = v; }
+    }
+    if (mn === Infinity) { mn = 0; mx = 1; }
+    if (mn === mx) { mn -= 1; mx += 1; }
+
+    // Synthesize timestamps if missing (shouldn't happen, but safe).
+    var xs = ts && ts.length === vals.length
+      ? ts.slice()
+      : vals.map(function (_, idx) { return idx; });
+
+    var splinePath = (typeof uPlot !== "undefined" && uPlot.paths && uPlot.paths.spline)
+      ? uPlot.paths.spline()
+      : null;
+
+    var opts = {
+      width: W,
+      height: H,
+      padding: [2, 2, 2, 2],
+      cursor: { show: false, drag: { x: false, y: false } },
+      legend: { show: false },
+      scales: {
+        x: { time: ts != null },
+        y: { auto: false, range: [mn - (mx - mn) * 0.15, mx + (mx - mn) * 0.15] },
+      },
+      axes: [{ show: false }, { show: false }],
+      series: [
+        { label: "t" },
+        {
+          label: "HLL",
+          stroke: "#6b8eff",
+          width: 1.25,
+          fill:  "rgba(107, 142, 255, 0.18)",
+          paths: splinePath || undefined,
+          points: vals.length === 2 ? { show: true, size: 4 } : { show: false },
+        },
+      ],
+    };
+    var plot = new uPlot(opts, [xs, vals.map(function (v) { return +v; })], el);
+    // Do NOT registerChart — sparkline is fixed-width and should not
+    // participate in global resize/reset-zoom flows.
+    if (vals.length === 2) {
+      // Label the two endpoints with their values so a two-snapshot
+      // capture still reads as a trend rather than a bare stub.
+      var overlay = document.createElement("div");
+      overlay.className = "hll-spark-endpoints";
+      overlay.innerHTML =
+        '<span class="hll-spark-start">' + escapeHTML(fmt(vals[0])) + '</span>' +
+        '<span class="hll-spark-end">'   + escapeHTML(fmt(vals[vals.length - 1])) + '</span>';
+      el.appendChild(overlay);
+    }
+    // Prevent "unused plot" linter concerns — handle kept for future reuse.
+    void plot;
+  }
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot);

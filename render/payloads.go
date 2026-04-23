@@ -30,8 +30,39 @@ func buildChartPayload(r *model.Report) map[string]any {
 		if r.DBSection.Processlist != nil {
 			payload["processlist"] = processlistChartPayload(r.DBSection.Processlist)
 		}
+		if hll := innoDBHLLSparklinePayload(r.DBSection.InnoDBPerSnapshot); hll != nil {
+			payload["innodb-hll"] = hll
+		}
 	}
 	return payload
+}
+
+// innoDBHLLSparklinePayload emits the per-snapshot History List Length
+// series consumed by the small sparkline below the aggregated History
+// list callout. Snapshots whose Data is nil (file absent / unparseable)
+// are skipped, mirroring aggregateInnoDBMetrics. Returns nil when fewer
+// than one populated snapshot exists so the template/JS falls back to
+// the scalar-only display.
+func innoDBHLLSparklinePayload(snaps []model.SnapshotInnoDB) map[string]any {
+	var ts []float64
+	var vals []float64
+	var prefixes []string
+	for _, si := range snaps {
+		if si.Data == nil {
+			continue
+		}
+		ts = append(ts, float64(si.Timestamp.Unix()))
+		vals = append(vals, float64(si.Data.HistoryListLength))
+		prefixes = append(prefixes, si.SnapshotPrefix)
+	}
+	if len(vals) == 0 {
+		return nil
+	}
+	return map[string]any{
+		"timestamps": ts,
+		"values":     vals,
+		"prefixes":   prefixes,
+	}
 }
 
 func mysqladminChartPayload(d *model.MysqladminData) map[string]any {

@@ -2218,3 +2218,100 @@ details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
   details > summary::before { content: none; }
   main.content { padding: 0; }
 }
+
+/* ---------- vmstat category tablist ---------- */
+.vmstat-tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px 0;
+  padding: 0;
+}
+.vmstat-tab {
+  appearance: none;
+  border: 1px solid var(--border, #d0d6e0);
+  background: transparent;
+  color: var(--fg-muted, #6c7588);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font: 500 12px/1.4 inherit;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.vmstat-tab:hover {
+  color: var(--fg, #1b1f27);
+  border-color: var(--fg-muted, #9aa5b4);
+}
+.vmstat-tab.active,
+.vmstat-tab[aria-selected="true"] {
+  background: #6b8eff;
+  color: #fff;
+  border-color: #6b8eff;
+}
+.vmstat-tab:focus-visible {
+  outline: 2px solid #6b8eff;
+  outline-offset: 2px;
+}
+
+/* ---------- History list length sparkline ---------- */
+.hll-sparkline {
+  margin-top: 8px;
+  min-height: 48px;
+  position: relative;
+}
+.hll-sparkline .hll-spark-single {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--fg-muted, #6c7588);
+}
+.hll-sparkline .hll-spark-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6b8eff;
+}
+.hll-sparkline .hll-spark-label {
+  font: 500 11px/1 ui-monospace, Menlo, monospace;
+  color: var(--fg, #1b1f27);
+}
+.hll-sparkline .hll-spark-endpoints {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  padding: 0 6px;
+  font: 500 10px/1 ui-monospace, Menlo, monospace;
+  color: var(--fg-muted, #6c7588);
+}
+
+/* ---------- Sticky mysqladmin editor panel ---------- */
+/* When the counter-deltas editor is open, the whole panel-host
+   (sticky strip + popped-open editor) follows the viewport while the
+   user scrolls through the charts. The sticky context is naturally
+   bounded by the surrounding details.subview body: once the user
+   scrolls past the mysqladmin section into OS or footer content, the
+   panel scrolls off with its container.
+
+   Scoped to .is-open so a closed (or just-pinned-away) editor never
+   anchors at the top and obstructs chart reading. Scoped further to
+   a data-mysqladmin-host body so the rule cannot accidentally affect
+   any future panel-host reuse elsewhere on the page.
+
+   Requirements: no overflow:hidden / overflow:auto on any ancestor
+   between here and the page scroll root (main.content, body). We
+   inspected details.subview, details.subview > .body, main.content
+   and body — all scroll-transparent, so CSS-only sticky is safe. */
+[data-mysqladmin-host] .ma-panel-host.is-open {
+  position: sticky;
+  top: 0;
+  /* Lift above chart canvases so crosshair overlays don't paint on
+     top of the open panel. The strip already uses z-index:40; bump
+     the host one notch higher so the absolutely-positioned .ma-panel
+     stays on top too. */
+  z-index: 45;
+}

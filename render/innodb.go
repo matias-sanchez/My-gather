@@ -197,9 +197,20 @@ func attachSemaphoreBreakdown(m *innoDBMetricView, snaps []model.SnapshotInnoDB)
 	}
 }
 
+// semaphoreBreakdownCap bounds the number of contention-breakdown rows
+// we render per panel. Sites are sorted desc by WaitCount (ties broken
+// by file then line) before truncation, so the top-N rows are the ones
+// that matter most for contention triage. The template surfaces the
+// full site count via a "Show all (N sites)" control.
+const semaphoreBreakdownCap = 10
+
 func buildSiteRows(sites []model.SemaphoreSite, total int) []semaphoreSiteRow {
-	out := make([]semaphoreSiteRow, 0, len(sites))
-	for _, s := range sites {
+	capped := sites
+	if len(capped) > semaphoreBreakdownCap {
+		capped = capped[:semaphoreBreakdownCap]
+	}
+	out := make([]semaphoreSiteRow, 0, len(capped))
+	for _, s := range capped {
 		pct := 0.0
 		if total > 0 {
 			pct = float64(s.WaitCount) * 100.0 / float64(total)
