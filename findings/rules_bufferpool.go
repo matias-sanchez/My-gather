@@ -6,6 +6,92 @@ import (
 	"github.com/matias-sanchez/My-gather/model"
 )
 
+// ruleBPUndersized flags a suspiciously small innodb_buffer_pool_size
+// relative to the server's apparent usage. The hit-ratio rule only
+// catches thrashing that's already happening; this one catches
+// under-provisioned pools that are coasting in a quiet moment but
+// can't scale with the workload.
+//
+// Heuristic (no canonical threshold exists): on an instance with any
+// real concurrency (Threads_connected > 50) and uptime past its warm-up
+// phase (Uptime > 3600), a buffer pool below 1 GiB is Warn and below
+// 256 MiB is Crit.
+func ruleBPUndersized(r *model.Report) Finding {
+	const (
+		warnBytes   = float64(1) * 1024 * 1024 * 1024       // 1 GiB
+		critBytes   = float64(256) * 1024 * 1024            // 256 MiB
+		minThreads  = 50.0
+		minUptimeS  = 3600.0
+	)
+	size, ok := variableFloat(r, "innodb_buffer_pool_size")
+	if !ok || size <= 0 {
+		return Finding{Severity: SeveritySkip}
+	}
+	connected, _ := gaugeMax(r, "Threads_connected")
+	uptime, _ := gaugeLast(r, "Uptime")
+	if connected < minThreads || uptime < minUptimeS {
+		// Dev/idle instance — size heuristic doesn't apply. Skip.
+		return Finding{Severity: SeveritySkip}
+	}
+	sev := SeverityOK
+	summary := fmt.Sprintf("innodb_buffer_pool_size is %s — sized for the observed workload.", humanBytes(size))
+	switch {
+	case size < critBytes:
+		sev = SeverityCrit
+		summary = fmt.Sprintf("innodb_buffer_pool_size is %s on an instance with %s connections — far too small for a production workload.",
+			humanBytes(size), formatNum(connected))
+	case size < warnBytes:
+		sev = SeverityWarn
+		summary = fmt.Sprintf("innodb_buffer_pool_size is only %s — likely under-provisioned; current hit ratio may only be healthy because the workload is quiet.",
+			humanBytes(size))
+	}
+	return Finding{
+		ID:        "bp.undersized",
+		Subsystem: "Buffer Pool",
+		Title:     "Buffer pool size vs workload",
+		Severity:  sev,
+		Summary:   summary,
+		Explanation: "The buffer pool caches hot data and index pages in memory. A small pool relative to the active dataset will thrash " +
+			"once the workload pushes past a quiet window, even if the current hit ratio looks healthy. On a production instance with " +
+			"dozens of active connections, 1 GiB is the floor for most deployments; 25-70 % of system RAM is the usual target.",
+		FormulaText:     "innodb_buffer_pool_size  vs  {≥1 GiB warn floor, ≥256 MiB crit floor}  (gated on Threads_connected ≥ 50 and Uptime ≥ 1h)",
+		FormulaComputed: fmt.Sprintf("innodb_buffer_pool_size = %s  (Threads_connected peak = %s, Uptime = %s s)", humanBytes(size), formatNum(connected), formatNum(uptime)),
+		Metrics: []MetricRef{
+			{Name: "innodb_buffer_pool_size", Value: size, Unit: "bytes"},
+			{Name: "Threads_connected (max)", Value: connected, Unit: "count"},
+			{Name: "Uptime", Value: uptime, Unit: "s"},
+		},
+		Recommendations: []string{
+			"Raise innodb_buffer_pool_size to 25-70 % of system RAM (reserve headroom for per-thread buffers, OS, and other processes).",
+			"Confirm with `SELECT @@innodb_buffer_pool_size / 1024 / 1024 / 1024` and your system's free memory before bumping.",
+			"On MySQL 8.0.14+, the pool is dynamically resizable — no restart required.",
+		},
+		Source: "Rosetta Stone — Buffer Pool §Utilization (capacity)",
+	}
+}
+
+// humanBytes formats a byte count as "128 MiB" / "2.5 GiB" / "900 KiB".
+func humanBytes(v float64) string {
+	const (
+		KiB = 1024.0
+		MiB = KiB * 1024
+		GiB = MiB * 1024
+		TiB = GiB * 1024
+	)
+	switch {
+	case v >= TiB:
+		return fmt.Sprintf("%.2f TiB", v/TiB)
+	case v >= GiB:
+		return fmt.Sprintf("%.2f GiB", v/GiB)
+	case v >= MiB:
+		return fmt.Sprintf("%.0f MiB", v/MiB)
+	case v >= KiB:
+		return fmt.Sprintf("%.0f KiB", v/KiB)
+	default:
+		return fmt.Sprintf("%.0f B", v)
+	}
+}
+
 // ruleBPHitRatio evaluates the InnoDB buffer pool hit ratio:
 //
 //	hit_ratio = 1 − reads / read_requests

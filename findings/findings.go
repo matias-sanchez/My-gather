@@ -104,6 +104,7 @@ type rule func(r *model.Report) Finding
 var allRules = []rule{
 	// Buffer Pool
 	ruleBPHitRatio,
+	ruleBPUndersized,
 	ruleBPFreePagesLow,
 	ruleBPLRUFlushing,
 	ruleBPWaitFree,
@@ -133,9 +134,14 @@ var allRules = []rule{
 	ruleFullScanSelectScan,
 	ruleFullScanSelectFullJoin,
 	ruleFullScanHandlerRndNext,
+	ruleProcesslistAbuse,
 
 	// Connections
 	ruleAbortedConnectsRate,
+	ruleConnectionsSaturation,
+
+	// Configuration
+	ruleSlowLogDisabled,
 }
 
 // Analyze runs every rule against the given Report and returns the
@@ -188,6 +194,8 @@ func subsystemOrder(s string) int {
 		return 6
 	case "Connections":
 		return 7
+	case "Configuration":
+		return 8
 	}
 	return 99
 }

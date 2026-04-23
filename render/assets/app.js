@@ -855,7 +855,7 @@
   function buildStackedChart(el, data, unit, hiddenLabels, onRebuild) {
     var series = data.series;
     var n = data.timestamps.length;
-    var stackedPath = uPlot.paths.bars({ size: [0.9, Infinity], align: 0, radius: 0.3 });
+    var stackedPath = uPlot.paths.bars({ size: [1.0, 64], align: 0, radius: 0.25 });
 
     // Raw per-series values, zero'd when hidden.
     var rawValues = series.map(function (s) {
