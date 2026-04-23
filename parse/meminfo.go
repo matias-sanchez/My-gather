@@ -42,12 +42,6 @@ var meminfoSeries = []struct {
 	{"__swap_used", "swap_used"}, // synthesised: SwapTotal − SwapFree
 }
 
-// tsMeminfoLine matches the per-sample boundary marker pt-stalk
-// writes before every /proc/meminfo capture:
-//
-//	TS 1776790303.009325313 2026-04-21 16:51:43
-var tsMeminfoLine = regexp.MustCompile(`^TS\s+(\d+(?:\.\d+)?)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})`)
-
 // meminfoValueLine matches a /proc/meminfo "Key:  value kB" row.
 // The unit is always kB on Linux; the parser assumes that and
 // converts to GB at emit time.
@@ -80,7 +74,7 @@ func parseMeminfo(r io.Reader, sourcePath string) (*model.MeminfoData, []model.D
 
 	for scanner.Scan() {
 		line := strings.TrimRight(scanner.Text(), "\r\n")
-		if m := tsMeminfoLine.FindStringSubmatch(line); m != nil {
+		if m := reTimestampLine.FindStringSubmatch(line); m != nil {
 			epoch, _ := strconv.ParseFloat(m[1], 64)
 			secs := int64(math.Floor(epoch))
 			ns := int64(math.Round((epoch - float64(secs)) * 1e9))
@@ -102,10 +96,10 @@ func parseMeminfo(r io.Reader, sourcePath string) (*model.MeminfoData, []model.D
 				})
 				return nil, diagnostics
 			}
-			v, err := strconv.ParseFloat(m[2], 64)
-			if err != nil {
-				continue
-			}
+			// m[2] is the (\d+) capture group from meminfoValueLine; it
+			// is digits-only by construction, so ParseFloat cannot fail
+			// within the physical-memory range. Discard the error.
+			v, _ := strconv.ParseFloat(m[2], 64)
 			current.vals[m[1]] = v
 		}
 	}

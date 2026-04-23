@@ -37,6 +37,12 @@
   }
   var REPORT_ID = REPORT.reportID;
 
+  // Canonical selector for every collapsible section in the main
+  // content column (OS / DB / Variables / Advisor). Both the collapse
+  // persistence init and the nav scroll-spy observe the same set, so
+  // the selector lives in one place.
+  var MAIN_SECTIONS_SELECTOR = "main.content details[id]";
+
   // --- Storage helper ---------------------------------------------
 
   function storageGet(key) {
@@ -60,7 +66,7 @@
   function initCollapsePersistence() {
     // Scope strictly to main-content details; nav groups have their
     // own namespace under initNavGroups().
-    var blocks = document.querySelectorAll("main.content details[id]");
+    var blocks = document.querySelectorAll(MAIN_SECTIONS_SELECTOR);
     for (var i = 0; i < blocks.length; i++) {
       (function (d) {
         var saved = storageGet(collapseKey(d.id));
@@ -2142,7 +2148,7 @@
     if (!navLinks.length) return;
     var byHash = {};
     navLinks.forEach(function (a) { byHash[a.getAttribute("href")] = a; });
-    var targets = document.querySelectorAll("main.content details[id]");
+    var targets = document.querySelectorAll(MAIN_SECTIONS_SELECTOR);
     var active = null;
     var observer = new IntersectionObserver(
       function (entries) {

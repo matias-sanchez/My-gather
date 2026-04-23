@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -53,20 +54,28 @@ func TestOSSubviewAnchors(t *testing.T) {
 	subviews := []string{"sub-os-iostat", "sub-os-top", "sub-os-vmstat", "sub-os-meminfo"}
 
 	// Every subview anchor lives inside the sec-os <details> block.
-	for _, anchor := range subviews {
-		want := `id="` + anchor + `"`
-		if !strings.Contains(section, want) {
-			t.Errorf("OS section missing %q anchor; SC-005 requires every OS subview to carry an HTML id for deep-linking", anchor)
-		}
-	}
+	assertAnchorsContained(t, section, subviews, `id="%s"`,
+		"OS section missing %q anchor; SC-005 requires every OS subview to carry an HTML id for deep-linking")
 
 	// Every subview must also be addressable from Report.Navigation,
 	// which serialises into <nav class="index"> at the document top
 	// (outside sec-os).
-	for _, anchor := range subviews {
-		wantHref := `href="#` + anchor + `"`
-		if !strings.Contains(html, wantHref) {
-			t.Errorf("Report.Navigation missing href=\"#%s\"; SC-005 requires every OS subview anchor to be reachable from the nav rail", anchor)
+	assertAnchorsContained(t, html, subviews, `href="#%s"`,
+		"Report.Navigation missing href=\"#%s\"; SC-005 requires every OS subview anchor to be reachable from the nav rail")
+}
+
+// assertAnchorsContained asserts that every anchor in `anchors`
+// appears inside `content` when formatted through `marker` (e.g.
+// `id="%s"` or `href="#%s"`). Extracted so both halves of
+// TestOSSubviewAnchors — "anchor lives in section HTML" and "nav rail
+// links to anchor" — drive through a single loop instead of repeating
+// the Contains scaffold.
+func assertAnchorsContained(t *testing.T, content string, anchors []string, marker, missingFmt string) {
+	t.Helper()
+	for _, anchor := range anchors {
+		want := fmt.Sprintf(marker, anchor)
+		if !strings.Contains(content, want) {
+			t.Errorf(missingFmt, anchor)
 		}
 	}
 }
