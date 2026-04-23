@@ -135,6 +135,60 @@ func TestMeminfoMissingKeyDiagnostic(t *testing.T) {
 	}
 }
 
+// TestMeminfoEmptyInput documents the graceful nil-return contract
+// that callers rely on: an empty reader (collector file was truncated,
+// or the capture script missed the window) MUST NOT panic and MUST
+// NOT emit a zero-sample MeminfoData that would later cause the
+// renderer's chart payload to dereference empty Samples. The render
+// pipeline's nil-guard in build_view.go depends on this.
+func TestMeminfoEmptyInput(t *testing.T) {
+	data, diags := parseMeminfo(strings.NewReader(""), "unit-test")
+	if data != nil {
+		t.Errorf("parseMeminfo(empty) returned non-nil data (%+v); want nil", data)
+	}
+	// Warnings for "key never seen" are suppressed when there are no
+	// samples at all — we bail out before reaching that code path.
+	for _, d := range diags {
+		if d.Severity == model.SeverityWarning {
+			t.Errorf("empty input should not emit Warning diagnostics; got %q", d.Message)
+		}
+	}
+}
+
+// TestMeminfoDataBeforeFirstTS documents that value lines appearing
+// before any TS marker are silently discarded, not mis-attributed to
+// a phantom first sample. This is the behaviour the renderer assumes
+// when it aligns per-snapshot timestamps.
+func TestMeminfoDataBeforeFirstTS(t *testing.T) {
+	input := "MemTotal:       32000000 kB\n" +
+		"MemFree:         5000000 kB\n" +
+		"TS 1776790303.000000000 2026-04-21 16:51:43\n" +
+		"MemTotal:       32000000 kB\n" +
+		"MemFree:         7000000 kB\n" +
+		"SwapTotal:       4000000 kB\n" +
+		"SwapFree:        4000000 kB\n"
+
+	data, _ := parseMeminfo(strings.NewReader(input), "unit-test")
+	if data == nil {
+		t.Fatalf("parseMeminfo returned nil data")
+	}
+	// Exactly one sample expected — the pre-TS values must not produce
+	// a phantom sample with a zero Timestamp.
+	for i := range data.Series {
+		if got := len(data.Series[i].Samples); got != 1 {
+			t.Fatalf("Series[%d] (%q) has %d samples; want 1 (pre-TS lines must be discarded)",
+				i, data.Series[i].Metric, got)
+		}
+	}
+	// The single sample's mem_free must correspond to the post-TS value
+	// (7 GB ≈ 7000000 kB / 1048576), not the pre-TS 5 GB.
+	got := data.Series[1].Samples[0].Measurements["mem_free"]
+	want := 7000000.0 / (1024.0 * 1024.0)
+	if math.Abs(got-want) > 1e-9 {
+		t.Errorf("mem_free = %v GB; want %v GB (post-TS value, not pre-TS)", got, want)
+	}
+}
+
 // TestMeminfoSwapUsedSynthesis verifies that swap_used is derived as
 // SwapTotal - SwapFree and clamps to zero when SwapFree > SwapTotal
 // (pathological /proc/meminfo snapshot).

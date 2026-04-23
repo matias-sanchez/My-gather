@@ -114,6 +114,75 @@ func TestDedupPreservesFirstAndChanges(t *testing.T) {
 	}
 }
 
+// TestDedupCyclePattern documents the chosen behaviour for a
+// non-monotonic signature sequence like [A, A, B, B, A]: the second
+// run of A (at snapshot #5) is kept as a fresh panel with its own
+// RangeNote rather than bridged back to the first A range. The dedup
+// only compares against the last KEPT panel, not every prior panel.
+// Pinning this keeps the reader's mental model predictable — each
+// panel is a contiguous identical-snapshots run — and prevents future
+// refactors from silently turning this into history-aware collapsing.
+func TestDedupCyclePattern(t *testing.T) {
+	a := []model.VariableEntry{
+		{Name: "innodb_buffer_pool_size", Value: "128M"},
+		{Name: "max_connections", Value: "200"},
+	}
+	b := []model.VariableEntry{
+		{Name: "innodb_buffer_pool_size", Value: "256M"},
+		{Name: "max_connections", Value: "200"},
+	}
+	rpt := &model.Report{
+		VariablesSection: &model.VariablesSection{
+			PerSnapshot: []model.SnapshotVariables{
+				{SnapshotPrefix: "snap1", Data: &model.VariablesData{Entries: a}},
+				{SnapshotPrefix: "snap2", Data: &model.VariablesData{Entries: a}},
+				{SnapshotPrefix: "snap3", Data: &model.VariablesData{Entries: b}},
+				{SnapshotPrefix: "snap4", Data: &model.VariablesData{Entries: b}},
+				{SnapshotPrefix: "snap5", Data: &model.VariablesData{Entries: a}},
+			},
+		},
+		Collection: &model.Collection{Snapshots: []*model.Snapshot{{}, {}, {}, {}, {}}},
+	}
+	sigs := computeVariableSignatures(rpt.VariablesSection)
+	view, err := buildView(rpt, rpt.Collection, sigs)
+	if err != nil {
+		t.Fatalf("buildView: %v", err)
+	}
+	if got := len(view.VariableSnapshots); got != 3 {
+		t.Fatalf("want 3 kept panels for [A,A,B,B,A]; got %d", got)
+	}
+	// Panel 3 (second A) is a single-snapshot run (#5). RangeNote is
+	// deliberately cleared for single-snapshot runs (rangeIsSingle
+	// branch in buildView), so the note must be empty — NOT bridged
+	// back to the first A run at #1-#2.
+	if note := view.VariableSnapshots[2].RangeNote; note != "" {
+		t.Errorf("second-A panel RangeNote: want \"\" (single-snapshot run, no cycle collapse); got %q",
+			note)
+	}
+	// The first two kept panels DO span multiple snapshots, so their
+	// RangeNote must remain populated (contrast with panel 3).
+	if lo, hi := parseRangeNote(view.VariableSnapshots[0].RangeNote); lo != 1 || hi != 2 {
+		t.Errorf("first A-run RangeNote: want #1-#2, got #%d-#%d (note=%q)",
+			lo, hi, view.VariableSnapshots[0].RangeNote)
+	}
+	if lo, hi := parseRangeNote(view.VariableSnapshots[1].RangeNote); lo != 3 || hi != 4 {
+		t.Errorf("B-run RangeNote: want #3-#4, got #%d-#%d (note=%q)",
+			lo, hi, view.VariableSnapshots[1].RangeNote)
+	}
+	// Panel 3 is compared against panel 2 (the last kept panel, which
+	// held B), so innodb_buffer_pool_size must be flagged Changed on
+	// the re-entry to A.
+	var changed []string
+	for _, row := range view.VariableSnapshots[2].Entries {
+		if row.Changed {
+			changed = append(changed, row.Name)
+		}
+	}
+	if len(changed) != 1 || changed[0] != "innodb_buffer_pool_size" {
+		t.Errorf("second-A panel Changed rows: want [innodb_buffer_pool_size] (vs prior B); got %v", changed)
+	}
+}
+
 // TestRangeNoteRoundtrip — formatRangeNote and parseRangeNote are
 // inverses for every valid (lo, hi) pair.
 func TestRangeNoteRoundtrip(t *testing.T) {
