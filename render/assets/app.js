@@ -822,23 +822,34 @@
     return plot;
   }
 
-  // buildStackedChart: construct a stacked-bar uPlot from a flat
+  // buildStackedChart: construct a stacked-AREA uPlot from a flat
   // {timestamps, series[, snapshotBoundaries]} payload (the same
-  // shape renderTimeSeries consumes). Series draw bottom-up in input
-  // order; uPlot is asked to paint them top-down (tallest first) so
-  // each smaller stack paints on top — the legend then reads
-  // top→bottom matching the visual stack order. Hidden labels drive
-  // a zero-value substitution that keeps legend indexes stable while
-  // removing the bucket's contribution from the cumulative heights.
+  // shape renderTimeSeries consumes). Despite the name it now paints
+  // continuous stacked areas rather than discrete bars — the earlier
+  // bar geometry read as narrow columns with wide empty gaps when
+  // samples were seconds apart, while stacked areas are the classic
+  // "composition-over-time" rendering (à la Grafana / Datadog).
+  //
+  // Each series' cumulative value is painted as a spline area from 0
+  // up to that cumulative height. uPlot draws series[1] first (the
+  // grand total, tallest) and each subsequent series paints on top —
+  // so each band's visible region is the strip between its stack-top
+  // and the next shorter series' stack-top. The topmost stroke line
+  // gives each layer a crisp upper edge; the fill alpha stays near-
+  // opaque so bands don't muddy into each other when overlapping.
+  //
+  // Hidden labels drive a zero-value substitution that keeps legend
+  // indexes stable while removing the bucket's contribution from the
+  // cumulative heights.
   //
   // hiddenLabels: mutable Set owned by the caller (we only read).
   // onRebuild: callback fired when the user toggles legend visibility
   //            so the caller can destroy + reconstruct with the new
-  //            hidden set. Must return the new plot if chaining state.
+  //            hidden set.
   function buildStackedChart(el, data, unit, hiddenLabels, onRebuild) {
     var series = data.series;
     var n = data.timestamps.length;
-    var barsPath = uPlot.paths.bars({ size: [1.0, Infinity], align: 0 });
+    var stackedPath = splinePaths();
 
     // Raw per-series values, zero'd when hidden.
     var rawValues = series.map(function (s) {
@@ -847,7 +858,9 @@
       for (var j = 0; j < n; j++) {
         if (hidden) { out[j] = 0; continue; }
         var v = +s.values[j];
-        out[j] = isNaN(v) ? null : v;
+        out[j] = isNaN(v) ? 0 : v; // NaN→0 so the cumulative stays
+                                   // continuous across snapshot
+                                   // boundaries; splines reject null.
       }
       return out;
     });
@@ -885,9 +898,9 @@
       plotSeries.push({
         label: series[k].label,
         stroke: stroke,
-        width: 0,
-        fill: hexToRgba(stroke, 0.95),
-        paths: barsPath,
+        width: 1.5,
+        fill: hexToRgba(stroke, 0.85),
+        paths: stackedPath,
         points: { show: false },
         value: function (u, v) { return v == null ? "–" : v.toLocaleString(); },
       });
@@ -955,7 +968,7 @@
       return b;
     }
     var btnLine  = makeBtn("line",    "Lines",        "Plot each process as a separate smooth line — shows each one's curve over time");
-    var btnStack = makeBtn("stacked", "Stacked bars", "Stack per-process %CPU per sample — shows composition and total load at a glance");
+    var btnStack = makeBtn("stacked", "Stacked area", "Stack per-process %CPU into a continuous area — shows composition and total load over time at a glance");
     toolbar.appendChild(btnLine);
     toolbar.appendChild(btnStack);
     el.parentNode.insertBefore(toolbar, el);
