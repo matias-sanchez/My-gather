@@ -2662,7 +2662,7 @@
     if (!data || !Array.isArray(data.values) || data.values.length === 0) return;
     var vals = data.values;
     var ts   = Array.isArray(data.timestamps) ? data.timestamps : null;
-    var W = 240, H = 48;
+    var W = 320, H = 64;
     // Clear any prior render (idempotent if initCharts re-runs).
     while (el.firstChild) el.removeChild(el.firstChild);
     el.classList.add("hll-sparkline-ready");
@@ -2713,11 +2713,41 @@
       ? uPlot.paths.spline()
       : null;
 
+    // Tooltip element (shared for 2+ samples). Positioned absolutely
+    // inside the sparkline container and updated via cursor hook.
+    el.style.position = el.style.position || "relative";
+    var tip = document.createElement("div");
+    tip.className = "hll-spark-tip";
+    tip.style.display = "none";
+    el.appendChild(tip);
+
+    // Min / max reference labels (always visible, corner-anchored).
+    var refs = document.createElement("div");
+    refs.className = "hll-spark-refs";
+    refs.innerHTML =
+      '<span class="hll-spark-max">max ' + escapeHTML(fmt(mx)) + '</span>' +
+      '<span class="hll-spark-min">min ' + escapeHTML(fmt(mn)) + '</span>';
+    el.appendChild(refs);
+
+    function fmtTs(sec) {
+      if (!ts || sec == null) return "";
+      var d = new Date(sec * 1000);
+      var hh = String(d.getHours()).padStart(2, "0");
+      var mm = String(d.getMinutes()).padStart(2, "0");
+      var ss = String(d.getSeconds()).padStart(2, "0");
+      return hh + ":" + mm + ":" + ss;
+    }
+
     var opts = {
       width: W,
       height: H,
-      padding: [2, 2, 2, 2],
-      cursor: { show: false, drag: { x: false, y: false } },
+      padding: [6, 6, 6, 6],
+      cursor: {
+        show: true,
+        drag: { x: false, y: false },
+        points: { show: true, size: 7, stroke: "#6b8eff", fill: "#0b1220" },
+        y: false,
+      },
       legend: { show: false },
       scales: {
         x: { time: ts != null },
@@ -2735,8 +2765,34 @@
           points: vals.length === 2 ? { show: true, size: 4 } : { show: false },
         },
       ],
+      hooks: {
+        setCursor: [
+          function (u) {
+            var idx = u.cursor.idx;
+            if (idx == null || idx < 0 || idx >= vals.length) {
+              tip.style.display = "none";
+              return;
+            }
+            var v = vals[idx];
+            var t = ts ? ts[idx] : null;
+            tip.innerHTML =
+              '<strong>' + escapeHTML(fmt(v)) + '</strong>' +
+              (t != null ? '<span>' + escapeHTML(fmtTs(t)) + '</span>' : '');
+            tip.style.display = "block";
+            // Position tip near cursor, clamped inside the sparkline rect.
+            var left = u.cursor.left;
+            var tipW = tip.offsetWidth || 80;
+            var maxLeft = W - tipW - 4;
+            if (left > maxLeft) left = maxLeft;
+            if (left < 4) left = 4;
+            tip.style.left = left + "px";
+          },
+        ],
+      },
     };
     var plot = new uPlot(opts, [xs, vals.map(function (v) { return +v; })], el);
+    // Hide tooltip when leaving the sparkline entirely.
+    el.addEventListener("mouseleave", function () { tip.style.display = "none"; });
     // Do NOT registerChart — sparkline is fixed-width and should not
     // participate in global resize/reset-zoom flows.
     if (vals.length === 2) {

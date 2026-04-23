@@ -2288,6 +2288,50 @@ details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
   font: 500 10px/1 ui-monospace, Menlo, monospace;
   color: var(--fg-muted, #6c7588);
 }
+.hll-sparkline .hll-spark-refs {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  right: 4px;
+  height: calc(100% - 4px);
+  pointer-events: none;
+  font: 500 9px/1 ui-monospace, Menlo, monospace;
+  color: var(--fg-muted, #6c7588);
+  opacity: 0.78;
+}
+.hll-sparkline .hll-spark-refs .hll-spark-max {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.hll-sparkline .hll-spark-refs .hll-spark-min {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+.hll-sparkline .hll-spark-tip {
+  position: absolute;
+  top: -22px;
+  display: flex;
+  gap: 6px;
+  padding: 2px 6px;
+  background: var(--panel, #131824);
+  border: 1px solid var(--border, #263047);
+  border-radius: 4px;
+  font: 500 10px/1.2 ui-monospace, Menlo, monospace;
+  color: var(--fg, #e6ebf5);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.hll-sparkline .hll-spark-tip strong {
+  color: #6b8eff;
+  font-weight: 600;
+}
+.hll-sparkline .hll-spark-tip span {
+  color: var(--fg-muted, #6c7588);
+}
 
 /* ---------- Sticky mysqladmin editor panel ---------- */
 /* When the counter-deltas editor is open, the whole panel-host
