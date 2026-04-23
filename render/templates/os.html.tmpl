@@ -14,7 +14,7 @@
     </div>
     {{- end }}
     <div class="chart" id="chart-iostat" data-chart="iostat" aria-label="Per-device iostat utilization over time"></div>
-    <noscript><p class="banner">Chart requires JavaScript. Raw iostat data is embedded in the page.</p></noscript>
+    <noscript><p class="banner">Charts require JavaScript. Raw iostat data is embedded in the page.</p></noscript>
     {{- else }}
     <p class="banner missing">Data not available — <code>-iostat</code> was missing or unparseable in this collection.</p>
     {{- end }}
@@ -35,7 +35,7 @@
     </div>
     {{- end }}
     <div class="chart" id="chart-top" data-chart="top" aria-label="Top 3 CPU-consuming processes over time"></div>
-    <noscript><p class="banner">Chart requires JavaScript. Raw top data is embedded in the page.</p></noscript>
+    <noscript><p class="banner">Charts require JavaScript. Raw top data is embedded in the page.</p></noscript>
     {{- else }}
     <p class="banner missing">Data not available — <code>-top</code> was missing or unparseable in this collection.</p>
     {{- end }}
@@ -55,7 +55,7 @@
     </div>
     {{- end }}
     <div class="chart" id="chart-vmstat" data-chart="vmstat" aria-label="System resource saturation over time"></div>
-    <noscript><p class="banner">Chart requires JavaScript. Raw vmstat data is embedded in the page.</p></noscript>
+    <noscript><p class="banner">Charts require JavaScript. Raw vmstat data is embedded in the page.</p></noscript>
     {{- else }}
     <p class="banner missing">Data not available — <code>-vmstat</code> was missing or unparseable in this collection.</p>
     {{- end }}
@@ -76,7 +76,7 @@
     </div>
     {{- end }}
     <div class="chart" id="chart-meminfo" data-chart="meminfo" aria-label="Memory usage over time"></div>
-    <noscript><p class="banner">Chart requires JavaScript. Raw /proc/meminfo samples are embedded in the page.</p></noscript>
+    <noscript><p class="banner">Charts require JavaScript. Raw meminfo data is embedded in the page.</p></noscript>
     {{- else }}
     <p class="banner missing">Data not available — <code>-meminfo</code> was missing or unparseable in this collection.</p>
     {{- end }}

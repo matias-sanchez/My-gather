@@ -11,6 +11,7 @@
     <p class="snapshot-range-note">{{.RangeNote}}</p>
     {{- end }}
     {{- if .Entries }}
+    <noscript><p class="banner">Search and filter require JavaScript. The full variable table is rendered server-side below.</p></noscript>
     <div class="search-row">
       <input type="search" class="variables-search"
              data-snapshot="{{.DetailsID}}"
