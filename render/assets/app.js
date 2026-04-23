@@ -1611,7 +1611,7 @@
       '<span class="ma-strip-editing"><span class="k">editing</span><span class="v">—</span></span>' +
       '<span class="ma-strip-sep" aria-hidden="true">·</span>' +
       '<span class="ma-strip-count">0 selected</span>' +
-      '<span class="ma-strip-hint" aria-hidden="true">press <kbd>E</kbd> to toggle</span>';
+      '<span class="ma-strip-hint" aria-hidden="true">press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>E</kbd> to toggle</span>';
     var stripValueEl = strip.querySelector(".ma-strip-editing .v");
     var stripCountEl = strip.querySelector(".ma-strip-count");
 
@@ -1798,7 +1798,14 @@
         ev.preventDefault();
         return;
       }
-      if ((ev.key === "e" || ev.key === "E") && subviewVisible && !ev.metaKey && !ev.ctrlKey && !ev.altKey) {
+      // Hotkey: Cmd+Shift+E (mac) / Ctrl+Shift+E (win/linux).
+      if (
+        (ev.key === "e" || ev.key === "E") &&
+        ev.shiftKey &&
+        (ev.metaKey || ev.ctrlKey) &&
+        !ev.altKey &&
+        subviewVisible
+      ) {
         setOpen(!isOpen);
         ev.preventDefault();
       }
