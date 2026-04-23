@@ -161,13 +161,19 @@ func ruleFullScanHandlerRndNext(r *model.Report) Finding {
 // information_schema.PROCESSLIST table, which performs a full
 // thread-list scan on every call — noticeably expensive on instances
 // with hundreds of open connections.
-// See Rosetta Stone — Part B Deprecated_use_i_s_processlist_last_timestamp.
+//
+// Uses Deprecated_use_i_s_processlist_count (the counter) rather than
+// the _last_timestamp sibling (a gauge). The gauge is the Unix-time
+// stamp of the last use and is classified as a gauge in
+// parse/mysql-status-types.json, so counterRatePerSec on it always
+// returns ok=false and the rule would permanently skip.
+// See Rosetta Stone — Part B Deprecated_use_i_s_processlist_count.
 func ruleProcesslistAbuse(r *model.Report) Finding {
 	const (
 		warnRate = 1.0   // calls per second
 		critRate = 100.0 // hammering
 	)
-	rate, ok := counterRatePerSec(r, "Deprecated_use_i_s_processlist_last_timestamp")
+	rate, ok := counterRatePerSec(r, "Deprecated_use_i_s_processlist_count")
 	if !ok || rate <= 0 {
 		return Finding{Severity: SeveritySkip}
 	}
@@ -190,15 +196,15 @@ func ruleProcesslistAbuse(r *model.Report) Finding {
 		Explanation: "Since MySQL 8.0.22, the information_schema.PROCESSLIST implementation is deprecated because it locks the thread list on every read. " +
 			"Monitoring tools that poll it frequently pay a real CPU cost proportional to Threads_connected. " +
 			"performance_schema.processlist is the drop-in replacement and is non-blocking.",
-		FormulaText:     "Deprecated_use_i_s_processlist_last_timestamp/s",
+		FormulaText:     "Deprecated_use_i_s_processlist_count/s",
 		FormulaComputed: fmt.Sprintf("%s /s", formatNum(rate)),
 		Metrics: []MetricRef{
-			{Name: "Deprecated_use_i_s_processlist_last_timestamp/s", Value: rate, Unit: "/s"},
+			{Name: "Deprecated_use_i_s_processlist_count/s", Value: rate, Unit: "/s"},
 		},
 		Recommendations: []string{
 			"Switch monitoring/agents to performance_schema.processlist (or SHOW PROCESSLIST) and set a minimum poll interval.",
 			"Set performance_schema_show_processlist=ON to make SHOW PROCESSLIST read from performance_schema too.",
 		},
-		Source: "Rosetta Stone — Part B Deprecated_use_i_s_processlist_last_timestamp",
+		Source: "Rosetta Stone — Part B Deprecated_use_i_s_processlist_count",
 	}
 }

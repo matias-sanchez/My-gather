@@ -592,7 +592,7 @@ func TestProcesslistAbuse(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run("", func(t *testing.T) {
-			b := newBuilder().counter("Deprecated_use_i_s_processlist_last_timestamp", tc.total)
+			b := newBuilder().counter("Deprecated_use_i_s_processlist_count", tc.total)
 			got := Analyze(b.build())
 			f := findByID(got, "queryshape.is_processlist")
 			if tc.wantSev == SeveritySkip {
