@@ -13,11 +13,11 @@ import (
 // because counter helpers skip index 0 by design (pt-mext raw tally
 // convention; see inputs.go::counterTotal).
 type builder struct {
-	counters    map[string][]float64
-	gauges      map[string][]float64
-	isCounter   map[string]bool
-	vars        map[string]string
-	windowSecs  float64
+	counters   map[string][]float64
+	gauges     map[string][]float64
+	isCounter  map[string]bool
+	vars       map[string]string
+	windowSecs float64
 }
 
 func newBuilder() *builder {
@@ -254,9 +254,9 @@ func TestTableCacheMissRatio(t *testing.T) {
 		hits, misses float64
 		want         Severity
 	}{
-		{1_000_000, 1_000, SeverityOK},   // 0.1 %
-		{1_000, 30, SeverityWarn},         // ~2.9 %
-		{100, 30, SeverityCrit},           // ~23 %
+		{1_000_000, 1_000, SeverityOK}, // 0.1 %
+		{1_000, 30, SeverityWarn},      // ~2.9 %
+		{100, 30, SeverityCrit},        // ~23 %
 	}
 	for _, tc := range cases {
 		b := newBuilder().

@@ -22,10 +22,10 @@ import (
 // bannedImports is the set of stdlib packages whose presence in the
 // shipped binary would violate Principle IX.
 var bannedImports = map[string]string{
-	"net":      "would enable socket I/O (Principle IX)",
-	"net/http": "would enable HTTP I/O (Principle IX)",
-	"net/rpc":  "would enable RPC I/O (Principle IX)",
-	"net/smtp": "would enable SMTP I/O (Principle IX)",
+	"net":        "would enable socket I/O (Principle IX)",
+	"net/http":   "would enable HTTP I/O (Principle IX)",
+	"net/rpc":    "would enable RPC I/O (Principle IX)",
+	"net/smtp":   "would enable SMTP I/O (Principle IX)",
 	"crypto/tls": "would enable TLS I/O (Principle IX)",
 }
 

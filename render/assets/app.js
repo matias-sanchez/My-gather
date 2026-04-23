@@ -1977,6 +1977,20 @@
 
     function setOpen(open, opts) {
       var wasOpen = isOpen();
+      // One-modal-at-a-time: opening the drawer unpins and closes any
+      // floating mysqladmin panel. Otherwise `mainEl.inert = true` below
+      // would strand a user-pinned panel inside an inert subtree (all
+      // controls disabled) with no way to reach it.
+      if (open) {
+        var pinnedPanels = document.querySelectorAll(".ma-panel-host.is-pinned .ma-panel-pin");
+        for (var pi = 0; pi < pinnedPanels.length; pi++) {
+          pinnedPanels[pi].click();
+        }
+        var openPanels = document.querySelectorAll(".ma-panel-host.is-open .ma-panel-close");
+        for (var ci = 0; ci < openPanels.length; ci++) {
+          openPanels[ci].click();
+        }
+      }
       document.body.classList.toggle("nav-open", !!open);
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
       drawer.setAttribute("aria-hidden", open ? "false" : "true");
@@ -2003,8 +2017,12 @@
       }
       // Re-fit charts once the transition settles (content layout
       // doesn't reflow, but browser zoom + window size may have changed
-      // while the drawer was open).
-      if (!open) setTimeout(resizeAllCharts, 360);
+      // while the drawer was open). Under prefers-reduced-motion the
+      // transition is near-instant (0.01ms), so don't wait 360ms.
+      if (!open) {
+        var rmReduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        setTimeout(resizeAllCharts, rmReduce ? 0 : 360);
+      }
     }
 
     toggle.addEventListener("click", function () { setOpen(!isOpen()); });
@@ -2041,6 +2059,12 @@
       if (e.defaultPrevented) return;
       // Escape closes.
       if (e.key === "Escape" && isOpen()) {
+        // If the floating mysqladmin panel is open, let its own Esc handler
+        // take this keypress — pressing Esc should close the topmost
+        // overlay, not a background drawer.
+        if (document.querySelector(".ma-panel-host.is-open") && !document.querySelector(".ma-panel-host.is-pinned")) {
+          return;
+        }
         e.preventDefault();
         setOpen(false);
         return;

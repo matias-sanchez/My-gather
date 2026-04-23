@@ -1970,7 +1970,7 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   padding: 3px 10px 3px 8px;
   border-radius: 999px;
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   line-height: 1;
@@ -1987,7 +1987,7 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
 }
 .sev-chip.sev-crit { color: var(--err);    background: color-mix(in srgb, var(--err)    18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--err)    30%, transparent); }
 .sev-chip.sev-warn { color: var(--warn);   background: color-mix(in srgb, var(--warn)   18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warn)   30%, transparent); }
-.sev-chip.sev-info { color: var(--accent); background: color-mix(in srgb, var(--accent) 30%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); font-weight: 600; }
+.sev-chip.sev-info { color: var(--accent); background: color-mix(in srgb, var(--accent) 30%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }
 .sev-chip.sev-ok   { color: var(--ok);     background: color-mix(in srgb, var(--ok)     18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ok)     30%, transparent); }
 
 .finding-title {
