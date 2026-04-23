@@ -1678,17 +1678,9 @@
     // Click handler attached later, after createChart / setActive /
     // persistLayout are all defined — see end of renderMysqladmin.
 
-    var fab = document.createElement("button");
-    fab.type = "button";
-    fab.className = "ma-fab";
-    fab.setAttribute("aria-label", "Open counter-deltas editor");
-    fab.setAttribute("data-tooltip", "Edit counters · ⌘⇧E");
-    fab.innerHTML = '<span class="ma-fab-pencil" aria-hidden="true">✎</span>';
-    fabStack.appendChild(fab);
-    fab.addEventListener("click", function (ev) {
-      ev.stopPropagation();
-      setOpen(!isOpen);
-    });
+    // Per-chart pencils (in each card header + empty-state big button)
+    // have replaced the floating edit-pencil FAB. The add-chart FAB
+    // stays because 'new chart' is a section-level action.
 
     // Sync the fixed-position panel's rect to the strip's bounding box
     // so it visually drops from the strip. Called on open, on scroll,
@@ -1835,14 +1827,9 @@
     // then narrows visibility when the user scrolls past the section.
     var subviewVisible = true;
     function syncFabVisibility() {
-      // Show both FABs (add-chart + edit-counters) while the mysqladmin
-      // section is in view. Hide the edit-counters pencil when the
-      // popover is already open (no need for a second opener). The
-      // add-chart (+) stays visible even while the editor is open —
-      // you might want to add a new chart and edit it in one flow.
-      var base = subviewVisible;
-      fab.classList.toggle("is-visible", base && !isOpen);
-      fabAdd.classList.toggle("is-visible", base);
+      // Only the add-chart FAB remains — it shows while the counter-
+      // deltas section is in view, regardless of popover state.
+      fabAdd.classList.toggle("is-visible", subviewVisible);
     }
     if (window.IntersectionObserver && subviewEl) {
       var io = new IntersectionObserver(function (entries) {
@@ -2039,6 +2026,20 @@
       var countEl = document.createElement("span");
       countEl.className = "ma-card-count";
 
+      // Per-chart pencil: activates this chart and opens the editor so
+      // the popover targets exactly this chart.
+      var btnEdit = document.createElement("button");
+      btnEdit.type = "button";
+      btnEdit.className = "ma-card-btn ma-card-edit";
+      btnEdit.innerHTML = "&#x270E;"; // pencil
+      btnEdit.title = "Edit this chart's counters";
+      btnEdit.setAttribute("aria-label", "Edit counters");
+      btnEdit.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        if (activeChartId !== id) setActive(id);
+        setOpen(true);
+      });
+
       var btnZoom = document.createElement("button");
       btnZoom.type = "button";
       btnZoom.className = "ma-card-btn ma-card-zoom";
@@ -2077,6 +2078,7 @@
 
       head.appendChild(titleEl);
       head.appendChild(countEl);
+      head.appendChild(btnEdit);
       head.appendChild(btnZoom);
       head.appendChild(btnDup);
       head.appendChild(btnClose);
@@ -2211,7 +2213,22 @@
       if (picks.length === 0) {
         var msg = document.createElement("div");
         msg.className = "ma-empty-chart";
-        msg.textContent = "Pick counters from the list above to plot them here.";
+        var bigBtn = document.createElement("button");
+        bigBtn.type = "button";
+        bigBtn.className = "ma-empty-edit";
+        bigBtn.innerHTML = '<span class="ma-empty-pencil" aria-hidden="true">&#x270E;</span>' +
+                           '<span class="ma-empty-label">Pick counters</span>';
+        bigBtn.setAttribute("aria-label", "Pick counters for this chart");
+        bigBtn.addEventListener("click", function (ev) {
+          ev.stopPropagation();
+          if (activeChartId !== cs.id) setActive(cs.id);
+          setOpen(true);
+        });
+        msg.appendChild(bigBtn);
+        var hint = document.createElement("div");
+        hint.className = "ma-empty-hint";
+        hint.textContent = "or pick counters from the list above";
+        msg.appendChild(hint);
         cs.plotEl.innerHTML = "";
         cs.cardEl.appendChild(msg);
         updateCardCount(cs);
