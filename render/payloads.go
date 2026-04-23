@@ -40,9 +40,11 @@ func buildChartPayload(r *model.Report) map[string]any {
 // innoDBHLLSparklinePayload emits the per-snapshot History List Length
 // series consumed by the small sparkline below the aggregated History
 // list callout. Snapshots whose Data is nil (file absent / unparseable)
-// are skipped, mirroring aggregateInnoDBMetrics. Returns nil when fewer
-// than one populated snapshot exists so the template/JS falls back to
-// the scalar-only display.
+// are skipped, mirroring aggregateInnoDBMetrics. Returns nil only when
+// NO populated snapshots exist (so the sparkline container stays empty
+// and the scalar callout is all the reader sees). With one populated
+// snapshot renderHLLSparkline in app.js draws its single-sample fallback
+// (centred dot + value label); with two+ it draws the proper spline.
 func innoDBHLLSparklinePayload(snaps []model.SnapshotInnoDB) map[string]any {
 	var ts []float64
 	var vals []float64

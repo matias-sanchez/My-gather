@@ -27,12 +27,19 @@ func aggregateInnoDBMetrics(snaps []model.SnapshotInnoDB) []innoDBMetricView {
 		return nil
 	}
 	semMetric := innoDBIntMetric("Semaphores", "waiting", sem)
+	semMetric.Key = "semaphores"
 	attachSemaphoreBreakdown(&semMetric, snaps)
+	pioMetric := innoDBIntMetric("Pending I/O", "reads + writes", pio)
+	pioMetric.Key = "pending_io"
+	ahiMetric := buildAHIMetric(snaps)
+	ahiMetric.Key = "ahi"
+	hllMetric := innoDBIntMetric("History list", "HLL (undo depth)", hll)
+	hllMetric.Key = "history_list"
 	return []innoDBMetricView{
 		semMetric,
-		innoDBIntMetric("Pending I/O", "reads + writes", pio),
-		buildAHIMetric(snaps),
-		innoDBIntMetric("History list", "HLL (undo depth)", hll),
+		pioMetric,
+		ahiMetric,
+		hllMetric,
 	}
 }
 
@@ -197,20 +204,16 @@ func attachSemaphoreBreakdown(m *innoDBMetricView, snaps []model.SnapshotInnoDB)
 	}
 }
 
-// semaphoreBreakdownCap bounds the number of contention-breakdown rows
-// we render per panel. Sites are sorted desc by WaitCount (ties broken
-// by file then line) before truncation, so the top-N rows are the ones
-// that matter most for contention triage. The template surfaces the
-// full site count via a "Show all (N sites)" control.
-const semaphoreBreakdownCap = 10
-
+// buildSiteRows materialises every SemaphoreSite into its rendered row
+// form. The view caps what is *visible by default* via the template's
+// `cb-tail hidden` class (rows with index >= 10); the corresponding
+// "Show all (N sites)" button in db.html.tmpl + the initSemaphoreBreakdown
+// handler in app.js unhide the remainder. We intentionally do NOT
+// truncate here — high-cardinality contention captures still expose
+// the full list to the user, just behind one click.
 func buildSiteRows(sites []model.SemaphoreSite, total int) []semaphoreSiteRow {
-	capped := sites
-	if len(capped) > semaphoreBreakdownCap {
-		capped = capped[:semaphoreBreakdownCap]
-	}
-	out := make([]semaphoreSiteRow, 0, len(capped))
-	for _, s := range capped {
+	out := make([]semaphoreSiteRow, 0, len(sites))
+	for _, s := range sites {
 		pct := 0.0
 		if total > 0 {
 			pct = float64(s.WaitCount) * 100.0 / float64(total)

@@ -92,18 +92,27 @@ func ruleFullScanHandlerRndNext(r *model.Report) Finding {
 	}
 	selRate, _ := counterRatePerSec(r, "Com_select")
 	var perSelect float64
-	if selRate >= minSelectsPs {
+	haveRatio := false
+	if selRate > 0 {
+		// Always compute the ratio when we have any SELECT activity so
+		// the metrics block can report it, but only *apply severity
+		// thresholds* against it when the SELECT rate is high enough
+		// for the ratio to be statistically meaningful. At 0.5 q/s a
+		// single accidental scan blows up the ratio; minSelectsPs
+		// guards against that noise.
 		perSelect = rate / selRate
+		haveRatio = true
 	}
+	applyRatio := haveRatio && selRate >= minSelectsPs
 	sev := SeverityOK
 	summary := fmt.Sprintf("Handler_read_rnd_next is %s/s — normal for this workload.", formatNum(rate))
 	// Evaluate ratio first (more sensitive); then absolute rate as a fallback.
 	switch {
-	case perSelect > critPerSel:
+	case applyRatio && perSelect > critPerSel:
 		sev = SeverityCrit
 		summary = fmt.Sprintf("Handler_read_rnd_next averages %s rows per SELECT (%s rows/s over %s SELECTs/s) — almost certainly unindexed scans dominating the workload.",
 			formatNum(perSelect), formatNum(rate), formatNum(selRate))
-	case perSelect > warnPerSel:
+	case applyRatio && perSelect > warnPerSel:
 		sev = SeverityWarn
 		summary = fmt.Sprintf("Handler_read_rnd_next averages %s rows per SELECT (%s rows/s over %s SELECTs/s) — high scan-per-query ratio.",
 			formatNum(perSelect), formatNum(rate), formatNum(selRate))
@@ -117,7 +126,7 @@ func ruleFullScanHandlerRndNext(r *model.Report) Finding {
 	metrics := []MetricRef{
 		{Name: "Handler_read_rnd_next/s", Value: rate, Unit: "/s"},
 	}
-	if selRate > 0 {
+	if haveRatio {
 		metrics = append(metrics,
 			MetricRef{Name: "Com_select/s", Value: selRate, Unit: "/s"},
 			MetricRef{Name: "rows scanned per SELECT", Value: perSelect, Unit: "rows"},
@@ -132,9 +141,14 @@ func ruleFullScanHandlerRndNext(r *model.Report) Finding {
 		Explanation: "Handler_read_rnd_next counts rows read by advancing through a table in storage order — the footprint of table scans. " +
 			"A high rate alone can be acceptable for reporting workloads, but when the ratio of rnd_next to Com_select climbs past ~100 rows per query, " +
 			"you are almost certainly missing an index.",
-		FormulaText:     "Handler_read_rnd_next/s  and  Handler_read_rnd_next / Com_select",
-		FormulaComputed: fmt.Sprintf("%s /s  and  %s rows/SELECT", formatNum(rate), formatNum(perSelect)),
-		Metrics:         metrics,
+		FormulaText: "Handler_read_rnd_next/s  and  Handler_read_rnd_next / Com_select",
+		FormulaComputed: func() string {
+			if haveRatio {
+				return fmt.Sprintf("%s /s  and  %s rows/SELECT", formatNum(rate), formatNum(perSelect))
+			}
+			return fmt.Sprintf("%s /s  (no Com_select activity — ratio n/a)", formatNum(rate))
+		}(),
+		Metrics: metrics,
 		Recommendations: []string{
 			"Cross-reference with slow log / query digest to identify the scan-heavy queries.",
 			"Check whether an index exists on the filter column; if it does, inspect EXPLAIN to see why it's not used.",

@@ -109,9 +109,10 @@ func classifyMysqladminCategory(cats []mysqladminCategoryDef, name string) []str
 // "8.0", "8.4" matching the "versions" list in the JSON.
 //
 // mysqlDefaultsVersions is the canonical chronological list used for
-// fallback resolution: when a capture comes from a version we don't
-// have a column for, lookupDefault walks this list in order and
-// returns the latest listed version ≤ captured (see resolveVersion).
+// fallback resolution by resolveVersion: when a capture comes from a
+// version we don't have a column for, resolveVersion selects the
+// latest listed version that is still ≤ captured (e.g. captured "8.1"
+// → "8.0" when only "5.7"/"8.0"/"8.4" are listed).
 var (
 	mysqlDefaults         map[string]map[string]string
 	mysqlDefaultsVersions []string
@@ -150,7 +151,8 @@ func majorVersion(raw string) string {
 	}
 	// First three characters must be digit.dot.digit — anything else
 	// (e.g. "unknown", "Ver 8") is unresolvable so we return empty and
-	// let lookupDefault fall through to the "unknown" result.
+	// the caller (classifyVariable) falls through to the "unknown"
+	// result.
 	if !(raw[0] >= '0' && raw[0] <= '9') || raw[1] != '.' || !(raw[2] >= '0' && raw[2] <= '9') {
 		return ""
 	}
@@ -176,11 +178,12 @@ func resolveVersion(captured string, supported []string) string {
 			return v
 		}
 	}
-	// 2. Latest supported ≤ captured. Compare lexicographically on
-	//    dotted components because the short form is always "N.N"
-	//    with single-digit-or-more components; lexicographic
-	//    comparison on the 3-char form like "8.0" vs "8.4" works for
-	//    the current range.
+	// 2. Latest supported ≤ captured. Order of `supported` is
+	//    irrelevant — we scan all entries and keep the highest one
+	//    that is still ≤ the captured version. Comparison is
+	//    lexicographic on the 3-char form ("8.0" vs "8.4") which is
+	//    correct for the current range (all short forms are "N.N"
+	//    with single-digit components).
 	best := ""
 	for _, v := range supported {
 		if v <= mv && v > best {

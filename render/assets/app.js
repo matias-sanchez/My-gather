@@ -1699,7 +1699,31 @@
       var wasOpen = isOpen;
       isOpen = !!open;
       storageSet(OPEN_KEY, isOpen ? "true" : "false");
+      if (isOpen) {
+        // Anchor the popover to the active chart when the strip is no
+        // longer in the viewport (e.g. user added a chart and scrolled
+        // down to it). Scroll the strip back into view so the popover
+        // drops from its usual place at viewport top, reachable from
+        // wherever the user was reading. If the active chart is below
+        // the fold too, scroll it into view as well so the popover and
+        // the chart it edits are both visible after settling.
+        var sRect = strip.getBoundingClientRect();
+        var stripHidden = sRect.bottom < 0 || sRect.top > window.innerHeight;
+        if (stripHidden) {
+          var active = getActive && getActive();
+          var activeEl = active && active.cardEl;
+          // Prefer scrolling the active chart into view near the top so
+          // the sticky strip re-pins above it and the popover lands
+          // right next to the chart being edited. Fall back to the
+          // strip itself.
+          var target = activeEl || strip;
+          try { target.scrollIntoView({ block: "start", behavior: "smooth" }); }
+          catch (_) { target.scrollIntoView(true); }
+        }
+      }
       applyPanelState();
+      // If we just scrolled, re-position after scroll animation settles.
+      if (isOpen) setTimeout(positionMaPanel, 360);
       if (isOpen) {
         // Autofocus the search input so keystrokes go straight into
         // filtering without an extra click. Deferred to the next
@@ -1783,9 +1807,25 @@
     }
     document.addEventListener("keydown", function (ev) {
       if (ev.defaultPrevented) return;
-      // Don't intercept keys while typing in an input / contenteditable.
       var t = ev.target;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) {
+      var typingInField = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      // Cmd/Ctrl+Shift+E is a modifier combo — never collides with
+      // typing, so we always let it toggle regardless of focus.
+      // Check this BEFORE the typing-in-field early-return so closing
+      // via the same hotkey works even when the panel's search input
+      // has focus.
+      if (
+        (ev.key === "e" || ev.key === "E") &&
+        ev.shiftKey &&
+        (ev.metaKey || ev.ctrlKey) &&
+        !ev.altKey &&
+        subviewVisible
+      ) {
+        setOpen(!isOpen);
+        ev.preventDefault();
+        return;
+      }
+      if (typingInField) {
         // Exception: Esc inside the panel's search still closes.
         if (ev.key === "Escape" && isOpen && !isPinned && panel.contains(t)) {
           setOpen(false);
@@ -1797,17 +1837,6 @@
         setOpen(false);
         ev.preventDefault();
         return;
-      }
-      // Hotkey: Cmd+Shift+E (mac) / Ctrl+Shift+E (win/linux).
-      if (
-        (ev.key === "e" || ev.key === "E") &&
-        ev.shiftKey &&
-        (ev.metaKey || ev.ctrlKey) &&
-        !ev.altKey &&
-        subviewVisible
-      ) {
-        setOpen(!isOpen);
-        ev.preventDefault();
       }
     });
 
@@ -2590,10 +2619,13 @@
   // ignored so the chart degrades cleanly if a future vmstat variant
   // adds columns we don't classify.
   var VMSTAT_CATEGORIES = {
-    cpu:    ["cpu_user", "cpu_sys", "cpu_idle", "cpu_iowait", "cpu_steal"],
+    // Series names here must match what vmstatChartPayload emits (see
+    // parse/vmstat.go's vmstatCols table). Any label listed that the
+    // parser doesn't emit is ignored at render time, so future columns
+    // just need to be added here AND to vmstatCols.
+    cpu:    ["cpu_user", "cpu_sys", "cpu_idle", "cpu_iowait"],
     memory: ["free_kb", "buff_kb", "cache_kb"],
-    io:     ["io_in", "io_out"],
-    system: ["interrupts", "ctx_switches", "in", "cs"],
+    io:     ["io_in", "io_out", "swap_in", "swap_out"],
     procs:  ["runqueue", "blocked"],
   };
   function vmstatCategoryKey() {

@@ -18,10 +18,10 @@ import (
 // 256 MiB is Crit.
 func ruleBPUndersized(r *model.Report) Finding {
 	const (
-		warnBytes   = float64(1) * 1024 * 1024 * 1024       // 1 GiB
-		critBytes   = float64(256) * 1024 * 1024            // 256 MiB
-		minThreads  = 50.0
-		minUptimeS  = 3600.0
+		warnBytes  = float64(1) * 1024 * 1024 * 1024 // 1 GiB
+		critBytes  = float64(256) * 1024 * 1024      // 256 MiB
+		minThreads = 50.0
+		minUptimeS = 3600.0
 	)
 	size, ok := variableFloat(r, "innodb_buffer_pool_size")
 	if !ok || size <= 0 {

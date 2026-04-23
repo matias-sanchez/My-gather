@@ -15,7 +15,7 @@
         <p class="v">{{.Worst}}</p>
         {{- if .Hint }}<p class="sub">{{.Hint}}</p>{{- end }}
         <p class="stats"><span>min {{.Min}}</span> · <span>avg {{.Avg}}</span> · <span>max {{.Max}}</span></p>
-        {{- if eq .Label "History list" }}
+        {{- if eq .Key "history_list" }}
         <div class="hll-sparkline" data-chart="innodb-hll" aria-label="History list length trend across snapshots"></div>
         {{- end }}
         {{- if .AHIFormula }}

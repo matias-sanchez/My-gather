@@ -483,11 +483,11 @@ func TestBPUndersized(t *testing.T) {
 		wantSev    Severity
 		wantInSumm string
 	}{
-		{"ok_large_pool", "17179869184", 200, 86400, SeverityOK, "sized for"}, // 16 GiB
+		{"ok_large_pool", "17179869184", 200, 86400, SeverityOK, "sized for"},      // 16 GiB
 		{"warn_small", "536870912", 200, 86400, SeverityWarn, "under-provisioned"}, // 512 MiB
-		{"crit_tiny", "134217728", 622, 471062, SeverityCrit, "far too small"},    // 128 MiB — the fixture
-		{"skip_idle", "134217728", 5, 86400, SeveritySkip, ""},                    // low concurrency → skip
-		{"skip_young", "134217728", 200, 60, SeveritySkip, ""},                    // uptime < 1h
+		{"crit_tiny", "134217728", 622, 471062, SeverityCrit, "far too small"},     // 128 MiB — the fixture
+		{"skip_idle", "134217728", 5, 86400, SeveritySkip, ""},                     // low concurrency → skip
+		{"skip_young", "134217728", 200, 60, SeveritySkip, ""},                     // uptime < 1h
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -556,10 +556,10 @@ func TestHandlerRndNextPerSelect(t *testing.T) {
 		wantSev Severity
 	}{
 		// window is 30s (default builder).
-		{"ok_low_ratio", 300, 300, SeverityOK},                  // 1 row/SELECT
-		{"warn_ratio", 6_000, 30, SeverityWarn},                  // 200 rows/SELECT; warn band
-		{"crit_ratio", 300_000, 30, SeverityCrit},                // 10 000 rows/SELECT
-		{"warn_absolute_only", 600_000, 0, SeverityWarn},         // 20 000/s, no selects measured
+		{"ok_low_ratio", 300, 300, SeverityOK},           // 1 row/SELECT
+		{"warn_ratio", 6_000, 30, SeverityWarn},          // 200 rows/SELECT; warn band
+		{"crit_ratio", 300_000, 30, SeverityCrit},        // 10 000 rows/SELECT
+		{"warn_absolute_only", 600_000, 0, SeverityWarn}, // 20 000/s, no selects measured
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -586,9 +586,9 @@ func TestProcesslistAbuse(t *testing.T) {
 		wantSev Severity
 	}{
 		{0, SeveritySkip},
-		{10, SeverityInfo},     // 10/30 = 0.33/s
-		{60, SeverityWarn},     // 2/s
-		{5_000, SeverityCrit},  // 166/s
+		{10, SeverityInfo},    // 10/30 = 0.33/s
+		{60, SeverityWarn},    // 2/s
+		{5_000, SeverityCrit}, // 166/s
 	}
 	for _, tc := range cases {
 		t.Run("", func(t *testing.T) {
