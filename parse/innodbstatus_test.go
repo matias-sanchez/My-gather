@@ -75,87 +75,41 @@ func TestInnoDBStatusGolden(t *testing.T) {
 	goldens.Compare(t, goldenPath, got)
 }
 
-// TestInnoDBSemaphoreSiteSumInvariant asserts that the parser keeps
-// SemaphoreSites wait-count sum in lock-step with SemaphoreCount
-// (thread-waited lines). A violation would silently under- or over-
-// count contention in the report — the parser emits a Warning in
-// that case, so this test guards against both drift and false alarms
-// by exercising the three documented paths: (a) paired thread + mutex,
-// (b) orphan thread at EOF with no partner, (c) two thread lines in a
-// row (defensive flush).
-func TestInnoDBSemaphoreSiteSumInvariant(t *testing.T) {
-	cases := []struct {
-		name       string
-		body       string
-		wantCount  int
-		wantSites  int
-		wantMutex  string
-		wantOrphan bool
-	}{
-		{
-			name: "paired thread and mutex",
-			body: "SEMAPHORES\n" +
-				"--Thread 140148200982272 has waited at ibuf0ibuf.cc line 3922 for 0 seconds the semaphore:\n" +
-				"Mutex at 0x7f0000000000, Mutex IBUF created ibuf0ibuf.cc:612, locked by...\n",
-			wantCount: 1,
-			wantSites: 1,
-			wantMutex: "IBUF",
-		},
-		{
-			name: "orphan thread at EOF",
-			body: "SEMAPHORES\n" +
-				"--Thread 140148200982272 has waited at ibuf0ibuf.cc line 3922 for 0 seconds the semaphore:\n",
-			wantCount:  1,
-			wantSites:  1,
-			wantOrphan: true,
-		},
-		{
-			name: "consecutive thread lines flush defensively",
-			body: "SEMAPHORES\n" +
-				"--Thread 140148200982272 has waited at ibuf0ibuf.cc line 3922 for 0 seconds the semaphore:\n" +
-				"--Thread 140148200982999 has waited at trx0sys.cc line 599 for 0 seconds the semaphore:\n" +
-				"Mutex at 0x7f0000000000, Mutex TRX_SYS created trx0sys.cc:599, locked by...\n",
-			wantCount: 2,
-			wantSites: 2,
-		},
-	}
+// TestInnoDBSemaphoreCanonicalPair exercises the single canonical
+// SEMAPHORES shape — a `--Thread ...` line immediately followed by
+// its paired `Mutex at ... Mutex <NAME> created ...` partner — and
+// asserts that both the thread count and the resulting SemaphoreSites
+// entry are populated, that sum(SemaphoreSites.WaitCount) equals
+// SemaphoreCount, and that no invariant-violation Warning is emitted.
+func TestInnoDBSemaphoreCanonicalPair(t *testing.T) {
+	body := "SEMAPHORES\n" +
+		"--Thread 140148200982272 has waited at ibuf0ibuf.cc line 3922 for 0 seconds the semaphore:\n" +
+		"Mutex at 0x7f0000000000, Mutex IBUF created ibuf0ibuf.cc:612, locked by...\n"
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, diags := parseInnodbStatus(strings.NewReader(tc.body), "unit-test")
-			if data == nil {
-				t.Fatalf("parseInnodbStatus returned nil data (diags: %+v)", diags)
-			}
-			if data.SemaphoreCount != tc.wantCount {
-				t.Errorf("SemaphoreCount = %d; want %d", data.SemaphoreCount, tc.wantCount)
-			}
-			if got := len(data.SemaphoreSites); got != tc.wantSites {
-				t.Fatalf("len(SemaphoreSites) = %d; want %d", got, tc.wantSites)
-			}
-			sum := 0
-			for _, s := range data.SemaphoreSites {
-				sum += s.WaitCount
-			}
-			if sum != data.SemaphoreCount {
-				t.Errorf("SemaphoreSites wait-count sum = %d; want %d (invariant)", sum, data.SemaphoreCount)
-			}
-			// The parser only emits the invariant Warning when it
-			// detects a mismatch; in the paths we exercise here,
-			// bookkeeping must balance so no such Warning should fire.
-			for _, d := range diags {
-				if d.Severity == model.SeverityWarning &&
-					strings.Contains(d.Message, "SemaphoreSites wait-count sum") {
-					t.Errorf("unexpected invariant-violation Warning: %q", d.Message)
-				}
-			}
-			if tc.wantMutex != "" && data.SemaphoreSites[0].MutexName != tc.wantMutex {
-				t.Errorf("SemaphoreSites[0].MutexName = %q; want %q",
-					data.SemaphoreSites[0].MutexName, tc.wantMutex)
-			}
-			if tc.wantOrphan && data.SemaphoreSites[0].MutexName != "" {
-				t.Errorf("SemaphoreSites[0].MutexName = %q; want \"\" for orphan thread",
-					data.SemaphoreSites[0].MutexName)
-			}
-		})
+	data, diags := parseInnodbStatus(strings.NewReader(body), "unit-test")
+	if data == nil {
+		t.Fatalf("parseInnodbStatus returned nil data (diags: %+v)", diags)
+	}
+	if data.SemaphoreCount != 1 {
+		t.Errorf("SemaphoreCount = %d; want 1", data.SemaphoreCount)
+	}
+	if got := len(data.SemaphoreSites); got != 1 {
+		t.Fatalf("len(SemaphoreSites) = %d; want 1", got)
+	}
+	if got := data.SemaphoreSites[0].MutexName; got != "IBUF" {
+		t.Errorf("SemaphoreSites[0].MutexName = %q; want %q", got, "IBUF")
+	}
+	sum := 0
+	for _, s := range data.SemaphoreSites {
+		sum += s.WaitCount
+	}
+	if sum != data.SemaphoreCount {
+		t.Errorf("SemaphoreSites wait-count sum = %d; want %d (invariant)", sum, data.SemaphoreCount)
+	}
+	for _, d := range diags {
+		if d.Severity == model.SeverityWarning &&
+			strings.Contains(d.Message, "SemaphoreSites wait-count sum") {
+			t.Errorf("unexpected invariant-violation Warning on canonical input: %q", d.Message)
+		}
 	}
 }

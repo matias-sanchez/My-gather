@@ -63,10 +63,13 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 		mutex string
 	}
 	siteCounts := map[siteKey]int{}
-	// awaitingMutex holds the pending thread's file/line while we
-	// look for its partner "Mutex ..." line on the next non-blank
-	// row. Only one pending record at a time: pt-stalk always emits
-	// the pair consecutively separated by at most whitespace lines.
+	// pendingFile / pendingLine buffer the current `--Thread ...` line
+	// until its paired `Mutex at ...` partner lands on a subsequent
+	// line. Canonical InnoDB output always emits the pair contiguously
+	// (whitespace lines allowed in between). Anything else — another
+	// thread before the partner, a section switch, or EOF mid-pair —
+	// drops the pending record; the `siteSum != threadWaited`
+	// diagnostic below reports the miss.
 	var pendingFile string
 	var pendingLine int
 	havePending := false
@@ -82,14 +85,8 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 			"INSERT BUFFER AND ADAPTIVE HASH INDEX", "LOG",
 			"BUFFER POOL AND MEMORY", "ROW OPERATIONS",
 			"TRANSACTIONS":
-			// LOW #7: flush any pending semaphore record before we
-			// leave its section, otherwise the last thread-line of a
-			// SEMAPHORES block with no "Mutex ..." partner would be
-			// lost when the section switches.
-			if havePending {
-				siteCounts[siteKey{file: pendingFile, line: pendingLine, mutex: ""}]++
-				havePending = false
-			}
+			// Section state does not leak across sections.
+			havePending = false
 			inSection = trimmed
 			anySectionSeen = true
 			continue
@@ -99,12 +96,6 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 		case "SEMAPHORES":
 			if m := reInnodbThreadWaited.FindStringSubmatch(trimmed); m != nil {
 				threadWaited++
-				// Flush a previous unmatched pending record with no
-				// mutex name so consecutive thread lines (rare but
-				// possible) don't lose their file:line.
-				if havePending {
-					siteCounts[siteKey{file: pendingFile, line: pendingLine, mutex: ""}]++
-				}
 				pendingFile = m[1]
 				pendingLine, _ = strconv.Atoi(m[2])
 				havePending = true
@@ -116,16 +107,11 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 					havePending = false
 					continue
 				}
-				// If we hit a blank line or an unrelated line, the
-				// mutex partner was missing — record with empty
-				// mutex name so the count is still attributed.
 				if trimmed == "" {
 					continue
 				}
-				// Defensive: any non-blank line that wasn't the
-				// partner and isn't another thread flushes the
-				// pending record.
-				siteCounts[siteKey{file: pendingFile, line: pendingLine, mutex: ""}]++
+				// Non-canonical: thread without its paired mutex. Drop
+				// the pending record.
 				havePending = false
 			}
 		case "TRANSACTIONS":
@@ -181,11 +167,6 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 		})
 	}
 
-	// Flush any trailing pending record (file reached EOF with no mutex partner).
-	if havePending {
-		siteCounts[siteKey{file: pendingFile, line: pendingLine, mutex: ""}]++
-	}
-
 	data.SemaphoreCount = threadWaited
 
 	// Materialise sites sorted desc by count, stable tie-break by
@@ -207,11 +188,11 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 		data.SemaphoreSites = sites
 	}
 
-	// LOW #6: parser-time invariant check. threadWaited counts thread
-	// lines; siteSum counts the resulting (file, line, mutex) entries.
-	// They should always match — a mismatch means a thread was either
-	// recorded twice or swallowed silently, and the reader deserves a
-	// warning so the Semaphores card isn't trusted blindly.
+	// Invariant check: threadWaited counts thread lines; siteSum counts
+	// successfully paired (file, line, mutex) entries. A mismatch means
+	// the SEMAPHORES section was not canonical and the breakdown is
+	// partial — surface that to the reader instead of silently showing
+	// incomplete rows.
 	if siteSum != threadWaited {
 		diagnostics = append(diagnostics, model.Diagnostic{
 			SourceFile: sourcePath,
