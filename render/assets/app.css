@@ -1317,32 +1317,72 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   text-align: center;
 }
 
+/* Option A: the panel is a viewport-fixed popover. JS (positionMaPanel)
+   syncs its top/left/width to the sticky strip on open + on scroll +
+   on resize so it visually "drops" from the strip without ever
+   entering document flow. Smooth open (220 ms) and close (160 ms)
+   transitions, no display:none swap — relies on opacity +
+   pointer-events instead so the close animation can run to
+   completion before the popover disappears. */
 .ma-panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  z-index: 50;
+  position: fixed;
+  z-index: 100;
   border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--bg-elev) 82%, transparent);
-  backdrop-filter: blur(12px) saturate(120%);
+  background: color-mix(in srgb, var(--bg-elev) 90%, transparent);
+  backdrop-filter: blur(14px) saturate(130%);
   box-shadow:
-    0 24px 60px -20px rgba(0, 0, 0, 0.55),
-    0 4px 14px rgba(0, 0, 0, 0.3);
+    0 30px 70px -18px rgba(0, 0, 0, 0.65),
+    0 6px 18px rgba(0, 0, 0, 0.35),
+    0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
   padding: 12px 14px;
   max-height: min(72vh, 620px);
   overflow-y: auto;
-  display: none;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
   transform-origin: top center;
+  pointer-events: none;
+  visibility: hidden;
+  /* Close: opacity + transform ease over 160 ms, then visibility flips
+     hidden (delayed so transforms finish first). */
+  transition:
+    opacity 160ms cubic-bezier(.4, 0, 1, 1),
+    transform 160ms cubic-bezier(.4, 0, 1, 1),
+    visibility 0s linear 160ms;
 }
-.ma-panel-host.is-open .ma-panel {
-  display: block;
-  animation: ma-panel-drop 200ms cubic-bezier(.22, 1, .36, 1);
+.ma-panel.ma-panel-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  visibility: visible;
+  /* Open: slightly longer + spring-y ease. */
+  transition:
+    opacity 220ms cubic-bezier(.2, .9, .2, 1),
+    transform 220ms cubic-bezier(.2, .9, .2, 1),
+    visibility 0s linear 0s;
 }
-@keyframes ma-panel-drop {
-  from { opacity: 0; transform: scaleY(.94) translateY(-6px); }
-  to   { opacity: 1; transform: scaleY(1)   translateY(0); }
+/* The in-panel "EDITING X" badge is redundant now that the strip is
+   always visible above the popover. Hide it to reclaim vertical space
+   and remove the duplicate-header effect. */
+.ma-panel .ma-editing { display: none; }
+
+/* Dim-blur backdrop behind the open popover. One instance per panel
+   (JS appends / removes via a 'is-visible' class). Clicks on it close
+   the panel (unless pinned) via the existing click-outside listener,
+   which treats the backdrop as "outside". */
+.ma-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  background: rgba(8, 12, 22, 0.42);
+  backdrop-filter: blur(3px) saturate(110%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+.ma-backdrop.is-visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 .ma-panel-controls {
   position: absolute;
@@ -1388,7 +1428,8 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .ma-panel-host.is-open .ma-panel { animation: none; }
+  .ma-panel,
+  .ma-backdrop { transition: none !important; }
 }
 /* Two-row labelled chip layout. */
 .ma-chip-row {
@@ -2350,12 +2391,6 @@ details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
    between here and the page scroll root (main.content, body). We
    inspected details.subview, details.subview > .body, main.content
    and body — all scroll-transparent, so CSS-only sticky is safe. */
-[data-mysqladmin-host] .ma-panel-host.is-open {
-  position: sticky;
-  top: 0;
-  /* Lift above chart canvases so crosshair overlays don't paint on
-     top of the open panel. The strip already uses z-index:40; bump
-     the host one notch higher so the absolutely-positioned .ma-panel
-     stays on top too. */
-  z-index: 45;
-}
+/* No sticky on the host itself — Option A makes the panel position:fixed,
+   so the host can stay a normal in-flow shell that holds only the
+   always-visible strip. The strip retains its own sticky rule. */

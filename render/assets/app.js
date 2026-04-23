@@ -1639,8 +1639,39 @@
     panel.insertBefore(panelControls, panel.firstChild);
 
     panelHost.appendChild(strip);
+    // With Option A, the panel is a viewport-fixed popover. We lift it
+    // out of the panelHost and append it directly to <body> so its
+    // stacking context is independent of any ancestor overflow/transform
+    // (which would otherwise confine a position:fixed element).
     panelHost.appendChild(panel);
     hostEl.parentNode.insertBefore(panelHost, hostEl);
+    // Move panel to body now that host is in the DOM.
+    document.body.appendChild(panel);
+
+    // Dim-blur backdrop element (one per panel). Inserted on open,
+    // removed on close. Clicking it closes the panel unless pinned.
+    var backdrop = document.createElement("div");
+    backdrop.className = "ma-backdrop";
+    backdrop.setAttribute("aria-hidden", "true");
+    document.body.appendChild(backdrop);
+
+    // Sync the fixed-position panel's rect to the strip's bounding box
+    // so it visually drops from the strip. Called on open, on scroll,
+    // on window resize, and (via ResizeObserver) whenever the strip
+    // width changes (layout/column-width shifts).
+    function positionMaPanel() {
+      if (!isOpen) return;
+      var r = strip.getBoundingClientRect();
+      // Panel hangs off the strip's bottom-left, same width as the strip.
+      panel.style.top    = (r.bottom + 6) + "px";
+      panel.style.left   = r.left + "px";
+      panel.style.width  = r.width + "px";
+    }
+    window.addEventListener("scroll",  positionMaPanel, { passive: true });
+    window.addEventListener("resize",  positionMaPanel);
+    if (typeof ResizeObserver === "function") {
+      new ResizeObserver(positionMaPanel).observe(strip);
+    }
 
     // Open/close + pin state, persisted under the v2 namespace so
     // reloading the same report remembers the reader's last choice.
@@ -1652,9 +1683,16 @@
     function applyPanelState() {
       panelHost.classList.toggle("is-open", isOpen);
       panelHost.classList.toggle("is-pinned", isPinned);
+      // The panel lives on <body>, so mirror the open flag onto it
+      // directly — CSS targets .ma-panel-host.is-open .ma-panel for the
+      // visual state, but since the panel is no longer a descendant of
+      // the host we add the matching class on the panel itself too.
+      panel.classList.toggle("ma-panel-open", isOpen);
+      backdrop.classList.toggle("is-visible", isOpen && !isPinned);
       strip.setAttribute("aria-expanded", isOpen ? "true" : "false");
       pinBtn.classList.toggle("active", isPinned);
       pinBtn.setAttribute("aria-pressed", isPinned ? "true" : "false");
+      if (isOpen) positionMaPanel();
     }
 
     function setOpen(open) {
@@ -1710,18 +1748,22 @@
       setPinned(!isPinned);
     });
 
-    // Click-outside-to-close: listens at document level, ignores
-    // clicks inside the panel itself or on the strip. Skipped when
-    // pinned. Guarded so repeated renderMysqladmin calls on the same
-    // host don't stack duplicate global listeners.
+    // Click-outside-to-close: the panel is now detached from panelHost
+    // (it lives on <body>), so the check also has to exclude the panel
+    // itself. Backdrop is treated as "outside" — clicking it closes.
+    // Skipped when pinned.
     if (!panelHost._clickOutsideInit) {
       panelHost._clickOutsideInit = true;
       document.addEventListener("click", function (ev) {
         if (!isOpen || isPinned) return;
         if (panelHost.contains(ev.target)) return;
+        if (panel.contains(ev.target)) return;
         setOpen(false);
       });
     }
+    backdrop.addEventListener("click", function () {
+      if (isOpen && !isPinned) setOpen(false);
+    });
 
     // Hotkey `E` toggles the panel, but only when the mysqladmin
     // subview is actually in the viewport — so pressing `e` while
