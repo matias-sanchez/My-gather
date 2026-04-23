@@ -1,0 +1,42 @@
+name: Bug report
+description: Report something that doesn't work as expected.
+title: "bug: <short description>"
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: my-gather version
+      description: Output of `my-gather --version`.
+      placeholder: v0.3.1
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: OS + architecture.
+      placeholder: darwin/arm64, linux/amd64, ...
+    validations:
+      required: true
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you see, what did you expect?
+      placeholder: |
+        Steps:
+        1. ran `my-gather -o /tmp/r.html /path/to/pt-stalk/`
+        2. ...
+
+        Expected:
+        Observed:
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: pt-stalk directory layout (`ls`), redacted log excerpts, screenshots, any diagnostic output.
+    validations:
+      required: false

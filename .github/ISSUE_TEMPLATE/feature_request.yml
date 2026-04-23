@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest a new collector, rule, chart, or UX improvement.
+title: "feat: <short description>"
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem you're solving
+      description: What's painful today? What's missing?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Rough sketch is fine — screenshots/mockups welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Anything you ruled out and why?
+    validations:
+      required: false
