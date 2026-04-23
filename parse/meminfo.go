@@ -122,12 +122,25 @@ func parseMeminfo(r io.Reader, sourcePath string) (*model.MeminfoData, []model.D
 		return nil, diagnostics
 	}
 
-	// Derive SwapUsed = SwapTotal − SwapFree. Negative or missing
-	// inputs collapse to zero rather than being emitted as NaN.
+	// Derive SwapUsed = SwapTotal − SwapFree. Both inputs are required
+	// on every sample: /proc/meminfo always emits SwapTotal/SwapFree
+	// (zero values on systems without swap) so absence signals a
+	// truncated or non-canonical capture. Reject rather than silently
+	// reporting 0 GB of swap pressure.
 	for i := range samples {
-		total := samples[i].vals["SwapTotal"]
-		free := samples[i].vals["SwapFree"]
-		used := total - free
+		_, hasTotal := samples[i].vals["SwapTotal"]
+		_, hasFree := samples[i].vals["SwapFree"]
+		if !hasTotal || !hasFree {
+			diagnostics = append(diagnostics, model.Diagnostic{
+				SourceFile: sourcePath,
+				Severity:   model.SeverityError,
+				Message: fmt.Sprintf(
+					"meminfo: sample %d missing SwapTotal and/or SwapFree; input is not canonical /proc/meminfo output",
+					i+1),
+			})
+			return nil, diagnostics
+		}
+		used := samples[i].vals["SwapTotal"] - samples[i].vals["SwapFree"]
 		if used < 0 {
 			used = 0
 		}

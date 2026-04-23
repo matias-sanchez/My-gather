@@ -63,10 +63,17 @@ type variableSnapshotView struct {
 	DetailsID string
 	Title     string
 	Badge     string
+	// rangeLo / rangeHi are the 1-based inclusive snapshot numbers
+	// this kept panel covers. Canonical numeric state for the dedup
+	// range; the presentation string RangeNote is derived from them
+	// once at the end of buildView and never parsed back.
+	rangeLo int
+	rangeHi int
 	// RangeNote is the dedup subtitle shown inside the snapshot body
-	// when this kept snapshot represents a run of identical snapshots
+	// when this kept panel represents a run of identical snapshots
 	// (e.g. "Identical values seen in snapshots #2–#10"). Empty for
-	// unique snapshots.
+	// unique snapshots. Derived from rangeLo/rangeHi; do not mutate
+	// directly.
 	RangeNote     string
 	Count         int
 	ModifiedCount int
