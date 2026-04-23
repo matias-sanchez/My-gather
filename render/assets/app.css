@@ -2550,13 +2550,146 @@ details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
    always-visible strip. The strip retains its own sticky rule. */
 
 /* ----- Environment section --------------------------------------------
-   Two side-by-side panels (Host + MySQL). Stacks on narrow viewports. */
-.env-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 12px 0 20px; }
-@media (max-width: 860px) { .env-grid { grid-template-columns: 1fr; } }
-.env-panel { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
-.env-panel h3 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg-dim); }
-dl.env { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; font-size: 13px; }
-dl.env dt { color: var(--fg-muted); }
-dl.env dd { margin: 0; color: var(--fg); word-break: break-word; }
-dl.env .filesystems { grid-column: 1 / -1; margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; }
-dl.env .filesystems ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; font: 500 12px/1.3 var(--mono); color: var(--fg); }
+   Tabbed Host / MySQL summary. Each pane is a responsive grid of
+   labelled sub-groups; keys are muted, values are strong, and ON/OFF
+   flags render as coloured chips. */
+.env-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px 18px;
+  margin: 12px 0 20px;
+}
+.env-tablist {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-elev-2, color-mix(in srgb, var(--bg-elev) 85%, black));
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 4px);
+  margin: 0 0 16px;
+}
+.env-tab {
+  padding: 6px 14px;
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--radius) - 6px);
+  font: 500 12px/1 inherit;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+.env-tab:hover  { color: var(--fg); }
+.env-tab.active {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--fg);
+}
+.env-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.env-pane[hidden] { display: none; }
+.env-pane {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px 22px;
+}
+.env-group {
+  min-width: 0;
+}
+.env-group-full { grid-column: 1 / -1; }
+.env-group h4 {
+  margin: 0 0 8px;
+  font: 600 10px/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border-left: 2px solid var(--accent);
+  padding-left: 8px;
+}
+dl.env-kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 13px;
+  align-items: baseline;
+}
+dl.env-kv dt {
+  color: var(--fg-muted);
+  font-weight: 400;
+  white-space: nowrap;
+}
+dl.env-kv dd {
+  margin: 0;
+  color: var(--fg);
+  word-break: break-word;
+  min-width: 0;
+}
+dl.env-kv dd.mono { font-family: var(--mono); font-size: 12.5px; }
+dl.env-kv dd.env-strong { font-weight: 600; color: var(--fg); }
+dl.env-kv .env-sub {
+  color: var(--fg-dim);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-left: 4px;
+}
+dl.env-kv .env-sqlmode {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--fg-muted);
+}
+
+/* ON / OFF chips */
+.env-chip {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font: 600 10.5px/1.4 var(--mono);
+  letter-spacing: 0.04em;
+}
+.env-chip-on {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ok) 45%, transparent);
+}
+.env-chip-off {
+  color: var(--fg-dim);
+  background: color-mix(in srgb, var(--fg-dim) 15%, transparent);
+  border: 1px solid var(--border);
+}
+
+/* Filesystems list with mini usage bar */
+ul.env-fs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+ul.env-fs li {
+  display: grid;
+  grid-template-columns: minmax(120px, auto) 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+}
+.env-fs-mount  { color: var(--fg); }
+.env-fs-bar    {
+  height: 6px;
+  background: color-mix(in srgb, var(--fg-dim) 25%, transparent);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 80px;
+}
+.env-fs-bar-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 70%, transparent), var(--accent));
+  border-radius: 3px;
+}
+.env-fs-pct    { font: 600 11px/1 var(--mono); color: var(--fg); min-width: 3ch; text-align: right; }
+.env-fs-size   { color: var(--fg-muted); font-size: 11.5px; }

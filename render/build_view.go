@@ -36,9 +36,12 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 	if r.EnvironmentSection != nil {
 		v.Environment = buildEnvironmentView(r.EnvironmentSection)
 		v.HasEnvironment = v.Environment.HasHost || v.Environment.HasMySQL
+		// Badge summarises which panels have data. With the tabs UI
+		// the badge is purely informational — the tabs themselves
+		// expose Host / MySQL; here we only flag degraded captures.
 		switch {
 		case v.Environment.HasHost && v.Environment.HasMySQL:
-			v.EnvBadge = "host + mysql"
+			v.EnvBadge = "complete"
 		case v.Environment.HasHost:
 			v.EnvBadge = "host only"
 		case v.Environment.HasMySQL:

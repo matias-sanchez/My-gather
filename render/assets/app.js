@@ -2671,6 +2671,55 @@
     }
   }
 
+  // initEnvTabs wires the Host / MySQL tab switcher in the Environment
+  // section. Mirrors the ARIA tablist pattern used by vmstat. Selection
+  // persists in localStorage under the v2 namespace so reopening the
+  // report remembers which panel was on screen.
+  function initEnvTabs() {
+    var roots = document.querySelectorAll("[data-env-root]");
+    if (!roots.length) return;
+    var KEY = "mygather:v2:" + REPORT_ID + ":env-tab";
+    roots.forEach(function (root) {
+      var tabs   = root.querySelectorAll("[role='tab'][data-env-tab]");
+      var panels = root.querySelectorAll("[role='tabpanel'][data-env-panel]");
+      function select(which, opts) {
+        opts = opts || {};
+        var ok = false;
+        tabs.forEach(function (t) {
+          var on = t.getAttribute("data-env-tab") === which;
+          if (on) ok = true;
+          t.classList.toggle("active", on);
+          t.setAttribute("aria-selected", on ? "true" : "false");
+          t.setAttribute("tabindex", on ? "0" : "-1");
+          if (on && opts.focus) { try { t.focus({ preventScroll: true }); } catch (_) { t.focus(); } }
+        });
+        if (!ok) return;
+        panels.forEach(function (p) {
+          p.hidden = p.getAttribute("data-env-panel") !== which;
+        });
+        try { storageSet(KEY, which); } catch (_) {}
+      }
+      tabs.forEach(function (t) {
+        t.addEventListener("click", function () { select(t.getAttribute("data-env-tab")); });
+      });
+      root.addEventListener("keydown", function (ev) {
+        if (ev.target.getAttribute("role") !== "tab") return;
+        var order = Array.from(tabs);
+        var idx = order.indexOf(ev.target);
+        if (idx < 0) return;
+        var next = null;
+        if      (ev.key === "ArrowRight") next = order[(idx + 1) % order.length];
+        else if (ev.key === "ArrowLeft")  next = order[(idx - 1 + order.length) % order.length];
+        else if (ev.key === "Home")       next = order[0];
+        else if (ev.key === "End")        next = order[order.length - 1];
+        if (next) { ev.preventDefault(); select(next.getAttribute("data-env-tab"), { focus: true }); }
+      });
+      var saved = null;
+      try { saved = storageGet(KEY); } catch (_) {}
+      if (saved === "host" || saved === "mysql") select(saved);
+    });
+  }
+
   function initPrintHook() {
     var beforeState = null;
     function stash() {
@@ -2988,6 +3037,7 @@
     initNavScrollSpy();
     initAdvisorFilter();
     initSemaphoreBreakdown();
+    initEnvTabs();
     initPrintHook();
     observeContentColumn();
     // Also re-fit on any <details> toggle (open/close affects

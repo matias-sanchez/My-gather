@@ -1,78 +1,156 @@
-{{- /* environment.html.tmpl — first section of the report. Two side-by-side
-       panels (Host + MySQL) summarising the captured environment. All
+{{- /* environment.html.tmpl — first section of the report. Tabbed
+       Host / MySQL panels summarising the captured environment. All
        dynamic values come from the model's EnvironmentSection via
        buildEnvironmentView; any missing value renders as "—". */ -}}
 {{- define "environment" -}}
 {{- $e := .Environment -}}
-<div class="env-grid">
-  <section class="env-panel" aria-label="Host environment">
-    <h3>Host</h3>
-    <dl class="env">
-      <dt>Hostname</dt><dd>{{or $e.Hostname "—"}}</dd>
-      <dt>OS</dt><dd>{{or $e.OS "—"}}</dd>
-      <dt>Kernel</dt><dd>{{or $e.Kernel "—"}}</dd>
-      <dt>Architecture</dt><dd>{{or $e.Architecture "—"}}</dd>
-      <dt>Logical CPUs</dt><dd>{{or $e.LogicalCPUs "—"}}</dd>
-      <dt>Load avg (1/5/15m)</dt><dd>{{or $e.LoadAverage "—"}}</dd>
-      <dt>OS uptime</dt><dd>{{or $e.OSUptime "—"}}</dd>
-      <dt>Memory total</dt><dd>{{or $e.MemTotal "—"}}</dd>
-      <dt>Memory available</dt><dd>{{or $e.MemAvailable "—"}}</dd>
-      <dt>Memory free</dt><dd>{{or $e.MemFree "—"}}</dd>
-      <dt>Buffers + Cached</dt><dd>{{or $e.BuffersCached "—"}}</dd>
-      <dt>Swap total</dt><dd>{{or $e.SwapTotal "—"}}</dd>
-      <dt>Swap used</dt><dd>{{or $e.SwapUsed "—"}}</dd>
-      <dt>Timezone</dt><dd>{{or $e.Timezone "—"}}</dd>
-      <dt>vm.swappiness</dt><dd>{{or $e.Swappiness "—"}}</dd>
-      <dt>vm.dirty_ratio</dt><dd>{{or $e.DirtyRatio "—"}}</dd>
-      <dt>vm.dirty_background_ratio</dt><dd>{{or $e.DirtyBackgroundRatio "—"}}</dd>
-      <dt>fs.file-max</dt><dd>{{or $e.FileMax "—"}}</dd>
-      {{- if $e.Filesystems }}
-      <div class="filesystems">
-        <dt>Top filesystems</dt>
-        <dd>
-          <ul>
-            {{- range $e.Filesystems }}
-            <li>{{.Mount}} {{.Used}}/{{.Total}} ({{.Pct}})</li>
-            {{- end }}
-          </ul>
-        </dd>
-      </div>
-      {{- end }}
-    </dl>
+<div class="env-card" data-env-root>
+  <div class="env-tablist" role="tablist" aria-label="Environment view">
+    <button type="button" role="tab" class="env-tab active" aria-selected="true"  tabindex="0"  data-env-tab="host">Host</button>
+    <button type="button" role="tab" class="env-tab"        aria-selected="false" tabindex="-1" data-env-tab="mysql">MySQL</button>
+  </div>
+
+  <section class="env-pane" role="tabpanel" aria-label="Host environment" data-env-panel="host">
+    <div class="env-group">
+      <h4>Identity</h4>
+      <dl class="env-kv">
+        <dt>Hostname</dt>           <dd class="mono">{{or $e.Hostname "—"}}</dd>
+        <dt>Timezone</dt>           <dd>{{or $e.Timezone "—"}}</dd>
+        <dt>OS uptime</dt>          <dd>{{or $e.OSUptime "—"}}</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Platform</h4>
+      <dl class="env-kv">
+        <dt>OS</dt>                 <dd>{{or $e.OS "—"}}</dd>
+        <dt>Kernel</dt>             <dd class="mono">{{or $e.Kernel "—"}}</dd>
+        <dt>Architecture</dt>       <dd class="mono">{{or $e.Architecture "—"}}</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Compute</h4>
+      <dl class="env-kv">
+        <dt>Logical CPUs</dt>       <dd>{{or $e.LogicalCPUs "—"}}</dd>
+        <dt>Load avg <span class="env-sub">1/5/15m</span></dt>
+                                    <dd class="mono">{{or $e.LoadAverage "—"}}</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Memory</h4>
+      <dl class="env-kv">
+        <dt>Total</dt>              <dd class="env-strong">{{or $e.MemTotal "—"}}</dd>
+        <dt>Available</dt>          <dd>{{or $e.MemAvailable "—"}}</dd>
+        <dt>Free</dt>               <dd>{{or $e.MemFree "—"}}</dd>
+        <dt>Buffers + cached</dt>   <dd>{{or $e.BuffersCached "—"}}</dd>
+        <dt>Swap total</dt>         <dd>{{or $e.SwapTotal "—"}}</dd>
+        <dt>Swap used</dt>          <dd>{{or $e.SwapUsed "—"}}</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Kernel tuning</h4>
+      <dl class="env-kv">
+        <dt>vm.swappiness</dt>               <dd class="mono">{{or $e.Swappiness "—"}}</dd>
+        <dt>vm.dirty_ratio</dt>              <dd class="mono">{{or $e.DirtyRatio "—"}}</dd>
+        <dt>vm.dirty_background_ratio</dt>   <dd class="mono">{{or $e.DirtyBackgroundRatio "—"}}</dd>
+        <dt>fs.file-max</dt>                 <dd class="mono">{{or $e.FileMax "—"}}</dd>
+      </dl>
+    </div>
+    {{- if $e.Filesystems }}
+    <div class="env-group env-group-full">
+      <h4>Top filesystems</h4>
+      <ul class="env-fs">
+        {{- range $e.Filesystems }}
+        <li>
+          <span class="env-fs-mount mono">{{.Mount}}</span>
+          <span class="env-fs-bar" aria-hidden="true"><span class="env-fs-bar-fill" style="width: {{.Pct}};"></span></span>
+          <span class="env-fs-pct">{{.Pct}}</span>
+          <span class="env-fs-size mono">{{.Used}} / {{.Total}}</span>
+        </li>
+        {{- end }}
+      </ul>
+    </div>
+    {{- end }}
   </section>
 
-  <section class="env-panel" aria-label="MySQL environment">
-    <h3>MySQL</h3>
-    <dl class="env">
-      <dt>Version</dt><dd>{{or $e.MysqlVersion "—"}}</dd>
-      <dt>Version comment</dt><dd>{{or $e.VersionComment "—"}}</dd>
-      <dt>Distribution</dt><dd>{{or $e.Distribution "—"}}</dd>
-      <dt>Compile OS / machine</dt><dd>{{or (printf "%s / %s" $e.CompileOS $e.CompileMachine) "—"}}</dd>
-      <dt>Uptime</dt><dd>{{or $e.MysqlUptime "—"}}</dd>
-      <dt>Start time (UTC)</dt><dd>{{or $e.MysqlStartTime "—"}}</dd>
-      <dt>Data directory</dt><dd>{{or $e.DataDir "—"}}</dd>
-      <dt>Port</dt><dd>{{or $e.Port "—"}}</dd>
-      <dt>Socket</dt><dd>{{or $e.Socket "—"}}</dd>
-      <dt>Pid file</dt><dd>{{or $e.PidFile "—"}}</dd>
-      <dt>Server ID</dt><dd>{{or $e.ServerID "—"}}</dd>
-      <dt>Default storage engine</dt><dd>{{or $e.DefaultStorageEngine "—"}}</dd>
-      <dt>Charset / collation</dt><dd>{{or $e.CharsetCollation "—"}}</dd>
-      <dt>Transaction isolation</dt><dd>{{or $e.TransactionIsolation "—"}}</dd>
-      <dt>InnoDB buffer pool</dt><dd>{{or $e.BufferPoolSize "—"}}</dd>
-      <dt>Buffer pool instances</dt><dd>{{or $e.BufferPoolInstances "—"}}</dd>
-      <dt>Max connections</dt><dd>{{or $e.MaxConnections "—"}}</dd>
-      <dt>SQL mode</dt><dd>{{or $e.SQLMode "—"}}</dd>
-      <dt>Slow query log</dt><dd>{{or $e.SlowQueryLog "—"}}</dd>
-      <dt>Long query time</dt><dd>{{or $e.LongQueryTime "—"}}</dd>
-      <dt>Binary logging</dt><dd>{{or $e.BinaryLogging "—"}}</dd>
-      <dt>GTID</dt><dd>{{or $e.GTID "—"}}</dd>
-      <dt>Read-only</dt><dd>{{or $e.ReadOnly "—"}}</dd>
-      <dt>Performance Schema</dt><dd>{{or $e.PerformanceSchema "—"}}</dd>
-      {{- if $e.HasWsrep }}
-      <dt>Galera cluster</dt><dd>{{or $e.WsrepClusterName "—"}} (size {{or $e.WsrepClusterSize "—"}})</dd>
-      <dt>wsrep provider</dt><dd>{{or $e.WsrepProviderName "—"}} {{$e.WsrepProviderVersion}}</dd>
-      {{- end }}
-    </dl>
+  <section class="env-pane" role="tabpanel" aria-label="MySQL environment" data-env-panel="mysql" hidden>
+    <div class="env-group">
+      <h4>Identity</h4>
+      <dl class="env-kv">
+        <dt>Version</dt>            <dd class="env-strong mono">{{or $e.MysqlVersion "—"}}</dd>
+        <dt>Distribution</dt>       <dd>{{or $e.Distribution "—"}}</dd>
+        <dt>Version comment</dt>    <dd>{{or $e.VersionComment "—"}}</dd>
+        <dt>Compile OS / machine</dt><dd class="mono">{{or (printf "%s / %s" $e.CompileOS $e.CompileMachine) "—"}}</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Runtime</h4>
+      <dl class="env-kv">
+        <dt>Uptime</dt>             <dd>{{or $e.MysqlUptime "—"}}</dd>
+        <dt>Start time <span class="env-sub">UTC</span></dt>
+                                    <dd class="mono">{{or $e.MysqlStartTime "—"}}</dd>
+        <dt>Server ID</dt>          <dd class="mono">{{or $e.ServerID "—"}}</dd>
+        <dt>Port</dt>               <dd class="mono">{{or $e.Port "—"}}</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Files</h4>
+      <dl class="env-kv">
+        <dt>Data directory</dt>     <dd class="mono">{{or $e.DataDir "—"}}</dd>
+        <dt>Socket</dt>             <dd class="mono">{{or $e.Socket "—"}}</dd>
+        <dt>Pid file</dt>           <dd class="mono">{{or $e.PidFile "—"}}</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>InnoDB</h4>
+      <dl class="env-kv">
+        <dt>Default engine</dt>     <dd>{{or $e.DefaultStorageEngine "—"}}</dd>
+        <dt>Buffer pool size</dt>   <dd class="env-strong">{{or $e.BufferPoolSize "—"}}</dd>
+        <dt>Buffer pool instances</dt><dd class="mono">{{or $e.BufferPoolInstances "—"}}</dd>
+        <dt>Max connections</dt>    <dd class="mono">{{or $e.MaxConnections "—"}}</dd>
+        <dt>Transaction isolation</dt><dd class="mono">{{or $e.TransactionIsolation "—"}}</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Encoding</h4>
+      <dl class="env-kv">
+        <dt>Charset / collation</dt><dd class="mono">{{or $e.CharsetCollation "—"}}</dd>
+        <dt>SQL mode</dt>           <dd class="mono env-sqlmode">{{or $e.SQLMode "—"}}</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Logging</h4>
+      <dl class="env-kv">
+        <dt>Slow query log</dt>     <dd>{{template "envchip" $e.SlowQueryLog}}</dd>
+        <dt>Long query time</dt>    <dd class="mono">{{or $e.LongQueryTime "—"}}</dd>
+        <dt>Binary logging</dt>     <dd class="mono">{{or $e.BinaryLogging "—"}}</dd>
+        <dt>Performance Schema</dt> <dd>{{template "envchip" $e.PerformanceSchema}}</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Replication</h4>
+      <dl class="env-kv">
+        <dt>GTID</dt>               <dd class="mono">{{or $e.GTID "—"}}</dd>
+        <dt>Read-only</dt>          <dd class="mono">{{or $e.ReadOnly "—"}}</dd>
+      </dl>
+    </div>
+    {{- if $e.HasWsrep }}
+    <div class="env-group env-group-full">
+      <h4>Galera / PXC</h4>
+      <dl class="env-kv">
+        <dt>Cluster name</dt>       <dd class="mono">{{or $e.WsrepClusterName "—"}}</dd>
+        <dt>Cluster size</dt>       <dd class="mono">{{or $e.WsrepClusterSize "—"}}</dd>
+        <dt>Provider</dt>           <dd class="mono">{{or $e.WsrepProviderName "—"}} {{$e.WsrepProviderVersion}}</dd>
+      </dl>
+    </div>
+    {{- end }}
   </section>
 </div>
+{{- end -}}
+
+{{- /* envchip: render ON/OFF values as coloured chips, anything else passes through. */ -}}
+{{- define "envchip" -}}
+  {{- if eq . "ON" -}}<span class="env-chip env-chip-on">ON</span>
+  {{- else if eq . "OFF" -}}<span class="env-chip env-chip-off">OFF</span>
+  {{- else -}}{{or . "—"}}
+  {{- end -}}
 {{- end -}}
