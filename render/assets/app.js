@@ -1662,10 +1662,28 @@
     function positionMaPanel() {
       if (!isOpen) return;
       var r = strip.getBoundingClientRect();
-      // Panel hangs off the strip's bottom-left, same width as the strip.
-      panel.style.top    = (r.bottom + 6) + "px";
-      panel.style.left   = r.left + "px";
-      panel.style.width  = r.width + "px";
+      var margin = 16;
+      // Panel hangs off the strip's bottom-left, same width as the
+      // strip — BUT always clamped inside the viewport. When the
+      // user opened the panel from a chart far below the strip, the
+      // strip may have scrolled above the viewport top (its
+      // bounding rect.bottom is negative), in which case we pin the
+      // popover near the viewport top so it's visible instead of
+      // landing off-screen.
+      var width = r.width > 0 ? r.width : (window.innerWidth - 2 * margin);
+      if (width > window.innerWidth - 2 * margin) width = window.innerWidth - 2 * margin;
+      var left = r.width > 0 ? r.left : margin;
+      if (left < margin) left = margin;
+      if (left + width > window.innerWidth - margin) {
+        left = Math.max(margin, window.innerWidth - margin - width);
+      }
+      var top = r.bottom + 6;
+      if (top < margin)                    top = margin;
+      var maxTop = window.innerHeight - 120; // leave room for at least part of the panel
+      if (top > maxTop)                    top = maxTop;
+      panel.style.top   = top + "px";
+      panel.style.left  = left + "px";
+      panel.style.width = width + "px";
     }
     window.addEventListener("scroll",  positionMaPanel, { passive: true });
     window.addEventListener("resize",  positionMaPanel);
