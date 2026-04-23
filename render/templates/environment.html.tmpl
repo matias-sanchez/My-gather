@@ -1,0 +1,78 @@
+{{- /* environment.html.tmpl — first section of the report. Two side-by-side
+       panels (Host + MySQL) summarising the captured environment. All
+       dynamic values come from the model's EnvironmentSection via
+       buildEnvironmentView; any missing value renders as "—". */ -}}
+{{- define "environment" -}}
+{{- $e := .Environment -}}
+<div class="env-grid">
+  <section class="env-panel" aria-label="Host environment">
+    <h3>Host</h3>
+    <dl class="env">
+      <dt>Hostname</dt><dd>{{or $e.Hostname "—"}}</dd>
+      <dt>OS</dt><dd>{{or $e.OS "—"}}</dd>
+      <dt>Kernel</dt><dd>{{or $e.Kernel "—"}}</dd>
+      <dt>Architecture</dt><dd>{{or $e.Architecture "—"}}</dd>
+      <dt>Logical CPUs</dt><dd>{{or $e.LogicalCPUs "—"}}</dd>
+      <dt>Load avg (1/5/15m)</dt><dd>{{or $e.LoadAverage "—"}}</dd>
+      <dt>OS uptime</dt><dd>{{or $e.OSUptime "—"}}</dd>
+      <dt>Memory total</dt><dd>{{or $e.MemTotal "—"}}</dd>
+      <dt>Memory available</dt><dd>{{or $e.MemAvailable "—"}}</dd>
+      <dt>Memory free</dt><dd>{{or $e.MemFree "—"}}</dd>
+      <dt>Buffers + Cached</dt><dd>{{or $e.BuffersCached "—"}}</dd>
+      <dt>Swap total</dt><dd>{{or $e.SwapTotal "—"}}</dd>
+      <dt>Swap used</dt><dd>{{or $e.SwapUsed "—"}}</dd>
+      <dt>Timezone</dt><dd>{{or $e.Timezone "—"}}</dd>
+      <dt>vm.swappiness</dt><dd>{{or $e.Swappiness "—"}}</dd>
+      <dt>vm.dirty_ratio</dt><dd>{{or $e.DirtyRatio "—"}}</dd>
+      <dt>vm.dirty_background_ratio</dt><dd>{{or $e.DirtyBackgroundRatio "—"}}</dd>
+      <dt>fs.file-max</dt><dd>{{or $e.FileMax "—"}}</dd>
+      {{- if $e.Filesystems }}
+      <div class="filesystems">
+        <dt>Top filesystems</dt>
+        <dd>
+          <ul>
+            {{- range $e.Filesystems }}
+            <li>{{.Mount}} {{.Used}}/{{.Total}} ({{.Pct}})</li>
+            {{- end }}
+          </ul>
+        </dd>
+      </div>
+      {{- end }}
+    </dl>
+  </section>
+
+  <section class="env-panel" aria-label="MySQL environment">
+    <h3>MySQL</h3>
+    <dl class="env">
+      <dt>Version</dt><dd>{{or $e.MysqlVersion "—"}}</dd>
+      <dt>Version comment</dt><dd>{{or $e.VersionComment "—"}}</dd>
+      <dt>Distribution</dt><dd>{{or $e.Distribution "—"}}</dd>
+      <dt>Compile OS / machine</dt><dd>{{or (printf "%s / %s" $e.CompileOS $e.CompileMachine) "—"}}</dd>
+      <dt>Uptime</dt><dd>{{or $e.MysqlUptime "—"}}</dd>
+      <dt>Start time (UTC)</dt><dd>{{or $e.MysqlStartTime "—"}}</dd>
+      <dt>Data directory</dt><dd>{{or $e.DataDir "—"}}</dd>
+      <dt>Port</dt><dd>{{or $e.Port "—"}}</dd>
+      <dt>Socket</dt><dd>{{or $e.Socket "—"}}</dd>
+      <dt>Pid file</dt><dd>{{or $e.PidFile "—"}}</dd>
+      <dt>Server ID</dt><dd>{{or $e.ServerID "—"}}</dd>
+      <dt>Default storage engine</dt><dd>{{or $e.DefaultStorageEngine "—"}}</dd>
+      <dt>Charset / collation</dt><dd>{{or $e.CharsetCollation "—"}}</dd>
+      <dt>Transaction isolation</dt><dd>{{or $e.TransactionIsolation "—"}}</dd>
+      <dt>InnoDB buffer pool</dt><dd>{{or $e.BufferPoolSize "—"}}</dd>
+      <dt>Buffer pool instances</dt><dd>{{or $e.BufferPoolInstances "—"}}</dd>
+      <dt>Max connections</dt><dd>{{or $e.MaxConnections "—"}}</dd>
+      <dt>SQL mode</dt><dd>{{or $e.SQLMode "—"}}</dd>
+      <dt>Slow query log</dt><dd>{{or $e.SlowQueryLog "—"}}</dd>
+      <dt>Long query time</dt><dd>{{or $e.LongQueryTime "—"}}</dd>
+      <dt>Binary logging</dt><dd>{{or $e.BinaryLogging "—"}}</dd>
+      <dt>GTID</dt><dd>{{or $e.GTID "—"}}</dd>
+      <dt>Read-only</dt><dd>{{or $e.ReadOnly "—"}}</dd>
+      <dt>Performance Schema</dt><dd>{{or $e.PerformanceSchema "—"}}</dd>
+      {{- if $e.HasWsrep }}
+      <dt>Galera cluster</dt><dd>{{or $e.WsrepClusterName "—"}} (size {{or $e.WsrepClusterSize "—"}})</dd>
+      <dt>wsrep provider</dt><dd>{{or $e.WsrepProviderName "—"}} {{$e.WsrepProviderVersion}}</dd>
+      {{- end }}
+    </dl>
+  </section>
+</div>
+{{- end -}}

@@ -33,6 +33,23 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 		MysqladminSelectID: "mysqladmin-select",
 	}
 
+	if r.EnvironmentSection != nil {
+		v.Environment = buildEnvironmentView(r.EnvironmentSection)
+		v.HasEnvironment = v.Environment.HasHost || v.Environment.HasMySQL
+		switch {
+		case v.Environment.HasHost && v.Environment.HasMySQL:
+			v.EnvBadge = "host + mysql"
+		case v.Environment.HasHost:
+			v.EnvBadge = "host only"
+		case v.Environment.HasMySQL:
+			v.EnvBadge = "mysql only"
+		default:
+			v.EnvBadge = "missing"
+		}
+	} else {
+		v.EnvBadge = "missing"
+	}
+
 	if r.OSSection != nil {
 		v.HasIostat = r.OSSection.Iostat != nil
 		v.HasTop = r.OSSection.Top != nil

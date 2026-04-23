@@ -29,6 +29,11 @@ type reportView struct {
 
 	AdvisorBadge   string
 	VariablesBadge string
+	EnvBadge       string
+
+	// Environment section payload (Host + MySQL panels).
+	HasEnvironment bool
+	Environment    envView
 
 	// Advisor section payload.
 	Findings      []findingView

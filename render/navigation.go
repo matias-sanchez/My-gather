@@ -16,6 +16,10 @@ import (
 func buildNavigation(r *model.Report, sigs []string) []model.NavEntry {
 	var nav []model.NavEntry
 
+	// Environment section — rendered first in the report, so the nav rail
+	// mirrors that order.
+	nav = append(nav, model.NavEntry{ID: "sec-environment", Title: "Environment", Level: 1})
+
 	// OS section.
 	nav = append(nav, model.NavEntry{ID: "sec-os", Title: "OS Usage", Level: 1})
 	nav = append(nav, model.NavEntry{ID: "sub-os-iostat", Title: "Disk utilization", Level: 2, ParentID: "sec-os"})

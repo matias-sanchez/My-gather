@@ -67,6 +67,18 @@
 
   <main class="content">
 
+    {{/* Environment section — rendered first so the reader lands on
+         the host / MySQL context before any time-series charts. */}}
+    <details id="sec-environment" class="section" open>
+      <summary>
+        <span>Environment</span>
+        <span class="badge">{{.EnvBadge}}</span>
+      </summary>
+      <div class="body">
+        {{template "environment" .}}
+      </div>
+    </details>
+
     {{/* OS Usage section */}}
     <details id="sec-os" class="section">
       <summary>
