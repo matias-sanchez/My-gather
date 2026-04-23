@@ -35,22 +35,22 @@ func TestOSGoldenHTML(t *testing.T) {
 
 // TestOSSubviewAnchors: T096 / SC-005 / FR-031.
 //
-// The OS Usage section renders three subviews (iostat, top, vmstat).
-// SC-005 requires each subview to be addressable both by an HTML
-// anchor AND by a corresponding `Report.Navigation` entry so a user
-// can deep-link to the specific chart.
+// The OS Usage section renders four subviews (iostat, top, vmstat,
+// meminfo). SC-005 requires each subview to be addressable both by
+// an HTML anchor AND by a corresponding `Report.Navigation` entry so
+// a user can deep-link to the specific chart.
 //
 // The real subview IDs emitted by render/templates/os.html.tmpl are
-// `sub-os-iostat`, `sub-os-top`, `sub-os-vmstat` (the task description
-// in tasks.md used aspirational `os-disk-util`/`os-top-cpu`/`os-vmstat`
-// names that never landed; this test pins what the template actually
-// emits). A template edit that dropped one anchor — or a nav-rail
-// refactor that stopped linking to it — would fail here.
+// `sub-os-iostat`, `sub-os-top`, `sub-os-vmstat`, `sub-os-meminfo`
+// (the task description in tasks.md used aspirational names that
+// never landed; this test pins what the template actually emits). A
+// template edit that dropped one anchor — or a nav-rail refactor
+// that stopped linking to it — would fail here.
 func TestOSSubviewAnchors(t *testing.T) {
-	html := renderGolden(t, model.SuffixIostat, model.SuffixTop, model.SuffixVmstat)
+	html := renderGolden(t, model.SuffixIostat, model.SuffixTop, model.SuffixVmstat, model.SuffixMeminfo)
 	section := extractDetailsSection(t, html, "sec-os")
 
-	subviews := []string{"sub-os-iostat", "sub-os-top", "sub-os-vmstat"}
+	subviews := []string{"sub-os-iostat", "sub-os-top", "sub-os-vmstat", "sub-os-meminfo"}
 
 	// Every subview anchor lives inside the sec-os <details> block.
 	for _, anchor := range subviews {

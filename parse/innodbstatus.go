@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -78,6 +77,14 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 			"INSERT BUFFER AND ADAPTIVE HASH INDEX", "LOG",
 			"BUFFER POOL AND MEMORY", "ROW OPERATIONS",
 			"TRANSACTIONS":
+			// LOW #7: flush any pending semaphore record before we
+			// leave its section, otherwise the last thread-line of a
+			// SEMAPHORES block with no "Mutex ..." partner would be
+			// lost when the section switches.
+			if havePending {
+				siteCounts[siteKey{file: pendingFile, line: pendingLine, mutex: ""}]++
+				havePending = false
+			}
 			inSection = trimmed
 			continue
 		}
@@ -166,6 +173,7 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 	// Materialise sites sorted desc by count, stable tie-break by
 	// file ascending then line ascending so identical captures
 	// render identically across runs.
+	siteSum := 0
 	if len(siteCounts) > 0 {
 		sites := make([]model.SemaphoreSite, 0, len(siteCounts))
 		for k, c := range siteCounts {
@@ -175,20 +183,25 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 				MutexName: k.mutex,
 				WaitCount: c,
 			})
+			siteSum += c
 		}
-		sort.SliceStable(sites, func(i, j int) bool {
-			if sites[i].WaitCount != sites[j].WaitCount {
-				return sites[i].WaitCount > sites[j].WaitCount
-			}
-			if sites[i].File != sites[j].File {
-				return sites[i].File < sites[j].File
-			}
-			if sites[i].Line != sites[j].Line {
-				return sites[i].Line < sites[j].Line
-			}
-			return sites[i].MutexName < sites[j].MutexName
-		})
+		model.SortSemaphoreSites(sites)
 		data.SemaphoreSites = sites
+	}
+
+	// LOW #6: parser-time invariant check. threadWaited counts thread
+	// lines; siteSum counts the resulting (file, line, mutex) entries.
+	// They should always match — a mismatch means a thread was either
+	// recorded twice or swallowed silently, and the reader deserves a
+	// warning so the Semaphores card isn't trusted blindly.
+	if siteSum != threadWaited {
+		diagnostics = append(diagnostics, model.Diagnostic{
+			SourceFile: sourcePath,
+			Severity:   model.SeverityWarning,
+			Message: fmt.Sprintf(
+				"innodbstatus: SemaphoreSites wait-count sum (%d) does not equal threads-waited count (%d); contention breakdown may be missing rows",
+				siteSum, threadWaited),
+		})
 	}
 
 	return data, diagnostics

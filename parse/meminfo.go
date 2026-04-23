@@ -129,6 +129,32 @@ func parseMeminfo(r io.Reader, sourcePath string) (*model.MeminfoData, []model.D
 
 	data := &model.MeminfoData{}
 	for _, s := range meminfoSeries {
+		// MED #3: detect declared series that never saw a single sample
+		// across the whole capture window. We still emit the series
+		// (filled with 0 GB) so the chart layout stays stable, but we
+		// attach an informational SeverityWarning diagnostic so the
+		// reader can see *why* a line is flat instead of silently
+		// getting a zero series.
+		seen := false
+		// __swap_used is always synthesised above from SwapTotal/Free;
+		// skip the "never seen" check — its presence is guaranteed.
+		if s.key != "__swap_used" {
+			for _, samp := range samples {
+				if _, ok := samp.vals[s.key]; ok {
+					seen = true
+					break
+				}
+			}
+			if !seen {
+				diagnostics = append(diagnostics, model.Diagnostic{
+					SourceFile: sourcePath,
+					Severity:   model.SeverityWarning,
+					Message: fmt.Sprintf(
+						"meminfo: declared series %q (/proc/meminfo key %q) never appeared in any sample; chart line will be flat at 0 GB",
+						s.metric, s.key),
+				})
+			}
+		}
 		out := make([]model.Sample, len(samples))
 		for j, samp := range samples {
 			kb := samp.vals[s.key]

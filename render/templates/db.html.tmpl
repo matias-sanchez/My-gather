@@ -36,7 +36,7 @@
             </p>
             <p class="cb-caption">
               worst snapshot <code>{{.AHIWorstSnapshot}}</code>
-              {{- if ne .AHIHashTableSize "–" }} · hash table size {{.AHIHashTableSize}}{{end}}
+              {{- if .AHIHasHashTable }} · hash table size {{.AHIHashTableSize}}{{end}}
             </p>
             <p class="cb-note">
               A high hit ratio means most index lookups are served directly

@@ -14,6 +14,7 @@
 package model
 
 import (
+	"sort"
 	"time"
 )
 
@@ -370,11 +371,11 @@ type MeminfoData struct {
 // time-series — "-innodbstatus1" is a snapshot taken once per
 // pt-stalk collection pass.
 type InnodbStatusData struct {
-	SemaphoreCount    int              // total threads currently waiting (sum of SemaphoreSites[*].WaitCount)
-	PendingReads      int              // aggregate pending IO reads
-	PendingWrites     int              // aggregate pending IO writes
-	AHIActivity       AHIActivity      // adaptive-hash-index view
-	HistoryListLength int              // "HLL"
+	SemaphoreCount    int         // total threads currently waiting (sum of SemaphoreSites[*].WaitCount)
+	PendingReads      int         // aggregate pending IO reads
+	PendingWrites     int         // aggregate pending IO writes
+	AHIActivity       AHIActivity // adaptive-hash-index view
+	HistoryListLength int         // "HLL"
 	// SemaphoreSites groups the SEMAPHORES-section "--Thread … has
 	// waited at FILE line N the semaphore:" records by (file, line,
 	// mutex name) so the reader can see the contention hotspots
@@ -391,6 +392,26 @@ type SemaphoreSite struct {
 	Line      int    // e.g. 602
 	MutexName string // e.g. "TRX_SYS" (empty when the partner "Mutex ..." line couldn't be associated)
 	WaitCount int
+}
+
+// SortSemaphoreSites orders sites in the canonical rendering order:
+// WaitCount descending first, then stable tie-break by File
+// ascending, Line ascending, MutexName ascending. Both parse/ and
+// render/ use this to guarantee identical bytes across the two layers
+// (NIT #44).
+func SortSemaphoreSites(sites []SemaphoreSite) {
+	sort.SliceStable(sites, func(i, j int) bool {
+		if sites[i].WaitCount != sites[j].WaitCount {
+			return sites[i].WaitCount > sites[j].WaitCount
+		}
+		if sites[i].File != sites[j].File {
+			return sites[i].File < sites[j].File
+		}
+		if sites[i].Line != sites[j].Line {
+			return sites[i].Line < sites[j].Line
+		}
+		return sites[i].MutexName < sites[j].MutexName
+	})
 }
 
 // AHIActivity summarises InnoDB adaptive-hash-index metrics at the

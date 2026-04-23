@@ -250,7 +250,7 @@ func twoSnapshotCollection() *model.Collection {
 				{Timestamp: ts(tsOffset), PID: 1, Command: "mysqld", CPUPercent: 75},
 				{Timestamp: ts(tsOffset + 1), PID: 1, Command: "mysqld", CPUPercent: 76},
 			},
-			Top3ByAverage: []model.ProcessSeries{{PID: 1, Command: "mysqld", CPU: mkCPUSeries(75)}},
+			Top3ByAverage:      []model.ProcessSeries{{PID: 1, Command: "mysqld", CPU: mkCPUSeries(75)}},
 			SnapshotBoundaries: []int{0},
 		}
 	}
