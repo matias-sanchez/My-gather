@@ -1434,6 +1434,50 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   display: inline-block;
   transform: translateY(-1px);
 }
+/* Custom tooltip for the FABs — renders to the LEFT of the button so
+   it doesn't slide off-screen near the page edge. Appears on hover
+   and on keyboard focus. */
+.ma-fab[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  padding: 6px 10px;
+  background: var(--bg-elev-2, #1a2131);
+  color: var(--fg, #e6ebf5);
+  border: 1px solid var(--border, #263047);
+  border-radius: 6px;
+  font: 500 12px/1.2 var(--mono, ui-monospace, Menlo, monospace);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+.ma-fab[data-tooltip]::before {
+  /* Little arrow pointing at the FAB. */
+  content: "";
+  position: absolute;
+  right: calc(100% + 6px);
+  top: 50%;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  border-left-color: var(--border, #263047);
+  transform: translateY(-50%) translateX(4px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+.ma-fab { position: relative; }
+.ma-fab:hover[data-tooltip]::after,
+.ma-fab:focus-visible[data-tooltip]::after,
+.ma-fab:hover[data-tooltip]::before,
+.ma-fab:focus-visible[data-tooltip]::before {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
 
 /* Dim-blur backdrop behind the open popover. One instance per panel
    (JS appends / removes via a 'is-visible' class). Clicks on it close

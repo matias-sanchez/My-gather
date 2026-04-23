@@ -1672,7 +1672,7 @@
     fabAdd.type = "button";
     fabAdd.className = "ma-fab ma-fab-add";
     fabAdd.setAttribute("aria-label", "Add new chart");
-    fabAdd.setAttribute("title", "Add a new chart");
+    fabAdd.setAttribute("data-tooltip", "Add new chart");
     fabAdd.innerHTML = '<span class="ma-fab-pencil" aria-hidden="true">+</span>';
     fabStack.appendChild(fabAdd);
     // Click handler attached later, after createChart / setActive /
@@ -1682,7 +1682,7 @@
     fab.type = "button";
     fab.className = "ma-fab";
     fab.setAttribute("aria-label", "Open counter-deltas editor");
-    fab.setAttribute("title", "Edit counters (⌘⇧E)");
+    fab.setAttribute("data-tooltip", "Edit counters · ⌘⇧E");
     fab.innerHTML = '<span class="ma-fab-pencil" aria-hidden="true">✎</span>';
     fabStack.appendChild(fab);
     fab.addEventListener("click", function (ev) {
