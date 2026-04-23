@@ -1,6 +1,7 @@
 package render
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/matias-sanchez/My-gather/model"
@@ -48,6 +49,47 @@ func TestSnapshotSignature(t *testing.T) {
 	}
 }
 
+// buildDedupView is the shared test harness for dedup assertions:
+// feed it per-snapshot VariableEntry slices and it returns the
+// collapsed reportView the renderer would produce. Canonical fixture
+// shape for dedup tests — adding a new test must not duplicate this.
+func buildDedupView(t *testing.T, snapshots ...[]model.VariableEntry) *reportView {
+	t.Helper()
+	per := make([]model.SnapshotVariables, len(snapshots))
+	snaps := make([]*model.Snapshot, len(snapshots))
+	for i, e := range snapshots {
+		per[i] = model.SnapshotVariables{
+			SnapshotPrefix: fmt.Sprintf("snap%d", i+1),
+			Data:           &model.VariablesData{Entries: e},
+		}
+		snaps[i] = &model.Snapshot{}
+	}
+	rpt := &model.Report{
+		VariablesSection: &model.VariablesSection{PerSnapshot: per},
+		Collection:       &model.Collection{Snapshots: snaps},
+	}
+	sigs := computeVariableSignatures(rpt.VariablesSection)
+	view, err := buildView(rpt, rpt.Collection, sigs)
+	if err != nil {
+		t.Fatalf("buildView: %v", err)
+	}
+	return view
+}
+
+// changedRowNames returns the sorted names of rows flagged Changed in
+// a collapsed variable-snapshot view. Extracted so both the linear and
+// the cyclic dedup tests assert Changed semantics through the same
+// lens.
+func changedRowNames(v variableSnapshotView) []string {
+	var out []string
+	for _, row := range v.Entries {
+		if row.Changed {
+			out = append(out, row.Name)
+		}
+	}
+	return out
+}
+
 // TestDedupPreservesFirstAndChanges — an [A, A, B, B] sequence
 // collapses to two panels. The first panel's RangeNote covers #1–#2,
 // the second covers #3–#4, and the second panel's Changed flag is
@@ -63,22 +105,7 @@ func TestDedupPreservesFirstAndChanges(t *testing.T) {
 	a := mkEntries("128M", "200")
 	b := mkEntries("256M", "200") // only innodb_buffer_pool_size differs
 
-	rpt := &model.Report{
-		VariablesSection: &model.VariablesSection{
-			PerSnapshot: []model.SnapshotVariables{
-				{SnapshotPrefix: "snap1", Data: &model.VariablesData{Entries: a}},
-				{SnapshotPrefix: "snap2", Data: &model.VariablesData{Entries: a}},
-				{SnapshotPrefix: "snap3", Data: &model.VariablesData{Entries: b}},
-				{SnapshotPrefix: "snap4", Data: &model.VariablesData{Entries: b}},
-			},
-		},
-		Collection: &model.Collection{Snapshots: []*model.Snapshot{{}, {}, {}, {}}},
-	}
-	sigs := computeVariableSignatures(rpt.VariablesSection)
-	view, err := buildView(rpt, rpt.Collection, sigs)
-	if err != nil {
-		t.Fatalf("buildView: %v", err)
-	}
+	view := buildDedupView(t, a, a, b, b)
 	if len(view.VariableSnapshots) != 2 {
 		t.Fatalf("want 2 kept panels, got %d", len(view.VariableSnapshots))
 	}
@@ -96,12 +123,7 @@ func TestDedupPreservesFirstAndChanges(t *testing.T) {
 
 	// Second panel: only innodb_buffer_pool_size should be flagged
 	// Changed. sort_buffer_size and max_connections did not change.
-	var changedNames []string
-	for _, row := range view.VariableSnapshots[1].Entries {
-		if row.Changed {
-			changedNames = append(changedNames, row.Name)
-		}
-	}
+	changedNames := changedRowNames(view.VariableSnapshots[1])
 	if len(changedNames) != 1 || changedNames[0] != "innodb_buffer_pool_size" {
 		t.Errorf("second panel Changed rows: want [innodb_buffer_pool_size], got %v", changedNames)
 	}
@@ -131,23 +153,7 @@ func TestDedupCyclePattern(t *testing.T) {
 		{Name: "innodb_buffer_pool_size", Value: "256M"},
 		{Name: "max_connections", Value: "200"},
 	}
-	rpt := &model.Report{
-		VariablesSection: &model.VariablesSection{
-			PerSnapshot: []model.SnapshotVariables{
-				{SnapshotPrefix: "snap1", Data: &model.VariablesData{Entries: a}},
-				{SnapshotPrefix: "snap2", Data: &model.VariablesData{Entries: a}},
-				{SnapshotPrefix: "snap3", Data: &model.VariablesData{Entries: b}},
-				{SnapshotPrefix: "snap4", Data: &model.VariablesData{Entries: b}},
-				{SnapshotPrefix: "snap5", Data: &model.VariablesData{Entries: a}},
-			},
-		},
-		Collection: &model.Collection{Snapshots: []*model.Snapshot{{}, {}, {}, {}, {}}},
-	}
-	sigs := computeVariableSignatures(rpt.VariablesSection)
-	view, err := buildView(rpt, rpt.Collection, sigs)
-	if err != nil {
-		t.Fatalf("buildView: %v", err)
-	}
+	view := buildDedupView(t, a, a, b, b, a)
 	if got := len(view.VariableSnapshots); got != 3 {
 		t.Fatalf("want 3 kept panels for [A,A,B,B,A]; got %d", got)
 	}
@@ -172,12 +178,7 @@ func TestDedupCyclePattern(t *testing.T) {
 	// Panel 3 is compared against panel 2 (the last kept panel, which
 	// held B), so innodb_buffer_pool_size must be flagged Changed on
 	// the re-entry to A.
-	var changed []string
-	for _, row := range view.VariableSnapshots[2].Entries {
-		if row.Changed {
-			changed = append(changed, row.Name)
-		}
-	}
+	changed := changedRowNames(view.VariableSnapshots[2])
 	if len(changed) != 1 || changed[0] != "innodb_buffer_pool_size" {
 		t.Errorf("second-A panel Changed rows: want [innodb_buffer_pool_size] (vs prior B); got %v", changed)
 	}

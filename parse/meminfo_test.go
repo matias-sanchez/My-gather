@@ -180,9 +180,22 @@ func TestMeminfoDataBeforeFirstTS(t *testing.T) {
 				i, data.Series[i].Metric, got)
 		}
 	}
+	// Look up mem_free by Metric name rather than position. The
+	// declared series order is already pinned by TestMeminfoGolden;
+	// this test only cares about the "discard pre-TS lines" behaviour.
+	var memFree *model.MetricSeries
+	for i := range data.Series {
+		if data.Series[i].Metric == "mem_free" {
+			memFree = &data.Series[i]
+			break
+		}
+	}
+	if memFree == nil {
+		t.Fatalf("mem_free series not found")
+	}
 	// The single sample's mem_free must correspond to the post-TS value
 	// (7 GB ≈ 7000000 kB / 1048576), not the pre-TS 5 GB.
-	got := data.Series[1].Samples[0].Measurements["mem_free"]
+	got := memFree.Samples[0].Measurements["mem_free"]
 	want := 7000000.0 / (1024.0 * 1024.0)
 	if math.Abs(got-want) > 1e-9 {
 		t.Errorf("mem_free = %v GB; want %v GB (post-TS value, not pre-TS)", got, want)
