@@ -24,10 +24,19 @@ func ruleConnectionsSaturation(r *model.Report) Finding {
 		return Finding{Severity: SeveritySkip}
 	}
 	maxConns, okM := variableFloat(r, "max_connections")
+	canEvalUtil := okC && okM && maxConns > 0
+	// If we can evaluate neither the utilization ratio nor a meaningful
+	// Threads_running ceiling, we have no signal — emit Skip instead of
+	// a green "within safe bounds" that would falsely reassure the
+	// reader on an incomplete capture (e.g. -variables missing).
+	if !canEvalUtil && !okR {
+		return Finding{Severity: SeveritySkip}
+	}
 	sev := SeverityOK
 	var util float64
-	summary := "Connection concurrency is within safe bounds."
-	if okC && okM && maxConns > 0 {
+	var summary string
+	if canEvalUtil {
+		summary = "Connection concurrency is within safe bounds."
 		util = connected / maxConns
 		switch {
 		case util >= critUtil:
@@ -39,6 +48,12 @@ func ruleConnectionsSaturation(r *model.Report) Finding {
 			summary = fmt.Sprintf("Threads_connected peaked at %s (%.0f %% of max_connections = %s) — connection pool is stretched.",
 				formatNum(connected), util*100, formatNum(maxConns))
 		}
+	} else {
+		// Utilization ratio unavailable — rely only on the running-
+		// threads ceiling and call that out honestly in the summary
+		// so the reader knows we couldn't assess max_connections
+		// saturation.
+		summary = "max_connections unavailable — only Threads_running concurrency was evaluated."
 	}
 	if okR {
 		switch {

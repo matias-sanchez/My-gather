@@ -2354,13 +2354,19 @@
       // would strand a user-pinned panel inside an inert subtree (all
       // controls disabled) with no way to reach it.
       if (open) {
+        // Unpin first (active-state on pin lives on .ma-panel-host,
+        // but since Option A detached .ma-panel to <body> we target
+        // the pin button inside any open popover directly).
         var pinnedPanels = document.querySelectorAll(".ma-panel-host.is-pinned .ma-panel-pin");
         for (var pi = 0; pi < pinnedPanels.length; pi++) {
           pinnedPanels[pi].click();
         }
-        var openPanels = document.querySelectorAll(".ma-panel-host.is-open .ma-panel-close");
-        for (var ci = 0; ci < openPanels.length; ci++) {
-          openPanels[ci].click();
+        // Close any open popovers. After Option A the panel lives on
+        // <body> (no longer inside .ma-panel-host), so match on the
+        // .ma-panel.ma-panel-open selector we now apply on open.
+        var openPopovers = document.querySelectorAll(".ma-panel.ma-panel-open .ma-panel-close");
+        for (var ci = 0; ci < openPopovers.length; ci++) {
+          openPopovers[ci].click();
         }
       }
       document.body.classList.toggle("nav-open", !!open);
