@@ -75,7 +75,9 @@ func TestPtMextFixture(t *testing.T) {
 		w := want[name]
 		g, ok := got[name]
 		if !ok {
-			t.Logf("%s: not reporting (classified as gauge, deliberate per R8-A)", name)
+			if testing.Verbose() {
+				t.Logf("%s: not reporting (classified as gauge, deliberate per R8-A)", name)
+			}
 			continue
 		}
 		matched++
@@ -175,7 +177,9 @@ func parseExpectedFile(t *testing.T, path string) map[string]ptMextAgg {
 		var total, minv, maxv, avg int64
 		_, err := fmt.Sscanf(stats, " total: %d min: %d max: %d avg: %d", &total, &minv, &maxv, &avg)
 		if err != nil {
-			t.Logf("skipping unparseable expected line: %q (err=%v)", line, err)
+			if testing.Verbose() {
+				t.Logf("skipping unparseable expected line: %q (err=%v)", line, err)
+			}
 			continue
 		}
 		out[name] = ptMextAgg{total, minv, maxv, avg}
@@ -345,7 +349,9 @@ func TestMysqladminGolden(t *testing.T) {
 	for _, c := range classifierSpotCheck {
 		got, present := data.IsCounter[c.name]
 		if !present {
-			t.Logf("%s: not in fixture — skipping allowlist check (%s)", c.name, c.category)
+			if testing.Verbose() {
+				t.Logf("%s: not in fixture — skipping allowlist check (%s)", c.name, c.category)
+			}
 			continue
 		}
 		if got != c.counter {

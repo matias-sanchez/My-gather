@@ -8,37 +8,106 @@
   <summary><span>InnoDB status</span><span class="badge">-innodbstatus1</span></summary>
   <div class="body">
     {{- if .HasInnoDB }}
-      {{- range .InnoDBSnapshots }}
-    <div class="snapshot-group">
-      <h4>{{.Title}}</h4>
-      {{- if .Data }}
-      <div class="callouts">
-        <div class="callout">
-          <p class="k">Semaphores</p>
-          <p class="v">{{.Data.SemaphoreCount}}</p>
-          <p class="sub">waiting / reserved</p>
-        </div>
-        <div class="callout">
-          <p class="k">Pending I/O</p>
-          <p class="v">{{.PendingTotal}}</p>
-          <p class="sub">reads {{.Data.PendingReads}} · writes {{.Data.PendingWrites}}</p>
-        </div>
-        <div class="callout">
-          <p class="k">AHI</p>
-          <p class="v">{{.AHISearchRate}}</p>
-          <p class="sub">searches/sec · hash tbl {{.Data.AHIActivity.HashTableSize}}</p>
-        </div>
-        <div class="callout">
-          <p class="k">History list</p>
-          <p class="v">{{.Data.HistoryListLength}}</p>
-          <p class="sub">HLL (undo depth)</p>
-        </div>
+    <div class="callouts">
+      {{- range .InnoDBMetrics }}
+      <div class="callout">
+        <p class="k">{{.Label}}</p>
+        <p class="v">{{.Worst}}</p>
+        {{- if .Hint }}<p class="sub">{{.Hint}}</p>{{- end }}
+        <p class="stats"><span>min {{.Min}}</span> · <span>avg {{.Avg}}</span> · <span>max {{.Max}}</span></p>
+        {{- if .AHIFormula }}
+        <details class="ahi-formula">
+          <summary>Formula <span class="cb-chev" aria-hidden="true">▸</span></summary>
+          <div class="cb-body">
+            <p class="ahi-formula-line">
+              <span class="ahi-name">hit ratio</span>
+              <span class="ahi-eq">=</span>
+              <span class="ahi-expr">hash / (hash + non-hash)</span>
+            </p>
+            {{- if .AHINoActivity }}
+            <p class="cb-caption">No index activity in any snapshot — hit ratio undefined (0 / 0).</p>
+            {{- else }}
+            <p class="ahi-formula-line computed">
+              <span class="ahi-name">at worst</span>
+              <span class="ahi-eq">=</span>
+              <span class="ahi-expr mono">{{.AHIWorstHash}} / ({{.AHIWorstHash}} + {{.AHIWorstNonHash}})</span>
+              <span class="ahi-eq">=</span>
+              <span class="ahi-result mono">{{.AHIWorstRatio}}%</span>
+            </p>
+            <p class="cb-caption">
+              worst snapshot <code>{{.AHIWorstSnapshot}}</code>
+              {{- if .AHIHasHashTable }} · hash table size {{.AHIHashTableSize}}{{end}}
+            </p>
+            <p class="cb-note">
+              A high hit ratio means most index lookups are served directly
+              from the adaptive hash index; a low one means InnoDB is
+              falling back to B-tree traversal — consider whether AHI's
+              memory is being paid for.
+            </p>
+            {{- end }}
+          </div>
+        </details>
+        {{- end }}
+        {{- if or .BreakdownPeak .BreakdownTotal }}
+        <details class="semaphore-breakdown">
+          <summary>Contention breakdown <span class="cb-chev" aria-hidden="true">▸</span></summary>
+          <div class="cb-body" data-view="peak">
+            {{- if .BreakdownPeak }}
+            <div class="cb-toggle" role="tablist" aria-label="Breakdown scope">
+              <button type="button" role="tab" aria-selected="true"  class="cb-tab active" data-view="peak">At peak</button>
+              {{- if .BreakdownTotal }}
+              <button type="button" role="tab" aria-selected="false" class="cb-tab" data-view="total">Over window</button>
+              {{- end }}
+            </div>
+            <div class="cb-tabview" data-view="peak">
+              <p class="cb-caption">
+                snapshot <code>{{.BreakdownPeakSnapshot}}</code> · {{.BreakdownPeakTotal}} waits
+              </p>
+              <table class="cb-table">
+                <thead><tr><th>Call site</th><th>Mutex</th><th class="num">waits</th><th class="num">%</th></tr></thead>
+                <tbody>
+                  {{- range $i, $row := .BreakdownPeak }}
+                  <tr{{if ge $i 10}} class="cb-tail" hidden{{end}}>
+                    <td class="mono">{{.File}}:{{.Line}}</td>
+                    <td class="mono">{{if .MutexName}}{{.MutexName}}{{else}}–{{end}}</td>
+                    <td class="mono num">{{.Count}}</td>
+                    <td class="mono num">{{.Percent}}%</td>
+                  </tr>
+                  {{- end }}
+                </tbody>
+              </table>
+              {{- if gt (len .BreakdownPeak) 10 }}
+              <button type="button" class="cb-more" data-scope="peak">Show all ({{len .BreakdownPeak}} sites)</button>
+              {{- end }}
+            </div>
+            {{- if .BreakdownTotal }}
+            <div class="cb-tabview" data-view="total" hidden>
+              <p class="cb-caption">summed across the capture window · {{.BreakdownTotalTotal}} waits</p>
+              <table class="cb-table">
+                <thead><tr><th>Call site</th><th>Mutex</th><th class="num">waits</th><th class="num">%</th></tr></thead>
+                <tbody>
+                  {{- range $i, $row := .BreakdownTotal }}
+                  <tr{{if ge $i 10}} class="cb-tail" hidden{{end}}>
+                    <td class="mono">{{.File}}:{{.Line}}</td>
+                    <td class="mono">{{if .MutexName}}{{.MutexName}}{{else}}–{{end}}</td>
+                    <td class="mono num">{{.Count}}</td>
+                    <td class="mono num">{{.Percent}}%</td>
+                  </tr>
+                  {{- end }}
+                </tbody>
+              </table>
+              {{- if gt (len .BreakdownTotal) 10 }}
+              <button type="button" class="cb-more" data-scope="total">Show all ({{len .BreakdownTotal}} sites)</button>
+              {{- end }}
+            </div>
+            {{- end }}
+            {{- end }}
+          </div>
+        </details>
+        {{- end }}
       </div>
-      {{- else }}
-      <p class="banner missing">Data not available for this snapshot.</p>
       {{- end }}
     </div>
-      {{- end }}
     {{- else }}
     <p class="banner missing">Data not available — no <code>-innodbstatus1</code> files were present in this collection.</p>
     {{- end }}
@@ -52,8 +121,8 @@
     <div class="ma-charts-host" id="chart-mysqladmin" data-chart="mysqladmin"
          aria-label="Per-sample counter deltas from mysqladmin extended-status"></div>
     <noscript>
-      <p class="banner">Interactive filtering requires JavaScript. The full list of
-      {{.MysqladminCount}} variables is embedded in the page as a JSON payload.</p>
+      <p class="banner">Charts and interactive filtering require JavaScript. Raw mysqladmin data
+      for {{.MysqladminCount}} variables is embedded in the page as a JSON payload.</p>
     </noscript>
     {{- else }}
     <p class="banner missing">Data not available — no <code>-mysqladmin</code> files were present in this collection.</p>
@@ -67,7 +136,7 @@
     {{- if .HasProcesslist }}
     <div class="chart" id="chart-processlist" data-chart="processlist"
          aria-label="Count of threads per state over time"></div>
-    <noscript><p class="banner">Chart requires JavaScript. Raw processlist data is embedded in the page.</p></noscript>
+    <noscript><p class="banner">Charts require JavaScript. Raw processlist data is embedded in the page.</p></noscript>
     {{- else }}
     <p class="banner missing">Data not available — no <code>-processlist</code> files were present in this collection.</p>
     {{- end }}

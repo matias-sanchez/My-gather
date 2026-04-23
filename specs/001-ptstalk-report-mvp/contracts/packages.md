@@ -231,6 +231,41 @@ Callers use `errors.Is(err, parse.ErrNotAPtStalkDir)` and
 
 `render` converts a `*model.Collection` into an HTML document.
 
+### Exported surface (as of M1 unexports, 2026-04-22)
+
+The public API of this package is intentionally narrow. In v1 the
+exported identifiers are exactly:
+
+- `func Render(w io.Writer, c *model.Collection, opts RenderOptions) error`
+- `type RenderOptions struct { … }`
+- `var ErrNilCollection = errors.New("render: nil Collection")`
+
+Every other helper that participates in determinism, formatting, or
+asset handling is unexported (package-private). In particular, the
+following identifiers — documented as public in earlier drafts of
+this contract — have been unexported and MUST NOT be imported by
+third-party code:
+
+| Former export | Status after M1 |
+|---|---|
+| `FormatFloat`       | unexported (`formatFloat`) |
+| `FormatTimestamp`   | unexported (`formatTimestamp`) |
+| `SortStrings`       | unexported (`sortStrings`) |
+| `SortedKeys`        | unexported (`sortedKeys`) |
+| `SortedEntries`     | unexported (`sortedEntries`) |
+| `Entry`             | unexported (`entry`) |
+| `OrdinalIDGenerator`| unexported (`ordinalIDGenerator`) |
+| `NewOrdinalIDGenerator` | unexported (`newOrdinalIDGenerator`) |
+| `CanonicalReportID` | unexported (`canonicalReportID`) |
+
+Rationale: these helpers are determinism-critical implementation
+details of `Render`. Exposing them invited ad-hoc usage from tests
+and callers that would then pin the package to a surface broader
+than what the spec actually guarantees. The M1 pass collapses the
+exported surface to the three identifiers above; Principle VI
+(library-first) is still satisfied because the package is
+independently importable via `Render`.
+
 ### Functions
 
 ```go
@@ -280,6 +315,32 @@ type RenderOptions struct {
   empty collection" note.
 - `Render` embeds the chart library and stylesheet via `go:embed`; no
   filesystem assets are read at runtime.
+
+---
+
+---
+
+## Package `findings`
+
+`findings` computes rule-based Advisor findings from a parsed
+`*model.Report`. Rules live in `findings/rules_*.go`; output is
+deterministic.
+
+### Exported surface
+
+- `func Analyze(r *model.Report) []Finding`
+- `func Summarise(fs []Finding) Counts`
+- `type Finding struct { … }`
+- `type Counts struct { … }`
+- `type MetricRef struct { … }`
+- `type Severity int` with constants `SeveritySkip`, `SeverityInfo`,
+  `SeverityWarn`, `SeverityCrit`.
+
+The earlier exported helpers `FormatNum` / `HumanInt` have been
+unexported (`formatNum` / `humanInt`). They are formatting details
+consumed only by the rules package internally; consumers should
+format Finding explanations from the structured fields rather than
+re-using the package's internal numeric formatters.
 
 ---
 

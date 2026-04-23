@@ -1,0 +1,206 @@
+{
+  "series": [
+    {
+      "Metric": "mem_available",
+      "Unit": "GB",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "mem_available": 26.915008544921875
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "mem_available": 26.89593505859375
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "mem_available": 26.876861572265625
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "mem_free",
+      "Unit": "GB",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "mem_free": 11.095561981201172
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "mem_free": 11.076488494873047
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "mem_free": 11.057415008544922
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "cached",
+      "Unit": "GB",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "cached": 15.93044662475586
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "cached": 15.939983367919922
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "cached": 15.959056854248047
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "buffers",
+      "Unit": "GB",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "buffers": 0.01322174072265625
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "buffers": 0.01322174072265625
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "buffers": 0.01322174072265625
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "anon_pages",
+      "Unit": "GB",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "anon_pages": 2.65924072265625
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "anon_pages": 2.678314208984375
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "anon_pages": 2.6878509521484375
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "dirty",
+      "Unit": "GB",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "dirty": 0.001697540283203125
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "dirty": 0.001953125
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "dirty": 0.001430511474609375
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "slab",
+      "Unit": "GB",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "slab": 0.7673377990722656
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "slab": 0.7682914733886719
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "slab": 0.7692451477050781
+          }
+        }
+      ]
+    },
+    {
+      "Metric": "swap_used",
+      "Unit": "GB",
+      "Subject": "",
+      "Samples": [
+        {
+          "Timestamp": "2026-04-21T16:51:41Z",
+          "Measurements": {
+            "swap_used": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:42Z",
+          "Measurements": {
+            "swap_used": 0
+          }
+        },
+        {
+          "Timestamp": "2026-04-21T16:51:43Z",
+          "Measurements": {
+            "swap_used": 0
+          }
+        }
+      ]
+    }
+  ],
+  "snapshotBoundaries": null,
+  "diagnostics": null
+}

@@ -1,11 +1,9 @@
 package parse
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"math"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -13,12 +11,6 @@ import (
 
 	"github.com/matias-sanchez/My-gather/model"
 )
-
-// tsLine matches the sample-boundary marker pt-stalk writes at the top
-// of each processlist snapshot:
-//
-//	TS 1776790303.009325313 2026-04-21 16:51:43
-var tsLine = regexp.MustCompile(`^TS\s+(\d+(?:\.\d+)?)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})`)
 
 // parseProcesslist reads pt-stalk -processlist output (repeated
 // SHOW FULL PROCESSLIST \G captures) and returns one
@@ -40,17 +32,17 @@ var tsLine = regexp.MustCompile(`^TS\s+(\d+(?:\.\d+)?)\s+(\d{4}-\d{2}-\d{2}\s+\d
 //
 // Threads with an empty State or an unknown state bucket into "Other".
 func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, []model.Diagnostic) {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 64*1024), 32*1024*1024)
+	scanner := newLineScanner(r)
 
 	var diagnostics []model.Diagnostic
 
 	type rowBuild struct {
-		user    string
-		host    string
-		command string
-		db      string
-		state   string
+		user     string
+		host     string
+		command  string
+		db       string
+		state    string
+		anyField bool
 	}
 	type sampleBuild struct {
 		t       time.Time
@@ -76,7 +68,13 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		if current == nil {
 			return
 		}
-		if current.row == (rowBuild{}) {
+		if !current.row.anyField {
+			// Row-separator fired with none of the tracked fields
+			// populated — nothing to attribute. This is expected for
+			// the first `*** 1. row ***` marker in every sample (it
+			// delimits the start of the first row, not the end of a
+			// prior row), so skip quietly and do not emit a
+			// diagnostic.
 			return
 		}
 		label := current.row.state
@@ -134,7 +132,7 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 
 	for scanner.Scan() {
 		line := strings.TrimRight(scanner.Text(), "\r\n")
-		if m := tsLine.FindStringSubmatch(line); m != nil {
+		if m := reTimestampLine.FindStringSubmatch(line); m != nil {
 			epoch, _ := strconv.ParseFloat(m[1], 64)
 			t := time.Unix(int64(math.Floor(epoch)), 0).UTC()
 			startNewSample(t)
@@ -159,14 +157,19 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		switch key {
 		case "State":
 			current.row.state = val
+			current.row.anyField = true
 		case "User":
 			current.row.user = val
+			current.row.anyField = true
 		case "Host":
 			current.row.host = val
+			current.row.anyField = true
 		case "Command":
 			current.row.command = val
+			current.row.anyField = true
 		case "db":
 			current.row.db = val
+			current.row.anyField = true
 		}
 	}
 	if err := scanner.Err(); err != nil {

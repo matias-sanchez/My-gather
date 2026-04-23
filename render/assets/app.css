@@ -37,6 +37,12 @@
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
   --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+
+  --nav-toggle-top: 16px;
+  --nav-toggle-left: 16px;
+  --nav-toggle-size: 72px;
+  --nav-iris-origin-x: calc(var(--nav-toggle-left) + var(--nav-toggle-size) / 2);
+  --nav-iris-origin-y: calc(var(--nav-toggle-top)  + var(--nav-toggle-size) / 2);
 }
 
 @media (prefers-color-scheme: light) {
@@ -61,6 +67,31 @@
 /* Reset & base. */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+
+/* Focus-visible ring: every interactive element gets a consistent
+   accent ring when focused via keyboard. Applied via :focus-visible
+   so it doesn't fire on mouse clicks. */
+.var-chip:focus-visible,
+.series-pill:focus-visible,
+.ma-chip:focus-visible,
+.ma-action:focus-visible,
+.ma-action-primary:focus-visible,
+.ma-cat-dd-toggle:focus-visible,
+.ma-card-btn:focus-visible,
+.ma-strip:focus-visible,
+.ma-panel-pin:focus-visible,
+.ma-panel-close:focus-visible,
+.ma-cat-load:focus-visible,
+.chart-zoom-reset:focus-visible,
+.view-btn:focus-visible,
+.cb-tab:focus-visible,
+.cb-more:focus-visible,
+.nav-title:focus-visible,
+.advisor-count:focus-visible,
+.nav-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 body {
   background: var(--bg);
   color: var(--fg);
@@ -136,11 +167,11 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
    Top-left, always visible. Doubles as the nav trigger. */
 .nav-toggle {
   position: fixed;
-  top: 16px;
-  left: 16px;
+  top: var(--nav-toggle-top);
+  left: var(--nav-toggle-left);
   z-index: 1101;
-  width: 72px;
-  height: 72px;
+  width: var(--nav-toggle-size);
+  height: var(--nav-toggle-size);
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
   border-radius: 50%;
@@ -232,7 +263,12 @@ body.nav-open .nav-backdrop {
   pointer-events: auto;
 }
 
-/* --- Drawer panel --- */
+/* --- Drawer panel ---
+   Opens with an iris-reveal: a circular clip-path centered on the logo
+   button (52 px in from the top-left corner, same as the button's
+   geometric center) expands to cover the whole drawer. On close it
+   collapses back into the logo, so the panel visually "pours out of"
+   and "retreats into" the button — one continuous object, not two. */
 nav.index {
   position: fixed;
   top: 0;
@@ -250,13 +286,15 @@ nav.index {
     inset -1px 0 0 color-mix(in srgb, var(--accent) 12%, transparent);
   overflow-y: auto;
   font-size: 13px;
-  transform: translateX(-108%);
-  transition: transform 320ms cubic-bezier(.22, 1, .36, 1),
+  clip-path: circle(0 at var(--nav-iris-origin-x) var(--nav-iris-origin-y));
+  pointer-events: none;
+  transition: clip-path 480ms cubic-bezier(.22, 1, .36, 1),
               box-shadow 320ms ease;
-  will-change: transform;
+  will-change: clip-path;
 }
 body.nav-open nav.index {
-  transform: translateX(0);
+  clip-path: circle(200vmax at var(--nav-iris-origin-x) var(--nav-iris-origin-y));
+  pointer-events: auto;
 }
 nav.index::-webkit-scrollbar { width: 8px; }
 nav.index::-webkit-scrollbar-thumb {
@@ -314,7 +352,6 @@ details.nav-group > summary {
   user-select: none;
   border-radius: var(--radius-sm);
 }
-details.nav-group > summary::-webkit-details-marker { display: none; }
 details.nav-group > summary::before {
   content: "▸";
   color: var(--fg-dim);
@@ -377,6 +414,14 @@ main.content {
 
 /* ---------- Sections ---------- */
 
+/* Global <details> marker reset. Webkit uses ::-webkit-details-marker,
+   Firefox + modern Chromium use the CSS pseudo ::marker. Without both,
+   a default bullet or triangle leaks through the custom chevrons used
+   in section summaries, ahi-formula, semaphore-breakdown, nav groups. */
+details > summary { list-style: none; }
+details > summary::marker { content: ""; }
+details > summary::-webkit-details-marker { display: none; }
+
 details.section {
   background: var(--bg-elev);
   border: 1px solid var(--border);
@@ -419,7 +464,6 @@ details.section > summary .badge {
 details.section[open] > summary {
   border-bottom-color: var(--border);
 }
-details.section > summary::-webkit-details-marker { display: none; }
 details.section > summary::before {
   content: "▶";
   color: var(--fg-dim);
@@ -470,7 +514,6 @@ details.subview > summary {
   align-items: center;
   gap: 10px;
 }
-details.subview > summary::-webkit-details-marker { display: none; }
 details.subview > summary::before {
   content: "▸";
   color: var(--fg-dim);
@@ -523,6 +566,21 @@ details.subview > .body { padding: 10px 12px 14px; }
 .banner.warn   { border-color: color-mix(in srgb, var(--warn) 40%, var(--border)); }
 .banner.err    { border-color: color-mix(in srgb, var(--err) 40%, var(--border)); color: var(--fg); }
 .banner code   { color: var(--fg); }
+
+/* Verbatim-passthrough banner (FR-026). Subtle by design: the reader
+   sees it once on open, then it scrolls away with the document. */
+.banner-verbatim {
+  margin: 0;
+  padding: 8px 104px 8px 24px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--warn) 6%, var(--bg-elev));
+  color: var(--fg-muted);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+@media (max-width: 800px) {
+  .banner-verbatim { padding-left: 14px; padding-right: 14px; }
+}
 
 /* ---------- Tables ---------- */
 
@@ -643,6 +701,37 @@ table.variables-table td.status-label {
 table.variables-table tr[data-status="modified"] td.status-label { color: var(--warn); }
 table.variables-table tr[data-status="default"]  td.status-label { color: var(--fg-dim); }
 
+/* Changed rows: the variable's value differs from the previous kept
+   snapshot. Highlighted with a subtle accent tint plus a 2 px left
+   bar so the reader can scan the table top-to-bottom and spot what
+   moved without having to diff values by eye. */
+table.variables-table tr[data-changed="true"] td {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+table.variables-table tr[data-changed="true"] td.status-dot {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+table.variables-table tr[data-changed="true"] td.mono {
+  color: var(--fg);
+}
+table.variables-table tr[data-changed="true"] td.status-label .label-changed {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* Changed chip accent: the panel-level filter that maps to the
+   same highlight. */
+.var-chips .var-chip.chip-changed {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+}
+.var-chips .var-chip.chip-changed.active {
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg-elev));
+  border-color: var(--accent);
+  color: var(--fg);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent) inset;
+}
+
 /* ---------- Scalar callouts (InnoDB per-snapshot) ---------- */
 
 .callouts {
@@ -677,17 +766,200 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   color: var(--fg-dim);
   margin-top: 2px;
 }
-
-.snapshot-group {
-  margin: 0 0 12px 0;
+/* AHI formula breakdown: expandable panel inside the AHI callout
+   that shows the hit-ratio formula literally and then re-renders it
+   with the worst-snapshot numbers substituted in, so a reader can
+   see WHY the hit ratio is what it is. */
+.ahi-formula {
+  margin-top: 10px;
+  border-top: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
+  padding-top: 8px;
 }
-.snapshot-group h4 {
-  margin: 0 0 6px 0;
+.ahi-formula > summary {
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  user-select: none;
+}
+.ahi-formula[open] > summary { color: var(--fg); }
+.ahi-formula .cb-chev {
+  display: inline-block;
+  transition: transform 120ms ease;
+}
+.ahi-formula[open] > summary .cb-chev { transform: rotate(90deg); }
+.ahi-formula .cb-body { padding-top: 8px; }
+.ahi-formula-line {
+  margin: 2px 0;
+  font-family: var(--mono);
   font-size: 12px;
   color: var(--fg-muted);
-  font-weight: 500;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+.ahi-formula-line.computed { color: var(--fg); }
+.ahi-formula-line .ahi-name {
+  color: var(--fg-muted);
+  min-width: 70px;
+}
+.ahi-formula-line.computed .ahi-name { color: var(--accent); font-weight: 600; }
+.ahi-formula-line .ahi-eq { color: var(--fg-dim); }
+.ahi-formula-line .ahi-expr { color: inherit; }
+.ahi-formula-line .ahi-result {
+  color: var(--fg);
+  font-weight: 700;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.ahi-formula .cb-caption {
+  margin: 4px 0 0;
   font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+}
+.ahi-formula .cb-caption code {
+  background: transparent;
+  color: var(--fg-muted);
+  padding: 0;
+}
+.ahi-formula .cb-note {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--fg-muted);
+  line-height: 1.45;
+}
+
+/* Semaphore contention-breakdown: expandable panel inside the
+   Semaphores callout listing the wait sites that produced the worst
+   count, with optional switch to a summed-over-window view. Kept
+   collapsed by default so the 4-card row reads at a glance. */
+.semaphore-breakdown {
+  margin-top: 10px;
+  border-top: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
+  padding-top: 8px;
+}
+.semaphore-breakdown > summary {
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg-muted);
+  user-select: none;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.semaphore-breakdown[open] > summary { color: var(--fg); }
+.semaphore-breakdown .cb-chev {
+  display: inline-block;
+  transition: transform 120ms ease;
+}
+.semaphore-breakdown[open] > summary .cb-chev {
+  transform: rotate(90deg);
+}
+.semaphore-breakdown .cb-body {
+  padding-top: 8px;
+}
+.semaphore-breakdown .cb-toggle {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding: 2px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.semaphore-breakdown .cb-tab {
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+.semaphore-breakdown .cb-tab:hover { color: var(--fg); }
+.semaphore-breakdown .cb-tab.active {
+  background: var(--accent-soft);
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+.semaphore-breakdown .cb-caption {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+}
+.semaphore-breakdown .cb-caption code {
+  background: transparent;
+  color: var(--fg-muted);
+  padding: 0;
+}
+.semaphore-breakdown .cb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.semaphore-breakdown .cb-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.semaphore-breakdown .cb-table td {
+  padding: 3px 8px 3px 0;
+  color: var(--fg);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+}
+.semaphore-breakdown .cb-table th.num,
+.semaphore-breakdown .cb-table td.num {
+  text-align: right;
+}
+.semaphore-breakdown .cb-table tbody tr:first-child td {
+  color: var(--fg);
+  font-weight: 600;
+}
+.semaphore-breakdown .cb-more {
+  margin-top: 8px;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+.semaphore-breakdown .cb-more:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+
+/* Smaller min/avg/max distribution footer under the main (worst) value.
+   Visually de-emphasised so the peak is what the reader lands on. */
+.callout .stats {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  margin: 6px 0 0;
   letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+.callout .stats span {
+  white-space: nowrap;
 }
 
 /* ---------- Charts ---------- */
@@ -801,10 +1073,32 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
 
 /* uPlot theming overrides. uPlot's default legend is verbose; we hide
    it and render our own pill legend underneath. */
-.uplot { font-family: var(--mono) !important; }
+.uplot { font-family: var(--mono) !important; position: relative; }
 .uplot .u-title { display: none; }
 .uplot .u-legend { display: none; }
 .uplot .u-over { cursor: crosshair; }
+
+/* Y-axis unit badge: small overlay in the plot's top-left corner so a
+   reader can tell "20 40 60" means %CPU vs threads vs Δ/sample
+   without widening the axis gutter. Non-interactive (pointer-events:
+   none) so it never intercepts cursor moves or zoom drags. */
+.uplot .chart-unit {
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  z-index: 1;
+  pointer-events: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  border-radius: 999px;
+  padding: 1px 8px;
+  backdrop-filter: blur(4px);
+}
 
 /* Hover tooltip — rendered inside .u-over and position:absolute. */
 .chart-tooltip {
@@ -867,6 +1161,35 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   color: var(--fg-dim);
   font-style: italic;
 }
+/* Focused row: the series the cursor is currently pointing at — the
+   band under Y in a stacked chart, or the line closest to the cursor
+   in a line chart. Bolded and accented with a 2 px bar in the series
+   color (set as a custom property from app.js). */
+.chart-tooltip .tt-row.is-focused {
+  border-left: 2px solid var(--focus-color, var(--fg));
+  padding-left: 6px;
+  margin-left: -2px;
+  font-weight: 700;
+}
+.chart-tooltip .tt-row.is-focused .tt-label,
+.chart-tooltip .tt-row.is-focused .tt-value {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+/* Dedup subtitle shown on a kept variables snapshot that represents
+   an identical run (e.g. "Identical values seen in snapshots #2–#10"). */
+.snapshot-range-note {
+  margin: 0 0 10px 0;
+  padding: 6px 10px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-left: 2px solid color-mix(in srgb, var(--accent) 60%, var(--border));
+  border-radius: 3px;
+  letter-spacing: 0.01em;
+}
 
 /* Clickable pill legend rendered by app.js directly after the chart. */
 .series-legend {
@@ -899,6 +1222,15 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
 .series-legend .series-pill.active { color: var(--fg); background: var(--bg-elev); }
 .series-legend .series-pill:not(.active) .swatch { opacity: 0.3; }
 .series-legend .series-pill:not(.active) .lbl { text-decoration: line-through; opacity: 0.55; }
+/* is-focused: the series the chart cursor is pointing at right now.
+   Driven live by app.js; independent of the persistent .active
+   (show/hide) state and the transient hover-to-focus alpha fade. */
+.series-legend .series-pill.is-focused {
+  background: color-mix(in srgb, var(--pill-focus-color, var(--accent)) 18%, var(--bg-elev-2));
+  border-color: var(--pill-focus-color, var(--accent));
+  color: var(--fg);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--pill-focus-color, var(--accent)) 45%, transparent) inset;
+}
 
 /* Chart view-toggle toolbar (used by iostat for util / aqu-sz). */
 .chart-view-toolbar {
@@ -928,12 +1260,150 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
 
 /* ---------- Mysqladmin filter panel ---------- */
 
-.ma-panel {
+/* Floating counter-selection panel.
+   .ma-panel-host is a positioning shell that holds the always-visible
+   sticky strip + the (normally hidden) full panel. The panel pops
+   open as a backdrop-blurred overlay anchored below the strip so it
+   never pushes the chart stack down — charts always own the full
+   vertical real estate. */
+.ma-panel-host {
+  position: relative;
+  margin-bottom: 12px;
+}
+.ma-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding: 8px 14px;
+  background: color-mix(in srgb, var(--bg-elev-2) 78%, transparent);
+  backdrop-filter: blur(6px);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  color: var(--fg);
+  cursor: pointer;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 12px;
+  transition: border-color 180ms ease, background 180ms ease;
+  text-align: left;
+}
+.ma-strip:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--bg-elev) 90%, transparent);
+}
+.ma-panel-host.is-open .ma-strip {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent) inset;
+}
+.ma-strip-pencil {
+  color: var(--accent);
+  font-size: 13px;
+}
+.ma-strip-editing { display: inline-flex; align-items: baseline; gap: 6px; }
+.ma-strip-editing .k {
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+}
+.ma-strip-editing .v { color: var(--accent); font-weight: 600; }
+.ma-strip-sep { color: var(--fg-dim); }
+.ma-strip-count { color: var(--fg-muted); }
+.ma-strip-hint {
+  margin-left: auto;
+  color: var(--fg-dim);
+  font-size: 10.5px;
+}
+.ma-strip-hint kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
   background: var(--bg);
-  padding: 10px;
-  margin-bottom: 12px;
+  color: var(--fg-muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  margin: 0 2px;
+  text-align: center;
+}
+
+.ma-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg-elev) 82%, transparent);
+  backdrop-filter: blur(12px) saturate(120%);
+  box-shadow:
+    0 24px 60px -20px rgba(0, 0, 0, 0.55),
+    0 4px 14px rgba(0, 0, 0, 0.3);
+  padding: 12px 14px;
+  max-height: min(72vh, 620px);
+  overflow-y: auto;
+  display: none;
+  transform-origin: top center;
+}
+.ma-panel-host.is-open .ma-panel {
+  display: block;
+  animation: ma-panel-drop 200ms cubic-bezier(.22, 1, .36, 1);
+}
+@keyframes ma-panel-drop {
+  from { opacity: 0; transform: scaleY(.94) translateY(-6px); }
+  to   { opacity: 1; transform: scaleY(1)   translateY(0); }
+}
+.ma-panel-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+.ma-panel-pin,
+.ma-panel-close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  padding: 0;
+  line-height: 1;
+}
+.ma-panel-pin:hover,
+.ma-panel-close:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+.ma-panel-pin.active {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-color: var(--accent);
+  color: var(--fg);
+}
+.ma-panel-close { font-size: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .ma-panel-host.is-open .ma-panel { animation: none; }
 }
 /* Two-row labelled chip layout. */
 .ma-chip-row {
@@ -962,14 +1432,6 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   flex-wrap: wrap;
   gap: 5px;
 }
-/* legacy alias for back-compat with any earlier markup */
-.ma-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 10px;
-}
-.ma-chips .ma-chip,
 .ma-chip-bag .ma-chip {
   background: var(--bg-elev-2);
   border: 1px solid var(--border);
@@ -984,9 +1446,7 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   gap: 6px;
   transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
 }
-.ma-chips .ma-chip:hover,
 .ma-chip-bag .ma-chip:hover { color: var(--fg); border-color: var(--border-strong); }
-.ma-chips .ma-chip.active,
 .ma-chip-bag .ma-chip.active {
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
@@ -1008,17 +1468,6 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   border-color: var(--ok);
   color: var(--fg);
 }
-.ma-chip-sep {
-  display: inline-block;
-  width: 1px;
-  height: 18px;
-  background: var(--border);
-  margin: 0 2px;
-  align-self: center;
-}
-/* Category chips slightly smaller / denser than view-mode chips. */
-.ma-chip-category { padding: 2px 8px 2px 10px; font-size: 11.5px; }
-
 /* Categories row — custom dropdown + two action buttons. */
 .ma-cat-actions {
   display: flex;
@@ -1098,10 +1547,9 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   text-align: center;
 }
 
-.ma-cat-load,
-.ma-cat-add {
+.ma-cat-load {
   background: var(--bg-elev-2);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
   color: var(--fg);
   font: inherit;
   font-size: 12px;
@@ -1109,9 +1557,7 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
-.ma-cat-load { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
 .ma-cat-load:hover { background: var(--accent-soft); border-color: var(--accent); }
-.ma-cat-add:hover  { color: var(--fg); border-color: var(--border-strong); }
 .ma-search {
   display: flex;
   align-items: center;
@@ -1318,11 +1764,6 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   opacity: 0.35;
   cursor: not-allowed;
 }
-.ma-card-btn.active {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
-}
 .ma-card-plot {
   position: relative;
   width: 100%;
@@ -1525,7 +1966,6 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   row-gap: 4px;
   align-items: baseline;
 }
-.finding > summary::-webkit-details-marker { display: none; }
 .finding > summary::after {
   content: "▸";
   grid-column: 4 / 5;
@@ -1545,7 +1985,7 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
   padding: 3px 10px 3px 8px;
   border-radius: 999px;
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   line-height: 1;
@@ -1562,7 +2002,7 @@ table.variables-table tr[data-status="default"]  td.status-label { color: var(--
 }
 .sev-chip.sev-crit { color: var(--err);    background: color-mix(in srgb, var(--err)    18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--err)    30%, transparent); }
 .sev-chip.sev-warn { color: var(--warn);   background: color-mix(in srgb, var(--warn)   18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warn)   30%, transparent); }
-.sev-chip.sev-info { color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent); }
+.sev-chip.sev-info { color: var(--accent); background: color-mix(in srgb, var(--accent) 30%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }
 .sev-chip.sev-ok   { color: var(--ok);     background: color-mix(in srgb, var(--ok)     18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ok)     30%, transparent); }
 
 .finding-title {
@@ -1720,7 +2160,6 @@ details.diagnostics > summary {
   align-items: center;
   gap: 10px;
 }
-details.diagnostics > summary::-webkit-details-marker { display: none; }
 details.diagnostics > summary::before {
   content: "▶";
   color: var(--fg-dim);
@@ -1780,7 +2219,7 @@ details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
 @media print {
   :root { color-scheme: light only; }
   body  { background: #fff !important; color: #000; }
-  nav.index, .chart-toolbar select[multiple], .chart-toolbar label { display: none !important; }
+  nav.index { display: none !important; }
   details          { break-inside: avoid; }
   details > summary { break-after: avoid; }
   /* Can't programmatically open details in CSS; use a body class that

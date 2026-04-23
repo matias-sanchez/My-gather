@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"strconv"
@@ -52,8 +51,7 @@ var vmstatColumns = []struct {
 // Samples don't carry per-sample timestamps; we synthesise them as
 // snapshotStart + sample_index * 1s.
 func parseVmstat(r io.Reader, snapshotStart time.Time, sourcePath string) (*model.VmstatData, []model.Diagnostic) {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 64*1024), 32*1024*1024)
+	scanner := newLineScanner(r)
 
 	var diagnostics []model.Diagnostic
 	addDiag := func(line int, msg string) {

@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"sort"
@@ -27,8 +26,7 @@ import (
 // deduplicated (first occurrence wins per FR-012) and a
 // SeverityWarning diagnostic records each drop.
 func parseVariables(r io.Reader, sourcePath string) (*model.VariablesData, []model.Diagnostic) {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 64*1024), 32*1024*1024)
+	scanner := newLineScanner(r)
 
 	var diagnostics []model.Diagnostic
 	addDiag := func(line int, sev model.Severity, msg string) {

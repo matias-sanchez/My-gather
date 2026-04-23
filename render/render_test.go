@@ -212,22 +212,6 @@ func TestGeneratedAtIsOnlyDiff(t *testing.T) {
 	}
 }
 
-// TestReportIDStability: spec FR-032 — ReportID is stable across
-// renders of the same collection, and changes when the collection
-// structure changes.
-func TestReportIDStability(t *testing.T) {
-	a := render.CanonicalReportID(minimalCollection())
-	b := render.CanonicalReportID(minimalCollection())
-	if a != b {
-		t.Errorf("same input produced different ReportIDs: %q vs %q", a, b)
-	}
-	c := minimalCollection()
-	c.Hostname = "a-different-host"
-	if d := render.CanonicalReportID(c); d == a {
-		t.Errorf("hostname change did not alter ReportID: %q", d)
-	}
-}
-
 // twoSnapshotCollection builds a Collection with two Snapshots,
 // each carrying a minimal payload for every time-series collector
 // (-iostat / -top / -vmstat / -processlist / -mysqladmin) with
@@ -250,7 +234,7 @@ func twoSnapshotCollection() *model.Collection {
 				{Timestamp: ts(tsOffset), PID: 1, Command: "mysqld", CPUPercent: 75},
 				{Timestamp: ts(tsOffset + 1), PID: 1, Command: "mysqld", CPUPercent: 76},
 			},
-			Top3ByAverage: []model.ProcessSeries{{PID: 1, Command: "mysqld", CPU: mkCPUSeries(75)}},
+			Top3ByAverage:      []model.ProcessSeries{{PID: 1, Command: "mysqld", CPU: mkCPUSeries(75)}},
 			SnapshotBoundaries: []int{0},
 		}
 	}

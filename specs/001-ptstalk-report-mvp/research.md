@@ -615,7 +615,7 @@ Normative in spec FR-034.
 
 **Implementation notes**:
 
-- `render/render.go::classifyMysqladminCategory` evaluates matchers
+- `render/assets.go::classifyMysqladminCategory` evaluates matchers
   in declared order; `members` overrides win over matcher matches.
 - `_source` / `_updated` / `_note` keys at the top of the JSON
   document record curation provenance (same pattern as R10).

@@ -11,16 +11,16 @@ package coverage_test
 
 import (
 	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/tests/goldens"
 )
 
 func TestEverySuffixHasFixture(t *testing.T) {
-	root := findRepoRoot(t)
+	root := goldens.RepoRoot(t)
 	testdata := filepath.Join(root, "testdata")
 
 	for _, suffix := range model.KnownSuffixes {
@@ -46,21 +46,4 @@ func TestEverySuffixHasFixture(t *testing.T) {
 			}
 		})
 	}
-}
-
-// findRepoRoot ascends from the test's working directory until it
-// finds a go.mod.
-func findRepoRoot(t *testing.T) string {
-	t.Helper()
-	wd, err := filepath.Abs(".")
-	if err != nil {
-		t.Fatalf("abs cwd: %v", err)
-	}
-	for dir := wd; dir != "/" && dir != ""; dir = filepath.Dir(dir) {
-		if fi, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil && !fi.IsDir() {
-			return dir
-		}
-	}
-	t.Fatalf("could not find go.mod starting from %s", wd)
-	return ""
 }

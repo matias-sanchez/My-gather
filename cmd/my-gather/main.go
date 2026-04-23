@@ -31,14 +31,14 @@ var (
 
 // Exit codes (see contracts/cli.md).
 const (
-	exitOK              = 0
-	exitUsage           = 2
-	exitInputPath       = 3
-	exitNotAPtStalkDir  = 4
-	exitSizeBound       = 5
-	exitOutputExists    = 6
-	exitOutputInsideIn  = 7
-	exitInternal        = 70
+	exitOK             = 0
+	exitUsage          = 2
+	exitInputPath      = 3
+	exitNotAPtStalkDir = 4
+	exitSizeBound      = 5
+	exitOutputExists   = 6
+	exitOutputInsideIn = 7
+	exitInternal       = 70
 )
 
 func main() {

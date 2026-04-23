@@ -37,6 +37,12 @@
   }
   var REPORT_ID = REPORT.reportID;
 
+  // Canonical selector for every collapsible section in the main
+  // content column (OS / DB / Variables / Advisor). Both the collapse
+  // persistence init and the nav scroll-spy observe the same set, so
+  // the selector lives in one place.
+  var MAIN_SECTIONS_SELECTOR = "main.content details[id]";
+
   // --- Storage helper ---------------------------------------------
 
   function storageGet(key) {
@@ -46,7 +52,10 @@
     try { window.localStorage.setItem(key, val); } catch (_) { /* ignore */ }
   }
   function collapseKey(sectionId) {
-    return "mygather:" + REPORT_ID + ":collapse:" + sectionId;
+    // v2: top-level sections now default to collapsed. Bumping the
+    // namespace invalidates any "open" entries left over from v1
+    // reports of the same capture so the new default is honoured.
+    return "mygather:v2:" + REPORT_ID + ":collapse:" + sectionId;
   }
   function mysqladminSelectionKey() {
     return "mygather:" + REPORT_ID + ":mysqladmin:selected";
@@ -57,7 +66,7 @@
   function initCollapsePersistence() {
     // Scope strictly to main-content details; nav groups have their
     // own namespace under initNavGroups().
-    var blocks = document.querySelectorAll("main.content details[id]");
+    var blocks = document.querySelectorAll(MAIN_SECTIONS_SELECTOR);
     for (var i = 0; i < blocks.length; i++) {
       (function (d) {
         var saved = storageGet(collapseKey(d.id));
@@ -86,25 +95,39 @@
         var chips = input.parentNode.querySelectorAll(
           '.var-chip[data-snapshot="' + cssEscape(snapshot) + '"]'
         );
-        var state = { needle: "", statusFilter: "all" };
+        // Default filter prefers 'changed' when the panel was kept
+        // due to a dedup diff (the Changed chip carries the .active
+        // class emitted by the template); otherwise fall back to
+        // 'modified'. The DOM is the source of truth so both
+        // branches stay in sync.
+        var initialChip = input.parentNode.querySelector(".var-chip.active");
+        var initialFilter = (initialChip && initialChip.getAttribute("data-filter")) || "modified";
+        var state = { needle: "", statusFilter: initialFilter };
 
         function update() {
           var needle = state.needle;
           var sf = state.statusFilter;
-          var shown = 0, modified = 0;
+          var shown = 0, modified = 0, changed = 0;
           for (var r = 0; r < rows.length; r++) {
             var row = rows[r];
             var name = row.getAttribute("data-variable-name") || "";
             var status = row.getAttribute("data-status") || "unknown";
+            var isChanged = row.getAttribute("data-changed") === "true";
             if (status === "modified") modified++;
+            if (isChanged) changed++;
             var nameHit = needle === "" || name.toLowerCase().indexOf(needle) !== -1;
-            var statusHit = sf === "all" || sf === status;
+            var statusHit;
+            if (sf === "all")          statusHit = true;
+            else if (sf === "changed") statusHit = isChanged;
+            else                       statusHit = sf === status;
             var hit = nameHit && statusHit;
             row.hidden = !hit;
             if (hit) shown++;
           }
           if (countEl) {
-            countEl.textContent = shown + " of " + rows.length + " shown · " + modified + " modified";
+            var summary = shown + " of " + rows.length + " shown · " + modified + " modified";
+            if (changed > 0) summary += " · " + changed + " changed";
+            countEl.textContent = summary;
           }
         }
 
@@ -115,7 +138,11 @@
         chips.forEach(function (c) {
           c.addEventListener("click", function () {
             state.statusFilter = c.getAttribute("data-filter") || "all";
-            chips.forEach(function (x) { x.classList.toggle("active", x === c); });
+            chips.forEach(function (x) {
+              var on = x === c;
+              x.classList.toggle("active", on);
+              x.setAttribute("aria-selected", on ? "true" : "false");
+            });
             update();
           });
         });
@@ -341,7 +368,25 @@
         init:  [attachTooltip],
         setCursor: [updateTooltipOnCursor],
         drawAxes: [makeBoundaryDrawHook(boundaries, timestamps)],
+        ready: [makeUnitBadgeHook(unit)],
       },
+    };
+  }
+
+  // makeUnitBadgeHook returns a uPlot ready-hook that appends a small
+  // "unit" badge to the plot root. Kept as an overlay (absolute
+  // positioning) instead of a uPlot axis label so the axis stays
+  // narrow and the chart's rhythm isn't disturbed — a reader's eye
+  // can catch the unit in the corner without the tick column getting
+  // wider. No-op when unit is empty so mysqladmin counters with
+  // heterogeneous units don't get a misleading label.
+  function makeUnitBadgeHook(unit) {
+    return function (u) {
+      if (!unit) return;
+      var badge = document.createElement("span");
+      badge.className = "chart-unit";
+      badge.textContent = unit;
+      u.root.appendChild(badge);
     };
   }
 
@@ -376,10 +421,55 @@
 
     u.over.addEventListener("mouseleave", function () {
       tt.style.display = "none";
+      if (typeof u.__setLegendFocus === "function") u.__setLegendFocus(-1, null);
     });
     u.over.addEventListener("mouseenter", function () {
       tt.style.display = "block";
     });
+  }
+
+  // findFocusedSeriesIdx returns the uPlot series index that the
+  // cursor is currently pointing at, or -1 when none applies. For
+  // stacked-bar plots (u.__rawData is set), it walks the series from
+  // last-to-first (visual bottom band → top band): the last series'
+  // u.data[i][idx] is the smallest cumulative sum (the bottom band's
+  // top edge), so we can walk upward through bands using each one's
+  // cumulative top as the next band's bottom. For line plots it
+  // picks the visible series whose painted pixel-Y at the cursor
+  // x-index is closest to the cursor pixel-Y.
+  function findFocusedSeriesIdx(u) {
+    var idx = u.cursor.idx;
+    if (idx == null) return -1;
+    var topPx = u.cursor.top;
+    if (topPx == null || topPx < 0) return -1;
+    var stacked = !!u.__rawData;
+    if (stacked) {
+      var yVal = u.posToVal(topPx, "y");
+      if (yVal == null || isNaN(yVal) || yVal < 0) return -1;
+      var prevTop = 0;
+      for (var i = u.series.length - 1; i >= 1; i--) {
+        if (u.series[i].show === false) continue;
+        var top = u.data[i][idx];
+        if (top == null || isNaN(top)) continue;
+        // Hidden or zero-height bands have top == prevTop; skip them.
+        if (top <= prevTop) continue;
+        if (yVal >= prevTop && yVal <= top) return i;
+        prevTop = top;
+      }
+      return -1;
+    }
+    var bestIdx = -1;
+    var bestDist = Infinity;
+    for (var j = 1; j < u.series.length; j++) {
+      if (u.series[j].show === false) continue;
+      var v = u.data[j][idx];
+      if (v == null || isNaN(v)) continue;
+      var yPx = u.valToPos(v, "y");
+      if (yPx == null || isNaN(yPx)) continue;
+      var d = Math.abs(yPx - topPx);
+      if (d < bestDist) { bestDist = d; bestIdx = j; }
+    }
+    return bestIdx;
   }
 
   // updateTooltipOnCursor runs on every uPlot setCursor, which fires
@@ -390,9 +480,16 @@
     var idx = u.cursor.idx;
     if (idx == null || u.cursor.left < 0) {
       tt.style.display = "none";
+      if (typeof u.__setLegendFocus === "function") u.__setLegendFocus(-1, null);
       return;
     }
     tt.style.display = "block";
+
+    var focusedIdx = findFocusedSeriesIdx(u);
+    var focusedColor = null;
+    if (focusedIdx >= 0 && u.series[focusedIdx]) {
+      focusedColor = u.series[focusedIdx].stroke || null;
+    }
 
     // Build rows: timestamp header + one row per visible series.
     var x = u.data[0][idx];
@@ -411,15 +508,18 @@
       if (s.show === false) continue;
       var v = (rawData && rawData[i]) ? rawData[i][idx] : u.data[i][idx];
       if (v == null || (typeof v === "number" && isNaN(v))) continue;
-      entries.push({ label: s.label, color: s.stroke, value: v });
+      entries.push({ idx: i, label: s.label, color: s.stroke, value: v });
     }
     entries.sort(function (a, b) { return Math.abs(b.value) - Math.abs(a.value); });
     if (entries.length === 0) {
       rows.push('<div class="tt-empty">no data at this point</div>');
     } else {
       entries.forEach(function (e) {
+        var focusCls = e.idx === focusedIdx ? " is-focused" : "";
+        var focusStyle = e.idx === focusedIdx
+          ? ' style="--focus-color:' + e.color + '"' : "";
         rows.push(
-          '<div class="tt-row">' +
+          '<div class="tt-row' + focusCls + '"' + focusStyle + ">" +
             '<span class="tt-sw" style="background:' + e.color + '"></span>' +
             '<span class="tt-label">' + escapeHTML(String(e.label)) + '</span>' +
             '<span class="tt-value">' + formatTooltipValue(e.value) + '</span>' +
@@ -428,14 +528,17 @@
       });
     }
     tt.innerHTML = rows.join("");
+    if (typeof u.__setLegendFocus === "function") {
+      u.__setLegendFocus(focusedIdx, focusedColor);
+    }
 
     // Position: offset +12 px right/below the cursor; flip to the
     // left if near the right edge.
     var left = u.cursor.left + 14;
     var top  = u.cursor.top  + 14;
     var rect = tt.getBoundingClientRect();
-    var plotW = u.bbox.width / devicePixelRatio;
-    var plotH = u.bbox.height / devicePixelRatio;
+    var plotW = u.over.clientWidth;
+    var plotH = u.over.clientHeight;
     if (left + rect.width > plotW) left = u.cursor.left - rect.width - 14;
     if (top + rect.height > plotH) top = Math.max(0, u.cursor.top - rect.height - 14);
     if (left < 0) left = 0;
@@ -628,6 +731,36 @@
       pills.push(btn);
     });
     containerEl.parentNode.insertBefore(legend, containerEl.nextSibling);
+    // Expose a handle the tooltip path uses to sync the "cursor is
+    // pointing at this series" state onto the matching pill. Focus
+    // is driven by the chart cursor, not by legend hover (which
+    // already fires uPlot's built-in alpha-fade focus), so these
+    // two signals stay independent.
+    if (plot) {
+      // Cache the last focused index + color so per-mousemove updates
+      // are a no-op when the cursor stays over the same series band.
+      var lastFocusedIdx = -2;
+      var lastFocusedColor = null;
+      plot.__setLegendFocus = function (focusedIdx, focusedColor) {
+        if (focusedIdx === lastFocusedIdx && focusedColor === lastFocusedColor) {
+          return;
+        }
+        lastFocusedIdx = focusedIdx;
+        lastFocusedColor = focusedColor;
+        for (var p = 0; p < pills.length; p++) {
+          var pillIdx = Number(pills[p].getAttribute("data-idx"));
+          if (pillIdx === focusedIdx) {
+            pills[p].classList.add("is-focused");
+            if (focusedColor) {
+              pills[p].style.setProperty("--pill-focus-color", focusedColor);
+            }
+          } else {
+            pills[p].classList.remove("is-focused");
+            pills[p].style.removeProperty("--pill-focus-color");
+          }
+        }
+      };
+    }
   }
 
   function escapeHTML(s) {
@@ -664,7 +797,8 @@
   function unitForChart(name) {
     if (name === "top")         return "%CPU";
     if (name === "processlist") return "threads";
-    if (name === "vmstat")      return "mixed";
+    if (name === "vmstat")      return "runqueue · blocked · %iowait";
+    if (name === "meminfo")     return "GB";
     return "";
   }
 
@@ -1112,16 +1246,27 @@
       li.className = "ma-cat-dd-opt";
       li.setAttribute("role", "option");
       li.setAttribute("data-key", c.key);
+      li.setAttribute("tabindex", "0");
       li.title = c.description || c.label;
       li.innerHTML =
         '<span class="opt-lbl">' + escapeHTML(c.label) + '</span>' +
         '<span class="opt-ct">' + c.count + '</span>';
-      li.addEventListener("click", function () {
+      function activate() {
         catCurrentKey = c.key;
         catCurrentLabel = c.label;
         setCatLabel(c.key);
         closeCatPopup();
-        applyCategory(true);
+        // Picking a category now only filters the list below — it
+        // does NOT push those counters onto the chart. The user
+        // explicitly clicks "Load on chart" to apply the selection.
+        filterListToCategory();
+      }
+      li.addEventListener("click", activate);
+      li.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" || ev.key === " " || ev.key === "Spacebar") {
+          ev.preventDefault();
+          activate();
+        }
       });
       catPopup.appendChild(li);
     });
@@ -1149,7 +1294,11 @@
       if (catPopup.hidden) openCatPopup(); else closeCatPopup();
     });
     document.addEventListener("keydown", function (ev) {
-      if (ev.key === "Escape" && !catPopup.hidden) closeCatPopup();
+      if (ev.key === "Escape" && !catPopup.hidden) {
+        closeCatPopup();
+        ev.preventDefault();
+        ev.stopPropagation();
+      }
     });
 
     catDD.appendChild(catToggle);
@@ -1160,40 +1309,47 @@
     btnLoad.className = "ma-action ma-cat-load";
     btnLoad.textContent = "Load on chart";
     btnLoad.title = "Replace chart selection with the picked category";
-    var btnAdd = document.createElement("button");
-    btnAdd.type = "button";
-    btnAdd.className = "ma-action ma-cat-add";
-    btnAdd.textContent = "+ Add to chart";
-    btnAdd.title = "Add the picked category to the existing chart selection";
 
     catActions.appendChild(catDD);
     catActions.appendChild(btnLoad);
-    catActions.appendChild(btnAdd);
     catRow.appendChild(catLabel);
     catRow.appendChild(catActions);
     panel.appendChild(catRow);
 
-    function applyCategory(replace) {
+    // Picking a category updates the list filter only — the chart
+    // itself stays untouched until the user commits via "Load on
+    // chart". Splitting these two signals lets a reader browse
+    // what's in a category before deciding to blow away the current
+    // selection.
+    function filterListToCategory() {
+      if (!catCurrentKey) return;
+      Object.keys(chipButtons).forEach(function (k) { chipButtons[k].classList.remove("active"); });
+      state.category = "cat:" + catCurrentKey;
+      redrawList();
+    }
+
+    function loadCategoryOnChart() {
       if (!catCurrentKey) return;
       var fn = catFilterByKey[catCurrentKey];
       if (!fn) return;
       var active = getActive();
       if (!active) return;
-      if (replace) active.selected.clear();
+      active.selected.clear();
       data.variables.forEach(function (n) {
         if (fn(n)) active.selected.add(n);
       });
-      if (replace && catCurrentLabel) updateActiveTitle(catCurrentLabel);
+      if (catCurrentLabel) updateActiveTitle(catCurrentLabel);
       persistLayout();
-      // Filter the list to show the chosen category for context.
+      // After loading, switch the list filter to 'selected' so the
+      // reader immediately sees the counters that went onto the chart.
       Object.keys(chipButtons).forEach(function (k) { chipButtons[k].classList.remove("active"); });
-      state.category = "cat:" + catCurrentKey;
       if (chipButtons["selected"]) chipButtons["selected"].classList.add("active");
+      state.category = "selected";
       redrawList();
       scheduleActiveRedraw();
     }
-    btnLoad.addEventListener("click", function () { applyCategory(true); });
-    btnAdd.addEventListener("click", function () { applyCategory(false); });
+
+    btnLoad.addEventListener("click", loadCategoryOnChart);
 
     // Search row.
     var searchRow = document.createElement("div");
@@ -1227,8 +1383,176 @@
     list.className = "ma-list";
     panel.appendChild(list);
 
-    // Insert panel BEFORE the chart host container.
-    hostEl.parentNode.insertBefore(panel, hostEl);
+    // Insert panel BEFORE the chart host container, wrapped inside a
+    // .ma-panel-host that also carries the always-visible sticky
+    // strip. The strip is the "quick access" summary; the full panel
+    // floats as an overlay anchored to the host when expanded.
+    var panelHost = document.createElement("div");
+    panelHost.className = "ma-panel-host";
+
+    var strip = document.createElement("button");
+    strip.type = "button";
+    strip.className = "ma-strip";
+    strip.setAttribute("aria-expanded", "false");
+    strip.setAttribute("aria-controls", "ma-panel-" + REPORT_ID);
+    panel.id = strip.getAttribute("aria-controls");
+    strip.innerHTML =
+      '<span class="ma-strip-pencil" aria-hidden="true">✎</span>' +
+      '<span class="ma-strip-editing"><span class="k">editing</span><span class="v">—</span></span>' +
+      '<span class="ma-strip-sep" aria-hidden="true">·</span>' +
+      '<span class="ma-strip-count">0 selected</span>' +
+      '<span class="ma-strip-hint" aria-hidden="true">press <kbd>E</kbd> to toggle</span>';
+    var stripValueEl = strip.querySelector(".ma-strip-editing .v");
+    var stripCountEl = strip.querySelector(".ma-strip-count");
+
+    // Pin + close controls injected into the floating panel header.
+    // The pin lives flush-right inside the editing badge row so it's
+    // easy to find without cluttering the strip.
+    var panelControls = document.createElement("div");
+    panelControls.className = "ma-panel-controls";
+    var pinBtn = document.createElement("button");
+    pinBtn.type = "button";
+    pinBtn.className = "ma-panel-pin";
+    pinBtn.setAttribute("aria-label", "Pin panel open");
+    pinBtn.setAttribute("title", "Keep the panel open (ignore outside-clicks and Esc)");
+    pinBtn.innerHTML = "📌";
+    var closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "ma-panel-close";
+    closeBtn.setAttribute("aria-label", "Close panel");
+    closeBtn.setAttribute("title", "Close (Esc)");
+    closeBtn.innerHTML = "×";
+    panelControls.appendChild(pinBtn);
+    panelControls.appendChild(closeBtn);
+    // Insert controls as the very first child of the panel so they
+    // overlay the top-right corner without reshuffling existing rows.
+    panel.insertBefore(panelControls, panel.firstChild);
+
+    panelHost.appendChild(strip);
+    panelHost.appendChild(panel);
+    hostEl.parentNode.insertBefore(panelHost, hostEl);
+
+    // Open/close + pin state, persisted under the v2 namespace so
+    // reloading the same report remembers the reader's last choice.
+    var OPEN_KEY = "mygather:v2:" + REPORT_ID + ":ma:panel-open";
+    var PIN_KEY = "mygather:v2:" + REPORT_ID + ":ma:panel-pinned";
+    var isOpen = storageGet(OPEN_KEY) === "true";
+    var isPinned = storageGet(PIN_KEY) === "true";
+
+    function applyPanelState() {
+      panelHost.classList.toggle("is-open", isOpen);
+      panelHost.classList.toggle("is-pinned", isPinned);
+      strip.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      pinBtn.classList.toggle("active", isPinned);
+      pinBtn.setAttribute("aria-pressed", isPinned ? "true" : "false");
+    }
+
+    function setOpen(open) {
+      var wasOpen = isOpen;
+      isOpen = !!open;
+      storageSet(OPEN_KEY, isOpen ? "true" : "false");
+      applyPanelState();
+      if (isOpen) {
+        // Autofocus the search input so keystrokes go straight into
+        // filtering without an extra click. Deferred to the next
+        // tick so the CSS transition starts first.
+        setTimeout(function () {
+          var s = panel.querySelector(".ma-search input[type='search']");
+          if (s) { try { s.focus({ preventScroll: true }); } catch (_) { s.focus(); } }
+        }, 60);
+      } else if (wasOpen) {
+        // Restore focus to the strip so keyboard users aren't stranded.
+        try { strip.focus({ preventScroll: true }); } catch (_) {
+          if (typeof strip.focus === "function") strip.focus();
+        }
+      }
+    }
+    function setPinned(pinned) {
+      isPinned = !!pinned;
+      storageSet(PIN_KEY, isPinned ? "true" : "false");
+      applyPanelState();
+    }
+
+    strip.addEventListener("click", function () { setOpen(!isOpen); });
+    closeBtn.addEventListener("click", function () { setOpen(false); });
+
+    // Tab focus trap inside the floating panel while open and not
+    // pinned. When pinned the user explicitly opted into parallel
+    // navigation, so we leave Tab alone.
+    panel.addEventListener("keydown", function (ev) {
+      if (!isOpen || isPinned || ev.key !== "Tab") return;
+      var items = panel.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!items.length) return;
+      var first = items[0];
+      var last  = items[items.length - 1];
+      if (ev.shiftKey && document.activeElement === first) {
+        ev.preventDefault();
+        last.focus();
+      } else if (!ev.shiftKey && document.activeElement === last) {
+        ev.preventDefault();
+        first.focus();
+      }
+    });
+    pinBtn.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      setPinned(!isPinned);
+    });
+
+    // Click-outside-to-close: listens at document level, ignores
+    // clicks inside the panel itself or on the strip. Skipped when
+    // pinned. Guarded so repeated renderMysqladmin calls on the same
+    // host don't stack duplicate global listeners.
+    if (!panelHost._clickOutsideInit) {
+      panelHost._clickOutsideInit = true;
+      document.addEventListener("click", function (ev) {
+        if (!isOpen || isPinned) return;
+        if (panelHost.contains(ev.target)) return;
+        setOpen(false);
+      });
+    }
+
+    // Hotkey `E` toggles the panel, but only when the mysqladmin
+    // subview is actually in the viewport — so pressing `e` while
+    // reading the OS section doesn't silently pop open a panel off
+    // screen. IntersectionObserver tracks visibility; if no subview
+    // ancestor can be found we fall back to always-active.
+    var subviewEl = hostEl.closest("details.subview") || hostEl.closest("section") || hostEl;
+    var subviewVisible = true;
+    if (window.IntersectionObserver && subviewEl) {
+      subviewVisible = false;
+      var io = new IntersectionObserver(function (entries) {
+        for (var i = 0; i < entries.length; i++) {
+          subviewVisible = entries[i].isIntersecting;
+        }
+      }, { rootMargin: "0px 0px -20% 0px", threshold: 0.01 });
+      io.observe(subviewEl);
+    }
+    document.addEventListener("keydown", function (ev) {
+      if (ev.defaultPrevented) return;
+      // Don't intercept keys while typing in an input / contenteditable.
+      var t = ev.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) {
+        // Exception: Esc inside the panel's search still closes.
+        if (ev.key === "Escape" && isOpen && !isPinned && panel.contains(t)) {
+          setOpen(false);
+          ev.preventDefault();
+        }
+        return;
+      }
+      if (ev.key === "Escape" && isOpen && !isPinned) {
+        setOpen(false);
+        ev.preventDefault();
+        return;
+      }
+      if ((ev.key === "e" || ev.key === "E") && subviewVisible && !ev.metaKey && !ev.ctrlKey && !ev.altKey) {
+        setOpen(!isOpen);
+        ev.preventDefault();
+      }
+    });
+
+    applyPanelState();
 
     // List-filter state (shared across charts; the list grid itself
     // only reflects the *active* chart's selection state).
@@ -1452,6 +1776,8 @@
       });
       var active = getActive();
       editingValueEl.textContent = active ? active.title : "—";
+      stripValueEl.textContent = active ? active.title : "—";
+      if (active) refreshStripCount(active);
       redrawList();
     }
 
@@ -1462,11 +1788,18 @@
       active.titleEl.textContent = newTitle;
       active.titleEl.title = newTitle;
       editingValueEl.textContent = newTitle;
+      stripValueEl.textContent = newTitle;
     }
 
     function updateCardCount(cs) {
       var n = cs.selected.size;
       cs.countEl.textContent = n === 0 ? "empty" : (n + " selected");
+      if (cs.id === activeChartId) refreshStripCount(cs);
+    }
+
+    function refreshStripCount(cs) {
+      var n = cs.selected.size;
+      stripCountEl.textContent = n === 0 ? "empty" : (n + " selected");
     }
 
     function updateActiveCount() {
@@ -1551,7 +1884,7 @@
         values.push(deltaArr.slice(tStart));
       });
       var width = measureChartWidth(cs.plotEl);
-      var opts = basePlotOpts(width, 340, series, "", data.snapshotBoundaries, data.timestamps);
+      var opts = basePlotOpts(width, 340, series, "Δ / sample", data.snapshotBoundaries, data.timestamps);
       cs.plotEl.innerHTML = "";
       cs.plot = new uPlot(opts, values, cs.plotEl);
       registerChart(cs.plot, cs.plotEl, opts);
@@ -1638,21 +1971,64 @@
     var drawer   = document.getElementById("nav-drawer");
     var backdrop = document.getElementById("nav-backdrop");
     if (!toggle || !drawer || !backdrop) return;
+    var mainEl = document.querySelector("main.content");
 
     function isOpen() { return document.body.classList.contains("nav-open"); }
 
-    function setOpen(open) {
+    function focusables() {
+      return drawer.querySelectorAll(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+    }
+
+    function setOpen(open, opts) {
+      var wasOpen = isOpen();
+      // One-modal-at-a-time: opening the drawer unpins and closes any
+      // floating mysqladmin panel. Otherwise `mainEl.inert = true` below
+      // would strand a user-pinned panel inside an inert subtree (all
+      // controls disabled) with no way to reach it.
+      if (open) {
+        var pinnedPanels = document.querySelectorAll(".ma-panel-host.is-pinned .ma-panel-pin");
+        for (var pi = 0; pi < pinnedPanels.length; pi++) {
+          pinnedPanels[pi].click();
+        }
+        var openPanels = document.querySelectorAll(".ma-panel-host.is-open .ma-panel-close");
+        for (var ci = 0; ci < openPanels.length; ci++) {
+          openPanels[ci].click();
+        }
+      }
       document.body.classList.toggle("nav-open", !!open);
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
       drawer.setAttribute("aria-hidden", open ? "false" : "true");
       backdrop.setAttribute("aria-hidden", open ? "false" : "true");
+      // a11y: make closed drawer non-interactive; when open, make main
+      // content inert so Tab stays trapped in the drawer.
+      drawer.inert = !open;
+      if (mainEl) mainEl.inert = !!open;
       // Prevent background scroll while the drawer is open so the
       // overlay reads as modal.
       document.documentElement.style.overflow = open ? "hidden" : "";
+      var manageFocus = !(opts && opts.silent);
+      if (manageFocus) {
+        if (open) {
+          // Move focus into the drawer so keyboard users don't stay
+          // stranded on the toggle.
+          var first = drawer.querySelector("a, button") || drawer;
+          if (first && typeof first.focus === "function") first.focus();
+        } else if (wasOpen) {
+          // Restore focus to the toggle so the user's keyboard context
+          // is preserved.
+          if (typeof toggle.focus === "function") toggle.focus();
+        }
+      }
       // Re-fit charts once the transition settles (content layout
       // doesn't reflow, but browser zoom + window size may have changed
-      // while the drawer was open).
-      if (!open) setTimeout(resizeAllCharts, 360);
+      // while the drawer was open). Under prefers-reduced-motion the
+      // transition is near-instant (0.01ms), so don't wait 360ms.
+      if (!open) {
+        var rmReduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        setTimeout(resizeAllCharts, rmReduce ? 0 : 360);
+      }
     }
 
     toggle.addEventListener("click", function () { setOpen(!isOpen()); });
@@ -1668,9 +2044,33 @@
       }
     });
 
+    // Tab focus trap while the drawer is open. Wraps from last to
+    // first (Tab) and first to last (Shift+Tab).
+    drawer.addEventListener("keydown", function (e) {
+      if (!isOpen() || e.key !== "Tab") return;
+      var items = focusables();
+      if (items.length === 0) return;
+      var first = items[0];
+      var last  = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+
     document.addEventListener("keydown", function (e) {
+      if (e.defaultPrevented) return;
       // Escape closes.
       if (e.key === "Escape" && isOpen()) {
+        // If the floating mysqladmin panel is open, let its own Esc handler
+        // take this keypress — pressing Esc should close the topmost
+        // overlay, not a background drawer.
+        if (document.querySelector(".ma-panel-host.is-open") && !document.querySelector(".ma-panel-host.is-pinned")) {
+          return;
+        }
         e.preventDefault();
         setOpen(false);
         return;
@@ -1683,8 +2083,9 @@
       }
     });
 
-    // Start closed every page-load.
-    setOpen(false);
+    // Start closed every page-load. Pass silent so we don't steal focus
+    // on the initial render.
+    setOpen(false, { silent: true });
   }
 
   function initNavGroups() {
@@ -1747,7 +2148,7 @@
     if (!navLinks.length) return;
     var byHash = {};
     navLinks.forEach(function (a) { byHash[a.getAttribute("href")] = a; });
-    var targets = document.querySelectorAll("main.content details[id]");
+    var targets = document.querySelectorAll(MAIN_SECTIONS_SELECTOR);
     var active = null;
     var observer = new IntersectionObserver(
       function (entries) {
@@ -1835,6 +2236,43 @@
 
   // --- Print-expand hook ----------------------------------------
 
+  // Semaphore contention-breakdown panel wiring: tab switcher
+  // between "At peak" and "Over window" views, plus the
+  // "Show all (N sites)" button that reveals rows past the top-10.
+  // Both interactions are strictly local to the <details> block
+  // rendered by db.html.tmpl; no cross-card state.
+  function initSemaphoreBreakdown() {
+    var blocks = document.querySelectorAll("details.semaphore-breakdown");
+    for (var i = 0; i < blocks.length; i++) {
+      (function (block) {
+        var tabs = block.querySelectorAll(".cb-tab");
+        var views = block.querySelectorAll(".cb-tabview");
+        tabs.forEach(function (tab) {
+          tab.addEventListener("click", function () {
+            var key = tab.getAttribute("data-view");
+            tabs.forEach(function (t) {
+              var on = t === tab;
+              t.classList.toggle("active", on);
+              t.setAttribute("aria-selected", on ? "true" : "false");
+            });
+            views.forEach(function (v) {
+              v.hidden = v.getAttribute("data-view") !== key;
+            });
+          });
+        });
+        block.querySelectorAll(".cb-more").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var scope = btn.getAttribute("data-scope");
+            var view = block.querySelector('.cb-tabview[data-view="' + scope + '"]');
+            if (!view) return;
+            view.querySelectorAll("tr.cb-tail").forEach(function (row) { row.hidden = false; });
+            btn.hidden = true;
+          });
+        });
+      })(blocks[i]);
+    }
+  }
+
   function initPrintHook() {
     var beforeState = null;
     function stash() {
@@ -1867,11 +2305,15 @@
     initNavCollapse();
     initNavScrollSpy();
     initAdvisorFilter();
+    initSemaphoreBreakdown();
     initPrintHook();
     observeContentColumn();
     // Also re-fit on any <details> toggle (open/close affects
     // content-column scrollbar which affects chart width).
-    document.addEventListener("toggle", function () {
+    document.addEventListener("toggle", function (ev) {
+      // Only react to content-area <details> toggles; nav-group
+      // open/close must not trigger a chart-wide resize pass.
+      if (!ev.target || !ev.target.closest || !ev.target.closest("main.content")) return;
       window.requestAnimationFrame(resizeAllCharts);
     }, true);
   }

@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"regexp"
@@ -9,6 +8,26 @@ import (
 	"strings"
 
 	"github.com/matias-sanchez/My-gather/model"
+)
+
+// Package-level regexes used by parseInnodbStatus. Lifted to avoid
+// re-compiling on every call (see parse/meminfo.go for the same
+// pattern).
+var (
+	reInnodbPendingReads     = regexp.MustCompile(`^Pending reads\s+(\d+)`)
+	reInnodbPendingWritesSum = regexp.MustCompile(`LRU (\d+), flush list (\d+), single page (\d+)`)
+	reInnodbHashRate         = regexp.MustCompile(`([\d.]+)\s+hash searches/s,\s+([\d.]+)\s+non-hash searches/s`)
+	reInnodbHashTblSize      = regexp.MustCompile(`^Hash table size\s+(\d+)`)
+	reInnodbHLL              = regexp.MustCompile(`^History list length (\d+)`)
+	// SEMAPHORES entry: "--Thread 140148200982272 has waited at
+	// ibuf0ibuf.cc line 3922 for 0 seconds the semaphore:" — capture
+	// <file> and <line>.
+	reInnodbThreadWaited = regexp.MustCompile(`^--Thread \d+ has waited at (\S+) line (\d+) `)
+	// Partner line following the thread line: "Mutex at 0x..., Mutex
+	// TRX_SYS created trx0sys.cc:599, locked by ...". We capture the
+	// mutex name (TRX_SYS) so the breakdown has a readable label next
+	// to the file:line key.
+	reInnodbMutexName = regexp.MustCompile(`^Mutex at 0x[0-9a-fA-F]+, Mutex ([^\s]+) created`)
 )
 
 // parseInnodbStatus reads the text of `SHOW ENGINE INNODB STATUS` as
@@ -27,19 +46,33 @@ import (
 // This is a targeted extractor rather than a full InnoDB status
 // parser; we only read what the report renders.
 func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData, []model.Diagnostic) {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 64*1024), 32*1024*1024)
+	scanner := newLineScanner(r)
 
 	var diagnostics []model.Diagnostic
 	data := &model.InnodbStatusData{}
 
 	var inSection string
+	anySectionSeen := false
 	threadWaited := 0
-	rePendingReads := regexp.MustCompile(`^Pending reads\s+(\d+)`)
-	rePendingWritesSum := regexp.MustCompile(`LRU (\d+), flush list (\d+), single page (\d+)`)
-	reHashRate := regexp.MustCompile(`([\d.]+)\s+hash searches/s,\s+([\d.]+)\s+non-hash searches/s`)
-	reHashTblSize := regexp.MustCompile(`^Hash table size\s+(\d+)`)
-	reHLL := regexp.MustCompile(`^History list length (\d+)`)
+
+	// Aggregation key for SemaphoreSites so we can group by
+	// (file, line, mutex) without another pass.
+	type siteKey struct {
+		file  string
+		line  int
+		mutex string
+	}
+	siteCounts := map[siteKey]int{}
+	// pendingFile / pendingLine buffer the current `--Thread ...` line
+	// until its paired `Mutex at ...` partner lands on a subsequent
+	// line. Canonical InnoDB output always emits the pair contiguously
+	// (whitespace lines allowed in between). Anything else — another
+	// thread before the partner, a section switch, or EOF mid-pair —
+	// drops the pending record; the `siteSum != threadWaited`
+	// diagnostic below reports the miss.
+	var pendingFile string
+	var pendingLine int
+	havePending := false
 
 	for scanner.Scan() {
 		line := strings.TrimRight(scanner.Text(), "\r\n")
@@ -52,27 +85,47 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 			"INSERT BUFFER AND ADAPTIVE HASH INDEX", "LOG",
 			"BUFFER POOL AND MEMORY", "ROW OPERATIONS",
 			"TRANSACTIONS":
+			// Section state does not leak across sections.
+			havePending = false
 			inSection = trimmed
+			anySectionSeen = true
 			continue
 		}
 
 		switch inSection {
 		case "SEMAPHORES":
-			if strings.HasPrefix(trimmed, "--Thread ") && strings.Contains(trimmed, " has waited ") {
+			if m := reInnodbThreadWaited.FindStringSubmatch(trimmed); m != nil {
 				threadWaited++
+				pendingFile = m[1]
+				pendingLine, _ = strconv.Atoi(m[2])
+				havePending = true
+				continue
+			}
+			if havePending {
+				if m := reInnodbMutexName.FindStringSubmatch(trimmed); m != nil {
+					siteCounts[siteKey{file: pendingFile, line: pendingLine, mutex: m[1]}]++
+					havePending = false
+					continue
+				}
+				if trimmed == "" {
+					continue
+				}
+				// Non-canonical: thread without its paired mutex. Drop
+				// the pending record.
+				havePending = false
 			}
 		case "TRANSACTIONS":
-			if m := reHLL.FindStringSubmatch(trimmed); m != nil {
+			if m := reInnodbHLL.FindStringSubmatch(trimmed); m != nil {
 				v, _ := strconv.Atoi(m[1])
 				data.HistoryListLength = v
 			}
 		case "BUFFER POOL AND MEMORY":
-			if m := rePendingReads.FindStringSubmatch(trimmed); m != nil {
+			if m := reInnodbPendingReads.FindStringSubmatch(trimmed); m != nil {
 				v, _ := strconv.Atoi(m[1])
 				data.PendingReads = v
 			}
 			if strings.HasPrefix(trimmed, "Pending writes:") {
-				if m := rePendingWritesSum.FindStringSubmatch(trimmed); m != nil {
+				if m := reInnodbPendingWritesSum.FindStringSubmatch(trimmed); m != nil {
 					lru, _ := strconv.Atoi(m[1])
 					fl, _ := strconv.Atoi(m[2])
 					sp, _ := strconv.Atoi(m[3])
@@ -82,11 +135,11 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 		case "INSERT BUFFER AND ADAPTIVE HASH INDEX":
 			// The first Hash table size line gives the configured size;
 			// overwrite on each so we end up with the last-seen value.
-			if m := reHashTblSize.FindStringSubmatch(trimmed); m != nil {
+			if m := reInnodbHashTblSize.FindStringSubmatch(trimmed); m != nil {
 				v, _ := strconv.Atoi(m[1])
 				data.AHIActivity.HashTableSize = v
 			}
-			if m := reHashRate.FindStringSubmatch(trimmed); m != nil {
+			if m := reInnodbHashRate.FindStringSubmatch(trimmed); m != nil {
 				h, _ := strconv.ParseFloat(m[1], 64)
 				nh, _ := strconv.ParseFloat(m[2], 64)
 				data.AHIActivity.SearchesPerSec = h
@@ -102,6 +155,53 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 		})
 	}
 
+	// If the scan completed without encountering any recognised section
+	// header, the file is almost certainly malformed or truncated.
+	// Surface that so the reader doesn't silently see an empty InnoDB
+	// status card.
+	if !anySectionSeen {
+		diagnostics = append(diagnostics, model.Diagnostic{
+			SourceFile: sourcePath,
+			Severity:   model.SeverityWarning,
+			Message:    "innodbstatus: no recognised section headers; file may be malformed",
+		})
+	}
+
 	data.SemaphoreCount = threadWaited
+
+	// Materialise sites sorted desc by count, stable tie-break by
+	// file ascending then line ascending so identical captures
+	// render identically across runs.
+	siteSum := 0
+	if len(siteCounts) > 0 {
+		sites := make([]model.SemaphoreSite, 0, len(siteCounts))
+		for k, c := range siteCounts {
+			sites = append(sites, model.SemaphoreSite{
+				File:      k.file,
+				Line:      k.line,
+				MutexName: k.mutex,
+				WaitCount: c,
+			})
+			siteSum += c
+		}
+		model.SortSemaphoreSites(sites)
+		data.SemaphoreSites = sites
+	}
+
+	// Invariant check: threadWaited counts thread lines; siteSum counts
+	// successfully paired (file, line, mutex) entries. A mismatch means
+	// the SEMAPHORES section was not canonical and the breakdown is
+	// partial — surface that to the reader instead of silently showing
+	// incomplete rows.
+	if siteSum != threadWaited {
+		diagnostics = append(diagnostics, model.Diagnostic{
+			SourceFile: sourcePath,
+			Severity:   model.SeverityWarning,
+			Message: fmt.Sprintf(
+				"innodbstatus: SemaphoreSites wait-count sum (%d) does not equal threads-waited count (%d); contention breakdown may be missing rows",
+				siteSum, threadWaited),
+		})
+	}
+
 	return data, diagnostics
 }

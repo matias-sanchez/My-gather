@@ -29,11 +29,11 @@ func ruleTableCacheOverflows(r *model.Report) Finding {
 		Subsystem: "Table Open Cache",
 		Title:     "Table open cache overflows",
 		Severity:  sev,
-		Summary:   fmt.Sprintf("Table_open_cache_overflows is incrementing at %s/s — the table cache is evicting entries.", FormatNum(rate)),
+		Summary:   fmt.Sprintf("Table_open_cache_overflows is incrementing at %s/s — the table cache is evicting entries.", formatNum(rate)),
 		Explanation: "An overflow occurs when a table-cache instance temporarily grows past its share of table_open_cache to accept a new entry. " +
 			"Repeated overflows mean the configured size (possibly divided across too many instances) is insufficient for the workload.",
 		FormulaText:     "Table_open_cache_overflows/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", FormatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Table_open_cache_overflows/s", Value: rate, Unit: "/s"},
 			{Name: "table_open_cache", Value: size, Unit: "entries"},
@@ -89,7 +89,7 @@ func ruleTableCacheMissRatio(r *model.Report) Finding {
 			"Frequent misses mean table_open_cache isn't large enough to hold the active working set.",
 		FormulaText: "miss_ratio = Table_open_cache_misses / (Table_open_cache_hits + Table_open_cache_misses)",
 		FormulaComputed: fmt.Sprintf("%s / (%s + %s) = %s",
-			FormatNum(misses), FormatNum(hits), FormatNum(misses), formatPercent(ratio)),
+			formatNum(misses), formatNum(hits), formatNum(misses), formatPercent(ratio)),
 		Metrics: []MetricRef{
 			{Name: "Table_open_cache_misses", Value: misses, Unit: "count"},
 			{Name: "Table_open_cache_hits", Value: hits, Unit: "count"},

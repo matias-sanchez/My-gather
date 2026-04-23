@@ -12,6 +12,7 @@ type OSSection struct {
 	Iostat  *IostatData
 	Top     *TopData
 	Vmstat  *VmstatData
+	Meminfo *MeminfoData
 	Missing []string
 }
 

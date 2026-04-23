@@ -14,6 +14,7 @@
 package model
 
 import (
+	"sort"
 	"time"
 )
 
@@ -30,6 +31,7 @@ const (
 	SuffixTop          Suffix = "top"
 	SuffixVariables    Suffix = "variables"
 	SuffixVmstat       Suffix = "vmstat"
+	SuffixMeminfo      Suffix = "meminfo"
 	SuffixInnodbStatus Suffix = "innodbstatus1" // parses the first innodb-status snapshot; -innodbstatus2 is out of scope for v1
 	SuffixMysqladmin   Suffix = "mysqladmin"
 	SuffixProcesslist  Suffix = "processlist"
@@ -44,6 +46,7 @@ var KnownSuffixes = []Suffix{
 	SuffixTop,
 	SuffixVariables,
 	SuffixVmstat,
+	SuffixMeminfo,
 	SuffixInnodbStatus,
 	SuffixMysqladmin,
 	SuffixProcesslist,
@@ -352,16 +355,63 @@ type VmstatData struct {
 	SnapshotBoundaries []int
 }
 
+// MeminfoData is the typed payload for a -meminfo SourceFile (a
+// snapshot of /proc/meminfo captured once per second for the
+// snapshot window, TS-delimited). A curated set of series (the
+// fields meaningful for DB capacity + pressure analysis) is emitted
+// in the fixed order declared in parse/meminfo.go. All values are
+// reported in gigabytes for chart readability.
+type MeminfoData struct {
+	Series             []MetricSeries
+	SnapshotBoundaries []int
+}
+
 // InnodbStatusData is the typed payload for an -innodbstatus1
 // SourceFile. Most fields are point-in-time scalars rather than
 // time-series — "-innodbstatus1" is a snapshot taken once per
 // pt-stalk collection pass.
 type InnodbStatusData struct {
-	SemaphoreCount    int         // "Number of semaphores"
+	SemaphoreCount    int         // total threads currently waiting (sum of SemaphoreSites[*].WaitCount)
 	PendingReads      int         // aggregate pending IO reads
 	PendingWrites     int         // aggregate pending IO writes
 	AHIActivity       AHIActivity // adaptive-hash-index view
 	HistoryListLength int         // "HLL"
+	// SemaphoreSites groups the SEMAPHORES-section "--Thread … has
+	// waited at FILE line N the semaphore:" records by (file, line,
+	// mutex name) so the reader can see the contention hotspots
+	// instead of a single total. Sorted descending by WaitCount,
+	// tie-broken by File / Line ascending for stability.
+	SemaphoreSites []SemaphoreSite
+}
+
+// SemaphoreSite is one row of the aggregated SEMAPHORES contention
+// breakdown — all threads waiting at the same caller line on the
+// same mutex.
+type SemaphoreSite struct {
+	File      string // e.g. "trx0sys.h"
+	Line      int    // e.g. 602
+	MutexName string // e.g. "TRX_SYS" (empty when the partner "Mutex ..." line couldn't be associated)
+	WaitCount int
+}
+
+// SortSemaphoreSites orders sites in the canonical rendering order:
+// WaitCount descending first, then stable tie-break by File
+// ascending, Line ascending, MutexName ascending. Both parse/ and
+// render/ use this to guarantee identical bytes across the two layers
+// (NIT #44). Sorts in place; does not copy.
+func SortSemaphoreSites(sites []SemaphoreSite) {
+	sort.SliceStable(sites, func(i, j int) bool {
+		if sites[i].WaitCount != sites[j].WaitCount {
+			return sites[i].WaitCount > sites[j].WaitCount
+		}
+		if sites[i].File != sites[j].File {
+			return sites[i].File < sites[j].File
+		}
+		if sites[i].Line != sites[j].Line {
+			return sites[i].Line < sites[j].Line
+		}
+		return sites[i].MutexName < sites[j].MutexName
+	})
 }
 
 // AHIActivity summarises InnoDB adaptive-hash-index metrics at the

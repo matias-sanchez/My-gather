@@ -1,7 +1,6 @@
-<details id="sec-db" class="section" open>
+<details id="sec-db" class="section">
       <summary>
         <span>Database Usage</span>
-        <span class="badge">3 / 3 subviews</span>
       </summary>
       <div class="body">
         
@@ -9,54 +8,103 @@
 <details id="sub-db-innodb" class="subview" open>
   <summary><span>InnoDB status</span><span class="badge">-innodbstatus1</span></summary>
   <div class="body">
-    <div class="snapshot-group">
-      <h4>Snapshot 2026_04_21_16_51_41</h4>
-      <div class="callouts">
-        <div class="callout">
-          <p class="k">Semaphores</p>
-          <p class="v">2</p>
-          <p class="sub">waiting / reserved</p>
-        </div>
-        <div class="callout">
-          <p class="k">Pending I/O</p>
-          <p class="v">13</p>
-          <p class="sub">reads 1 · writes 12</p>
-        </div>
-        <div class="callout">
-          <p class="k">AHI</p>
-          <p class="v">2.73</p>
-          <p class="sub">searches/sec · hash tbl 138401</p>
-        </div>
-        <div class="callout">
-          <p class="k">History list</p>
-          <p class="v">133</p>
-          <p class="sub">HLL (undo depth)</p>
-        </div>
+    <div class="callouts">
+      <div class="callout">
+        <p class="k">Semaphores</p>
+        <p class="v">2</p><p class="sub">waiting</p>
+        <p class="stats"><span>min 0</span> · <span>avg 1.0</span> · <span>max 2</span></p>
+        <details class="semaphore-breakdown">
+          <summary>Contention breakdown <span class="cb-chev" aria-hidden="true">▸</span></summary>
+          <div class="cb-body" data-view="peak">
+            <div class="cb-toggle" role="tablist" aria-label="Breakdown scope">
+              <button type="button" role="tab" aria-selected="true"  class="cb-tab active" data-view="peak">At peak</button>
+              <button type="button" role="tab" aria-selected="false" class="cb-tab" data-view="total">Over window</button>
+            </div>
+            <div class="cb-tabview" data-view="peak">
+              <p class="cb-caption">
+                snapshot <code>2026_04_21_16_51_41</code> · 2 waits
+              </p>
+              <table class="cb-table">
+                <thead><tr><th>Call site</th><th>Mutex</th><th class="num">waits</th><th class="num">%</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td class="mono">buf0buf.cc:3207</td>
+                    <td class="mono">BUF_POOL_LRU_LIST</td>
+                    <td class="mono num">1</td>
+                    <td class="mono num">50.0%</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">buf0buf.cc:4968</td>
+                    <td class="mono">BUF_POOL_LRU_LIST</td>
+                    <td class="mono num">1</td>
+                    <td class="mono num">50.0%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="cb-tabview" data-view="total" hidden>
+              <p class="cb-caption">summed across the capture window · 2 waits</p>
+              <table class="cb-table">
+                <thead><tr><th>Call site</th><th>Mutex</th><th class="num">waits</th><th class="num">%</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td class="mono">buf0buf.cc:3207</td>
+                    <td class="mono">BUF_POOL_LRU_LIST</td>
+                    <td class="mono num">1</td>
+                    <td class="mono num">50.0%</td>
+                  </tr>
+                  <tr>
+                    <td class="mono">buf0buf.cc:4968</td>
+                    <td class="mono">BUF_POOL_LRU_LIST</td>
+                    <td class="mono num">1</td>
+                    <td class="mono num">50.0%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
       </div>
-    </div>
-    <div class="snapshot-group">
-      <h4>Snapshot 2026_04_21_16_52_11</h4>
-      <div class="callouts">
-        <div class="callout">
-          <p class="k">Semaphores</p>
-          <p class="v">0</p>
-          <p class="sub">waiting / reserved</p>
-        </div>
-        <div class="callout">
-          <p class="k">Pending I/O</p>
-          <p class="v">14</p>
-          <p class="sub">reads 0 · writes 14</p>
-        </div>
-        <div class="callout">
-          <p class="k">AHI</p>
-          <p class="v">0.00</p>
-          <p class="sub">searches/sec · hash tbl 138401</p>
-        </div>
-        <div class="callout">
-          <p class="k">History list</p>
-          <p class="v">1075</p>
-          <p class="sub">HLL (undo depth)</p>
-        </div>
+      <div class="callout">
+        <p class="k">Pending I/O</p>
+        <p class="v">14</p><p class="sub">reads &#43; writes</p>
+        <p class="stats"><span>min 13</span> · <span>avg 13.5</span> · <span>max 14</span></p>
+      </div>
+      <div class="callout">
+        <p class="k">AHI</p>
+        <p class="v">0.0%</p><p class="sub">hit ratio</p>
+        <p class="stats"><span>min 0.0%</span> · <span>avg 0.0%</span> · <span>max 0.0%</span></p>
+        <details class="ahi-formula">
+          <summary>Formula <span class="cb-chev" aria-hidden="true">▸</span></summary>
+          <div class="cb-body">
+            <p class="ahi-formula-line">
+              <span class="ahi-name">hit ratio</span>
+              <span class="ahi-eq">=</span>
+              <span class="ahi-expr">hash / (hash + non-hash)</span>
+            </p>
+            <p class="ahi-formula-line computed">
+              <span class="ahi-name">at worst</span>
+              <span class="ahi-eq">=</span>
+              <span class="ahi-expr mono">0.00 / (0.00 + 3689000.00)</span>
+              <span class="ahi-eq">=</span>
+              <span class="ahi-result mono">0.0%</span>
+            </p>
+            <p class="cb-caption">
+              worst snapshot <code>2026_04_21_16_52_11</code> · hash table size 138,401
+            </p>
+            <p class="cb-note">
+              A high hit ratio means most index lookups are served directly
+              from the adaptive hash index; a low one means InnoDB is
+              falling back to B-tree traversal — consider whether AHI's
+              memory is being paid for.
+            </p>
+          </div>
+        </details>
+      </div>
+      <div class="callout">
+        <p class="k">History list</p>
+        <p class="v">1075</p><p class="sub">HLL (undo depth)</p>
+        <p class="stats"><span>min 133</span> · <span>avg 604.0</span> · <span>max 1075</span></p>
       </div>
     </div>
   </div>
@@ -68,8 +116,8 @@
     <div class="ma-charts-host" id="chart-mysqladmin" data-chart="mysqladmin"
          aria-label="Per-sample counter deltas from mysqladmin extended-status"></div>
     <noscript>
-      <p class="banner">Interactive filtering requires JavaScript. The full list of
-      541 variables is embedded in the page as a JSON payload.</p>
+      <p class="banner">Charts and interactive filtering require JavaScript. Raw mysqladmin data
+      for 541 variables is embedded in the page as a JSON payload.</p>
     </noscript>
   </div>
 </details>
@@ -79,7 +127,7 @@
   <div class="body">
     <div class="chart" id="chart-processlist" data-chart="processlist"
          aria-label="Count of threads per state over time"></div>
-    <noscript><p class="banner">Chart requires JavaScript. Raw processlist data is embedded in the page.</p></noscript>
+    <noscript><p class="banner">Charts require JavaScript. Raw processlist data is embedded in the page.</p></noscript>
   </div>
 </details>
 

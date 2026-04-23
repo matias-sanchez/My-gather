@@ -5,10 +5,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>{{.Title}}</title>
+  <title>my-gather {{.Title}}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="my-gather {{.Version}}">
   <meta name="referrer" content="no-referrer">
+  <link rel="icon" type="image/png" href="{{.LogoDataURI}}">
   <style>{{.EmbeddedCSS}}</style>
   <script type="application/json" id="report-data">{{.DataPayload}}</script>
 </head>
@@ -34,6 +35,13 @@
     <span><span class="k">my-gather</span> <span class="v">{{.Version}}{{if .GitCommit}} · {{.GitCommit}}{{end}}</span></span>
   </div>
 </header>
+
+<p class="banner-verbatim" role="note">
+  This report contains captured diagnostic output verbatim.
+  Hostnames, IP addresses, query text, and MySQL variable values
+  appear as provided by pt-stalk. Verify for sensitive data before
+  sharing.
+</p>
 
 <div class="layout" id="app-layout">
   <nav class="index" id="nav-drawer" aria-label="Report navigation" aria-hidden="true">
@@ -67,10 +75,9 @@
   <main class="content">
 
     {{/* OS Usage section */}}
-    <details id="sec-os" class="section" open>
+    <details id="sec-os" class="section">
       <summary>
         <span>OS Usage</span>
-        <span class="badge">{{.OSBadge}}</span>
       </summary>
       <div class="body">
         {{template "os" .}}
@@ -78,7 +85,7 @@
     </details>
 
     {{/* Variables section */}}
-    <details id="sec-variables" class="section" open>
+    <details id="sec-variables" class="section">
       <summary>
         <span>Variables</span>
         <span class="badge">{{.VariablesBadge}}</span>
@@ -89,10 +96,9 @@
     </details>
 
     {{/* Database Usage section */}}
-    <details id="sec-db" class="section" open>
+    <details id="sec-db" class="section">
       <summary>
         <span>Database Usage</span>
-        <span class="badge">{{.DBBadge}}</span>
       </summary>
       <div class="body">
         {{template "db" .}}
@@ -100,38 +106,13 @@
     </details>
 
     {{/* Advisor section — rule-based findings, rendered at the end. */}}
-    <details id="sec-advisor" class="section" open>
+    <details id="sec-advisor" class="section">
       <summary>
         <span>Advisor</span>
         <span class="badge">{{.AdvisorBadge}}</span>
       </summary>
       <div class="body">
         {{template "advisor" .}}
-      </div>
-    </details>
-
-    {{/* Parser Diagnostics — collapsed by default per Principle XI so
-         the signal isn't drowned out, but always surfaced so incomplete
-         or partially-parsed source files are visible to the reader. */}}
-    <details id="sec-diagnostics" class="diagnostics">
-      <summary>
-        <span>Parser Diagnostics</span>
-        <span class="badge">{{.DiagnosticsBadge}}</span>
-      </summary>
-      <div class="body">
-        {{- if .Diagnostics }}
-        <ul>
-          {{- range .Diagnostics }}
-          <li>
-            <span class="sev {{.SeverityClass}}">{{.SeverityLabel}}</span>
-            <span class="loc">{{if .SourceFileDisplay}}{{.SourceFileDisplay}}{{end}}{{if .Location}} · {{.Location}}{{end}}</span>
-            <span class="msg">{{.Message}}</span>
-          </li>
-          {{- end }}
-        </ul>
-        {{- else }}
-        <p class="banner" style="margin:12px 14px;">No parser diagnostics — the collection parsed without warnings or errors.</p>
-        {{- end }}
       </div>
     </details>
 

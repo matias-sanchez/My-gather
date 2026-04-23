@@ -40,9 +40,9 @@ parser will plug into.
 
 **Independent Test**: Point the CLI at `_references/examples/example2/`
 (or any real pt-stalk dump), run it, open the resulting HTML in any
-browser while disconnected from the internet, and confirm the three
-top-level sections (OS usage, Variables, Database usage) are all present
-and the document renders with working charts.
+browser while disconnected from the internet, and confirm the four
+top-level sections (OS Usage, Variables, Database Usage, Advisor) are
+all present and the document renders with working charts.
 
 **Acceptance Scenarios**:
 
@@ -232,8 +232,11 @@ matching their respective golden files.
 - **FR-004**: The generated HTML file MUST be renderable in a modern
   browser with no network access of any kind: no CDN fetches, no remote
   fonts, no analytics beacons, no image URLs that resolve off-document.
-- **FR-005**: The report MUST contain exactly three top-level sections,
-  in this order: "OS Usage", "Variables", "Database Usage".
+- **FR-005**: The report MUST contain exactly four top-level sections,
+  in this order: "OS Usage", "Variables", "Database Usage", "Advisor".
+  The first three sections surface captured pt-stalk data; the fourth
+  surfaces rule-based interpretive findings computed by the `findings/`
+  package (see FR-042).
 - **FR-006**: For a given input directory, two consecutive runs of the
   tool MUST produce byte-identical output files, except for a single
   "Report generated at" timestamp that the report explicitly labels as
@@ -244,8 +247,15 @@ matching their respective golden files.
   report generation on such a condition.
 - **FR-008**: If the tool cannot parse a portion of an otherwise-present
   source file, it MUST render whatever it was able to parse AND MUST
-  record a diagnostic entry (file name, location, reason) in a visible
-  "Parser Diagnostics" panel within the report.
+  record a diagnostic entry (file name, location, reason) on the
+  corresponding SourceFile's Diagnostics field. Per FR-027, Warning /
+  Error severity diagnostics are additionally mirrored to stderr.
+  Historical note: earlier drafts of this spec mandated a visible
+  "Parser Diagnostics" panel in the rendered HTML; that panel was
+  removed in commit db35624 ("render: collapse top sections by
+  default; drop Parser Diagnostics") because its signal-to-clutter
+  ratio did not meet Principle XI. Diagnostics are still captured
+  on the model and still mirrored to stderr, per FR-027.
 - **FR-009**: The OS Usage section MUST include a per-device disk
   utilisation time-series derived from the `-iostat` file, with average
   queue size available per device on the same chart.
@@ -396,9 +406,11 @@ matching their respective golden files.
 
 - **FR-031**: The rendered report MUST include a navigation index
   listing every top-level section (OS Usage, Variables, Database
-  Usage) and every named subview within each section (e.g., "Disk
-  utilization", "Top CPU processes", "vmstat saturation", "Counter
-  deltas", "InnoDB status", "Thread states", "Parser Diagnostics").
+  Usage, Advisor) and every named subview within each section (e.g.,
+  "Disk utilization", "Top CPU processes", "vmstat saturation",
+  "Counter deltas", "InnoDB status", "Thread states"). The historical
+  "Parser Diagnostics" entry was removed along with the in-report
+  panel (see FR-008) and is no longer part of the navigation.
   The index MUST be visible alongside the content as the viewer
   scrolls (e.g., sticky header, left rail, or equivalent) and MUST
   allow click-to-jump to any listed entry. The index MUST operate
@@ -411,8 +423,9 @@ matching their respective golden files.
   MUST persist across page reloads of the same report file via
   `localStorage` under a key that is stable per-report (e.g., a hash
   of the embedded data payload or the report's generation timestamp).
-  Default first-load state: all sections expanded. Parser Diagnostics
-  panel: default collapsed, per Principle XI ("prioritise signal over
+  Default first-load state: all top-level sections collapsed. Rationale:
+  the reader lands on a scannable overview of available sections and
+  drills in on demand, per Principle XI ("prioritise signal over
   clutter"). When JavaScript is disabled, all sections MUST be
   rendered expanded — collapse is progressive enhancement only.
 
@@ -455,7 +468,7 @@ matching their respective golden files.
 
 - **FR-036**: The report's navigation index (FR-031) MUST support
   keyboard-driven show/hide via a platform-idiomatic accelerator
-  (Cmd/Ctrl + `\`). The accelerator is progressive enhancement only
+  (Cmd/Ctrl + `.`). The accelerator is progressive enhancement only
   — with JavaScript disabled the nav remains visible via the
   `<noscript>` / degraded-anchor-list path declared in FR-031.
 
@@ -535,6 +548,24 @@ matching their respective golden files.
   in the same audit document. The audit gate is complementary to —
   not a replacement for — the Constitution Check (Principle XI) and
   the existing test suite.
+
+- **FR-042**: The report MUST include a fourth top-level section,
+  "Advisor", that surfaces rule-based interpretive findings derived
+  from the parsed Collection. The Advisor is a pure, deterministic
+  function of `model.Report` (see `findings/`): same input, same
+  ordered slice of `Finding` records. Each finding carries a
+  severity (Info / Warn / Crit), a short title, a plain-text
+  explanation, and a reference to the canonical data surface (e.g.,
+  the specific variable or chart it derives from). The Advisor
+  section MUST provide a severity filter (show / hide Info, Warn,
+  Crit) that operates entirely client-side on the embedded data,
+  with no network access (Principle IX). Findings are
+  read-only pointers into existing canonical data surfaces; they do
+  NOT re-render underlying sample values (FR-038 continues to hold).
+  Rule coverage at MVP: binary logs, buffer pool, connections,
+  query-shape heuristics, redo-log sizing, table cache, thread
+  cache, and tmp-table activity (see `findings/rules_*.go`). New
+  rules may be added without changing this FR.
 
 ### Key Entities
 
@@ -650,17 +681,19 @@ matching their respective golden files.
   samples. Supported pt-stalk formats are limited to the current
   Percona Toolkit stable release and the immediately preceding minor
   release in the same major line (see FR-024); other forks are best-effort only.
-- The MVP supports only the seven source-file suffixes listed here
-  (`-iostat`, `-top`, `-variables`, `-vmstat`, `-innodbstatus1`,
-  `-mysqladmin`, `-processlist`). Other pt-stalk collectors (e.g.,
-  `-meminfo`, `-disk-space`, `-slave-status`) are explicitly out of
+- The MVP supports eight source-file suffixes: `-iostat`, `-top`,
+  `-variables`, `-vmstat`, `-innodbstatus1`, `-mysqladmin`,
+  `-processlist`, and `-meminfo`. The original draft scoped seven
+  collectors; `-meminfo` was added mid-feature (commit 6e2c150) to
+  give the OS-Usage section a dedicated memory chart. Other pt-stalk
+  collectors (e.g., `-disk-space`, `-slave-status`) remain out of
   scope for this feature and will be added in subsequent features.
 - The MEMORY element of "OS Usage — CPU/DISK/MEMORY" is served by the
-  `-vmstat` resource-saturation chart (which includes free/cached memory
-  and swap activity). A dedicated `-meminfo` view is deferred to a
-  future feature; if memory context is judged insufficient from vmstat
-  alone, that will be addressed by adding a `-meminfo` parser later, not
-  by expanding this MVP.
+  dedicated `-meminfo` chart plus the `-vmstat` resource-saturation
+  view (which also covers free/cached memory and swap activity). The
+  two views are complementary: `-meminfo` shows total / free / cached
+  / buffers / swap as absolute values, `-vmstat` shows swap-in and
+  swap-out rates.
 - When an input directory contains multiple pt-stalk snapshots (typical
   when pt-stalk fires more than once), the MVP merges them within a
   single report rather than producing multiple reports (see FR-018).

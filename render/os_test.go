@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -35,38 +36,46 @@ func TestOSGoldenHTML(t *testing.T) {
 
 // TestOSSubviewAnchors: T096 / SC-005 / FR-031.
 //
-// The OS Usage section renders three subviews (iostat, top, vmstat).
-// SC-005 requires each subview to be addressable both by an HTML
-// anchor AND by a corresponding `Report.Navigation` entry so a user
-// can deep-link to the specific chart.
+// The OS Usage section renders four subviews (iostat, top, vmstat,
+// meminfo). SC-005 requires each subview to be addressable both by
+// an HTML anchor AND by a corresponding `Report.Navigation` entry so
+// a user can deep-link to the specific chart.
 //
 // The real subview IDs emitted by render/templates/os.html.tmpl are
-// `sub-os-iostat`, `sub-os-top`, `sub-os-vmstat` (the task description
-// in tasks.md used aspirational `os-disk-util`/`os-top-cpu`/`os-vmstat`
-// names that never landed; this test pins what the template actually
-// emits). A template edit that dropped one anchor — or a nav-rail
-// refactor that stopped linking to it — would fail here.
+// `sub-os-iostat`, `sub-os-top`, `sub-os-vmstat`, `sub-os-meminfo`
+// (the task description in tasks.md used aspirational names that
+// never landed; this test pins what the template actually emits). A
+// template edit that dropped one anchor — or a nav-rail refactor
+// that stopped linking to it — would fail here.
 func TestOSSubviewAnchors(t *testing.T) {
-	html := renderGolden(t, model.SuffixIostat, model.SuffixTop, model.SuffixVmstat)
+	html := renderGolden(t, model.SuffixIostat, model.SuffixTop, model.SuffixVmstat, model.SuffixMeminfo)
 	section := extractDetailsSection(t, html, "sec-os")
 
-	subviews := []string{"sub-os-iostat", "sub-os-top", "sub-os-vmstat"}
+	subviews := []string{"sub-os-iostat", "sub-os-top", "sub-os-vmstat", "sub-os-meminfo"}
 
 	// Every subview anchor lives inside the sec-os <details> block.
-	for _, anchor := range subviews {
-		want := `id="` + anchor + `"`
-		if !strings.Contains(section, want) {
-			t.Errorf("OS section missing %q anchor; SC-005 requires every OS subview to carry an HTML id for deep-linking", anchor)
-		}
-	}
+	assertAnchorsContained(t, section, subviews, `id="%s"`,
+		"OS section missing %q anchor; SC-005 requires every OS subview to carry an HTML id for deep-linking")
 
 	// Every subview must also be addressable from Report.Navigation,
 	// which serialises into <nav class="index"> at the document top
 	// (outside sec-os).
-	for _, anchor := range subviews {
-		wantHref := `href="#` + anchor + `"`
-		if !strings.Contains(html, wantHref) {
-			t.Errorf("Report.Navigation missing href=\"#%s\"; SC-005 requires every OS subview anchor to be reachable from the nav rail", anchor)
+	assertAnchorsContained(t, html, subviews, `href="#%s"`,
+		"Report.Navigation missing href=\"#%s\"; SC-005 requires every OS subview anchor to be reachable from the nav rail")
+}
+
+// assertAnchorsContained asserts that every anchor in `anchors`
+// appears inside `content` when formatted through `marker` (e.g.
+// `id="%s"` or `href="#%s"`). Extracted so both halves of
+// TestOSSubviewAnchors — "anchor lives in section HTML" and "nav rail
+// links to anchor" — drive through a single loop instead of repeating
+// the Contains scaffold.
+func assertAnchorsContained(t *testing.T, content string, anchors []string, marker, missingFmt string) {
+	t.Helper()
+	for _, anchor := range anchors {
+		want := fmt.Sprintf(marker, anchor)
+		if !strings.Contains(content, want) {
+			t.Errorf(missingFmt, anchor)
 		}
 	}
 }
