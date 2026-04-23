@@ -236,4 +236,3 @@ func innoDBIntMetric(label, hint string, vals []int) innoDBMetricView {
 		Max:   fmt.Sprintf("%d", mx),
 	}
 }
-
