@@ -785,6 +785,8 @@
           renderIostat(containers[i], data);
         } else if (name === "processlist" && Array.isArray(data.dimensions) && data.dimensions.length > 1) {
           renderProcesslist(containers[i], data);
+        } else if (name === "top") {
+          renderTopChart(containers[i], data);
         } else {
           renderTimeSeries(containers[i], data, unitForChart(name));
         }
@@ -802,9 +804,12 @@
     return "";
   }
 
-  // renderTimeSeries: generic multi-line chart with the pill legend.
-  function renderTimeSeries(el, data, unit) {
-    if (!data || !Array.isArray(data.timestamps) || !Array.isArray(data.series)) return;
+  // buildLineChart: construct a multi-line uPlot on `el` and attach the
+  // pill legend. Returns the uPlot instance (so callers that compose
+  // this into a toolbar wrapper can re-mount a single reset-zoom
+  // button over the top of sequential rebuilds). Does NOT mount a
+  // reset button itself — that's the caller's responsibility.
+  function buildLineChart(el, data, unit) {
     var width = measureChartWidth(el);
     var series = [{ label: "time" }].concat(
       data.series.map(function (s, i) { return decorateSeries(s.label, i); })
@@ -814,7 +819,193 @@
     var plot = new uPlot(opts, values, el);
     registerChart(plot, el, opts);
     mountLegend(el, series, plot);
+    return plot;
+  }
+
+  // buildStackedChart: construct a stacked-bar uPlot from a flat
+  // {timestamps, series[, snapshotBoundaries]} payload (the same
+  // shape renderTimeSeries consumes). Series draw bottom-up in input
+  // order; uPlot is asked to paint them top-down (tallest first) so
+  // each smaller stack paints on top — the legend then reads
+  // top→bottom matching the visual stack order. Hidden labels drive
+  // a zero-value substitution that keeps legend indexes stable while
+  // removing the bucket's contribution from the cumulative heights.
+  //
+  // hiddenLabels: mutable Set owned by the caller (we only read).
+  // onRebuild: callback fired when the user toggles legend visibility
+  //            so the caller can destroy + reconstruct with the new
+  //            hidden set. Must return the new plot if chaining state.
+  function buildStackedChart(el, data, unit, hiddenLabels, onRebuild) {
+    var series = data.series;
+    var n = data.timestamps.length;
+    var barsPath = uPlot.paths.bars({ size: [1.0, Infinity], align: 0 });
+
+    // Raw per-series values, zero'd when hidden.
+    var rawValues = series.map(function (s) {
+      var out = new Array(n);
+      var hidden = hiddenLabels.has(s.label);
+      for (var j = 0; j < n; j++) {
+        if (hidden) { out[j] = 0; continue; }
+        var v = +s.values[j];
+        out[j] = isNaN(v) ? null : v;
+      }
+      return out;
+    });
+
+    // Cumulative stacks — each index's value is the sum up to and
+    // including that index.
+    var stacked = rawValues.map(function () { return new Array(n); });
+    for (var j = 0; j < n; j++) {
+      var cum = 0;
+      for (var i = 0; i < rawValues.length; i++) {
+        cum += rawValues[i][j] || 0;
+        stacked[i][j] = cum;
+      }
+    }
+
+    // Raw (un-zeroed) values retained so the tooltip can show what a
+    // hidden bucket's value WOULD be.
+    var tooltipRaw = series.map(function (s) {
+      var out = new Array(n);
+      for (var j = 0; j < n; j++) {
+        var v = +s.values[j];
+        out[j] = isNaN(v) ? null : v;
+      }
+      return out;
+    });
+
+    // Push in REVERSE so uPlot paints the grand total first, then
+    // each smaller stack covers it — yielding the visual layering a
+    // reader expects and putting the legend in top→bottom stack order.
+    var plotSeries = [{ label: "time" }];
+    var plotData = [data.timestamps.slice()];
+    var plotRawByIdx = [null];
+    for (var k = series.length - 1; k >= 0; k--) {
+      var stroke = SERIES_COLORS[k % SERIES_COLORS.length];
+      plotSeries.push({
+        label: series[k].label,
+        stroke: stroke,
+        width: 0,
+        fill: hexToRgba(stroke, 0.95),
+        paths: barsPath,
+        points: { show: false },
+        value: function (u, v) { return v == null ? "–" : v.toLocaleString(); },
+      });
+      plotData.push(stacked[k]);
+      plotRawByIdx.push(tooltipRaw[k]);
+    }
+
+    var w = measureChartWidth(el);
+    var opts = basePlotOpts(w, 320, plotSeries, unit, data.snapshotBoundaries, data.timestamps);
+    var plot = new uPlot(opts, plotData, el);
+    plot.__rawData = plotRawByIdx; // consumed by updateTooltipOnCursor
+    registerChart(plot, el, opts);
+    mountLegend(el, plotSeries, plot, {
+      initialVisible: function (idx) {
+        return !hiddenLabels.has(plotSeries[idx].label);
+      },
+      onVisibilityChange: function (visibleIdxs) {
+        var active = new Set(visibleIdxs);
+        hiddenLabels.clear();
+        for (var idx = 1; idx < plotSeries.length; idx++) {
+          if (!active.has(idx)) hiddenLabels.add(plotSeries[idx].label);
+        }
+        if (typeof onRebuild === "function") onRebuild();
+      },
+    });
+    return plot;
+  }
+
+  // renderTimeSeries: generic multi-line chart with the pill legend
+  // and an adjacent "reset zoom" button. Thin wrapper over
+  // buildLineChart for charts that don't need a style toggle.
+  function renderTimeSeries(el, data, unit) {
+    if (!data || !Array.isArray(data.timestamps) || !Array.isArray(data.series)) return;
+    var plot = buildLineChart(el, data, unit);
     mountResetZoomButton(el, function () { return plot; });
+  }
+
+  // renderTopChart: Top CPU processes chart with a segmented toolbar
+  // letting the reader toggle between line + stacked-bar views.
+  // Default is the line view; the choice persists per-report under
+  // the v2 localStorage namespace. Each mode fully rebuilds the uPlot
+  // instance (destroys + recreates); zoom state is intentionally not
+  // preserved across switches — the toggle is meant for "show me a
+  // different angle", not "keep my zoom".
+  function renderTopChart(el, data) {
+    if (!data || !Array.isArray(data.timestamps) || !Array.isArray(data.series)) return;
+
+    var STORAGE_KEY = "mygather:v2:" + REPORT_ID + ":chart-type:top";
+    var current = storageGet(STORAGE_KEY);
+    if (current !== "line" && current !== "stacked") current = "line";
+
+    var toolbar = document.createElement("div");
+    toolbar.className = "chart-view-toolbar";
+    toolbar.setAttribute("role", "tablist");
+    toolbar.setAttribute("aria-label", "Top CPU chart style");
+
+    function makeBtn(key, label, tooltip) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "view-btn";
+      b.setAttribute("role", "tab");
+      b.setAttribute("data-chart-type", key);
+      b.textContent = label;
+      b.title = tooltip;
+      return b;
+    }
+    var btnLine  = makeBtn("line",    "Lines",        "Plot each process as a separate smooth line — shows each one's curve over time");
+    var btnStack = makeBtn("stacked", "Stacked bars", "Stack per-process %CPU per sample — shows composition and total load at a glance");
+    toolbar.appendChild(btnLine);
+    toolbar.appendChild(btnStack);
+    el.parentNode.insertBefore(toolbar, el);
+
+    // Stacked-mode hidden-label Set is preserved across rebuilds so
+    // toggling visibility of a process in stacked mode, then switching
+    // back to lines, then back to stacked, remembers the hidden set.
+    // Clearing on mode switch would be annoying for a reader iterating
+    // between views.
+    var stackedHidden = new Set();
+    var plot = null, legendEl = null;
+
+    function setAria() {
+      btnLine.classList.toggle("active",  current === "line");
+      btnStack.classList.toggle("active", current === "stacked");
+      btnLine.setAttribute("aria-selected",  current === "line"    ? "true" : "false");
+      btnStack.setAttribute("aria-selected", current === "stacked" ? "true" : "false");
+    }
+
+    function cleanup() {
+      if (plot) { unregisterChart(plot); plot.destroy(); plot = null; }
+      if (legendEl && legendEl.parentNode) {
+        legendEl.parentNode.removeChild(legendEl);
+        legendEl = null;
+      }
+    }
+
+    function draw() {
+      cleanup();
+      if (current === "stacked") {
+        plot = buildStackedChart(el, data, "%CPU", stackedHidden, draw);
+      } else {
+        plot = buildLineChart(el, data, "%CPU");
+      }
+      legendEl = el.nextSibling;
+    }
+
+    setAria();
+    draw();
+    mountResetZoomButton(el, function () { return plot; });
+
+    function switchTo(next) {
+      if (current === next) return;
+      current = next;
+      storageSet(STORAGE_KEY, current);
+      setAria();
+      draw();
+    }
+    btnLine.addEventListener("click",  function () { switchTo("line"); });
+    btnStack.addEventListener("click", function () { switchTo("stacked"); });
   }
 
   // renderIostat: split into two charts sharing the same pill legend —
