@@ -79,7 +79,14 @@
         <dt>Version</dt>            <dd class="env-strong mono">{{or $e.MysqlVersion "—"}}</dd>
         <dt>Distribution</dt>       <dd>{{or $e.Distribution "—"}}</dd>
         <dt>Version comment</dt>    <dd>{{or $e.VersionComment "—"}}</dd>
-        <dt>Compile OS / machine</dt><dd class="mono">{{or (printf "%s / %s" $e.CompileOS $e.CompileMachine) "—"}}</dd>
+        <dt>Compile OS / machine</dt>
+        <dd class="mono">
+          {{- if or $e.CompileOS $e.CompileMachine -}}
+            {{or $e.CompileOS "—"}} / {{or $e.CompileMachine "—"}}
+          {{- else -}}
+            —
+          {{- end -}}
+        </dd>
       </dl>
     </div>
     <div class="env-group">

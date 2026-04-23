@@ -144,6 +144,14 @@ type Collection struct {
 	// unreadable subdir). Per-file diagnostics live on their
 	// SourceFile.
 	Diagnostics []Diagnostic
+
+	// RawEnvSidecars caches the raw contents of the environment-only
+	// sidecar files (-hostname, -meminfo, -procstat, -sysctl, -top,
+	// -df, -output) at Discover time. Keyed by suffix. The render
+	// layer consumes it instead of re-reading from disk so two
+	// renders of the same Collection stay byte-identical even if the
+	// underlying files are later modified or removed.
+	RawEnvSidecars map[string]string
 }
 
 // Snapshot is one timestamped pt-stalk collection pass within a

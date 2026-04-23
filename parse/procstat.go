@@ -59,7 +59,16 @@ func ParseProcStat(content string) *model.EnvProcStat {
 			continue
 		}
 		if head == "btime" {
-			if v, err := strconv.ParseInt(strings.Fields(rest)[0], 10, 64); err == nil {
+			// Guard against truncated captures where `btime` has no
+			// numeric token: `strings.Fields(rest)` would be empty
+			// and [0] would panic. Treat missing/unparseable values
+			// as "uptime unavailable" (any stays false from btime's
+			// perspective, but earlier cpuN lines may still mark it).
+			toks := strings.Fields(rest)
+			if len(toks) == 0 {
+				continue
+			}
+			if v, err := strconv.ParseInt(toks[0], 10, 64); err == nil {
 				out.BTime = v
 				any = true
 			}

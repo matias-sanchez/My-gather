@@ -338,13 +338,51 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 	// self-contained and captures its own diagnostics on the SourceFile;
 	// the overall Discover call still returns err==nil.
 	collection := &model.Collection{
-		RootPath:    absRoot,
-		Hostname:    hostname,
-		PtStalkSize: totalBytes,
-		Snapshots:   snapshots,
+		RootPath:       absRoot,
+		Hostname:       hostname,
+		PtStalkSize:    totalBytes,
+		Snapshots:      snapshots,
+		RawEnvSidecars: loadEnvSidecars(absRoot, snapshots),
 	}
 	runParsers(ctx, collection, opts.Sink)
 	return collection, nil
+}
+
+// envSidecarSuffixes are the pt-stalk per-snapshot files the
+// Environment panel consumes. They are not part of model.KnownSuffixes
+// because they aren't time-series collectors — they're one-shot
+// machine-inventory dumps. Loaded once at Discover time into
+// Collection.RawEnvSidecars so render is a pure function of the model.
+var envSidecarSuffixes = []string{
+	"hostname", "meminfo", "procstat", "sysctl", "top", "df", "output",
+}
+
+// loadEnvSidecars reads the env-only sidecar files once, picking the
+// newest snapshot that has each file present. Missing/unreadable files
+// map to absent keys; the render layer treats them as "data unavailable".
+func loadEnvSidecars(rootPath string, snapshots []*model.Snapshot) map[string]string {
+	if rootPath == "" || len(snapshots) == 0 {
+		return nil
+	}
+	// Walk snapshots newest-first (snapshots are sorted ascending by
+	// Timestamp; reverse-index so we hit the latest capture first).
+	prefixes := make([]string, 0, len(snapshots))
+	for i := len(snapshots) - 1; i >= 0; i-- {
+		prefixes = append(prefixes, snapshots[i].Prefix)
+	}
+	out := make(map[string]string, len(envSidecarSuffixes))
+	for _, suf := range envSidecarSuffixes {
+		for _, pfx := range prefixes {
+			path := filepath.Join(rootPath, pfx+"-"+suf)
+			data, err := os.ReadFile(path)
+			if err != nil || len(data) == 0 {
+				continue
+			}
+			out[suf] = string(data)
+			break
+		}
+	}
+	return out
 }
 
 // runParsers iterates every SourceFile in every Snapshot and invokes

@@ -3,9 +3,6 @@ package render
 import (
 	"fmt"
 	"math"
-	"os"
-	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -14,66 +11,36 @@ import (
 	"github.com/matias-sanchez/My-gather/parse"
 )
 
-// envSidecarSuffixes enumerates the non-primary pt-stalk sidecar files
-// the Environment panel consumes. These files are not part of
-// model.KnownSuffixes (the set of time-series collectors parse.Discover
-// classifies) — buildEnvironmentSection reads them directly from the
-// Collection root to avoid altering the primary parser surface.
-var envSidecarSuffixes = []string{
-	"hostname",
-	"meminfo",
-	"procstat",
-	"sysctl",
-	"top",
-	"df",
-	"output",
-}
-
 // buildEnvironmentSection constructs the render-ready EnvironmentSection
-// from a Collection. It reads one sidecar file per suffix from the LAST
-// snapshot that has the file present on disk; missing / unreadable files
-// become nil sub-fields which the template renders as "—".
+// from a Collection. Consumes Collection.RawEnvSidecars — a map of
+// suffix → raw file contents populated once at parse.Discover time — so
+// the render layer is a pure function of the in-memory model (no
+// filesystem reads here; determinism contract preserved).
 //
-// The function performs filesystem reads but never mutates anything and
-// never fails: every os.Open/Read error degrades to "data unavailable"
-// for the affected sub-field.
+// Host panel is nil when no host-side sidecar produced any signal; MySQL
+// panel is nil when no -variables snapshot parsed. Both nil means the
+// Environment section will render as "missing" in the badge.
 func buildEnvironmentSection(c *model.Collection) *model.EnvironmentSection {
 	if c == nil {
 		return nil
 	}
 	sec := &model.EnvironmentSection{}
-
-	// Gather per-suffix raw contents by walking snapshots newest-first.
-	contents := map[string]string{}
-	if c.RootPath != "" {
-		prefixes := make([]string, 0, len(c.Snapshots))
-		for _, s := range c.Snapshots {
-			prefixes = append(prefixes, s.Prefix)
-		}
-		// newest-first
-		sort.Sort(sort.Reverse(sort.StringSlice(prefixes)))
-		for _, suf := range envSidecarSuffixes {
-			for _, pfx := range prefixes {
-				path := filepath.Join(c.RootPath, pfx+"-"+suf)
-				data, err := os.ReadFile(path)
-				if err != nil || len(data) == 0 {
-					continue
-				}
-				contents[suf] = string(data)
-				break
-			}
-		}
-	}
+	contents := c.RawEnvSidecars // may be nil; all lookups below are nil-safe
 
 	// ----- Host panel ---------------------------------------------
 	host := &model.HostEnv{}
-	if s, ok := contents["hostname"]; ok {
-		host.Hostname = parse.ParseEnvHostname(s)
+	populated := false
+	if s := contents["hostname"]; s != "" {
+		if h := parse.ParseEnvHostname(s); h != "" {
+			host.Hostname = h
+			populated = true
+		}
 	}
-	if host.Hostname == "" {
+	if host.Hostname == "" && c.Hostname != "" {
 		host.Hostname = c.Hostname
+		populated = true
 	}
-	if s, ok := contents["sysctl"]; ok {
+	if s := contents["sysctl"]; s != "" {
 		keys := parse.ParseSysctl(s)
 		// Kernel line: osrelease + version when available.
 		parts := []string{}
@@ -83,32 +50,54 @@ func buildEnvironmentSection(c *model.Collection) *model.EnvironmentSection {
 		if v := keys["kernel.version"]; v != "" {
 			parts = append(parts, v)
 		}
-		host.Kernel = strings.Join(parts, " ")
+		if k := strings.Join(parts, " "); k != "" {
+			host.Kernel = k
+			populated = true
+		}
 		// Architecture: tail of kernel.osrelease after last dot.
 		if v := keys["kernel.osrelease"]; v != "" {
 			if idx := strings.LastIndex(v, "."); idx >= 0 && idx+1 < len(v) {
 				host.Architecture = v[idx+1:]
+				populated = true
 			}
 		}
 		// OS best-effort via crypto.fips_name (RHEL/Rocky/OL hint).
 		if v := keys["crypto.fips_name"]; v != "" {
 			host.OS = v
+			populated = true
 		}
-		host.Swappiness = keys["vm.swappiness"]
-		host.DirtyRatio = keys["vm.dirty_ratio"]
-		host.DirtyBackgroundRatio = keys["vm.dirty_background_ratio"]
-		host.FileMax = keys["fs.file-max"]
+		if v := keys["vm.swappiness"]; v != "" {
+			host.Swappiness = v
+			populated = true
+		}
+		if v := keys["vm.dirty_ratio"]; v != "" {
+			host.DirtyRatio = v
+			populated = true
+		}
+		if v := keys["vm.dirty_background_ratio"]; v != "" {
+			host.DirtyBackgroundRatio = v
+			populated = true
+		}
+		if v := keys["fs.file-max"]; v != "" {
+			host.FileMax = v
+			populated = true
+		}
 	}
 	// Secondary OS hint: grep -output for distro strings if we don't have one.
 	if host.OS == "" {
-		if s, ok := contents["output"]; ok {
-			host.OS = guessOSFromOutput(s)
+		if s := contents["output"]; s != "" {
+			if guess := guessOSFromOutput(s); guess != "" {
+				host.OS = guess
+				populated = true
+			}
 		}
 	}
-	if s, ok := contents["procstat"]; ok {
-		ps := parse.ParseProcStat(s)
-		if ps != nil {
-			host.LogicalCPUs = ps.LogicalCPUs
+	if s := contents["procstat"]; s != "" {
+		if ps := parse.ParseProcStat(s); ps != nil {
+			if ps.LogicalCPUs > 0 {
+				host.LogicalCPUs = ps.LogicalCPUs
+				populated = true
+			}
 			// OS uptime — btime vs capture timestamp (last snapshot).
 			if ps.BTime > 0 && len(c.Snapshots) > 0 {
 				last := c.Snapshots[len(c.Snapshots)-1]
@@ -116,32 +105,49 @@ func buildEnvironmentSection(c *model.Collection) *model.EnvironmentSection {
 					diff := last.Timestamp.Unix() - ps.BTime
 					if diff > 0 {
 						host.OSUptimeSeconds = diff
+						populated = true
 					}
 				}
 			}
 		}
 	}
-	if s, ok := contents["top"]; ok {
+	if s := contents["top"]; s != "" {
 		if th := parse.ParseTopHeader(s); th != nil {
 			host.LoadAvg1 = th.Loadavg1
 			host.LoadAvg5 = th.Loadavg5
 			host.LoadAvg15 = th.Loadavg15
+			if th.Loadavg1 != 0 || th.Loadavg5 != 0 || th.Loadavg15 != 0 {
+				populated = true
+			}
 		}
 	}
-	if s, ok := contents["meminfo"]; ok {
-		host.Meminfo = parse.ParseEnvMeminfo(s)
+	if s := contents["meminfo"]; s != "" {
+		if m := parse.ParseEnvMeminfo(s); m != nil {
+			host.Meminfo = m
+			populated = true
+		}
 	}
-	if s, ok := contents["df"]; ok {
-		host.Filesystems = parse.ParseDFSnapshot(s, 5)
+	if s := contents["df"]; s != "" {
+		if fs := parse.ParseDFSnapshot(s, 5); len(fs) > 0 {
+			host.Filesystems = fs
+			populated = true
+		}
 	}
-	sec.Host = host
 
 	// ----- MySQL panel --------------------------------------------
 	sec.MySQL = buildMySQLEnv(c)
+	// Timezone belongs to the host panel but reads a MySQL variable;
+	// only count it as host-populated when we actually have it.
 	if sec.MySQL != nil {
-		host.Timezone = lookupVar(c, "system_time_zone")
+		if tz := lookupVar(c, "system_time_zone"); tz != "" {
+			host.Timezone = tz
+			populated = true
+		}
 	}
 
+	if populated {
+		sec.Host = host
+	}
 	return sec
 }
 
