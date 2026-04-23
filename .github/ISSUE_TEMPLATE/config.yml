@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Idea or open-ended discussion
+    url: https://github.com/matias-sanchez/My-gather/discussions/categories/ideas
+    about: For feature ideas, design questions, or anything you want feedback on before it becomes a ticket.
+  - name: Question or help wanted
+    url: https://github.com/matias-sanchez/My-gather/discussions/categories/q-a
+    about: Ask a question instead of filing an issue.
