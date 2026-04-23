@@ -91,9 +91,9 @@ func changedRowNames(v variableSnapshotView) []string {
 }
 
 // TestDedupPreservesFirstAndChanges — an [A, A, B, B] sequence
-// collapses to two panels. The first panel's RangeNote covers #1–#2,
-// the second covers #3–#4, and the second panel's Changed flag is
-// true ONLY for rows that actually differ from panel 1.
+// collapses to two panels. The first panel's range covers snapshots
+// #1–#2, the second covers #3–#4, and the second panel's Changed flag
+// is true ONLY for rows that actually differ from panel 1.
 func TestDedupPreservesFirstAndChanges(t *testing.T) {
 	mkEntries := func(bp, maxConn string) []model.VariableEntry {
 		return []model.VariableEntry{
@@ -109,17 +109,8 @@ func TestDedupPreservesFirstAndChanges(t *testing.T) {
 	if len(view.VariableSnapshots) != 2 {
 		t.Fatalf("want 2 kept panels, got %d", len(view.VariableSnapshots))
 	}
-	if view.VariableSnapshots[0].RangeNote == "" {
-		t.Errorf("first panel: want non-empty RangeNote spanning #1–#2, got empty")
-	}
-	lo, hi := parseRangeNote(view.VariableSnapshots[0].RangeNote)
-	if lo != 1 || hi != 2 {
-		t.Errorf("first panel RangeNote: want #1-#2, got #%d-#%d (note=%q)", lo, hi, view.VariableSnapshots[0].RangeNote)
-	}
-	lo2, hi2 := parseRangeNote(view.VariableSnapshots[1].RangeNote)
-	if lo2 != 3 || hi2 != 4 {
-		t.Errorf("second panel RangeNote: want #3-#4, got #%d-#%d", lo2, hi2)
-	}
+	assertRange(t, view.VariableSnapshots[0], 1, 2, "first panel")
+	assertRange(t, view.VariableSnapshots[1], 3, 4, "second panel")
 
 	// Second panel: only innodb_buffer_pool_size should be flagged
 	// Changed. sort_buffer_size and max_connections did not change.
@@ -136,14 +127,33 @@ func TestDedupPreservesFirstAndChanges(t *testing.T) {
 	}
 }
 
+// assertRange pins a kept panel's numeric range (rangeLo..rangeHi)
+// and asserts RangeNote derives consistently: empty for a single-
+// snapshot run, populated with formatRangeNote output otherwise.
+// Extracted so every dedup test reads range through one lens.
+func assertRange(t *testing.T, vs variableSnapshotView, wantLo, wantHi int, label string) {
+	t.Helper()
+	if vs.rangeLo != wantLo || vs.rangeHi != wantHi {
+		t.Errorf("%s range: want #%d-#%d, got #%d-#%d",
+			label, wantLo, wantHi, vs.rangeLo, vs.rangeHi)
+	}
+	wantNote := ""
+	if wantLo != wantHi {
+		wantNote = formatRangeNote(wantLo, wantHi)
+	}
+	if vs.RangeNote != wantNote {
+		t.Errorf("%s RangeNote: want %q, got %q", label, wantNote, vs.RangeNote)
+	}
+}
+
 // TestDedupCyclePattern documents the chosen behaviour for a
 // non-monotonic signature sequence like [A, A, B, B, A]: the second
-// run of A (at snapshot #5) is kept as a fresh panel with its own
-// RangeNote rather than bridged back to the first A range. The dedup
-// only compares against the last KEPT panel, not every prior panel.
-// Pinning this keeps the reader's mental model predictable — each
-// panel is a contiguous identical-snapshots run — and prevents future
-// refactors from silently turning this into history-aware collapsing.
+// run of A (at snapshot #5) is kept as a fresh panel rather than
+// bridged back to the first A range. The dedup only compares against
+// the last KEPT panel, not every prior panel. Pinning this keeps the
+// reader's mental model predictable — each panel is a contiguous
+// identical-snapshots run — and prevents future refactors from
+// silently turning this into history-aware collapsing.
 func TestDedupCyclePattern(t *testing.T) {
 	a := []model.VariableEntry{
 		{Name: "innodb_buffer_pool_size", Value: "128M"},
@@ -157,24 +167,12 @@ func TestDedupCyclePattern(t *testing.T) {
 	if got := len(view.VariableSnapshots); got != 3 {
 		t.Fatalf("want 3 kept panels for [A,A,B,B,A]; got %d", got)
 	}
-	// Panel 3 (second A) is a single-snapshot run (#5). RangeNote is
-	// deliberately cleared for single-snapshot runs (rangeIsSingle
-	// branch in buildView), so the note must be empty — NOT bridged
-	// back to the first A run at #1-#2.
-	if note := view.VariableSnapshots[2].RangeNote; note != "" {
-		t.Errorf("second-A panel RangeNote: want \"\" (single-snapshot run, no cycle collapse); got %q",
-			note)
-	}
-	// The first two kept panels DO span multiple snapshots, so their
-	// RangeNote must remain populated (contrast with panel 3).
-	if lo, hi := parseRangeNote(view.VariableSnapshots[0].RangeNote); lo != 1 || hi != 2 {
-		t.Errorf("first A-run RangeNote: want #1-#2, got #%d-#%d (note=%q)",
-			lo, hi, view.VariableSnapshots[0].RangeNote)
-	}
-	if lo, hi := parseRangeNote(view.VariableSnapshots[1].RangeNote); lo != 3 || hi != 4 {
-		t.Errorf("B-run RangeNote: want #3-#4, got #%d-#%d (note=%q)",
-			lo, hi, view.VariableSnapshots[1].RangeNote)
-	}
+	// First two runs span multiple snapshots (populated RangeNote);
+	// the second-A panel is a single-snapshot run (#5 only, no note).
+	assertRange(t, view.VariableSnapshots[0], 1, 2, "first A-run")
+	assertRange(t, view.VariableSnapshots[1], 3, 4, "B-run")
+	assertRange(t, view.VariableSnapshots[2], 5, 5, "second-A single-snapshot")
+
 	// Panel 3 is compared against panel 2 (the last kept panel, which
 	// held B), so innodb_buffer_pool_size must be flagged Changed on
 	// the re-entry to A.
@@ -184,33 +182,23 @@ func TestDedupCyclePattern(t *testing.T) {
 	}
 }
 
-// TestRangeNoteRoundtrip — formatRangeNote and parseRangeNote are
-// inverses for every valid (lo, hi) pair.
-func TestRangeNoteRoundtrip(t *testing.T) {
-	cases := [][2]int{
-		{1, 1},
-		{1, 5},
-		{3, 10},
-		{100, 200},
+// TestFormatRangeNote — formatRangeNote is the one-way presentation
+// formatter; pin its output shape so templates and screen readers
+// stay aligned. No parseRangeNote pair exists anymore — the range is
+// tracked as numeric state on variableSnapshotView.
+func TestFormatRangeNote(t *testing.T) {
+	cases := []struct {
+		lo, hi int
+		want   string
+	}{
+		{1, 1, "Identical values seen in snapshot #1"},
+		{1, 5, "Identical values seen in snapshots #1–#5"},
+		{3, 10, "Identical values seen in snapshots #3–#10"},
 	}
 	for _, c := range cases {
-		note := formatRangeNote(c[0], c[1])
-		lo, hi := parseRangeNote(note)
-		if lo != c[0] || hi != c[1] {
-			t.Errorf("roundtrip (%d,%d): note=%q parsed as (%d,%d)", c[0], c[1], note, lo, hi)
+		got := formatRangeNote(c.lo, c.hi)
+		if got != c.want {
+			t.Errorf("formatRangeNote(%d,%d) = %q; want %q", c.lo, c.hi, got, c.want)
 		}
-	}
-}
-
-// TestExtendRangeEmptyInput — LOW #11 — a blank RangeNote (or any
-// malformed note that parseRangeNote returns (0,0) for) must be
-// treated as "no range seeded" and anchored on the current snapNum
-// rather than collapsing to (0, snapNum).
-func TestExtendRangeEmptyInput(t *testing.T) {
-	v := &variableSnapshotView{}
-	extendRange(v, 5)
-	lo, hi := parseRangeNote(v.RangeNote)
-	if lo != 5 || hi != 5 {
-		t.Errorf("extendRange on empty note: want (5,5), got (%d,%d); note=%q", lo, hi, v.RangeNote)
 	}
 }

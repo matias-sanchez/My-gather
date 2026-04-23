@@ -155,6 +155,16 @@ func TestMeminfoRejectsPreTSData(t *testing.T) {
 			input: "MemTotal: 32000000 kB\nTS 1776790303.000000000 2026-04-21 16:51:43\n",
 			want:  "value line before first TS marker",
 		},
+		{
+			name: "missing SwapTotal/SwapFree",
+			// /proc/meminfo always emits both (zero on systems without
+			// swap); absence signals a truncated capture and must be
+			// rejected instead of synthesising swap_used=0 silently.
+			input: "TS 1776790303.000000000 2026-04-21 16:51:43\n" +
+				"MemTotal:       32000000 kB\n" +
+				"MemFree:         5000000 kB\n",
+			want: "missing SwapTotal and/or SwapFree",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -56,51 +56,40 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 		totalSnaps = len(r.VariablesSection.PerSnapshot)
 		defaults := loadMySQLDefaults()
 		haveAny := false
-		// Dedup adjacent identical snapshots. For each captured
-		// snapshot compute a signature over the (name, value) pairs —
-		// skipping volatile variables that drift without meaningful
-		// change — and compare against the last KEPT snapshot. If
-		// identical, extend that snapshot's range; otherwise emit a
-		// new view. Nil-Data snapshots emit their own entry so
-		// partial captures remain visible.
-		lastKept := -1
-		var lastSig string
-		var lastKeptMap map[string]string // name → value from previous kept snapshot
-		for i, sv := range r.VariablesSection.PerSnapshot {
-			if sv.Data == nil {
+		// keptVariableRuns is the single source of truth for dedup;
+		// navigation and this body iterate the same runs so they can
+		// never disagree on which snapshots were collapsed.
+		var lastKeptMap map[string]string // name → value from previous kept panel
+		for _, run := range keptVariableRuns(r.VariablesSection, sigs) {
+			startSV := r.VariablesSection.PerSnapshot[run.StartIdx]
+			if run.NilData {
 				v.VariableSnapshots = append(v.VariableSnapshots, variableSnapshotView{
-					DetailsID: variablesSnapshotID(i),
-					Title:     fmt.Sprintf("Snapshot %s", sv.SnapshotPrefix),
-					Badge:     fmt.Sprintf("snap #%d", i+1),
+					DetailsID: variablesSnapshotID(run.StartIdx),
+					Title:     fmt.Sprintf("Snapshot %s", startSV.SnapshotPrefix),
+					Badge:     fmt.Sprintf("snap #%d", run.StartIdx+1),
 				})
-				lastKept = -1
-				lastSig = ""
 				lastKeptMap = nil
 				continue
 			}
-			sig := sigs[i]
-			if lastKept >= 0 && sig == lastSig {
-				// Identical to the last kept snapshot — extend its range.
-				extendRange(&v.VariableSnapshots[lastKept], i+1)
-				continue
-			}
 			vv := variableSnapshotView{
-				DetailsID: variablesSnapshotID(i),
-				Title:     fmt.Sprintf("Snapshot %s", sv.SnapshotPrefix),
-				Badge:     fmt.Sprintf("snap #%d", i+1),
-				Count:     len(sv.Data.Entries),
+				DetailsID: variablesSnapshotID(run.StartIdx),
+				Title:     fmt.Sprintf("Snapshot %s", startSV.SnapshotPrefix),
+				Badge:     fmt.Sprintf("snap #%d", run.StartIdx+1),
+				Count:     len(startSV.Data.Entries),
+				rangeLo:   run.StartIdx + 1,
+				rangeHi:   run.EndIdx + 1,
 			}
-			vv.Entries = make([]variableRowView, 0, len(sv.Data.Entries))
-			for _, e := range sv.Data.Entries {
+			vv.Entries = make([]variableRowView, 0, len(startSV.Data.Entries))
+			for _, e := range startSV.Data.Entries {
 				st := classifyVariable(defaults, e.Name, e.Value)
 				if st == "modified" {
 					vv.ModifiedCount++
 				}
 				// Flag the row as Changed when (1) there IS a previous
-				// kept snapshot, (2) this variable is NOT in the
-				// volatile ignorelist, and (3) its value differs from
-				// (or was absent in) the previous snapshot. The first
-				// kept panel never highlights — nothing to compare to.
+				// kept panel, (2) this variable is NOT in the volatile
+				// ignorelist, and (3) its value differs from (or was
+				// absent in) the previous panel. The first kept panel
+				// never highlights — nothing to compare to.
 				changed := false
 				if lastKeptMap != nil {
 					if _, vol := volatileVariables[strings.ToLower(e.Name)]; !vol {
@@ -122,23 +111,19 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 			}
 			haveAny = true
 			v.VariableSnapshots = append(v.VariableSnapshots, vv)
-			lastKept = len(v.VariableSnapshots) - 1
-			lastSig = sig
 			// Snapshot the name→value map for the next kept comparison.
-			lastKeptMap = make(map[string]string, len(sv.Data.Entries))
-			for _, e := range sv.Data.Entries {
+			lastKeptMap = make(map[string]string, len(startSV.Data.Entries))
+			for _, e := range startSV.Data.Entries {
 				lastKeptMap[e.Name] = e.Value
 			}
-			// Seed the range tracker with the current snapshot number
-			// so extendRange can grow it later.
-			v.VariableSnapshots[lastKept].RangeNote = formatRangeNote(i+1, i+1)
 		}
 		v.HasVariables = haveAny
-		// RangeNote is only informative when the kept snapshot
-		// represents a range; clear the single-snapshot notes.
+		// Derive the presentation RangeNote once per kept panel.
+		// Single-snapshot runs and nil-Data entries leave it empty.
 		for idx := range v.VariableSnapshots {
-			if rangeIsSingle(v.VariableSnapshots[idx].RangeNote) {
-				v.VariableSnapshots[idx].RangeNote = ""
+			vs := &v.VariableSnapshots[idx]
+			if vs.rangeLo != 0 && vs.rangeLo != vs.rangeHi {
+				vs.RangeNote = formatRangeNote(vs.rangeLo, vs.rangeHi)
 			}
 		}
 	}

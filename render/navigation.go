@@ -27,33 +27,19 @@ func buildNavigation(r *model.Report, sigs []string) []model.NavEntry {
 	// snapshots with identical variables are collapsed, matching the
 	// panels rendered in the Variables body). nil-Data snapshots
 	// always get their own entry so partial captures stay visible.
+	// keptVariableRuns is the single source of truth for which
+	// snapshots survive dedup; buildView consumes the same runs so
+	// nav entries and rendered panels cannot disagree.
 	nav = append(nav, model.NavEntry{ID: "sec-variables", Title: "Variables", Level: 1})
 	if r.VariablesSection != nil {
-		var lastSig string
-		sigValid := false
-		for i, sv := range r.VariablesSection.PerSnapshot {
-			if sv.Data == nil {
-				nav = append(nav, model.NavEntry{
-					ID:       variablesSnapshotID(i),
-					Title:    sv.SnapshotPrefix,
-					Level:    2,
-					ParentID: "sec-variables",
-				})
-				sigValid = false
-				continue
-			}
-			sig := sigs[i]
-			if sigValid && sig == lastSig {
-				continue
-			}
+		for _, run := range keptVariableRuns(r.VariablesSection, sigs) {
+			sv := r.VariablesSection.PerSnapshot[run.StartIdx]
 			nav = append(nav, model.NavEntry{
-				ID:       variablesSnapshotID(i),
+				ID:       variablesSnapshotID(run.StartIdx),
 				Title:    sv.SnapshotPrefix,
 				Level:    2,
 				ParentID: "sec-variables",
 			})
-			lastSig = sig
-			sigValid = true
 		}
 	}
 
