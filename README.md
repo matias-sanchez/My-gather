@@ -8,14 +8,37 @@ Built for MySQL / Percona support engineers and DBAs triaging incidents under ti
 
 Active development. See `specs/001-ptstalk-report-mvp/` for the current feature spec, implementation plan, and task list.
 
+## Install
+
+One-liner (macOS + Linux, amd64 + arm64) — verifies the SHA-256 against the published `SHA256SUMS` and installs into `~/.local/bin`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/matias-sanchez/My-gather/main/scripts/install.sh | sh
+```
+
+Pin to a specific tag or install somewhere else:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/matias-sanchez/My-gather/main/scripts/install.sh | VERSION=v0.3.0 sh
+curl -fsSL https://raw.githubusercontent.com/matias-sanchez/My-gather/main/scripts/install.sh | PREFIX=/usr/local/bin sudo sh
+```
+
+Or grab a raw binary from the [latest release](https://github.com/matias-sanchez/My-gather/releases/latest) directly — `my-gather-darwin-arm64`, `my-gather-darwin-amd64`, `my-gather-linux-arm64`, `my-gather-linux-amd64`. Each tag also ships a `.tar.gz` that bundles the binary + README + CHANGELOG, plus a single `SHA256SUMS` covering every artifact.
+
 ## Quickstart
+
+```bash
+my-gather testdata/example2 -o /tmp/report.html
+open /tmp/report.html   # macOS; xdg-open on Linux
+```
+
+Or build from source:
 
 ```bash
 git clone git@github.com:matias-sanchez/My-gather.git
 cd My-gather
 make build
 ./bin/my-gather testdata/example2 -o /tmp/report.html
-open /tmp/report.html   # macOS; xdg-open on Linux
 ```
 
 The report is one self-contained HTML file — CSS, JS, fonts, and data are inlined. Open it on an air-gapped laptop and everything renders.

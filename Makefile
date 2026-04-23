@@ -59,10 +59,13 @@ lint:
 	$(GO) vet ./...
 
 # release: cross-compile for every target, bundle each into a tarball,
-# and emit a single SHA256SUMS file beside them. Does NOT depend on
-# `clean` so the local ./bin/ binary survives a release build.
+# also emit a raw `my-gather-<os>-<arch>` binary alongside each tarball
+# (so users can `curl | chmod | mv` in one step without the tarball
+# dance), and finish with a single SHA256SUMS covering every artifact.
+# Does NOT depend on `clean` so the local ./bin/ binary survives a
+# release build.
 release: $(DIST)
-	@rm -f $(DIST)/my-gather_*.tar.gz $(DIST)/SHA256SUMS
+	@rm -f $(DIST)/my-gather_*.tar.gz $(DIST)/my-gather-* $(DIST)/SHA256SUMS
 	@for target in $(TARGETS); do \
 	  os=$${target%%/*}; arch=$${target##*/}; \
 	  stage="$(DIST)/my-gather_$(VERSION)_$${os}_$${arch}"; \
@@ -73,11 +76,13 @@ release: $(DIST)
 	    || exit 1; \
 	  cp README.md CHANGELOG.md "$$stage/" 2>/dev/null || true; \
 	  ( cd $(DIST) && tar -czf "my-gather_$(VERSION)_$${os}_$${arch}.tar.gz" "my-gather_$(VERSION)_$${os}_$${arch}" ) || exit 1; \
+	  cp "$$stage/$(BIN_NAME)" "$(DIST)/$(BIN_NAME)-$${os}-$${arch}"; \
+	  chmod +x "$(DIST)/$(BIN_NAME)-$${os}-$${arch}"; \
 	  rm -rf "$$stage"; \
 	done
-	@( cd $(DIST) && $(SHA256) my-gather_*.tar.gz > SHA256SUMS )
+	@( cd $(DIST) && $(SHA256) my-gather_*.tar.gz my-gather-* > SHA256SUMS )
 	@echo "Release artifacts in $(DIST)/:"
-	@ls -lh $(DIST)/my-gather_*.tar.gz $(DIST)/SHA256SUMS
+	@ls -lh $(DIST)/my-gather_*.tar.gz $(DIST)/my-gather-* $(DIST)/SHA256SUMS
 
 $(DIST):
 	@mkdir -p $(DIST)

@@ -132,4 +132,8 @@ jobs:
         with:
           files: |
             dist/my-gather_*.tar.gz
+            dist/my-gather-darwin-amd64
+            dist/my-gather-darwin-arm64
+            dist/my-gather-linux-amd64
+            dist/my-gather-linux-arm64
             dist/SHA256SUMS
