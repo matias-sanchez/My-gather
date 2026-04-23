@@ -9,6 +9,17 @@ import (
 	"github.com/matias-sanchez/My-gather/model"
 )
 
+// volatileVariables are SHOW VARIABLES entries expected to drift
+// between snapshots on a busy server even when the operator has not
+// changed anything (e.g. gtid_executed advances on every commit).
+// Excluding them from the dedup signature keeps the "collapse
+// identical snapshots" behaviour useful on busy replicas. Matching
+// is case-insensitive.
+var volatileVariables = map[string]struct{}{
+	"gtid_executed": {},
+	"gtid_purged":   {},
+}
+
 // snapshotSignature returns a stable hash of a snapshot's variable
 // entries (sorted by name, skipping the volatile set). Adjacent
 // snapshots with identical signatures are collapsed into a single

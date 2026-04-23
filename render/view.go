@@ -76,17 +76,6 @@ type variableSnapshotView struct {
 	Entries      []variableRowView
 }
 
-// volatileVariables are SHOW VARIABLES entries expected to drift
-// between snapshots on a busy server even when the operator has not
-// changed anything (e.g. gtid_executed advances on every commit).
-// Excluding them from the dedup signature keeps the "collapse
-// identical snapshots" behaviour useful on busy replicas. Matching
-// is case-insensitive.
-var volatileVariables = map[string]struct{}{
-	"gtid_executed": {},
-	"gtid_purged":   {},
-}
-
 type variableRowView struct {
 	Name   string
 	Value  string

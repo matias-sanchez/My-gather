@@ -398,7 +398,7 @@ type SemaphoreSite struct {
 // WaitCount descending first, then stable tie-break by File
 // ascending, Line ascending, MutexName ascending. Both parse/ and
 // render/ use this to guarantee identical bytes across the two layers
-// (NIT #44).
+// (NIT #44). Sorts in place; does not copy.
 func SortSemaphoreSites(sites []SemaphoreSite) {
 	sort.SliceStable(sites, func(i, j int) bool {
 		if sites[i].WaitCount != sites[j].WaitCount {

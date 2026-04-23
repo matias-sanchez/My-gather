@@ -52,7 +52,7 @@ var tsMeminfoLine = regexp.MustCompile(`^TS\s+(\d+(?:\.\d+)?)\s+(\d{4}-\d{2}-\d{
 // meminfoValueLine matches a /proc/meminfo "Key:  value kB" row.
 // The unit is always kB on Linux; the parser assumes that and
 // converts to GB at emit time.
-var meminfoValueLine = regexp.MustCompile(`^([A-Za-z_()]+):\s+(\d+)\s*kB\s*$`)
+var meminfoValueLine = regexp.MustCompile(`^([A-Za-z0-9_()]+):\s+(\d+)\s*kB\s*$`)
 
 const kbPerGB = 1024.0 * 1024.0
 
@@ -84,7 +84,9 @@ func parseMeminfo(r io.Reader, sourcePath string) (*model.MeminfoData, []model.D
 		line := strings.TrimRight(scanner.Text(), "\r\n")
 		if m := tsMeminfoLine.FindStringSubmatch(line); m != nil {
 			epoch, _ := strconv.ParseFloat(m[1], 64)
-			t := time.Unix(int64(math.Floor(epoch)), 0).UTC()
+			secs := int64(math.Floor(epoch))
+			ns := int64(math.Round((epoch - float64(secs)) * 1e9))
+			t := time.Unix(secs, ns).UTC()
 			startNewSample(t)
 			continue
 		}

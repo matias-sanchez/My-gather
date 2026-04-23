@@ -132,7 +132,11 @@
         chips.forEach(function (c) {
           c.addEventListener("click", function () {
             state.statusFilter = c.getAttribute("data-filter") || "all";
-            chips.forEach(function (x) { x.classList.toggle("active", x === c); });
+            chips.forEach(function (x) {
+              var on = x === c;
+              x.classList.toggle("active", on);
+              x.setAttribute("aria-selected", on ? "true" : "false");
+            });
             update();
           });
         });
@@ -527,8 +531,8 @@
     var left = u.cursor.left + 14;
     var top  = u.cursor.top  + 14;
     var rect = tt.getBoundingClientRect();
-    var plotW = u.bbox.width / devicePixelRatio;
-    var plotH = u.bbox.height / devicePixelRatio;
+    var plotW = u.over.clientWidth;
+    var plotH = u.over.clientHeight;
     if (left + rect.width > plotW) left = u.cursor.left - rect.width - 14;
     if (top + rect.height > plotH) top = Math.max(0, u.cursor.top - rect.height - 14);
     if (left < 0) left = 0;
@@ -1267,7 +1271,11 @@
       if (catPopup.hidden) openCatPopup(); else closeCatPopup();
     });
     document.addEventListener("keydown", function (ev) {
-      if (ev.key === "Escape" && !catPopup.hidden) closeCatPopup();
+      if (ev.key === "Escape" && !catPopup.hidden) {
+        closeCatPopup();
+        ev.preventDefault();
+        ev.stopPropagation();
+      }
     });
 
     catDD.appendChild(catToggle);
@@ -1363,7 +1371,7 @@
     strip.type = "button";
     strip.className = "ma-strip";
     strip.setAttribute("aria-expanded", "false");
-    strip.setAttribute("aria-controls", "ma-panel-" + Math.random().toString(36).slice(2, 8));
+    strip.setAttribute("aria-controls", "ma-panel-" + REPORT_ID);
     panel.id = strip.getAttribute("aria-controls");
     strip.innerHTML =
       '<span class="ma-strip-pencil" aria-hidden="true">✎</span>' +
@@ -1445,12 +1453,16 @@
 
     // Click-outside-to-close: listens at document level, ignores
     // clicks inside the panel itself or on the strip. Skipped when
-    // pinned.
-    document.addEventListener("click", function (ev) {
-      if (!isOpen || isPinned) return;
-      if (panelHost.contains(ev.target)) return;
-      setOpen(false);
-    });
+    // pinned. Guarded so repeated renderMysqladmin calls on the same
+    // host don't stack duplicate global listeners.
+    if (!panelHost._clickOutsideInit) {
+      panelHost._clickOutsideInit = true;
+      document.addEventListener("click", function (ev) {
+        if (!isOpen || isPinned) return;
+        if (panelHost.contains(ev.target)) return;
+        setOpen(false);
+      });
+    }
 
     // Hotkey `E` toggles the panel, but only when the mysqladmin
     // subview is actually in the viewport — so pressing `e` while
@@ -1941,6 +1953,7 @@
     });
 
     document.addEventListener("keydown", function (e) {
+      if (e.defaultPrevented) return;
       // Escape closes.
       if (e.key === "Escape" && isOpen()) {
         e.preventDefault();
@@ -2121,7 +2134,11 @@
         tabs.forEach(function (tab) {
           tab.addEventListener("click", function () {
             var key = tab.getAttribute("data-view");
-            tabs.forEach(function (t) { t.classList.toggle("active", t === tab); });
+            tabs.forEach(function (t) {
+              var on = t === tab;
+              t.classList.toggle("active", on);
+              t.setAttribute("aria-selected", on ? "true" : "false");
+            });
             views.forEach(function (v) {
               v.hidden = v.getAttribute("data-view") !== key;
             });
@@ -2177,7 +2194,10 @@
     observeContentColumn();
     // Also re-fit on any <details> toggle (open/close affects
     // content-column scrollbar which affects chart width).
-    document.addEventListener("toggle", function () {
+    document.addEventListener("toggle", function (ev) {
+      // Only react to content-area <details> toggles; nav-group
+      // open/close must not trigger a chart-wide resize pass.
+      if (!ev.target || !ev.target.closest || !ev.target.closest("main.content")) return;
       window.requestAnimationFrame(resizeAllCharts);
     }, true);
   }

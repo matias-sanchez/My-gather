@@ -16,15 +16,15 @@
              data-snapshot="{{.DetailsID}}"
              placeholder="Filter by name…" autocomplete="off" spellcheck="false">
       <div class="var-chips" role="tablist" aria-label="Variable filters">
-        <button class="var-chip"        data-filter="all"      data-snapshot="{{.DetailsID}}">All ({{.Count}})</button>
+        <button type="button" role="tab" aria-selected="false" class="var-chip"        data-filter="all"      data-snapshot="{{.DetailsID}}">All ({{.Count}})</button>
         {{- if gt .ChangedCount 0 }}
-        <button class="var-chip chip-changed active" data-filter="changed" data-snapshot="{{.DetailsID}}">Changed ({{.ChangedCount}})</button>
-        <button class="var-chip"        data-filter="modified" data-snapshot="{{.DetailsID}}">Modified ({{.ModifiedCount}})</button>
+        <button type="button" role="tab" aria-selected="true"  class="var-chip chip-changed active" data-filter="changed" data-snapshot="{{.DetailsID}}">Changed ({{.ChangedCount}})</button>
+        <button type="button" role="tab" aria-selected="false" class="var-chip"        data-filter="modified" data-snapshot="{{.DetailsID}}">Modified ({{.ModifiedCount}})</button>
         {{- else }}
-        <button class="var-chip active" data-filter="modified" data-snapshot="{{.DetailsID}}">Modified ({{.ModifiedCount}})</button>
+        <button type="button" role="tab" aria-selected="true"  class="var-chip active" data-filter="modified" data-snapshot="{{.DetailsID}}">Modified ({{.ModifiedCount}})</button>
         {{- end }}
-        <button class="var-chip"        data-filter="default"  data-snapshot="{{.DetailsID}}">Default</button>
-        <button class="var-chip"        data-filter="unknown"  data-snapshot="{{.DetailsID}}">Unknown</button>
+        <button type="button" role="tab" aria-selected="false" class="var-chip"        data-filter="default"  data-snapshot="{{.DetailsID}}">Default</button>
+        <button type="button" role="tab" aria-selected="false" class="var-chip"        data-filter="unknown"  data-snapshot="{{.DetailsID}}">Unknown</button>
       </div>
       <span class="count">{{.Count}} variables · {{.ModifiedCount}} modified{{if gt .ChangedCount 0}} · {{.ChangedCount}} changed{{end}}</span>
     </div>

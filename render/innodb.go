@@ -2,7 +2,6 @@ package render
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/matias-sanchez/My-gather/model"
 )
@@ -50,6 +49,10 @@ func aggregateInnoDBMetrics(snaps []model.SnapshotInnoDB) []innoDBMetricView {
 // Snapshots with zero activity (hash + non-hash == 0) are skipped —
 // dividing 0/0 is meaningless and lets an idle capture collapse the
 // ratio to 0 which would misrepresent the server.
+//
+// AHIHashTableSize is the last non-zero size observed in iteration
+// order; it usually equals the worst snapshot's size but can diverge
+// if the instance restarted mid-window.
 func buildAHIMetric(snaps []model.SnapshotInnoDB) innoDBMetricView {
 	var ratios []float64
 	type active struct {
@@ -234,12 +237,3 @@ func innoDBIntMetric(label, hint string, vals []int) innoDBMetricView {
 	}
 }
 
-// isMysqldCommand reports whether a top-process Command string refers
-// to the mysqld server (or mariadbd on MariaDB). Wrappers such as
-// mysqld_safe are NOT matched — only the server binary itself.
-// Matches are case-insensitive and tolerant of leading/trailing
-// whitespace.
-func isMysqldCommand(cmd string) bool {
-	trimmed := strings.TrimSpace(cmd)
-	return strings.EqualFold(trimmed, "mysqld") || strings.EqualFold(trimmed, "mariadbd")
-}

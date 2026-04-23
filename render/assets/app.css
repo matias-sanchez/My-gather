@@ -37,6 +37,12 @@
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
   --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+
+  --nav-toggle-top: 16px;
+  --nav-toggle-left: 16px;
+  --nav-toggle-size: 72px;
+  --nav-iris-origin-x: calc(var(--nav-toggle-left) + var(--nav-toggle-size) / 2);
+  --nav-iris-origin-y: calc(var(--nav-toggle-top)  + var(--nav-toggle-size) / 2);
 }
 
 @media (prefers-color-scheme: light) {
@@ -136,11 +142,11 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
    Top-left, always visible. Doubles as the nav trigger. */
 .nav-toggle {
   position: fixed;
-  top: 16px;
-  left: 16px;
+  top: var(--nav-toggle-top);
+  left: var(--nav-toggle-left);
   z-index: 1101;
-  width: 72px;
-  height: 72px;
+  width: var(--nav-toggle-size);
+  height: var(--nav-toggle-size);
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
   border-radius: 50%;
@@ -255,14 +261,14 @@ nav.index {
     inset -1px 0 0 color-mix(in srgb, var(--accent) 12%, transparent);
   overflow-y: auto;
   font-size: 13px;
-  clip-path: circle(0px at 52px 52px);
+  clip-path: circle(0 at var(--nav-iris-origin-x) var(--nav-iris-origin-y));
   pointer-events: none;
   transition: clip-path 480ms cubic-bezier(.22, 1, .36, 1),
               box-shadow 320ms ease;
   will-change: clip-path;
 }
 body.nav-open nav.index {
-  clip-path: circle(200vmax at 52px 52px);
+  clip-path: circle(200vmax at var(--nav-iris-origin-x) var(--nav-iris-origin-y));
   pointer-events: auto;
 }
 nav.index::-webkit-scrollbar { width: 8px; }
@@ -321,7 +327,6 @@ details.nav-group > summary {
   user-select: none;
   border-radius: var(--radius-sm);
 }
-details.nav-group > summary::-webkit-details-marker { display: none; }
 details.nav-group > summary::before {
   content: "▸";
   color: var(--fg-dim);
@@ -384,6 +389,14 @@ main.content {
 
 /* ---------- Sections ---------- */
 
+/* Global <details> marker reset. Webkit uses ::-webkit-details-marker,
+   Firefox + modern Chromium use the CSS pseudo ::marker. Without both,
+   a default bullet or triangle leaks through the custom chevrons used
+   in section summaries, ahi-formula, semaphore-breakdown, nav groups. */
+details > summary { list-style: none; }
+details > summary::marker { content: ""; }
+details > summary::-webkit-details-marker { display: none; }
+
 details.section {
   background: var(--bg-elev);
   border: 1px solid var(--border);
@@ -426,7 +439,6 @@ details.section > summary .badge {
 details.section[open] > summary {
   border-bottom-color: var(--border);
 }
-details.section > summary::-webkit-details-marker { display: none; }
 details.section > summary::before {
   content: "▶";
   color: var(--fg-dim);
@@ -477,7 +489,6 @@ details.subview > summary {
   align-items: center;
   gap: 10px;
 }
-details.subview > summary::-webkit-details-marker { display: none; }
 details.subview > summary::before {
   content: "▸";
   color: var(--fg-dim);
@@ -734,7 +745,6 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   letter-spacing: 0.06em;
   user-select: none;
 }
-.ahi-formula > summary::-webkit-details-marker { display: none; }
 .ahi-formula[open] > summary { color: var(--fg); }
 .ahi-formula .cb-chev {
   display: inline-block;
@@ -804,7 +814,6 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-.semaphore-breakdown > summary::-webkit-details-marker { display: none; }
 .semaphore-breakdown[open] > summary { color: var(--fg); }
 .semaphore-breakdown .cb-chev {
   display: inline-block;
@@ -1377,14 +1386,6 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   flex-wrap: wrap;
   gap: 5px;
 }
-/* legacy alias for back-compat with any earlier markup */
-.ma-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 10px;
-}
-.ma-chips .ma-chip,
 .ma-chip-bag .ma-chip {
   background: var(--bg-elev-2);
   border: 1px solid var(--border);
@@ -1399,9 +1400,7 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   gap: 6px;
   transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
 }
-.ma-chips .ma-chip:hover,
 .ma-chip-bag .ma-chip:hover { color: var(--fg); border-color: var(--border-strong); }
-.ma-chips .ma-chip.active,
 .ma-chip-bag .ma-chip.active {
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
@@ -1423,17 +1422,6 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   border-color: var(--ok);
   color: var(--fg);
 }
-.ma-chip-sep {
-  display: inline-block;
-  width: 1px;
-  height: 18px;
-  background: var(--border);
-  margin: 0 2px;
-  align-self: center;
-}
-/* Category chips slightly smaller / denser than view-mode chips. */
-.ma-chip-category { padding: 2px 8px 2px 10px; font-size: 11.5px; }
-
 /* Categories row — custom dropdown + two action buttons. */
 .ma-cat-actions {
   display: flex;
@@ -1730,11 +1718,6 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   opacity: 0.35;
   cursor: not-allowed;
 }
-.ma-card-btn.active {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
-}
 .ma-card-plot {
   position: relative;
   width: 100%;
@@ -1937,7 +1920,6 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   row-gap: 4px;
   align-items: baseline;
 }
-.finding > summary::-webkit-details-marker { display: none; }
 .finding > summary::after {
   content: "▸";
   grid-column: 4 / 5;
@@ -2132,7 +2114,6 @@ details.diagnostics > summary {
   align-items: center;
   gap: 10px;
 }
-details.diagnostics > summary::-webkit-details-marker { display: none; }
 details.diagnostics > summary::before {
   content: "▶";
   color: var(--fg-dim);
@@ -2192,7 +2173,7 @@ details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
 @media print {
   :root { color-scheme: light only; }
   body  { background: #fff !important; color: #000; }
-  nav.index, .chart-toolbar select[multiple], .chart-toolbar label { display: none !important; }
+  nav.index { display: none !important; }
   details          { break-inside: avoid; }
   details > summary { break-after: avoid; }
   /* Can't programmatically open details in CSS; use a body class that

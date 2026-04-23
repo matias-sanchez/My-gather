@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/matias-sanchez/My-gather/model"
@@ -510,4 +511,14 @@ func concatProcesslist(ins []*model.ProcesslistData) *model.ProcesslistData {
 	}
 	out.SnapshotBoundaries = boundaries
 	return out
+}
+
+// isMysqldCommand reports whether a top-process Command string refers
+// to the mysqld server (or mariadbd on MariaDB). Wrappers such as
+// mysqld_safe are NOT matched — only the server binary itself.
+// Matches are case-insensitive and tolerant of leading/trailing
+// whitespace. Lives here because concatTop is its only caller.
+func isMysqldCommand(cmd string) bool {
+	trimmed := strings.TrimSpace(cmd)
+	return strings.EqualFold(trimmed, "mysqld") || strings.EqualFold(trimmed, "mariadbd")
 }
