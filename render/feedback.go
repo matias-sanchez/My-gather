@@ -37,10 +37,14 @@ type FeedbackView struct {
 	Categories []string
 }
 
-// feedbackGitHubURL is the Ideas-category new-discussion URL for the
-// project repo. The dialog's submit handler appends title and body
-// query parameters; this constant is only the base.
-const feedbackGitHubURL = "https://github.com/matias-sanchez/My-gather/discussions/new?category=ideas"
+// feedbackGitHubURL is the new-issue URL used by the legacy
+// `window.open` fallback path (when the Worker is unavailable). The
+// dialog's submit handler appends title and body query parameters; the
+// labels=… pre-fill maps the fallback issue to the same triage labels
+// the Worker applies on the happy path, so the two code paths land the
+// user on the same venue (GitHub Issues) and with the same label set.
+// Principle XIII: one conceptual destination per one user gesture.
+const feedbackGitHubURL = "https://github.com/matias-sanchez/My-gather/issues/new?labels=user-feedback,needs-triage"
 
 // feedbackWorkerURL is the public HTTPS endpoint of the feedback
 // Cloudflare Worker (spec 003, research R7). The URL is a build-time

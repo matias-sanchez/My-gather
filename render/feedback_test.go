@@ -15,7 +15,7 @@ func TestBuildFeedbackViewIsDeterministic(t *testing.T) {
 
 func TestFeedbackViewShape(t *testing.T) {
 	v := BuildFeedbackView()
-	wantURL := "https://github.com/matias-sanchez/My-gather/discussions/new?category=ideas"
+	wantURL := "https://github.com/matias-sanchez/My-gather/issues/new?labels=user-feedback,needs-triage"
 	if v.GitHubURL != wantURL {
 		t.Errorf("GitHubURL: got %q, want %q", v.GitHubURL, wantURL)
 	}
