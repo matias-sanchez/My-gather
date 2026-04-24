@@ -9,7 +9,7 @@ import {
   GitHubError,
   resolveLabelIds,
 } from "./github-app";
-import { cacheResponse, releaseReservation, reserveResponse } from "./idempotency";
+import { cacheResponse, reserveResponse } from "./idempotency";
 import { logRequest } from "./log";
 import { checkRateLimit, hashIp } from "./ratelimit";
 import { uploadAttachment } from "./r2-upload";
@@ -242,26 +242,16 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
   // reach this point, so an abusive burst is still bounded but
   // innocent retries of a successful key don't consume quota.
   //
-  // The checkRateLimit call itself can throw if KV list/put fails —
-  // without the try/catch below, an uncaught throw here would
-  // bounce to the outer catch-all in fetch(), which doesn't know
-  // about our reservation. The key would stay "inflight" for ~30s
-  // and retries with the same idempotencyKey would see
-  // duplicate_inflight instead of getting processed. Release on
-  // any thrown error so a transient KV rate-limit glitch doesn't
-  // lock the caller out of their own submission.
-  let rl: Awaited<ReturnType<typeof checkRateLimit>>;
-  try {
-    rl = await checkRateLimit(env, ip);
-  } catch (err) {
-    await releaseReservation(env, payload.idempotencyKey, reservation.token).catch(() => undefined);
-    throw err;
-  }
+  // No release on failure: the inflight reservation we just wrote
+  // will expire on its own 30 s TTL. A KV-based compare-and-delete
+  // is racy (see idempotency.ts "Why there is no releaseReservation"),
+  // and the UX cost of the 30 s window is smaller than the
+  // correctness cost of letting a failed release wipe another
+  // racer's successful cached response. Client retries of the same
+  // idempotencyKey within that window see 409 duplicate_inflight
+  // (deterministic, easy to interpret); after 30 s they proceed.
+  const rl = await checkRateLimit(env, ip);
   if (!rl.allowed) {
-    // Release the reservation we just planted so a later retry (after
-    // the hour rolls over) can re-enter instead of getting stuck on
-    // "duplicate_inflight" until the inflight TTL expires.
-    await releaseReservation(env, payload.idempotencyKey, reservation.token).catch(() => undefined);
     const retryAfter = rl.retryAfterSeconds ?? 3600;
     logRequest({
       status: 429,
@@ -329,9 +319,9 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
       labelIds,
     });
   } catch (err) {
-    // Pre-create failure — nothing landed on GitHub yet, so it's
-    // safe to release the reservation and let the client retry.
-    await releaseReservation(env, payload.idempotencyKey, reservation.token).catch(() => undefined);
+    // Pre-create failure — no GitHub side effect and no release
+    // (see rate-limit block comment above). The 30 s inflight TTL
+    // lets same-key retries start fresh after the window.
     if (err instanceof GitHubError) {
       logRequest({
         status: 503,

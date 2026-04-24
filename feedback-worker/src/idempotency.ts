@@ -2,41 +2,48 @@
 //
 // Reservation pattern — rationale
 // -------------------------------
-// The issue Codex originally flagged: doing a KV lookup and only
-// writing the final {issueUrl, issueNumber} AFTER the GitHub call
-// means two concurrent requests with the same idempotencyKey can
-// both observe the cache miss and both create GitHub issues.
+// The original Codex concern was that a plain KV lookup followed by
+// a post-create write let two concurrent same-key submissions both
+// observe the cache miss and both create GitHub issues. Mitigation
+// without Durable Objects: write a reservation BEFORE any side
+// effect. A concurrent request that arrives after the reservation
+// propagates sees it and returns a deterministic "duplicate in
+// flight" signal instead of creating a second issue. The
+// reservation TTL is short (30 s) so a crashed worker can't lock
+// the key out forever — a retry after that window re-reserves and
+// proceeds.
 //
-// Mitigation without Durable Objects: write a reservation BEFORE
-// any side effect. A concurrent request that arrives after the
-// reservation propagates sees it and returns a deterministic
-// "duplicate in flight" signal instead of creating a second issue.
-// The reservation TTL is short (30 s) so a crashed worker can't
-// lock the key out forever — a retry after that window will
-// re-reserve and proceed.
+// Why there is no releaseReservation
+// ----------------------------------
+// A previous iteration of this file exposed a releaseReservation
+// helper that pre-create failure paths called to let the client
+// retry immediately. That helper was fundamentally racy: KV has no
+// compare-and-delete primitive, so the unavoidable get → delete
+// gap allowed a cross-request clobber — request A reads its own
+// "inflight" marker, request B concurrently writes `{done, …}`,
+// and A's subsequent delete wipes B's successful cached response,
+// letting a later retry create a DUPLICATE issue. A per-call
+// token narrowed the window but could not close it (last-write
+// wins on KV put).
 //
-// Per-reservation tokens
-// ----------------------
-// Under KV's eventual consistency, a truly-simultaneous race can
-// still leave TWO requests each thinking they reserved the slot.
-// releaseReservation was originally written as an unconditional
-// delete, which created a second failure mode: if one of the two
-// racers completes the full happy path and writes
-// `{status: "done"}` while the other later fails pre-create,
-// calling delete would WIPE the successful cached response — and
-// the user's retry would create a DUPLICATE issue instead of
-// replaying the original success.
+// Rather than ship a mitigation that still admits duplicates
+// under realistic races, this file now lets the 30-second
+// inflight TTL handle cleanup unconditionally. The UX cost is
+// modest:
 //
-// Each reservation now carries a unique token. releaseReservation
-// takes that token and only deletes when the current stored state
-// is still the caller's own "inflight" reservation; a "done"
-// state, or an "inflight" with someone else's token, is left
-// alone. This doesn't need to be linearizable — it just has to
-// prevent the cross-request clobber that Codex flagged.
+//   * A client retry within 30 s of a pre-create failure or
+//     rate-limit rejection gets 409 duplicate_inflight instead of
+//     a fresh attempt. After the TTL, a fresh attempt proceeds.
+//   * A truly-stuck isolate (server-side crash mid-handler)
+//     also self-heals after 30 s.
+//
+// The correctness win is that no code path can ever wipe a
+// successful `{done, …}` record; the 5-minute idempotency replay
+// contract is preserved on every race.
 //
 // Key format: idem:<idempotencyKey>
-// Inflight value: {status: "inflight", token: "<hex>"}    TTL: 30s
-// Done value:     {status: "done", issueUrl, issueNumber} TTL: 300s
+// Inflight value: {status: "inflight"}                     TTL: 30s
+// Done value:     {status: "done", issueUrl, issueNumber}  TTL: 300s
 
 import type { Env } from "./env";
 
@@ -52,19 +59,19 @@ function keyFor(idempotencyKey: string): string {
   return `idem:${idempotencyKey}`;
 }
 
-// Outcome of reserveResponse: either the slot was free and we wrote
-// a fresh reservation (kind: "reserved" with the token the caller
-// needs to pass back to releaseReservation); or a prior successful
-// response is already cached (kind: "done"); or another request is
-// still processing this same key (kind: "inflight").
+// Outcome of reserveResponse: either a prior successful response is
+// already cached (kind: "done"); or another request is still
+// processing this key (kind: "inflight"); or the slot was free and
+// we wrote a fresh reservation (kind: "reserved" — caller proceeds
+// and eventually calls cacheResponse on success; nothing to do on
+// failure because the 30 s TTL handles cleanup).
 export type ReservationResult =
-  | { kind: "reserved"; token: string }
+  | { kind: "reserved" }
   | { kind: "done"; response: CachedResponse }
   | { kind: "inflight" };
 
 interface StoredInflight {
   status: "inflight";
-  token: string;
 }
 
 interface StoredDone {
@@ -82,8 +89,7 @@ function parseState(raw: string | null): StoredState | null {
     if (!parsed || typeof parsed !== "object") return null;
     const status = (parsed as { status?: unknown }).status;
     if (status === "inflight") {
-      const token = (parsed as { token?: unknown }).token;
-      return { status: "inflight", token: typeof token === "string" ? token : "" };
+      return { status: "inflight" };
     }
     if (status === "done") {
       const url = (parsed as { issueUrl?: unknown }).issueUrl;
@@ -98,22 +104,11 @@ function parseState(raw: string | null): StoredState | null {
   return null;
 }
 
-function newReservationToken(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  let hex = "";
-  for (let i = 0; i < bytes.byteLength; i++) {
-    hex += bytes[i]!.toString(16).padStart(2, "0");
-  }
-  return hex;
-}
-
 // reserveResponse is the single entry point used by the happy-path
 // handler. Returns "done" (cached response) / "inflight" (another
 // request is processing this key) / "reserved" (this caller now
-// owns the slot and must eventually call cacheResponse, or
-// releaseReservation with the returned token on pre-create
-// failure).
+// owns the slot and must eventually call cacheResponse to upgrade
+// the marker to "done").
 export async function reserveResponse(
   env: Env,
   idempotencyKey: string,
@@ -129,18 +124,18 @@ export async function reserveResponse(
     }
     return { kind: "inflight" };
   }
-  const token = newReservationToken();
-  const reservation: StoredInflight = { status: "inflight", token };
+  const reservation: StoredInflight = { status: "inflight" };
   await env.FEEDBACK_IDEMP.put(key, JSON.stringify(reservation), {
     expirationTtl: INFLIGHT_TTL_SECONDS,
   });
-  return { kind: "reserved", token };
+  return { kind: "reserved" };
 }
 
 // cacheResponse records the final issue details once the GitHub
-// call has succeeded. Overwrites any prior "inflight" reservation
+// call has succeeded. Overwrites the prior "inflight" reservation
 // we planted in reserveResponse — "last-write wins" semantics are
-// exactly what we want here.
+// exactly what we want here: even if a concurrent racer's failed
+// path wrote nothing, this put still lands.
 export async function cacheResponse(
   env: Env,
   idempotencyKey: string,
@@ -154,25 +149,4 @@ export async function cacheResponse(
   await env.FEEDBACK_IDEMP.put(keyFor(idempotencyKey), JSON.stringify(done), {
     expirationTtl: DONE_TTL_SECONDS,
   });
-}
-
-// releaseReservation clears an inflight reservation when the
-// handler bails before producing a final cached response (e.g.
-// GitHub returned a transient error the caller will retry). Only
-// deletes when the current stored state is still an "inflight"
-// record whose token matches the one returned by reserveResponse;
-// this prevents a failed-racer's release from wiping a different
-// request's successful "done" state (see the per-reservation-tokens
-// block comment above).
-export async function releaseReservation(
-  env: Env,
-  idempotencyKey: string,
-  token: string,
-): Promise<void> {
-  const key = keyFor(idempotencyKey);
-  const state = parseState(await env.FEEDBACK_IDEMP.get(key));
-  if (!state) return; // already expired or deleted by someone else
-  if (state.status === "done") return; // a concurrent racer succeeded; keep it
-  if (state.status === "inflight" && state.token !== token) return; // not ours
-  await env.FEEDBACK_IDEMP.delete(key);
 }
