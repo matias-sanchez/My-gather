@@ -3445,13 +3445,23 @@
       if (submitBtn.disabled) return;
       setErr(""); hide(fallback);
       var url = buildURL();
+
+      // 1. Try to open GitHub. Attempt this FIRST so the user-gesture
+      //    is consumed on a real navigation, not on a download that
+      //    might satisfy the browser's popup heuristic instead.
       var win;
       try { win = window.open(url, "_blank", "noopener,noreferrer"); } catch (_) { win = null; }
       if (!win) {
         fallbackLink.href = url; show(fallback);
-        setErr("Popup blocked. Use the link below to open GitHub.");
-        return;
+        setErr("Popup blocked. Use the link below to open GitHub — your attachments are ready to paste/drop.");
       }
+
+      // 2. Hand media off regardless of the popup outcome. The same
+      //    user-click is still an active gesture, so clipboard-write
+      //    and programmatic <a download> both work. When the popup is
+      //    blocked, the user still gets the image on the clipboard
+      //    and the voice file on disk, so by the time they click the
+      //    fallback link everything is ready to paste/drop on GitHub.
       if (imgBlob) {
         var wrote = false;
         try {
