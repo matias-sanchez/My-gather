@@ -3278,11 +3278,14 @@
     var imgBlob = null, imgURL = null;
     var voiceBlob = null, voiceURL = null;
     var recorder = null, recStream = null, recChunks = null;
-    // Monotonic session counter: bumped by startRecording and any path
-    // that invalidates the current recording attempt (closeDialog,
-    // stopRecording). Captured in the getUserMedia promise's `.then`
-    // so a delayed permission grant that lands on a dismissed dialog
-    // can detect it and tear down the stream instead of attaching a
+    // Monotonic session counter: bumped by startRecording (claims a
+    // fresh session) and closeDialog (invalidates any in-flight
+    // permission grant). stopRecording does NOT bump because it runs
+    // after the stream is already attached (past the getUserMedia
+    // session guard), so there's no stale-promise to invalidate at
+    // that point. Captured in the getUserMedia promise's `.then` so a
+    // delayed permission grant that lands on a dismissed dialog can
+    // detect it and tear down the stream instead of attaching a
     // recorder to a closed session.
     var recSessionId = 0;
     var recStart = 0, recRAF = 0, recLabel = null;
@@ -3516,9 +3519,15 @@
         if (mySession !== recSessionId || !dialog.open) {
           // Dialog was closed (or another startRecording superseded
           // us) before permission resolved. Drop the stream so the
-          // browser's recording indicator goes away and return
-          // without touching module state.
+          // browser's recording indicator goes away, re-enable
+          // recordBtn so the next dialog open can start a fresh
+          // recording (recordBtn is persistent DOM across open/close
+          // — closeDialog doesn't reset its disabled state, so a
+          // stale-session exit that skips this line strands the
+          // button disabled for the rest of the page session), and
+          // return without touching module recorder state.
           try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
+          recordBtn.disabled = false;
           return;
         }
         recStream = stream;
