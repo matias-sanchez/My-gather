@@ -3278,6 +3278,13 @@
     var imgBlob = null, imgURL = null;
     var voiceBlob = null, voiceURL = null;
     var recorder = null, recStream = null, recChunks = null;
+    // Monotonic session counter: bumped by startRecording and any path
+    // that invalidates the current recording attempt (closeDialog,
+    // stopRecording). Captured in the getUserMedia promise's `.then`
+    // so a delayed permission grant that lands on a dismissed dialog
+    // can detect it and tear down the stream instead of attaching a
+    // recorder to a closed session.
+    var recSessionId = 0;
     var recStart = 0, recRAF = 0, recLabel = null;
 
     function show(el) { if (el) el.hidden = false; }
@@ -3494,6 +3501,7 @@
         setErr("Voice recording is not supported by this browser."); return;
       }
       recordBtn.disabled = true;
+<<<<<<< Updated upstream
       // getUserMedia resolves after the browser permission prompt,
       // which can take seconds to minutes (user reads it; or the OS
       // device dialog is slow). If the dialog is dismissed in
@@ -3506,6 +3514,22 @@
         if (!dialog.open) {
           try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
           recordBtn.disabled = false;
+=======
+      // Claim a new session id so the getUserMedia .then below can
+      // detect "dialog closed while we were awaiting mic permission"
+      // by comparing against the module-level recSessionId. If the
+      // user dismisses the dialog before permission resolves,
+      // closeDialog bumps recSessionId and our captured mySession
+      // won't match → we tear down the stream and exit cleanly.
+      var mySession = ++recSessionId;
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+        if (mySession !== recSessionId || !dialog.open) {
+          // Dialog was closed (or another startRecording superseded
+          // us) before permission resolved. Drop the stream so the
+          // browser's recording indicator goes away and return
+          // without touching module state.
+          try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
+>>>>>>> Stashed changes
           return;
         }
         recStream = stream;
@@ -3589,6 +3613,11 @@
       try { titleInput.focus(); } catch (_) {}
     }
     function closeDialog() {
+      // Invalidate any in-flight getUserMedia permission prompt so its
+      // delayed .then callback won't attach a recorder to the
+      // now-dismissed dialog. The bumped recSessionId is what the
+      // callback compares against.
+      recSessionId++;
       if (recorder || recStream || recRAF) {
         // MediaRecorder.stop is async: the "stop" listener below runs
         // on a later tick and — if it finds a non-empty recChunks —
@@ -3730,6 +3759,7 @@
       var genMeta = document.querySelector('meta[name="generator"]');
       if (genMeta && genMeta.content) reportVersion = genMeta.content.slice(0, 64);
 
+<<<<<<< Updated upstream
       // Mint the idempotency key once at the TOP of the submit
       // flow, before any async work. Doing it inside the
       // Promise.all().then() callback means every retry of the
@@ -3759,6 +3789,24 @@
       }) : Promise.resolve(null);
       var voiceP = voiceBlobAtSubmit ? blobToBase64(voiceBlobAtSubmit).then(function (b64) {
         return { mime: voiceBlobAtSubmit.type || "audio/webm", base64: b64 };
+=======
+      // Snapshot the attachment blobs BEFORE kicking off the async
+      // base64 encoding. The user can Remove/replace attachments while
+      // the encoder is still running; if we read imgBlob.type inside
+      // the `.then` the global might be null (→ throws) or point at a
+      // different blob (→ MIME/data mismatch). Capturing locals fixes
+      // both races — the in-flight submission always carries the blob
+      // that was present at Submit click.
+      var imgSnap = imgBlob, voiceSnap = voiceBlob;
+      var imgMime = imgSnap ? (imgSnap.type || "image/png") : null;
+      var voiceMime = voiceSnap ? (voiceSnap.type || "audio/webm") : null;
+
+      var imgP = imgSnap ? blobToBase64(imgSnap).then(function (b64) {
+        return { mime: imgMime, base64: b64 };
+      }) : Promise.resolve(null);
+      var voiceP = voiceSnap ? blobToBase64(voiceSnap).then(function (b64) {
+        return { mime: voiceMime, base64: b64 };
+>>>>>>> Stashed changes
       }) : Promise.resolve(null);
 
       Promise.all([imgP, voiceP]).then(function (parts) {
