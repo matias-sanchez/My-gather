@@ -22,7 +22,7 @@
 - `voice`, if present:
   - `mime` matches `/^audio\/(webm|mp4|ogg|mpeg)(;.*)?$/`
   - `base64` decodes to ≤ 10 485 760 bytes
-- `idempotencyKey`: 36-char UUIDv4 format (`/^[0-9a-f-]{36}$/i`)
+- `idempotencyKey`: 36-char UUID v4 (`/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i`)
 - `reportVersion`: opaque, ≤ 64 chars
 
 ### Response
@@ -32,7 +32,8 @@
 ```json
 {
   "ok": true,
-  "discussionUrl": "https://github.com/matias-sanchez/My-gather/discussions/123"
+  "issueUrl": "https://github.com/matias-sanchez/My-gather/issues/123",
+  "issueNumber": 123
 }
 ```
 
@@ -75,7 +76,7 @@ Headers:
 {
   "ok": false,
   "error": "github_api_error",
-  "message": "GitHub Discussions API unavailable. Please retry or use the fallback link."
+  "message": "GitHub API unavailable. Please retry or use the fallback link."
 }
 ```
 
@@ -99,7 +100,7 @@ Headers:
 - Status: `204 No Content`
 - Headers:
   - `Access-Control-Allow-Origin: *`
-  - `Access-Control-Allow-Methods: POST, OPTIONS`
+  - `Access-Control-Allow-Methods: POST, OPTIONS, GET`
   - `Access-Control-Allow-Headers: Content-Type`
   - `Access-Control-Max-Age: 86400`
 
@@ -112,7 +113,7 @@ Headers:
 - Status: `200 OK`
 - Body: `{"ok": true, "version": "<worker-deploy-sha>"}`
 
-Purpose: allow anyone (including the maintainer's monitoring) to poll without side effects. Never creates discussions. Never consumes rate-limit budget.
+Purpose: allow anyone (including the maintainer's monitoring) to poll without side effects. Never creates issues. Never consumes rate-limit budget.
 
 ## CORS contract
 
@@ -124,15 +125,15 @@ This allows reports served from any origin (including `file://` which sends `Ori
 
 ## Caching contract
 
-All responses MUST include `Cache-Control: no-store`. We never want intermediate caches returning a stale success (e.g., a discussion URL that was later deleted).
+All responses MUST include `Cache-Control: no-store`. We never want intermediate caches returning a stale success (e.g., an issue URL that was later deleted).
 
 ## Request size limit
 
-The Worker MUST reject requests with `Content-Length > 17_000_000` (≈ 14 MB base64 voice + 7 MB base64 image + overhead) with `413 Payload Too Large` before decoding. Avoids DoS via large uploads that would eat CPU budget parsing base64.
+The Worker MUST reject requests with body byte length > `30_000_000` (≈ 20 MB base64 voice + 7 MB base64 image + overhead) with `413 Payload Too Large`. The size check is streamed — the reader aborts once the running byte count crosses the cap so an oversized upload can't be fully buffered into the isolate before we notice. Content-Length (when present) is a cheap fast-reject pre-flight; the authoritative check is the streaming byte count.
 
 ## Idempotency contract
 
-If the same `idempotencyKey` is submitted twice within 5 minutes and the first call produced a 200 response, the second call MUST return the same 200 response (same `discussionUrl`) without creating a new discussion.
+If the same `idempotencyKey` is submitted twice within 5 minutes and the first call produced a 200 response, the second call MUST return the same 200 response (same `issueUrl`) without creating a new issue.
 
 If the first call produced a 4xx/5xx, the second call is treated as a fresh request.
 
@@ -151,8 +152,8 @@ Every request produces a single Tail log entry:
   "error":            null,
   "duration_ms":      287,
   "ip_hash":          "sha256-...",
-  "discussion_id":    12345,
-  "discussion_number":67,
+  "issue_id":         "I_kwDOPNQ",
+  "issue_number":     67,
   "report_version":   "v0.3.1-54-g29734aa",
   "rate_limit_count": 2,
   "has_image":        true,

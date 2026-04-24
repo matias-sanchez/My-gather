@@ -183,6 +183,29 @@ describe("validatePayload", () => {
     if (!res.ok) expect(res.error).toBe("idempotency_key_invalid");
   });
 
+  // Regression guard for the Copilot finding: the prior loose regex
+  // `/^[0-9a-f-]{36}$/i` accepted 36 hyphens, 36 hex digits with no
+  // hyphens at all, and non-v4 UUIDs. The tightened regex pins the
+  // 8-4-4-4-12 grouping AND the RFC 4122 v4 version / variant
+  // nibbles, matching the browser-side generateIdempotencyKey.
+  it("rejects non-v4 UUID shapes even when they look plausible", () => {
+    const bad = [
+      "------------------------------------",                   // 36 hyphens
+      "00000000000000000000000000000000",                       // 32 hex, no dashes
+      "00000000-0000-0000-0000-000000000000",                   // RFC 4122 "nil" UUID (v0/variant 0)
+      "550e8400-e29b-31d4-a716-446655440000",                   // v3, not v4
+      "550e8400-e29b-51d4-a716-446655440000",                   // v5, not v4
+      "550e8400-e29b-41d4-0716-446655440000",                   // bad variant nibble (0 instead of 8-b)
+      "550e8400-e29b-41d4-c716-446655440000",                   // bad variant nibble (c)
+      "550e8400e29b41d4a716446655440000",                       // 32 hex, no dashes
+    ];
+    for (const key of bad) {
+      const res = validatePayload(goodPayload({ idempotencyKey: key }));
+      expect(res.ok, `expected ${JSON.stringify(key)} to be rejected`).toBe(false);
+      if (!res.ok) expect(res.error).toBe("idempotency_key_invalid");
+    }
+  });
+
   it("rejects an empty reportVersion as report_version_invalid", () => {
     const res = validatePayload(goodPayload({ reportVersion: "" }));
     expect(res.ok).toBe(false);

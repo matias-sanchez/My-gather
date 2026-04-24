@@ -51,7 +51,12 @@ const REPORT_VERSION_MAX = 64;
 const CATEGORIES: readonly Category[] = ["UI", "Parser", "Advisor", "Other"];
 const IMAGE_MIME_RE = /^image\/(png|jpeg|gif|webp)$/;
 const VOICE_MIME_RE = /^audio\/(webm|mp4|ogg|mpeg)(;.*)?$/;
-const UUID_RE = /^[0-9a-f-]{36}$/i;
+// RFC 4122 v4: 8-4-4-4-12 hex groups with the version nibble fixed
+// to 4 and the variant nibble in {8, 9, a, b}. The prior
+// /^[0-9a-f-]{36}$/i accepted strings like 36 hyphens or 36 hex
+// digits with no dashes, which let a caller inject malformed
+// values into KV keys without being caught here.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function fail(error: ValidationError, message: string): ValidationResult {
   return { ok: false, error, message };
@@ -128,10 +133,12 @@ export function validatePayload(raw: unknown): ValidationResult {
     return fail("title_too_long", `Title exceeds ${TITLE_MAX} characters.`);
   }
 
-  // Body (may be empty)
+  // Body (may be empty).
   const bodyRaw = raw["body"];
-  const body = typeof bodyRaw === "string" ? bodyRaw : "";
-  if (typeof bodyRaw !== "string" && bodyRaw !== undefined && bodyRaw !== null) {
+  let body = "";
+  if (typeof bodyRaw === "string") {
+    body = bodyRaw;
+  } else if (bodyRaw !== undefined && bodyRaw !== null) {
     return fail("malformed_payload", "Body must be a string.");
   }
   if (utf8ByteLength(body) > BODY_MAX_BYTES) {

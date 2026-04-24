@@ -3376,14 +3376,22 @@
       // length there would block genuinely-valid submissions whose
       // bodies fit the Worker but bloat past the URL budget (long
       // paragraphs, code blocks, etc). Gate by the runtime path.
-      var titleOK = titleInput.value.trim().length > 0;
-      if (!titleOK) { submitBtn.disabled = true; return; }
+      var titleLen = titleInput.value.trim().length;
+      if (titleLen === 0) { submitBtn.disabled = true; return; }
       if (WORKER_URL) {
-        // Worker path — cap by body UTF-8 byte length matching the
-        // Worker's BODY_MAX_BYTES (10,240). Use TextEncoder for exact
-        // UTF-8 size (multi-byte glyphs don't collapse to .length).
+        // Worker path — cap by the backend's real limits from
+        // feedback-worker/src/validate.ts:
+        //   title  ≤ 200 chars (TITLE_MAX)
+        //   body   ≤ 10_240 UTF-8 bytes (BODY_MAX_BYTES)
+        // Leaving the button enabled past 200 chars would let the
+        // user submit a payload the Worker immediately rejects with
+        // 400 `title_too_long` — not a silent failure, but a broken
+        // invariant: the gate is supposed to mirror the contract.
+        // Use TextEncoder for exact UTF-8 size (multi-byte glyphs
+        // don't collapse to .length).
+        var titleOK = titleInput.value.length <= 200;
         var bodyBytes = new TextEncoder().encode(bodyInput.value).byteLength;
-        submitBtn.disabled = bodyBytes > 10240;
+        submitBtn.disabled = !(titleOK && bodyBytes <= 10240);
       } else {
         // Legacy fallback path — gate by GitHub URL length.
         submitBtn.disabled = buildURL().length > URL_MAX;
@@ -3709,6 +3717,17 @@
       var genMeta = document.querySelector('meta[name="generator"]');
       if (genMeta && genMeta.content) reportVersion = genMeta.content.slice(0, 64);
 
+      // Mint the idempotency key once at the TOP of the submit
+      // flow, before any async work. Doing it inside the
+      // Promise.all().then() callback means every retry of the
+      // same logical submit attempt (e.g. submitBtn re-enabled
+      // after a network error, user re-clicks) generates a fresh
+      // key, so the Worker's 5-minute idempotency replay can't
+      // deduplicate them. Closing the key in scope here ensures
+      // one gesture ↔ one key ↔ one durable record regardless of
+      // how the async chain below schedules.
+      var idempotencyKey = generateIdempotencyKey();
+
       // Build attachment promises first; any base64 encoding error
       // routes through the same fallback arm as a Worker failure.
       var imgP = imgBlob ? blobToBase64(imgBlob).then(function (b64) {
@@ -3728,7 +3747,7 @@
         var payload = {
           title: titleInput.value,
           body: bodyInput.value,
-          idempotencyKey: generateIdempotencyKey(),
+          idempotencyKey: idempotencyKey,
           reportVersion: reportVersion
         };
         if (catSelect.value) payload.category = catSelect.value;
