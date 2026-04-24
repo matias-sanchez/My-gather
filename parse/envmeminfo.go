@@ -11,22 +11,34 @@ import (
 // panel from a raw -meminfo file contents string.
 //
 // The file is the concatenation of one or more /proc/meminfo dumps
-// separated by `TS <epoch> …` boundary lines. This parser walks every
-// sample and returns the values from the LAST fully-populated block so
-// the Environment panel reflects the most recent observation — matching
-// how render-layer collectors pick the last-snapshot sidecar.
+// separated by `TS <epoch> …` boundary lines. This parser scans each
+// sample INDEPENDENTLY and returns the newest sample whose MemTotal is
+// set (the canonical indicator of a non-truncated /proc/meminfo dump),
+// falling back to the newest sample with any keys when none qualifies.
+// Keys from different samples are never mixed: if the last sample is
+// truncated past MemTotal the render path sees the prior complete
+// sample rather than a Frankenstein combination.
 //
-// Never returns an error: a malformed or empty input yields an
-// EnvMeminfo with zero fields, which the template renders as "—".
+// Never returns an error: a malformed or empty input yields nil,
+// which the template renders as "—".
 func ParseEnvMeminfo(content string) *model.EnvMeminfo {
-	out := &model.EnvMeminfo{}
-	any := false
-
-	setInt := func(dst *int64, raw string) {
+	var (
+		samples []*model.EnvMeminfo
+		cur     *model.EnvMeminfo
+		curAny  bool
+	)
+	flush := func() {
+		if cur != nil && curAny {
+			samples = append(samples, cur)
+		}
+		cur = nil
+		curAny = false
+	}
+	setInt := func(dst *int64, rest string) {
 		// "MemTotal:       32654396 kB" — after the colon, fields are
 		// [number, unit]. HugePages_Total has no unit so we just take
 		// the first numeric field.
-		fields := strings.Fields(raw)
+		fields := strings.Fields(rest)
 		if len(fields) == 0 {
 			return
 		}
@@ -35,17 +47,23 @@ func ParseEnvMeminfo(content string) *model.EnvMeminfo {
 			return
 		}
 		*dst = v
-		any = true
+		curAny = true
 	}
-
 	for _, line := range strings.Split(content, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
-		// TS lines reset-per-sample but we intentionally accumulate across
-		// samples: the last occurrence of each key wins, giving us the
-		// most recent value present in the file.
+		if strings.HasPrefix(line, "TS ") {
+			flush()
+			cur = &model.EnvMeminfo{}
+			continue
+		}
+		if cur == nil {
+			// Input without any TS boundaries — treat the whole file
+			// as a single sample.
+			cur = &model.EnvMeminfo{}
+		}
 		idx := strings.IndexByte(line, ':')
 		if idx <= 0 {
 			continue
@@ -54,27 +72,37 @@ func ParseEnvMeminfo(content string) *model.EnvMeminfo {
 		rest := line[idx+1:]
 		switch key {
 		case "MemTotal":
-			setInt(&out.MemTotalKB, rest)
+			setInt(&cur.MemTotalKB, rest)
 		case "MemFree":
-			setInt(&out.MemFreeKB, rest)
+			setInt(&cur.MemFreeKB, rest)
 		case "MemAvailable":
-			setInt(&out.MemAvailableKB, rest)
+			setInt(&cur.MemAvailableKB, rest)
 		case "Buffers":
-			setInt(&out.BuffersKB, rest)
+			setInt(&cur.BuffersKB, rest)
 		case "Cached":
-			setInt(&out.CachedKB, rest)
+			setInt(&cur.CachedKB, rest)
 		case "SwapTotal":
-			setInt(&out.SwapTotalKB, rest)
+			setInt(&cur.SwapTotalKB, rest)
 		case "SwapFree":
-			setInt(&out.SwapFreeKB, rest)
+			setInt(&cur.SwapFreeKB, rest)
 		case "HugePages_Total":
-			setInt(&out.HugePagesTotal, rest)
+			setInt(&cur.HugePagesTotal, rest)
 		case "AnonHugePages":
-			setInt(&out.AnonHugePagesKB, rest)
+			setInt(&cur.AnonHugePagesKB, rest)
 		}
 	}
-	if !any {
+	flush()
+
+	// Prefer the newest sample whose MemTotal is populated. Samples
+	// that are truncated before the MemTotal line are treated as
+	// unusable; the prior full sample is returned instead.
+	for i := len(samples) - 1; i >= 0; i-- {
+		if samples[i].MemTotalKB > 0 {
+			return samples[i]
+		}
+	}
+	if len(samples) == 0 {
 		return nil
 	}
-	return out
+	return samples[len(samples)-1]
 }

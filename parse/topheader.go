@@ -15,28 +15,29 @@ import (
 var topLoadAvgRE = regexp.MustCompile(
 	`load average:\s*([0-9]+(?:\.[0-9]+)?),\s*([0-9]+(?:\.[0-9]+)?),\s*([0-9]+(?:\.[0-9]+)?)`)
 
-// ParseTopHeader reads the first `top - …` line of a -top file contents
-// string and returns the three load-average values. Returns nil when the
-// input does not start with a recognisable top header.
+// ParseTopHeader scans a -top file contents string and returns the
+// load-average values from the LATEST `top - …` header line. pt-stalk
+// `-top` captures typically contain many samples per file, so returning
+// the first header understates current load on long/busy captures.
+// Returns nil when no recognisable top header is found.
 func ParseTopHeader(content string) *model.EnvTopHeader {
-	// Find the first header line anywhere near the start — pt-stalk
-	// sometimes pre-pends a TS marker before the first top header.
-	for _, line := range strings.SplitN(content, "\n", 8) {
+	var result *model.EnvTopHeader
+	for _, line := range strings.Split(content, "\n") {
 		if !strings.HasPrefix(line, "top - ") {
 			continue
 		}
 		m := topLoadAvgRE.FindStringSubmatch(line)
 		if m == nil {
-			return nil
+			continue
 		}
 		one, _ := strconv.ParseFloat(m[1], 64)
 		five, _ := strconv.ParseFloat(m[2], 64)
 		fifteen, _ := strconv.ParseFloat(m[3], 64)
-		return &model.EnvTopHeader{
+		result = &model.EnvTopHeader{
 			Loadavg1:  one,
 			Loadavg5:  five,
 			Loadavg15: fifteen,
 		}
 	}
-	return nil
+	return result
 }

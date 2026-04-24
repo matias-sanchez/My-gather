@@ -47,3 +47,32 @@ func TestParseEnvMeminfo_EmptyReturnsNil(t *testing.T) {
 		t.Errorf("empty input should yield nil; got %+v", got)
 	}
 }
+
+func TestParseEnvMeminfo_TruncatedLastSampleFallsBack(t *testing.T) {
+	// Last sample is truncated before MemTotal. The parser must not
+	// mix keys across samples; it should fall back to the last full
+	// sample rather than combine an old MemTotal with a newer MemFree.
+	input := `TS 1769702259.004572779 2026-01-29 15:57:39
+MemTotal:       32654396 kB
+MemFree:        11634540 kB
+MemAvailable:   28222432 kB
+Buffers:           13864 kB
+Cached:         16704284 kB
+SwapTotal:      33554428 kB
+SwapFree:       33554428 kB
+HugePages_Total:       0
+AnonHugePages:   1000000 kB
+TS 1769702289.004572779 2026-01-29 15:58:09
+MemFree:        99999999 kB
+`
+	got := ParseEnvMeminfo(input)
+	if got == nil {
+		t.Fatalf("ParseEnvMeminfo returned nil")
+	}
+	if got.MemTotalKB != 32654396 {
+		t.Errorf("MemTotalKB: want 32654396, got %d", got.MemTotalKB)
+	}
+	if got.MemFreeKB != 11634540 {
+		t.Errorf("MemFreeKB must come from the same (last complete) sample, not the truncated sample; got %d", got.MemFreeKB)
+	}
+}
