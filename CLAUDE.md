@@ -27,3 +27,19 @@ All artifacts that live inside this repository MUST be written in English:
 Out-of-band conversation with the user (chat/UI) may be in any language
 the user chooses — only the durable, shared artifacts are required to
 be English so contributors and tooling have a single consistent language.
+
+## Repo-local Claude Code tooling
+
+- `/pr-review-fix-my-gather` (skill at `.claude/skills/pr-review-fix-my-gather/`)
+  — the My-gather variant of the PR review-fix workflow. Walks the 13
+  principles in `.specify/memory/constitution.md`, uses Go-native
+  validation, and marks review threads resolved on GitHub. **Use this
+  in this repo, not the global `/pr-review-fix`** — the global one
+  targets Python projects and would apply the wrong rules here.
+- `@agent-pre-review-constitution-guard` (agent at
+  `.claude/agents/pre-review-constitution-guard.md`) — local pre-push
+  reviewer that emits P1/P2/P3 findings against the constitution
+  before you push.
+- Pre-push hook (`scripts/hooks/pre-push-constitution-guard.sh`) wired
+  via `.claude/settings.json` — mechanical checks that block pushes
+  violating Principles I, VIII, or X.

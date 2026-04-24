@@ -1,6 +1,6 @@
 ---
-name: pr-review-fix
-description: "Triage Codex / Copilot findings on the current My-gather PR, verify each one, apply fixes that respect the 13-principle constitution, mark resolved threads as resolved, clean stale trigger comments, and optionally re-trigger the review cycle. Use when the user says `/pr-review-fix`, `address review findings`, `fix codex comments`, `fix copilot comments`, `resolve PR review`, or is cycling through a codex-review round on the current branch. This is the My-gather-local variant — it overrides the generic Python version. <example>Context: Codex has posted findings on the current PR. user: \"address the codex findings\" assistant: \"Invoking /pr-review-fix to triage each finding, walk the constitution, apply valid fixes, mark the threads resolved, and commit.\"</example> <example>Context: User wants to clear an iteration. user: \"fix review comments and resolve them\" assistant: \"Launching /pr-review-fix — will verify each comment against the code, apply only principle-compliant fixes, resolve the threads on GitHub, and push.\"</example> <example>Context: Bilingual. user: \"aplica las correcciones de codex en el PR\" assistant: \"Running /pr-review-fix: verify, principle-walk, fix, resolve threads, push.\"</example>"
+name: pr-review-fix-my-gather
+description: "Triage Codex / Copilot findings on the current My-gather PR, verify each one, apply fixes that respect the 13-principle constitution in .specify/memory/constitution.md, mark resolved threads as resolved on GitHub, clean stale trigger comments, and optionally re-trigger the review cycle. Use in the My-gather repo whenever the user says `/pr-review-fix-my-gather`, `address review findings`, `fix codex comments`, `fix copilot comments`, `resolve PR review`, or is cycling through a codex-review round on the current branch. Prefer this over the generic `/pr-review-fix` when working in this repo — only this variant walks the 13 principles and uses Go-native validation. <example>Context: Codex has posted findings on the current PR. user: \"address the codex findings\" assistant: \"Invoking /pr-review-fix-my-gather to triage each finding, walk the constitution, apply valid fixes, mark the threads resolved, and commit.\"</example> <example>Context: User wants to clear an iteration. user: \"fix review comments and resolve them\" assistant: \"Launching /pr-review-fix-my-gather — will verify each comment against the code, apply only principle-compliant fixes, resolve the threads on GitHub, and push.\"</example> <example>Context: Bilingual. user: \"aplica las correcciones de codex en el PR\" assistant: \"Running /pr-review-fix-my-gather: verify, principle-walk, fix, resolve threads, push.\"</example>"
 ---
 
 # PR Review Fix (My-gather)
@@ -10,7 +10,7 @@ Read Codex / Copilot findings on the current PR, verify each against the code, a
 This skill is one half of the review loop:
 
 1. **`/pr-review-trigger`** — post review requests.
-2. **`/pr-review-fix`** (this skill) — verify, principle-walk, fix, resolve threads, commit, clean, re-trigger.
+2. **`/pr-review-fix-my-gather`** (this skill) — verify, principle-walk, fix, resolve threads, commit, clean, re-trigger.
 
 ## Scope and goals
 
