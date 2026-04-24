@@ -562,8 +562,8 @@ type NetstatSocketsData struct {
 // actionable indicator that application draining or kernel
 // send-buffer flushing was backlogged.
 type NetstatSocketsSample struct {
-	Timestamp   time.Time
-	StateCounts map[string]int
+	Timestamp    time.Time
+	StateCounts  map[string]int
 	RecvQNonZero bool
 	SendQNonZero bool
 }

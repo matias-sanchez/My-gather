@@ -9,13 +9,13 @@ import "time"
 // names whose subview should render the "data not available" banner,
 // sorted alphabetically for determinism.
 type OSSection struct {
-	Iostat          *IostatData
-	Top             *TopData
-	Vmstat          *VmstatData
-	Meminfo         *MeminfoData
-	NetSockets      *NetstatSocketsData
-	NetCounters     *NetstatCountersData
-	Missing         []string
+	Iostat      *IostatData
+	Top         *TopData
+	Vmstat      *VmstatData
+	Meminfo     *MeminfoData
+	NetSockets  *NetstatSocketsData
+	NetCounters *NetstatCountersData
+	Missing     []string
 }
 
 // VariablesSection is the render-ready view of the Variables content,
