@@ -16,10 +16,10 @@ var reProcStatCPU = regexp.MustCompile(`^cpu[0-9]+$`)
 // The file is the concatenation of one or more /proc/stat dumps
 // separated by `TS <epoch> …` boundary lines. btime is written by the
 // kernel in every dump so we take the value from the LAST occurrence.
-// Logical CPU count is the number of distinct `cpuN` (N integer) lines
-// in a single sample — we take the count from the first sample that
-// had any cpuN lines, which is sufficient for the Environment panel
-// (physical topology is stable across a capture window).
+// Logical CPU count is the MAX count of distinct `cpuN` lines observed
+// in any single sample: /proc/stat always lists every online CPU, so
+// the maximum across all TS blocks matches the true topology even
+// when the first (or any individual) block is truncated mid-dump.
 //
 // Returns nil when neither btime nor any cpuN line was found.
 func ParseProcStat(content string) *model.EnvProcStat {
@@ -28,11 +28,9 @@ func ParseProcStat(content string) *model.EnvProcStat {
 
 	// Walk samples separated by TS lines so we can count cpuN per sample.
 	var currentCPUs int
-	firstSampleHadCPU := false
 	flushSample := func() {
-		if !firstSampleHadCPU && currentCPUs > 0 {
+		if currentCPUs > out.LogicalCPUs {
 			out.LogicalCPUs = currentCPUs
-			firstSampleHadCPU = true
 			any = true
 		}
 		currentCPUs = 0
