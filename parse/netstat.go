@@ -46,54 +46,60 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 		})
 	}
 
+	// pendingSample buffers one TS block's counts until the end of
+	// the file. ESTAB classification is deferred because ss -tan
+	// (TCP) and ss -uan (UDP) share the same row shape — we need
+	// evidence collected across the WHOLE file (not just the current
+	// block) to decide which bucket those ESTAB rows belong to.
+	// Otherwise an ss -uan capture where every block contains only
+	// connected UDP sockets (all ESTAB, no UNCONN) would be misread
+	// as TCP.
+	type pendingSample struct {
+		ts                 time.Time
+		states             map[string]int
+		recvNZ             bool
+		sendNZ             bool
+		pendingESTAB       int
+		pendingESTABRecvNZ bool
+		pendingESTABSendNZ bool
+		popular            bool
+	}
+
 	var (
-		samples    []*model.NetstatSocketsSample
+		pending    []pendingSample
 		curTS      = snapshotStart
 		curStates  map[string]int
 		curRecvNZ  bool
 		curSendNZ  bool
 		curPopular bool // at least one recognised socket row in the block
 
-		// Deferred ESTAB classification. In state-first rows
-		// (ss -tan / ss -uan), the token "ESTAB" is ambiguous: ss -tan
-		// uses it for TCP ESTABLISHED, ss -uan for a connected UDP
-		// socket. We can't tell from the row itself — but UNCONN never
-		// appears in ss -tan output, and TCP-only states (LISTEN,
-		// TIME-WAIT, …) never appear in ss -uan output. Defer the
-		// ESTAB count until flush time, then bucket based on the other
-		// evidence collected in this TS block.
-		pendingESTAB         int
-		pendingESTABRecvNZ   bool
-		pendingESTABSendNZ   bool
-		sawStateFirstUNCONN  bool // ss -uan fingerprint
-		sawStateFirstTCPOnly bool // ss -tan fingerprint (LISTEN etc.)
+		// Per-block pending ESTAB; resolved in a final pass after all
+		// blocks are read so file-level evidence (below) is available.
+		pendingESTAB       int
+		pendingESTABRecvNZ bool
+		pendingESTABSendNZ bool
+
+		// FILE-level fingerprint evidence for the state-first shape.
+		// ss -uan never emits TCP-only states; ss -tan never emits
+		// UNCONN. When either fingerprint appears anywhere in the
+		// file we can classify all deferred ESTAB rows accordingly.
+		fileSawUNCONN  bool
+		fileSawTCPOnly bool
 	)
 	flush := func() {
-		if pendingESTAB > 0 && curStates != nil {
-			// Decide bucket from accumulated evidence. UNCONN alone
-			// implies ss -uan → ESTAB is UDP. Anything else defaults
-			// to the historical TCP mapping.
-			bucket := "ESTABLISHED"
-			if sawStateFirstUNCONN && !sawStateFirstTCPOnly {
-				bucket = "UDP"
-			}
-			curStates[bucket] += pendingESTAB
-			if pendingESTABRecvNZ {
-				curRecvNZ = true
-			}
-			if pendingESTABSendNZ {
-				curSendNZ = true
-			}
-			curPopular = true
+		if curStates == nil && pendingESTAB == 0 {
+			return
 		}
-		if curStates != nil && curPopular {
-			samples = append(samples, &model.NetstatSocketsSample{
-				Timestamp:    curTS,
-				StateCounts:  curStates,
-				RecvQNonZero: curRecvNZ,
-				SendQNonZero: curSendNZ,
-			})
-		}
+		pending = append(pending, pendingSample{
+			ts:                 curTS,
+			states:             curStates,
+			recvNZ:             curRecvNZ,
+			sendNZ:             curSendNZ,
+			pendingESTAB:       pendingESTAB,
+			pendingESTABRecvNZ: pendingESTABRecvNZ,
+			pendingESTABSendNZ: pendingESTABSendNZ,
+			popular:            curPopular,
+		})
 		curStates = nil
 		curRecvNZ = false
 		curSendNZ = false
@@ -101,8 +107,6 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 		pendingESTAB = 0
 		pendingESTABRecvNZ = false
 		pendingESTABSendNZ = false
-		sawStateFirstUNCONN = false
-		sawStateFirstTCPOnly = false
 	}
 
 	lineNum := 0
@@ -194,12 +198,12 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 			}
 			// Track file-flavour evidence for ESTAB disambiguation.
 			if first == "UNCONN" {
-				sawStateFirstUNCONN = true
+				fileSawUNCONN = true
 			} else {
 				// Every other token normalizeSSState accepts (LISTEN,
 				// TIME-WAIT, CLOSE-WAIT, FIN-WAIT-*, SYN-*, LAST-ACK,
 				// CLOSING, CLOSED) is TCP-only.
-				sawStateFirstTCPOnly = true
+				fileSawTCPOnly = true
 			}
 			state = canon
 		}
@@ -238,6 +242,48 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 			SourceFile: sourcePath,
 			Severity:   model.SeverityWarning,
 			Message:    fmt.Sprintf("netstat read: %v", err),
+		})
+	}
+
+	// Finalise deferred ESTAB counts against file-level evidence.
+	// UNCONN-only across the whole file → ss -uan → ESTAB goes to
+	// the UDP bucket. Any TCP-only token anywhere in the file → ss
+	// -tan → ESTAB is TCP ESTABLISHED. When neither fingerprint is
+	// present (e.g. an all-ESTAB capture on either flavour), we
+	// default to TCP for backward compatibility — uncommon on a
+	// real host; if it matters the capture tool should be fixed to
+	// emit proto-prefixed rows.
+	estabBucket := "ESTABLISHED"
+	if fileSawUNCONN && !fileSawTCPOnly {
+		estabBucket = "UDP"
+	}
+	samples := make([]*model.NetstatSocketsSample, 0, len(pending))
+	for _, p := range pending {
+		popular := p.popular
+		states := p.states
+		recvNZ := p.recvNZ
+		sendNZ := p.sendNZ
+		if p.pendingESTAB > 0 {
+			if states == nil {
+				states = map[string]int{}
+			}
+			states[estabBucket] += p.pendingESTAB
+			if p.pendingESTABRecvNZ {
+				recvNZ = true
+			}
+			if p.pendingESTABSendNZ {
+				sendNZ = true
+			}
+			popular = true
+		}
+		if states == nil || !popular {
+			continue
+		}
+		samples = append(samples, &model.NetstatSocketsSample{
+			Timestamp:    p.ts,
+			StateCounts:  states,
+			RecvQNonZero: recvNZ,
+			SendQNonZero: sendNZ,
 		})
 	}
 	if len(samples) == 0 {

@@ -187,7 +187,7 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
     // Release the reservation we just planted so a later retry (after
     // the hour rolls over) can re-enter instead of getting stuck on
     // "duplicate_inflight" until the inflight TTL expires.
-    await releaseReservation(env, payload.idempotencyKey).catch(() => undefined);
+    await releaseReservation(env, payload.idempotencyKey, reservation.token).catch(() => undefined);
     const retryAfter = rl.retryAfterSeconds ?? 3600;
     logRequest({
       status: 429,
@@ -257,7 +257,7 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
   } catch (err) {
     // Pre-create failure — nothing landed on GitHub yet, so it's
     // safe to release the reservation and let the client retry.
-    await releaseReservation(env, payload.idempotencyKey).catch(() => undefined);
+    await releaseReservation(env, payload.idempotencyKey, reservation.token).catch(() => undefined);
     if (err instanceof GitHubError) {
       logRequest({
         status: 503,

@@ -201,6 +201,41 @@ TIME-WAIT  0      0      10.0.0.1:1234              10.0.0.2:8080
 	}
 }
 
+func TestParseNetstat_SSUANEstabOnlyBlocksUsesFileEvidence(t *testing.T) {
+	// Multi-TS ss -uan capture where ONE block has UNCONN (fingerprint
+	// of ss -uan) and other blocks have only ESTAB. With per-block
+	// evidence the ESTAB-only blocks would misclassify as
+	// ESTABLISHED; file-level evidence correctly carries the UNCONN
+	// fingerprint across every block so every ESTAB lands in UDP.
+	input := `TS 1769702259.000000000 2026-01-29 15:57:39
+UNCONN     0      0      0.0.0.0:68        0.0.0.0:*
+ESTAB      0      0      10.0.0.1:51234    10.0.0.2:53
+TS 1769702289.000000000 2026-01-29 15:58:09
+ESTAB      0      0      10.0.0.1:51235    10.0.0.2:53
+ESTAB      0      0      10.0.0.1:51236    10.0.0.2:53
+`
+	snapshotStart := time.Unix(1769702259, 0).UTC()
+	samples, _ := parseNetstat(strings.NewReader(input), snapshotStart, "test-ss-uan-multi")
+	if len(samples) != 2 {
+		t.Fatalf("want 2 samples, got %d", len(samples))
+	}
+	// First block: 1 UNCONN + 1 ESTAB (now UDP) = 2 in the UDP bucket.
+	if got := samples[0].StateCounts["UDP"]; got != 2 {
+		t.Errorf("block 0 UDP bucket: want 2, got %d (full map: %+v)", got, samples[0].StateCounts)
+	}
+	if _, ok := samples[0].StateCounts["ESTABLISHED"]; ok {
+		t.Errorf("block 0 must not have ESTABLISHED: %+v", samples[0].StateCounts)
+	}
+	// Second block: ESTAB-only. With file-level evidence, these are
+	// still UDP (the file contains UNCONN elsewhere).
+	if got := samples[1].StateCounts["UDP"]; got != 2 {
+		t.Errorf("block 1 UDP bucket (ESTAB-only, file-level UNCONN evidence): want 2, got %d (full map: %+v)", got, samples[1].StateCounts)
+	}
+	if _, ok := samples[1].StateCounts["ESTABLISHED"]; ok {
+		t.Errorf("block 1 must not have ESTABLISHED: %+v", samples[1].StateCounts)
+	}
+}
+
 func TestParseNetstatS_EmitsOneSamplePerTSBlock(t *testing.T) {
 	// Two polls; counters monotonically increase across polls. The
 	// old parser overwrote values as it walked the file and returned
