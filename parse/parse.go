@@ -352,7 +352,16 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 			opts.Sink.OnDiagnostic(d)
 		}
 	}
-	runParsers(ctx, collection, opts.Sink)
+	// Propagate ctx cancellation out of runParsers so a
+	// deadline/cancel during per-collector parsing surfaces to the
+	// caller instead of returning a half-populated Collection as a
+	// silent success. Without this, timeout-controlled invocations
+	// would get (collection, nil) with many SourceFiles still at
+	// their default zero-value status, producing incomplete
+	// reports without any signal that the run was aborted.
+	if err := runParsers(ctx, collection, opts.Sink); err != nil {
+		return nil, err
+	}
 	return collection, nil
 }
 
@@ -447,8 +456,12 @@ func loadEnvSidecars(rootPath string) (map[string]string, map[string]time.Time, 
 }
 
 // runParsers iterates every SourceFile in every Snapshot and invokes
-// its per-collector parser. Invoked from Discover.
-func runParsers(ctx context.Context, c *model.Collection, sink DiagnosticSink) {
+// its per-collector parser. Invoked from Discover. Returns ctx.Err()
+// if the context is cancelled mid-iteration; per-collector parse
+// failures are attached to the SourceFile as diagnostics, not
+// returned, matching Constitution Principle III (graceful
+// degradation).
+func runParsers(ctx context.Context, c *model.Collection, sink DiagnosticSink) error {
 	for _, snap := range c.Snapshots {
 		for _, suffix := range model.KnownSuffixes {
 			sf, ok := snap.SourceFiles[suffix]
@@ -456,11 +469,12 @@ func runParsers(ctx context.Context, c *model.Collection, sink DiagnosticSink) {
 				continue
 			}
 			if err := ctx.Err(); err != nil {
-				return
+				return err
 			}
 			runOneParser(snap, sf, sink)
 		}
 	}
+	return nil
 }
 
 func runOneParser(snap *model.Snapshot, sf *model.SourceFile, sink DiagnosticSink) {

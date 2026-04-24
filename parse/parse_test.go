@@ -179,3 +179,28 @@ func TestHappyPathAgainstFixtures(t *testing.T) {
 		t.Errorf("Hostname empty; expected anonymised value")
 	}
 }
+
+// TestContextCanceledDuringParsePropagates — regression guard for
+// the P2 codex flagged on 31f91da: runParsers returned void, so a
+// deadline/cancel that fired AFTER directory enumeration but DURING
+// per-collector parsing let Discover return (collection, nil) — a
+// silent partial success. Discover now forwards the context error.
+func TestContextCanceledDuringParsePropagates(t *testing.T) {
+	root := goldens.RepoRoot(t)
+	fixtureDir := filepath.Join(root, "testdata", "example2")
+
+	// Cancel immediately so the ctx.Err() check inside runParsers'
+	// inner loop fires on the first SourceFile. Directory
+	// enumeration ran synchronously before runParsers, so it
+	// completes before the check trips.
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := parse.Discover(ctx, fixtureDir, parse.DiscoverOptions{})
+	if err == nil {
+		t.Fatalf("expected cancellation error, got nil (Discover silently returned a partial Collection)")
+	}
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("expected context.Canceled, got %v", err)
+	}
+}
