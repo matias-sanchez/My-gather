@@ -213,14 +213,12 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
   height: 60px;
   object-fit: contain;
   pointer-events: none;
-  /* logo.png ships at 512×384 (4:3 crop of the Gemini master) so
-     every browser zoom up to ~800 % stays in the downscaling regime
-     instead of flipping to a blurry upscale at high zoom. Use
-     image-rendering: high-quality so Chrome/Safari pick their best
-     downscaler. We intentionally do NOT set
-     -webkit-optimize-contrast — on Chromium it forces crisp-edges
-     resampling which stair-steps alpha-transparent edges into a
-     visible checker. */
+  /* logo.png ships at 512×370 (cropped to the non-transparent
+     bounding box of the Gemini master, with its baked-in grey
+     checker pattern replaced by true alpha=0 pixels). At that
+     resolution every browser zoom up to ~800 % stays in the
+     downscaling regime. Use image-rendering: high-quality so
+     Chrome/Safari pick their best downscaler. */
   image-rendering: auto;
   image-rendering: high-quality;
   transition: transform 260ms cubic-bezier(.34,1.56,.64,1),
