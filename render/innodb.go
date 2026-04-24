@@ -252,12 +252,12 @@ func buildSiteRows(sites []model.SemaphoreSite, total int) []semaphoreSiteRow {
 // "at peak" caption in the expanded breakdown.
 func attachPendingIOBreakdown(m *innoDBMetricView, snaps []model.SnapshotInnoDB) {
 	var (
-		peakReads, peakWrites, peakFsyncs                    int
-		peakLRU, peakFL, peakSP                              int
-		peakFsyncLog, peakFsyncBP                            int
-		peakModified                                         int
-		peakWritesSnap                                       string
-		anyFsync, anySingle, anyPendingWrite                 bool
+		peakReads, peakWrites, peakFsyncs    int
+		peakLRU, peakFL, peakSP              int
+		peakFsyncLog, peakFsyncBP            int
+		peakModified                         int
+		peakWritesSnap                       string
+		anyFsync, anySingle, anyPendingWrite bool
 	)
 	peakWritesCombined := -1
 	for _, si := range snaps {

@@ -184,13 +184,13 @@ type pendingIOView struct {
 	// Row-level presence flags. The template uses these to paint
 	// per-row severity in the flushing breakdown without having to
 	// parse the formatted peak strings back into numbers.
-	HasLRU           bool
-	HasFlushList     bool
-	HasSinglePage    bool
-	HasFsyncLog      bool
-	HasFsyncBP       bool
-	HasPendingFsync  bool
-	HasPendingWrite  bool
+	HasLRU          bool
+	HasFlushList    bool
+	HasSinglePage   bool
+	HasFsyncLog     bool
+	HasFsyncBP      bool
+	HasPendingFsync bool
+	HasPendingWrite bool
 }
 
 // semaphoreSiteRow is one row in the contention-breakdown sub-panel.
