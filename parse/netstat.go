@@ -110,20 +110,29 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 		first := fields[0]
 		switch {
 		case strings.HasPrefix(first, "tcp"):
-			// ss -nap has state in col[1]; netstat -an has state in
-			// col[5]. Try the ss shape first — if col[1] isn't a
-			// recognised state, fall back to the netstat position.
+			// ss -nap: "tcp LISTEN 0 128 ..." — state at col[1], queues
+			// at col[2]/col[3].
+			// netstat -an: "tcp 0 0 local foreign STATE pid/prog" —
+			// queues at col[1]/col[2], state at col[5].
 			if canon, _, ok := normalizeSSState(fields[1]); ok {
 				state = canon
+				recvQIdx, sendQIdx = 2, 3
 			} else if len(fields) >= 6 {
 				state = fields[5]
 			} else {
 				tcpRowNoState = true
 			}
 		case strings.HasPrefix(first, "udp"):
+			// ss -nap/-uap: "udp UNCONN 0 0 ..." — queues at col[2]/col[3].
+			// netstat -an: "udp 0 0 ..." — queues at col[1]/col[2]. UDP
+			// has no TCP state column so the bucket is always "UDP".
+			if _, _, ok := normalizeSSState(fields[1]); ok {
+				recvQIdx, sendQIdx = 2, 3
+			}
 			state = "UDP"
 		default:
-			// `ss -tan` / `ss -uan` rows — first column is the state.
+			// `ss -tan` / `ss -uan` rows — first column is the state,
+			// queues are col[1]/col[2] (already the default).
 			canon, _, ok := normalizeSSState(first)
 			if !ok {
 				continue // not a socket row (header, blank, etc.)

@@ -157,8 +157,15 @@ TIME-WAIT  0      0      10.0.0.1:1234              10.0.0.2:8080
 func TestParseNetstat_ParsesSSNAPRows(t *testing.T) {
 	// `ss -nap`: proto is col[0] AND state is col[1]. Must parse the
 	// state from col[1], not fall through to col[5] like netstat.
+	// Also: queue columns shift to col[2]/col[3] — reading them from
+	// col[1]/col[2] would treat the state token (e.g. "LISTEN") as
+	// Recv-Q and sticky-set RecvQNonZero on every capture.
+	// All Recv-Q / Send-Q columns are 0 so the no-false-positive
+	// queue-flag assertion below is unambiguous. (Real ss -nap often
+	// shows somaxconn in Send-Q for LISTEN rows, which is distinct
+	// from an actual backlog but would still register as non-zero.)
 	input := `Netid State   Recv-Q Send-Q Local Address:Port    Peer Address:Port
-tcp    LISTEN  0      128    0.0.0.0:22            0.0.0.0:*
+tcp    LISTEN  0      0      0.0.0.0:22            0.0.0.0:*
 tcp    ESTAB   0      0      10.0.0.1:5678         10.0.0.2:80
 udp    UNCONN  0      0      0.0.0.0:68            0.0.0.0:*
 `
@@ -176,6 +183,35 @@ udp    UNCONN  0      0      0.0.0.0:68            0.0.0.0:*
 	}
 	if s.StateCounts["UDP"] != 1 {
 		t.Errorf("UDP: want 1, got %d", s.StateCounts["UDP"])
+	}
+	// Every queue column in the fixture is "0"; RecvQNonZero must
+	// stay false. If the parser was still reading col[1] as Recv-Q
+	// it would see the state token "LISTEN" and flip this to true.
+	if s.RecvQNonZero {
+		t.Errorf("RecvQNonZero: parser read state token as Recv-Q")
+	}
+	if s.SendQNonZero {
+		t.Errorf("SendQNonZero: parser read state token as Send-Q")
+	}
+}
+
+func TestParseNetstat_SSNAPDetectsRealQueueBacklog(t *testing.T) {
+	// With ss-nap queue indices correct, a genuinely backlogged row
+	// still sets RecvQNonZero / SendQNonZero — i.e., the fix is
+	// surgical (shifted columns), not a blanket suppression.
+	input := `tcp    ESTAB   99     0      10.0.0.1:5678    10.0.0.2:80
+udp    UNCONN  0      17     0.0.0.0:514      0.0.0.0:*
+`
+	snapshotStart := time.Unix(1769702259, 0).UTC()
+	samples, _ := parseNetstat(strings.NewReader(input), snapshotStart, "test-ss-nap-backlog")
+	if len(samples) != 1 {
+		t.Fatalf("want 1 sample, got %d", len(samples))
+	}
+	if !samples[0].RecvQNonZero {
+		t.Errorf("RecvQNonZero: want true (ESTAB row has Recv-Q=99)")
+	}
+	if !samples[0].SendQNonZero {
+		t.Errorf("SendQNonZero: want true (UNCONN row has Send-Q=17)")
 	}
 }
 
