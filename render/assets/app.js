@@ -1153,12 +1153,25 @@
     if (!data || !Array.isArray(data.timestamps) || !Array.isArray(data.series)) return;
     var hidden = new Set();
     var plot = null;
+    var legendEl = null;
     function draw() {
       if (plot) { unregisterChart(plot); plot.destroy(); plot = null; }
+      // buildStackedChart appends a fresh .series-legend sibling after
+      // el on every call. Without removing the previous one, toggling
+      // a legend chip (which re-enters draw()) stacks duplicate legend
+      // rows under the chart — see the bug report with 5 rows.
+      if (legendEl && legendEl.parentNode) {
+        legendEl.parentNode.removeChild(legendEl);
+        legendEl = null;
+      }
       plot = buildStackedChart(el, data, {
         label: "sockets",
         title: "Socket count — number of sockets in each TCP state at each snapshot (absolute, not a rate)",
       }, hidden, draw);
+      var next = el.nextSibling;
+      if (next && next.classList && next.classList.contains("series-legend")) {
+        legendEl = next;
+      }
     }
     draw();
     mountResetZoomButton(el, function () { return plot; });
