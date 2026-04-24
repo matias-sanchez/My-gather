@@ -3209,6 +3209,279 @@
     void plot;
   }
 
+  // --- Feedback dialog ---------------------------------------------
+  // Wires the static <dialog id="feedback-dialog"> emitted by the
+  // template. See specs/002-report-feedback-button. Strictly local:
+  // no network calls (Principle V/IX) — only window.open to GitHub on
+  // a user gesture. Static-node mutations are limited to form values,
+  // `disabled`, `hidden`, `href`. One submit code path (Principle XIII)
+  // — the form's submit event catches click, Enter-in-input, and
+  // Cmd/Ctrl+Enter.
+  function initFeedbackDialog() {
+    var dialog = document.getElementById("feedback-dialog");
+    var openBtn = document.getElementById("feedback-open");
+    if (!dialog || !openBtn || typeof dialog.showModal !== "function") return;
+    var form = document.getElementById("feedback-form");
+    var titleInput = document.getElementById("feedback-field-title");
+    var bodyInput = document.getElementById("feedback-field-body");
+    var catSelect = document.getElementById("feedback-field-category");
+    var submitBtn = document.getElementById("feedback-submit");
+    var cancelBtn = document.getElementById("feedback-cancel");
+    var recordBtn = document.getElementById("feedback-record");
+    var attachments = document.getElementById("feedback-attachments");
+    var hint = document.getElementById("feedback-hint");
+    var errEl = document.getElementById("feedback-error");
+    var fallback = document.getElementById("feedback-fallback");
+    var fallbackLink = document.getElementById("feedback-fallback-link");
+
+    var BASE_URL = dialog.dataset.feedbackUrl ||
+      "https://github.com/matias-sanchez/My-gather/discussions/new?category=ideas";
+    var URL_MAX = 7500;
+
+    var imgBlob = null, imgURL = null;
+    var voiceBlob = null, voiceURL = null;
+    var recorder = null, recStream = null, recChunks = null;
+    var recStart = 0, recRAF = 0, recLabel = null;
+
+    function show(el) { if (el) el.hidden = false; }
+    function hide(el) { if (el) el.hidden = true; }
+    function setErr(msg) {
+      if (!msg) { errEl.textContent = ""; hide(errEl); return; }
+      errEl.textContent = msg; show(errEl);
+    }
+    function shortID() {
+      try {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          return window.crypto.randomUUID().slice(0, 8);
+        }
+      } catch (_) { /* fall through */ }
+      return Math.random().toString(36).slice(2, 10);
+    }
+    function extFromMime(m) { return (m && m.indexOf("mp4") !== -1) ? "mp4" : "webm"; }
+    function maybePrefixBody() {
+      var cat = catSelect.value;
+      return cat ? "> Category: " + cat + "\n\n" + bodyInput.value : bodyInput.value;
+    }
+    function buildURL() {
+      var sep = BASE_URL.indexOf("?") === -1 ? "?" : "&";
+      return BASE_URL + sep +
+        "title=" + encodeURIComponent(titleInput.value) +
+        "&body=" + encodeURIComponent(maybePrefixBody());
+    }
+    function refreshHint() {
+      var parts = [];
+      if (imgBlob) parts.push("Image will be on your clipboard — paste into GitHub's body.");
+      if (voiceBlob) parts.push("Voice note will be downloaded — drag it into GitHub's body.");
+      if (!parts.length) { hint.textContent = ""; hide(hint); return; }
+      hint.textContent = parts.join(" "); show(hint);
+    }
+    function updateSubmitEnabled() {
+      submitBtn.disabled = !(titleInput.value.trim().length > 0 && buildURL().length <= URL_MAX);
+    }
+
+    // --- Attachments (single helper, kind-parameterised) ----------
+
+    function clearAttachment(kind) {
+      if (kind === "image") {
+        if (imgURL) { try { URL.revokeObjectURL(imgURL); } catch (_) {} }
+        imgBlob = null; imgURL = null;
+      } else {
+        if (voiceURL) { try { URL.revokeObjectURL(voiceURL); } catch (_) {} }
+        voiceBlob = null; voiceURL = null;
+      }
+      var n = attachments.querySelector('[data-kind="' + kind + '"]');
+      if (n) n.parentNode.removeChild(n);
+      var dl = attachments.querySelector('[data-kind="image-download"]');
+      if (kind === "image" && dl) dl.parentNode.removeChild(dl);
+      refreshHint(); updateSubmitEnabled();
+    }
+    function addAttachment(kind, blob) {
+      clearAttachment(kind);
+      var url = URL.createObjectURL(blob);
+      var media;
+      if (kind === "image") {
+        imgBlob = blob; imgURL = url;
+        media = document.createElement("img");
+        media.alt = "Pasted screenshot preview";
+      } else {
+        voiceBlob = blob; voiceURL = url;
+        media = document.createElement("audio");
+        media.controls = true;
+      }
+      media.src = url;
+      var wrap = document.createElement("div");
+      wrap.className = "feedback-attachment";
+      wrap.setAttribute("data-kind", kind);
+      var rm = document.createElement("button");
+      rm.type = "button"; rm.className = "feedback-remove"; rm.textContent = "Remove";
+      rm.addEventListener("click", function () { clearAttachment(kind); });
+      wrap.appendChild(media); wrap.appendChild(rm);
+      attachments.appendChild(wrap);
+      refreshHint(); updateSubmitEnabled();
+    }
+
+    // --- Recording ------------------------------------------------
+
+    function stopRecording() {
+      if (recRAF) { cancelAnimationFrame(recRAF); recRAF = 0; }
+      if (recorder && recorder.state === "recording") {
+        try { recorder.stop(); } catch (_) {}
+      }
+      if (recStream) {
+        try { recStream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
+        recStream = null;
+      }
+      if (recLabel && recLabel.parentNode) recLabel.parentNode.removeChild(recLabel);
+      recLabel = null;
+      recordBtn.textContent = "Record voice note";
+      recordBtn.disabled = false;
+    }
+    function tickTimer() {
+      if (!recLabel) return;
+      var elapsed = (performance.now() - recStart) / 1000;
+      if (elapsed >= 120) { stopRecording(); return; }
+      var m = Math.floor(elapsed / 60);
+      var s = Math.floor(elapsed % 60);
+      recLabel.textContent = m + ":" + (s < 10 ? "0" : "") + s + " / 2:00";
+      recRAF = requestAnimationFrame(tickTimer);
+    }
+    function startRecording() {
+      setErr("");
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia ||
+          typeof window.MediaRecorder === "undefined") {
+        setErr("Voice recording is not supported by this browser."); return;
+      }
+      recordBtn.disabled = true;
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+        recStream = stream;
+        try { recorder = new MediaRecorder(stream); }
+        catch (e) {
+          setErr("Could not start recorder: " + (e && e.message ? e.message : e));
+          try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
+          recStream = null; recordBtn.disabled = false; return;
+        }
+        recChunks = [];
+        recorder.addEventListener("dataavailable", function (ev) {
+          if (ev.data && ev.data.size) recChunks.push(ev.data);
+        });
+        recorder.addEventListener("stop", function () {
+          var mime = recorder.mimeType || "audio/webm";
+          if (recChunks && recChunks.length) addAttachment("voice", new Blob(recChunks, { type: mime }));
+          recChunks = null; recorder = null;
+        });
+        recorder.start();
+        recStart = performance.now();
+        recLabel = document.createElement("span");
+        recLabel.className = "feedback-rec-timer";
+        recLabel.textContent = "0:00 / 2:00";
+        recordBtn.parentNode.insertBefore(recLabel, recordBtn.nextSibling);
+        recordBtn.textContent = "Stop recording";
+        recordBtn.disabled = false;
+        recRAF = requestAnimationFrame(tickTimer);
+      }).catch(function (err) {
+        setErr("Microphone access denied: " + (err && err.message ? err.message : err));
+        recordBtn.disabled = false;
+      });
+    }
+
+    // --- Open / close / submit ------------------------------------
+
+    function openDialog() {
+      setErr(""); hide(fallback);
+      dialog.showModal();
+      try { titleInput.focus(); } catch (_) {}
+    }
+    function closeDialog() {
+      if (recorder || recStream || recRAF) stopRecording();
+      clearAttachment("image"); clearAttachment("voice");
+      titleInput.value = ""; bodyInput.value = ""; catSelect.value = "";
+      setErr(""); hide(fallback); hide(hint);
+      updateSubmitEnabled();
+      if (dialog.open) { try { dialog.close(); } catch (_) {} }
+    }
+    function renderImageDownload() {
+      if (!imgBlob || !imgURL) return;
+      if (attachments.querySelector('[data-kind="image-download"]')) return;
+      var a = document.createElement("a");
+      a.setAttribute("data-kind", "image-download");
+      a.className = "feedback-img-download";
+      a.href = imgURL;
+      a.download = "feedback-image-" + shortID() + ".png";
+      a.textContent = "Download image";
+      attachments.appendChild(a);
+      hint.textContent = "Clipboard blocked — download the image and drop it into GitHub's body.";
+      show(hint);
+    }
+    function doSubmit() {
+      if (submitBtn.disabled) return;
+      setErr(""); hide(fallback);
+      var url = buildURL();
+      var win;
+      try { win = window.open(url, "_blank", "noopener,noreferrer"); } catch (_) { win = null; }
+      if (!win) {
+        fallbackLink.href = url; show(fallback);
+        setErr("Popup blocked. Use the link below to open GitHub.");
+        return;
+      }
+      if (imgBlob) {
+        var wrote = false;
+        try {
+          if (navigator.clipboard && typeof navigator.clipboard.write === "function" &&
+              typeof window.ClipboardItem !== "undefined") {
+            navigator.clipboard.write([new window.ClipboardItem({ "image/png": imgBlob })])
+              .catch(function () { renderImageDownload(); });
+            wrote = true;
+          }
+        } catch (_) { /* fall through */ }
+        if (!wrote) renderImageDownload();
+      }
+      if (voiceBlob && voiceURL) {
+        var a = document.createElement("a");
+        a.href = voiceURL;
+        a.download = "feedback-voice-" + shortID() + "." + extFromMime(voiceBlob.type);
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      }
+      // Do not auto-close; the user decides when to dismiss the dialog.
+    }
+
+    // --- Wiring ---------------------------------------------------
+
+    openBtn.addEventListener("click", openDialog);
+    cancelBtn.addEventListener("click", function () { closeDialog(); });
+    // Escape fires "cancel"; funnel it through our cleanup path.
+    dialog.addEventListener("cancel", function (ev) { ev.preventDefault(); closeDialog(); });
+    dialog.addEventListener("close", function () { closeDialog(); });
+    // Backdrop click: target is the dialog element itself.
+    dialog.addEventListener("click", function (ev) { if (ev.target === dialog) closeDialog(); });
+    // Single submit path — catches button click, Enter-in-input, and Cmd/Ctrl+Enter.
+    form.addEventListener("submit", function (ev) { ev.preventDefault(); doSubmit(); });
+    dialog.addEventListener("keydown", function (ev) {
+      if ((ev.metaKey || ev.ctrlKey) && ev.key === "Enter") {
+        ev.preventDefault();
+        if (!submitBtn.disabled) { form.requestSubmit ? form.requestSubmit() : doSubmit(); }
+      }
+    });
+    titleInput.addEventListener("input", updateSubmitEnabled);
+    bodyInput.addEventListener("input", updateSubmitEnabled);
+    catSelect.addEventListener("change", updateSubmitEnabled);
+    dialog.addEventListener("paste", function (ev) {
+      var items = ev.clipboardData && ev.clipboardData.items;
+      if (!items) return;
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        if (it.kind === "file" && it.type && it.type.indexOf("image/") === 0) {
+          var blob = it.getAsFile();
+          if (blob) { ev.preventDefault(); addAttachment("image", blob); return; }
+        }
+      }
+    });
+    recordBtn.addEventListener("click", function () {
+      if (recorder && recorder.state === "recording") stopRecording();
+      else startRecording();
+    });
+    updateSubmitEnabled();
+  }
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot);
   } else {
@@ -3225,6 +3498,7 @@
     initSemaphoreBreakdown();
     initEnvTabs();
     initPrintHook();
+    initFeedbackDialog();
     observeContentColumn();
     // Also re-fit on any <details> toggle (open/close affects
     // content-column scrollbar which affects chart width).
