@@ -52,8 +52,11 @@ function readClientIp(req: Request): string {
 }
 
 function categoryLabel(category: string | undefined): string | null {
+  // Labels in the repo live as lowercase (area/ui, area/parser, …). The
+  // payload uses Title-case enum values (UI, Parser, …) for human
+  // readability; normalise here so label resolution is case-consistent.
   if (!category) return null;
-  return `area/${category}`;
+  return `area/${category.toLowerCase()}`;
 }
 
 async function handleFeedback(req: Request, env: Env, startedAt: number): Promise<Response> {
