@@ -1,0 +1,20 @@
+name = "my-gather-feedback"
+main = "src/index.ts"
+compatibility_date = "2026-04-24"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "FEEDBACK_RATELIMIT"
+id = "a0424545a9164b70bd0b8852ffd4de32"
+
+[[kv_namespaces]]
+binding = "FEEDBACK_IDEMP"
+id = "e9d7dfd96131442d8d908c2b44691aa2"
+
+[[r2_buckets]]
+binding = "FEEDBACK_ATTACHMENTS"
+bucket_name = "feedback-attachments"
+
+[observability]
+enabled = true
