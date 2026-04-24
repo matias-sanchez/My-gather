@@ -14,11 +14,20 @@ package render
 // control and its dialog need at render time. Every field is a
 // build-time constant so the rendered markup is deterministic.
 type FeedbackView struct {
-	// GitHubURL is the base URL the client-side dialog opens on
-	// submit. The dialog appends "&title=<enc>&body=<enc>" at click
-	// time. Embedded as a build-time constant — not configurable at
+	// GitHubURL is the base URL the client-side dialog falls back to
+	// when the Worker path is unreachable (spec 003, research R8).
+	// The dialog appends "&title=<enc>&body=<enc>" at click time.
+	// Embedded as a build-time constant — not configurable at
 	// runtime, not derived from environment or input data.
 	GitHubURL string
+
+	// WorkerURL is the HTTPS endpoint of the feedback Cloudflare
+	// Worker (spec 003). The client-side dialog POSTs the feedback
+	// JSON payload here; on any Worker failure the dialog falls back
+	// to GitHubURL. Constant at build time (research R7) so the
+	// rendered markup stays byte-identical across runs
+	// (Principle IV).
+	WorkerURL string
 
 	// Categories is the ordered, English-only list of triage buckets
 	// shown in the dialog's category selector. Order is intentional:
@@ -32,6 +41,12 @@ type FeedbackView struct {
 // project repo. The dialog's submit handler appends title and body
 // query parameters; this constant is only the base.
 const feedbackGitHubURL = "https://github.com/matias-sanchez/My-gather/discussions/new?category=ideas"
+
+// feedbackWorkerURL is the public HTTPS endpoint of the feedback
+// Cloudflare Worker (spec 003, research R7). The URL is a build-time
+// constant so the Principle IV determinism guarantee is preserved and
+// two renders of the same Collection produce byte-identical output.
+const feedbackWorkerURL = "https://my-gather-feedback.mati-orfeo.workers.dev/feedback"
 
 // feedbackCategories is the authoritative list of triage buckets.
 // Copy-on-return in BuildFeedbackView so callers cannot mutate the
@@ -52,6 +67,7 @@ func BuildFeedbackView() FeedbackView {
 	copy(cats, feedbackCategories)
 	return FeedbackView{
 		GitHubURL:  feedbackGitHubURL,
+		WorkerURL:  feedbackWorkerURL,
 		Categories: cats,
 	}
 }

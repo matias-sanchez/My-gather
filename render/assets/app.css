@@ -2995,3 +2995,11 @@ dd.env-meter:has(.sev-crit) .env-meter-pct { color: var(--err); }
 .feedback-hint { margin: 6px 0 0; font-size: 12px; color: var(--fg-muted); }
 .feedback-error { margin: 6px 0 0; font-size: 12px; color: var(--err); }
 .feedback-fallback { margin: 6px 0 0; font-size: 12px; }
+
+/* Inline success panel shown after a 200 from the feedback Worker
+   (spec 003). Sibling of the form inside the <dialog>; JS toggles
+   form.hidden / successEl.hidden. */
+.feedback-success { display: flex; flex-direction: column; gap: 6px; }
+.feedback-success h2 { margin: 0; font-size: 16px; }
+.feedback-success p { margin: 0; font-size: 13px; }
+.feedback-success-note { color: var(--fg-muted); font-size: 12px; }

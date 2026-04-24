@@ -3234,12 +3234,13 @@
 
   // --- Feedback dialog ---------------------------------------------
   // Wires the static <dialog id="feedback-dialog"> emitted by the
-  // template. See specs/002-report-feedback-button. Strictly local:
-  // no network calls (Principle V/IX) — only window.open to GitHub on
-  // a user gesture. Static-node mutations are limited to form values,
-  // `disabled`, `hidden`, `href`. One submit code path (Principle XIII)
-  // — the form's submit event catches click, Enter-in-input, and
-  // Cmd/Ctrl+Enter.
+  // template. See specs/002-report-feedback-button and
+  // specs/003-feedback-backend-worker. One submit code path
+  // (Principle XIII): doSubmit() POSTs JSON to the Worker; on any
+  // failure it calls doLegacyFallback() (feature-002 window.open +
+  // clipboard/download handoff) so the feature degrades gracefully
+  // (Principle III). Static-node mutations are limited to form
+  // values, `disabled`, `hidden`, `href`, `textContent`.
   function initFeedbackDialog() {
     var dialog = document.getElementById("feedback-dialog");
     var openBtn = document.getElementById("feedback-open");
@@ -3256,13 +3257,22 @@
     var errEl = document.getElementById("feedback-error");
     var fallback = document.getElementById("feedback-fallback");
     var fallbackLink = document.getElementById("feedback-fallback-link");
+    var successEl = document.getElementById("feedback-success");
+    var successLink = document.getElementById("feedback-success-link");
 
-    // Single source of truth for the GitHub Ideas URL: rendered onto
-    // the <dialog> by the Go template from FeedbackView.GitHubURL
-    // (Principle XIII — no duplicate constant in JS).
+    // Single source of truth for both URLs: rendered onto the
+    // <dialog> by the Go template from FeedbackView.GitHubURL and
+    // FeedbackView.WorkerURL (Principle XIII — no duplicate constant
+    // in JS).
     var BASE_URL = dialog.dataset.feedbackUrl;
+    var WORKER_URL = dialog.dataset.feedbackWorkerUrl;
     if (!BASE_URL) return; // template didn't render the attr → abort init
     var URL_MAX = 7500;
+    // 15s is deliberately large: base64-encoding a 5 MB image + voice
+    // note in the fetch body takes real time on slow uplinks. Short
+    // enough that a dead Worker still surfaces a fallback within the
+    // user's attention window.
+    var WORKER_TIMEOUT_MS = 15000;
 
     var imgBlob = null, imgURL = null;
     var voiceBlob = null, voiceURL = null;
@@ -3440,7 +3450,9 @@
     // --- Open / close / submit ------------------------------------
 
     function openDialog() {
-      setErr(""); hide(fallback);
+      setErr(""); hide(fallback); hide(hint);
+      if (successEl) hide(successEl);
+      form.hidden = false;
       dialog.showModal();
       try { titleInput.focus(); } catch (_) {}
     }
@@ -3461,6 +3473,12 @@
       clearAttachment("image"); clearAttachment("voice");
       titleInput.value = ""; bodyInput.value = ""; catSelect.value = "";
       setErr(""); hide(fallback); hide(hint);
+      // Reset the success panel so reopening the dialog after a
+      // successful submit starts back at the form, not the stale
+      // "Feedback posted" state.
+      if (successEl) hide(successEl);
+      if (successLink) successLink.href = "#";
+      form.hidden = false;
       updateSubmitEnabled();
       if (dialog.open) { try { dialog.close(); } catch (_) {} }
     }
@@ -3481,9 +3499,40 @@
       hint.textContent = "Clipboard blocked — download the image and drop it into GitHub's body.";
       show(hint);
     }
-    function doSubmit() {
-      if (submitBtn.disabled) return;
-      setErr(""); hide(fallback);
+    // blobToBase64 reads the given Blob via FileReader.readAsDataURL
+    // and returns the raw base64 payload (the "data:<mime>;base64,"
+    // prefix stripped). Rejects if the reader errors. Used to pack
+    // image + voice attachments into the Worker JSON payload (spec
+    // 003, research R6).
+    function blobToBase64(blob) {
+      return new Promise(function (resolve, reject) {
+        var reader = new FileReader();
+        reader.onerror = function () { reject(reader.error || new Error("FileReader error")); };
+        reader.onload = function () {
+          var s = String(reader.result || "");
+          var comma = s.indexOf(",");
+          resolve(comma === -1 ? s : s.slice(comma + 1));
+        };
+        try { reader.readAsDataURL(blob); } catch (e) { reject(e); }
+      });
+    }
+
+    // renderSuccess hides the form and reveals the post-submit panel
+    // with a link to the freshly-created GitHub issue.
+    function renderSuccess(issueUrl) {
+      if (!successEl || !successLink) return;
+      successLink.href = issueUrl;
+      form.hidden = true;
+      show(successEl);
+    }
+
+    // doLegacyFallback is the feature-002 submit path: open GitHub's
+    // new-issue URL in a new tab and hand media off via clipboard
+    // (images) or programmatic download (voice). Invoked only on the
+    // Worker-path failure arm of doSubmit() (Principle III graceful
+    // degradation; Principle XIII single code path — this is the
+    // failure branch of doSubmit, not a parallel handler).
+    function doLegacyFallback() {
       var url = buildURL();
 
       // 1. Try to open GitHub. Attempt this FIRST so the user-gesture
@@ -3520,6 +3569,110 @@
         a.download = "feedback-voice-" + shortID() + "." + extFromMime(voiceBlob.type);
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
       }
+    }
+
+    // doSubmit — single code path for the Submit gesture (Principle
+    // XIII). Validates (via updateSubmitEnabled gating the button),
+    // POSTs a JSON payload to the Worker, and routes by response:
+    //   200 → inline success panel, no auto-close
+    //   400 → inline validation error, no fallback (R8)
+    //   429 → throttle message with retryAfterSeconds, no fallback
+    //   everything else (5xx, network error, timeout, abort) →
+    //     doLegacyFallback() with a note in #feedback-hint.
+    function doSubmit() {
+      if (submitBtn.disabled) return;
+      setErr(""); hide(fallback); hide(hint);
+      if (successEl) hide(successEl);
+
+      // If the template didn't emit a Worker URL (older report), go
+      // straight to the legacy flow. Still one code path — the "no
+      // worker" case is just a pre-computed failure.
+      if (!WORKER_URL || typeof window.fetch !== "function") {
+        doLegacyFallback();
+        return;
+      }
+
+      submitBtn.disabled = true;
+      var hadImage = !!imgBlob, hadVoice = !!voiceBlob;
+      var reportVersion = "unknown";
+      var genMeta = document.querySelector('meta[name="generator"]');
+      if (genMeta && genMeta.content) reportVersion = genMeta.content.slice(0, 64);
+
+      // Build attachment promises first; any base64 encoding error
+      // routes through the same fallback arm as a Worker failure.
+      var imgP = imgBlob ? blobToBase64(imgBlob).then(function (b64) {
+        return { mime: imgBlob.type || "image/png", base64: b64 };
+      }) : Promise.resolve(null);
+      var voiceP = voiceBlob ? blobToBase64(voiceBlob).then(function (b64) {
+        return { mime: voiceBlob.type || "audio/webm", base64: b64 };
+      }) : Promise.resolve(null);
+
+      Promise.all([imgP, voiceP]).then(function (parts) {
+        var payload = {
+          title: titleInput.value,
+          body: maybePrefixBody(),
+          idempotencyKey: (window.crypto && typeof window.crypto.randomUUID === "function")
+            ? window.crypto.randomUUID()
+            : "00000000-0000-4000-8000-000000000000",
+          reportVersion: reportVersion
+        };
+        if (catSelect.value) payload.category = catSelect.value;
+        if (parts[0]) payload.image = parts[0];
+        if (parts[1]) payload.voice = parts[1];
+
+        var controller = new AbortController();
+        var timer = setTimeout(function () { try { controller.abort(); } catch (_) {} }, WORKER_TIMEOUT_MS);
+
+        return fetch(WORKER_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+          // `no-store` mirrors the Worker's cache contract.
+          cache: "no-store",
+          mode: "cors"
+        }).then(function (res) {
+          clearTimeout(timer);
+          return res.json().then(function (data) { return { res: res, data: data }; },
+            function () { return { res: res, data: null }; });
+        }, function (err) {
+          clearTimeout(timer);
+          throw err;
+        });
+      }).then(function (r) {
+        var res = r.res, data = r.data || {};
+        if (res.status === 200 && data && data.ok && data.issueUrl) {
+          renderSuccess(data.issueUrl);
+          return;
+        }
+        if (res.status === 400) {
+          var msg = (data && data.message) || "Your submission was rejected.";
+          setErr(msg);
+          submitBtn.disabled = false;
+          return;
+        }
+        if (res.status === 429) {
+          var retry = (data && typeof data.retryAfterSeconds === "number") ? data.retryAfterSeconds : 0;
+          var base = (data && data.message) || "Rate limit reached.";
+          var suffix = retry > 0 ? " Try again in " + Math.ceil(retry / 60) + " minute(s)." : "";
+          setErr(base + suffix);
+          submitBtn.disabled = false;
+          return;
+        }
+        // 5xx, 413, unexpected status → fall back.
+        doLegacyFallback();
+        hint.textContent = "Backend unavailable — opened GitHub with pre-filled form.";
+        show(hint);
+        submitBtn.disabled = false;
+      }).catch(function () {
+        // Network error, timeout, abort, or JSON parse/encoding failure.
+        doLegacyFallback();
+        hint.textContent = "Backend unavailable — opened GitHub with pre-filled form.";
+        show(hint);
+        submitBtn.disabled = false;
+      });
+      // Silence unused-var warnings in branches that don't reach them.
+      void hadImage; void hadVoice;
       // Do not auto-close; the user decides when to dismiss the dialog.
     }
 

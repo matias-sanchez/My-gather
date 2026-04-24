@@ -148,6 +148,50 @@ var feedbackCategorySelectRE = regexp.MustCompile(
 // slice reflects document order, which is the determinism contract.
 var feedbackOptionValueRE = regexp.MustCompile(`<option\s+value="([^"]*)"`)
 
+// TestFeedbackDialogHasWorkerUrl: spec 003-feedback-backend-worker —
+// the <dialog> must carry the data-feedback-worker-url attribute
+// pointing at the Cloudflare Worker endpoint. The constant is
+// build-time (render/feedback.go), so the rendered value is fixed and
+// deterministic (Principle IV).
+func TestFeedbackDialogHasWorkerUrl(t *testing.T) {
+	out := renderFeedbackFixture(t)
+
+	want := `data-feedback-worker-url="https://my-gather-feedback.mati-orfeo.workers.dev/feedback"`
+	if !strings.Contains(out, want) {
+		t.Errorf("rendered HTML missing Worker URL attribute %q", want)
+	}
+}
+
+// TestFeedbackSuccessMarkupPresent: spec 003-feedback-backend-worker —
+// the inline success state lives next to the form inside the dialog.
+// Rendered hidden so the default first paint shows the form; the
+// client JS un-hides it on a 200 response from the Worker and fills
+// #feedback-success-link with the GitHub issue URL.
+func TestFeedbackSuccessMarkupPresent(t *testing.T) {
+	out := renderFeedbackFixture(t)
+
+	wantSubstrings := []string{
+		`id="feedback-success"`,
+		`id="feedback-success-link"`,
+	}
+	for _, s := range wantSubstrings {
+		if !strings.Contains(out, s) {
+			t.Errorf("rendered HTML missing feedback-success marker %q", s)
+		}
+	}
+
+	// #feedback-success must ship with the `hidden` attribute on the
+	// same element so the success panel doesn't flash on first paint.
+	idx := strings.Index(out, `id="feedback-success"`)
+	if idx == -1 {
+		t.Fatalf("feedback-success id not found")
+	}
+	tagEnd := strings.Index(out[idx:], ">")
+	if tagEnd == -1 || !strings.Contains(out[idx:idx+tagEnd], "hidden") {
+		t.Errorf("feedback-success must carry the `hidden` attribute on first paint")
+	}
+}
+
 // TestFeedbackCategoriesRenderInExactOrder: ui.md / feedback.go —
 // the dialog's category selector must emit options in the exact order
 // ["", "UI", "Parser", "Advisor", "Other"]. The empty-value entry is

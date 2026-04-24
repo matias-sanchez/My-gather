@@ -142,6 +142,7 @@
 <dialog id="feedback-dialog"
         class="feedback-dialog"
         data-feedback-url="{{ .Feedback.GitHubURL }}"
+        data-feedback-worker-url="{{ .Feedback.WorkerURL }}"
         aria-labelledby="feedback-title"
         aria-describedby="feedback-help">
   <form id="feedback-form" method="dialog">
@@ -182,6 +183,16 @@
       <a id="feedback-fallback-link" href="#" target="_blank" rel="noopener noreferrer">Open GitHub manually</a>
     </p>
   </form>
+
+  {{- /* Inline success state (spec 003). Rendered as a sibling of the
+         form so the form can be hidden wholesale when the Worker POST
+         returns 200. JS fills the link href and toggles visibility. */}}
+  <div class="feedback-success" id="feedback-success" hidden>
+    <h2>Feedback posted</h2>
+    <p>Your feedback was posted on GitHub:</p>
+    <p><a id="feedback-success-link" href="#" target="_blank" rel="noopener noreferrer">View on GitHub</a></p>
+    <p class="feedback-success-note">Close this dialog when you're done.</p>
+  </div>
 </dialog>
 
 <script>{{.EmbeddedChartJS}}</script>

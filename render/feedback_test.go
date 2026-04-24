@@ -19,6 +19,10 @@ func TestFeedbackViewShape(t *testing.T) {
 	if v.GitHubURL != wantURL {
 		t.Errorf("GitHubURL: got %q, want %q", v.GitHubURL, wantURL)
 	}
+	wantWorker := "https://my-gather-feedback.mati-orfeo.workers.dev/feedback"
+	if v.WorkerURL != wantWorker {
+		t.Errorf("WorkerURL: got %q, want %q", v.WorkerURL, wantWorker)
+	}
 	wantCats := []string{"UI", "Parser", "Advisor", "Other"}
 	if !reflect.DeepEqual(v.Categories, wantCats) {
 		t.Errorf("Categories: got %#v, want %#v", v.Categories, wantCats)
