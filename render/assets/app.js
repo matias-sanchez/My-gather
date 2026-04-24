@@ -3417,7 +3417,19 @@
       try { titleInput.focus(); } catch (_) {}
     }
     function closeDialog() {
-      if (recorder || recStream || recRAF) stopRecording();
+      if (recorder || recStream || recRAF) {
+        // MediaRecorder.stop is async: the "stop" listener below runs
+        // on a later tick and — if it finds a non-empty recChunks —
+        // calls addAttachment("voice", …). When the user cancels
+        // mid-recording we've already cleared attachments by the time
+        // that callback fires, so a canceled recording would
+        // silently repopulate the voice attachment on the NEXT
+        // dialog open. Null recChunks first so the stop guard
+        // (`if (recChunks && recChunks.length)`) is false and the
+        // late callback is a no-op.
+        recChunks = null;
+        stopRecording();
+      }
       clearAttachment("image"); clearAttachment("voice");
       titleInput.value = ""; bodyInput.value = ""; catSelect.value = "";
       setErr(""); hide(fallback); hide(hint);
