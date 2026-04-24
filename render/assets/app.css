@@ -214,10 +214,9 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
   object-fit: contain;
   pointer-events: none;
   /* Use the browser's high-quality downscaler when the page is
-     zoomed — the embedded asset is intentionally 4× the display
-     size (512×384 baked into logo.png) so every zoom level up to
-     ~400 % stays in the downscaling regime instead of flipping to
-     a blurry upscale at high zoom. */
+     zoomed — logo.png ships at 512×286 from the Gemini master so
+     every browser zoom up to ~900 % stays in the downscaling
+     regime instead of flipping to a blurry upscale at high zoom. */
   image-rendering: auto;
   image-rendering: high-quality;
   image-rendering: -webkit-optimize-contrast;
