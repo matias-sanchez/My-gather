@@ -3443,21 +3443,43 @@
           try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
           recStream = null; recordBtn.disabled = false; return;
         }
-        recChunks = [];
-        recorder.addEventListener("dataavailable", function (ev) {
-          // recChunks is nulled by closeDialog on cancel to silence the
-          // async stop listener; a final dataavailable event can still
-          // fire between cancel and stop, so null-guard the push to
-          // keep an unconditional push from throwing TypeError and
-          // breaking the dialog flow.
-          if (recChunks && ev.data && ev.data.size) recChunks.push(ev.data);
+        // Bind the async recorder listeners to THIS session's locals
+        // so a delayed event from a previous recording can't
+        // clobber a new session's state. If the user cancels
+        // mid-recording, quickly reopens the dialog, and starts a
+        // second recording before the first MediaRecorder dispatches
+        // its `stop` event, the old callback would otherwise reach
+        // through to the module-level `recorder` / `recChunks`
+        // variables (which now hold the NEW session's state) and
+        // null them out — the new recording would lose its chunks
+        // mid-stream.
+        var sessionRecorder = recorder;
+        var sessionChunks = [];
+        recChunks = sessionChunks; // closeDialog nulls this to silence cancel
+        sessionRecorder.addEventListener("dataavailable", function (ev) {
+          // A cancel sets recChunks = null on the module-level. Our
+          // own sessionChunks is still allocated — check the module
+          // reference to decide whether to collect or drop chunks.
+          if (recChunks === sessionChunks && ev.data && ev.data.size) {
+            sessionChunks.push(ev.data);
+          }
         });
-        recorder.addEventListener("stop", function () {
-          var mime = recorder.mimeType || "audio/webm";
-          if (recChunks && recChunks.length) addAttachment("voice", new Blob(recChunks, { type: mime }));
-          recChunks = null; recorder = null;
+        sessionRecorder.addEventListener("stop", function () {
+          var mime = sessionRecorder.mimeType || "audio/webm";
+          // Only materialise an attachment when THIS session is
+          // still the active one AND wasn't silenced by closeDialog.
+          // sessionChunks.length === 0 covers a clean cancel (data
+          // path silenced) and the "mic never produced any data"
+          // case alike.
+          if (recChunks === sessionChunks && sessionChunks.length > 0) {
+            addAttachment("voice", new Blob(sessionChunks, { type: mime }));
+          }
+          if (recorder === sessionRecorder) {
+            recorder = null;
+            recChunks = null;
+          }
         });
-        recorder.start();
+        sessionRecorder.start();
         recStart = performance.now();
         // Contract markup: wrapper + pulsing dot + timer + Stop button
         // (see specs/002-report-feedback-button/contracts/ui.md).

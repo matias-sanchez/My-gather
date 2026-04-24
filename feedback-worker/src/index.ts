@@ -241,7 +241,22 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
   // Only genuinely new submissions (reservation.kind === "reserved")
   // reach this point, so an abusive burst is still bounded but
   // innocent retries of a successful key don't consume quota.
-  const rl = await checkRateLimit(env, ip);
+  //
+  // The checkRateLimit call itself can throw if KV list/put fails —
+  // without the try/catch below, an uncaught throw here would
+  // bounce to the outer catch-all in fetch(), which doesn't know
+  // about our reservation. The key would stay "inflight" for ~30s
+  // and retries with the same idempotencyKey would see
+  // duplicate_inflight instead of getting processed. Release on
+  // any thrown error so a transient KV rate-limit glitch doesn't
+  // lock the caller out of their own submission.
+  let rl: Awaited<ReturnType<typeof checkRateLimit>>;
+  try {
+    rl = await checkRateLimit(env, ip);
+  } catch (err) {
+    await releaseReservation(env, payload.idempotencyKey, reservation.token).catch(() => undefined);
+    throw err;
+  }
   if (!rl.allowed) {
     // Release the reservation we just planted so a later retry (after
     // the hour rolls over) can re-enter instead of getting stuck on
