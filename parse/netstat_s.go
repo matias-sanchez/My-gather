@@ -49,10 +49,11 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 	}
 
 	var (
-		samples []*model.NetstatCountersSample
-		curTS   = snapshotStart
-		curVals map[string]float64
-		curAny  bool
+		samples    []*model.NetstatCountersSample
+		curTS      = snapshotStart
+		curVals    map[string]float64
+		curAny     bool
+		curSection string // last non-indented "Section:" header
 	)
 	flush := func() {
 		if curVals != nil && curAny {
@@ -63,6 +64,7 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 		}
 		curVals = nil
 		curAny = false
+		curSection = ""
 	}
 
 	lineNum := 0
@@ -79,17 +81,31 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 			curVals = map[string]float64{}
 			continue
 		}
-		// Section headers like "Tcp:", "TcpExt:" start at column 0;
-		// counter lines are indented. Skip headers — labels tie
-		// directly to counter keywords so we don't need the section
-		// context.
+		// Non-indented lines are section headers like "Tcp:" /
+		// "TcpExt:" / "Udp:" / "UdpLite:". Counter labels are NOT
+		// unique across sections — "packets received", "packets sent",
+		// and the *buf error triplet all appear under both Udp and
+		// UdpLite (and some also under Ip). Track the current section
+		// so counters are looked up as (section, label), not label
+		// alone: otherwise a UdpLite row would overwrite the
+		// corresponding Udp value (or vice-versa) and the
+		// network-counters chart would conflate the two protocols.
 		if !strings.HasPrefix(raw, " ") && !strings.HasPrefix(raw, "\t") {
+			if strings.HasSuffix(line, ":") {
+				curSection = strings.TrimSuffix(line, ":")
+			} else {
+				curSection = ""
+			}
 			continue
 		}
 		if curVals == nil {
 			// No TS seen yet — treat the whole file as one sample.
 			curVals = map[string]float64{}
 			curTS = snapshotStart
+		}
+		sectionMap, sectionKnown := netstatSRawToCanon[curSection]
+		if !sectionKnown {
+			continue
 		}
 
 		// Try "LABEL: N"
@@ -98,7 +114,7 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 			rest := strings.TrimSpace(line[idx+1:])
 			toks := strings.Fields(rest)
 			if len(toks) == 1 {
-				if name, ok := netstatSRawToCanon[label]; ok {
+				if name, ok := sectionMap[label]; ok {
 					if v, err := strconv.ParseFloat(toks[0], 64); err == nil {
 						curVals[name] = v
 						curAny = true
@@ -118,7 +134,7 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 			continue
 		}
 		rest := strings.TrimSpace(strings.TrimPrefix(line, first))
-		if name, ok := netstatSRawToCanon[rest]; ok {
+		if name, ok := sectionMap[rest]; ok {
 			curVals[name] = v
 			curAny = true
 		}
@@ -137,34 +153,38 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 	return samples, diagnostics
 }
 
-// netstatSRawToCanon declares the canonical counter names and the
-// raw-label forms we translate from. Keep the ordering deterministic
-// by populating netstatSCounters as the render-side display order.
-// We curate only counters that have clear operational meaning and are
-// stable across supported kernels — parser lookups reference this map
-// directly.
-var netstatSRawToCanon = map[string]string{
-	// TCP section
-	"active connection openings":  "tcp_active_opens",
-	"passive connection openings": "tcp_passive_opens",
-	"failed connection attempts":  "tcp_failed_conns",
-	"connection resets received":  "tcp_resets_recv",
-	"segments received":           "tcp_segs_in",
-	"segments sent out":           "tcp_segs_out",
-	"segments retransmitted":      "tcp_retransmits",
-	"bad segments received":       "tcp_bad_segs",
-	"resets sent":                 "tcp_resets_sent",
-	// TcpExt section
-	"TCPListenOverflows": "tcp_listen_overflows",
-	"TCPBacklogDrop":     "tcp_backlog_drop",
-	"SyncookiesSent":     "tcp_syncookies_sent",
-	"TCPSynRetrans":      "tcp_syn_retrans",
-	// UDP section
-	"packets received":      "udp_pkts_in",
-	"packets sent":          "udp_pkts_out",
-	"packet receive errors": "udp_recv_errors",
-	"receive buffer errors": "udp_rcvbuf_errors",
-	"send buffer errors":    "udp_sndbuf_errors",
+// netstatSRawToCanon declares the canonical counter names we render,
+// keyed by (section, raw-label) so identical labels under different
+// `netstat -s` sections stay disambiguated. "packets received",
+// "packets sent", and the *buf error triplet all appear under both
+// Udp and UdpLite; keying by label alone would let UdpLite clobber
+// Udp (or vice-versa) depending on section order. Keep the rendering
+// order stable via netstatSCounters below.
+var netstatSRawToCanon = map[string]map[string]string{
+	"Tcp": {
+		"active connection openings":  "tcp_active_opens",
+		"passive connection openings": "tcp_passive_opens",
+		"failed connection attempts":  "tcp_failed_conns",
+		"connection resets received":  "tcp_resets_recv",
+		"segments received":           "tcp_segs_in",
+		"segments sent out":           "tcp_segs_out",
+		"segments retransmitted":      "tcp_retransmits",
+		"bad segments received":       "tcp_bad_segs",
+		"resets sent":                 "tcp_resets_sent",
+	},
+	"TcpExt": {
+		"TCPListenOverflows": "tcp_listen_overflows",
+		"TCPBacklogDrop":     "tcp_backlog_drop",
+		"SyncookiesSent":     "tcp_syncookies_sent",
+		"TCPSynRetrans":      "tcp_syn_retrans",
+	},
+	"Udp": {
+		"packets received":      "udp_pkts_in",
+		"packets sent":          "udp_pkts_out",
+		"packet receive errors": "udp_recv_errors",
+		"receive buffer errors": "udp_rcvbuf_errors",
+		"send buffer errors":    "udp_sndbuf_errors",
+	},
 }
 
 // NetstatSCounters is the canonical render order. The Network chart

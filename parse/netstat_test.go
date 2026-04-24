@@ -287,6 +287,44 @@ udp    UNCONN  0      17     0.0.0.0:514      0.0.0.0:*
 	}
 }
 
+func TestParseNetstatS_SectionAwareMapping(t *testing.T) {
+	// `netstat -s` duplicates counter labels across sections — e.g.
+	// "packets received" appears under both Udp and UdpLite, and
+	// "receive buffer errors" / "send buffer errors" too. Before the
+	// section-aware fix, a later UdpLite block would clobber the
+	// earlier Udp values (or vice versa). Feed a fixture with BOTH
+	// sections where UdpLite sorts AFTER Udp and assert only the Udp
+	// numbers land in udp_pkts_in / udp_pkts_out.
+	input := `Udp:
+    120 packets received
+    118 packets sent
+    3 packet receive errors
+    0 receive buffer errors
+    0 send buffer errors
+UdpLite:
+    9999 packets received
+    9999 packets sent
+    9999 packet receive errors
+    9999 receive buffer errors
+    9999 send buffer errors
+`
+	snapshotStart := time.Unix(1769702259, 0).UTC()
+	samples, _ := parseNetstatS(strings.NewReader(input), snapshotStart, "test-udplite")
+	if len(samples) != 1 {
+		t.Fatalf("want 1 sample, got %d", len(samples))
+	}
+	s := samples[0]
+	if s.Values["udp_pkts_in"] != 120 {
+		t.Errorf("udp_pkts_in: want 120 (from Udp:), got %v — UdpLite likely clobbered the Udp value", s.Values["udp_pkts_in"])
+	}
+	if s.Values["udp_pkts_out"] != 118 {
+		t.Errorf("udp_pkts_out: want 118 (from Udp:), got %v", s.Values["udp_pkts_out"])
+	}
+	if s.Values["udp_recv_errors"] != 3 {
+		t.Errorf("udp_recv_errors: want 3, got %v", s.Values["udp_recv_errors"])
+	}
+}
+
 func TestParseNetstatS_NoTSFallsBackToSnapshotStart(t *testing.T) {
 	input := `Tcp:
     50 active connection openings
