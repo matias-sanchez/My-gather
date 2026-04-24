@@ -53,8 +53,39 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 		curRecvNZ  bool
 		curSendNZ  bool
 		curPopular bool // at least one recognised socket row in the block
+
+		// Deferred ESTAB classification. In state-first rows
+		// (ss -tan / ss -uan), the token "ESTAB" is ambiguous: ss -tan
+		// uses it for TCP ESTABLISHED, ss -uan for a connected UDP
+		// socket. We can't tell from the row itself — but UNCONN never
+		// appears in ss -tan output, and TCP-only states (LISTEN,
+		// TIME-WAIT, …) never appear in ss -uan output. Defer the
+		// ESTAB count until flush time, then bucket based on the other
+		// evidence collected in this TS block.
+		pendingESTAB         int
+		pendingESTABRecvNZ   bool
+		pendingESTABSendNZ   bool
+		sawStateFirstUNCONN  bool // ss -uan fingerprint
+		sawStateFirstTCPOnly bool // ss -tan fingerprint (LISTEN etc.)
 	)
 	flush := func() {
+		if pendingESTAB > 0 && curStates != nil {
+			// Decide bucket from accumulated evidence. UNCONN alone
+			// implies ss -uan → ESTAB is UDP. Anything else defaults
+			// to the historical TCP mapping.
+			bucket := "ESTABLISHED"
+			if sawStateFirstUNCONN && !sawStateFirstTCPOnly {
+				bucket = "UDP"
+			}
+			curStates[bucket] += pendingESTAB
+			if pendingESTABRecvNZ {
+				curRecvNZ = true
+			}
+			if pendingESTABSendNZ {
+				curSendNZ = true
+			}
+			curPopular = true
+		}
 		if curStates != nil && curPopular {
 			samples = append(samples, &model.NetstatSocketsSample{
 				Timestamp:    curTS,
@@ -67,6 +98,11 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 		curRecvNZ = false
 		curSendNZ = false
 		curPopular = false
+		pendingESTAB = 0
+		pendingESTABRecvNZ = false
+		pendingESTABSendNZ = false
+		sawStateFirstUNCONN = false
+		sawStateFirstTCPOnly = false
 	}
 
 	lineNum := 0
@@ -136,6 +172,34 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 			canon, _, ok := normalizeSSState(first)
 			if !ok {
 				continue // not a socket row (header, blank, etc.)
+			}
+			// Defer ESTAB — it's ambiguous across ss -tan (TCP) and
+			// ss -uan (connected UDP). Record queue-flag evidence now
+			// so the flush-time bucketing still gets it.
+			if first == "ESTAB" || first == "ESTABLISHED" {
+				if curStates == nil {
+					curStates = map[string]int{}
+					curTS = snapshotStart
+				}
+				if len(fields) > sendQIdx {
+					if fields[recvQIdx] != "0" {
+						pendingESTABRecvNZ = true
+					}
+					if fields[sendQIdx] != "0" {
+						pendingESTABSendNZ = true
+					}
+				}
+				pendingESTAB++
+				continue
+			}
+			// Track file-flavour evidence for ESTAB disambiguation.
+			if first == "UNCONN" {
+				sawStateFirstUNCONN = true
+			} else {
+				// Every other token normalizeSSState accepts (LISTEN,
+				// TIME-WAIT, CLOSE-WAIT, FIN-WAIT-*, SYN-*, LAST-ACK,
+				// CLOSING, CLOSED) is TCP-only.
+				sawStateFirstTCPOnly = true
 			}
 			state = canon
 		}

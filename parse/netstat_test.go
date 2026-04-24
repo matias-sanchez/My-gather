@@ -149,6 +149,58 @@ udp        0      0 0.0.0.0:53     0.0.0.0:*
 	}
 }
 
+func TestParseNetstat_SSUANEstabBucketsAsUDP(t *testing.T) {
+	// ss -uan output: state-first rows where ESTAB means a connected
+	// UDP socket, not TCP. The presence of UNCONN (never seen in
+	// ss -tan) is the fingerprint the parser uses to reclassify ESTAB
+	// as UDP at flush time.
+	input := `State      Recv-Q Send-Q Local Address:Port         Peer Address:Port
+UNCONN     0      0      0.0.0.0:68                 0.0.0.0:*
+UNCONN     0      0      127.0.0.1:323              0.0.0.0:*
+ESTAB      0      0      10.0.0.1:51234             10.0.0.2:53
+ESTAB      0      0      10.0.0.1:51235             10.0.0.2:53
+`
+	snapshotStart := time.Unix(1769702259, 0).UTC()
+	samples, _ := parseNetstat(strings.NewReader(input), snapshotStart, "test-ss-uan")
+	if len(samples) != 1 {
+		t.Fatalf("want 1 sample, got %d", len(samples))
+	}
+	s := samples[0]
+	// All four rows (2 UNCONN + 2 ESTAB) must land in the UDP bucket.
+	// ESTABLISHED must not appear — that would be the misclassification.
+	if got := s.StateCounts["UDP"]; got != 4 {
+		t.Errorf("UDP bucket: want 4 (2 UNCONN + 2 ESTAB reclassified), got %d (full map: %+v)", got, s.StateCounts)
+	}
+	if _, hasESTABLISHED := s.StateCounts["ESTABLISHED"]; hasESTABLISHED {
+		t.Errorf("ESTABLISHED must not appear on ss -uan captures; got %+v", s.StateCounts)
+	}
+}
+
+func TestParseNetstat_SSTANEstabStaysTCP(t *testing.T) {
+	// ss -tan output: LISTEN / TIME-WAIT / CLOSE-WAIT are TCP-only
+	// states that never appear in ss -uan. Their presence locks
+	// ESTAB into the TCP ESTABLISHED bucket — preserving the
+	// original, more-common behaviour on TCP captures.
+	input := `State      Recv-Q Send-Q Local Address:Port         Peer Address:Port
+LISTEN     0      128    0.0.0.0:22                 0.0.0.0:*
+ESTAB      0      0      10.0.0.1:5678              10.0.0.2:80
+ESTAB      0      0      10.0.0.1:5679              10.0.0.2:443
+TIME-WAIT  0      0      10.0.0.1:1234              10.0.0.2:8080
+`
+	snapshotStart := time.Unix(1769702259, 0).UTC()
+	samples, _ := parseNetstat(strings.NewReader(input), snapshotStart, "test-ss-tan")
+	if len(samples) != 1 {
+		t.Fatalf("want 1 sample, got %d", len(samples))
+	}
+	s := samples[0]
+	if got := s.StateCounts["ESTABLISHED"]; got != 2 {
+		t.Errorf("ESTABLISHED: want 2, got %d (full map: %+v)", got, s.StateCounts)
+	}
+	if _, hasUDP := s.StateCounts["UDP"]; hasUDP {
+		t.Errorf("UDP bucket must stay empty on ss -tan captures; got %+v", s.StateCounts)
+	}
+}
+
 func TestParseNetstatS_EmitsOneSamplePerTSBlock(t *testing.T) {
 	// Two polls; counters monotonically increase across polls. The
 	// old parser overwrote values as it walked the file and returned

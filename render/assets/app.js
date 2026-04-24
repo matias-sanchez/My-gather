@@ -2868,10 +2868,33 @@
       });
       var saved = null;
       try { saved = storageGet(KEY); } catch (_) {}
+      // "mysql only" captures (host sidecars absent/unreadable but
+      // -variables parsed) leave the Host panel as an all-"—" block
+      // and the MySQL panel populated. If we blindly default to host
+      // the reader lands on an empty view and can misread the whole
+      // Environment section as unavailable. Detect panel emptiness
+      // (no <dd> with content other than the missing marker) and
+      // prefer the populated side when no persisted choice exists.
+      function panelHasData(which) {
+        var panel = root.querySelector("[data-env-panel='" + which + "']");
+        if (!panel) return false;
+        var dds = panel.querySelectorAll("dd");
+        for (var i = 0; i < dds.length; i++) {
+          var txt = (dds[i].textContent || "").trim();
+          if (txt && txt !== "—") return true;
+        }
+        return false;
+      }
+      var initial = "host";
+      if (saved === "host" || saved === "mysql") {
+        initial = saved;
+      } else if (!panelHasData("host") && panelHasData("mysql")) {
+        initial = "mysql";
+      }
       // Template renders both panels visible so no-JS readers can reach
       // MySQL content. Always call select() once JS is running so the
       // inactive panel is hidden and the tab UX matches other tablists.
-      select(saved === "host" || saved === "mysql" ? saved : "host");
+      select(initial);
     });
   }
 
