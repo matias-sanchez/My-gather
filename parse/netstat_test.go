@@ -120,6 +120,65 @@ Udp:
 	}
 }
 
+func TestParseNetstat_ParsesSSTANRows(t *testing.T) {
+	// `ss -tan` captures: first column is the connection state, not
+	// the proto. The old parser gated on "first column starts with
+	// tcp/udp" and silently dropped every row, producing an empty
+	// Network sockets view.
+	input := `State      Recv-Q Send-Q Local Address:Port         Peer Address:Port        Process
+LISTEN     0      128    0.0.0.0:22                 0.0.0.0:*
+ESTAB      0      0      10.0.0.1:5678              10.0.0.2:80
+ESTAB      42     0      10.0.0.1:5679              10.0.0.2:443
+TIME-WAIT  0      0      10.0.0.1:1234              10.0.0.2:8080
+`
+	snapshotStart := time.Unix(1769702259, 0).UTC()
+	samples, _ := parseNetstat(strings.NewReader(input), snapshotStart, "test-ss")
+	if len(samples) != 1 {
+		t.Fatalf("want 1 sample, got %d", len(samples))
+	}
+	s := samples[0]
+	if s.StateCounts["LISTEN"] != 1 {
+		t.Errorf("LISTEN: want 1, got %d", s.StateCounts["LISTEN"])
+	}
+	// ss "ESTAB" must normalise to "ESTABLISHED" so mixed ss/netstat
+	// captures combine onto the same bucket.
+	if s.StateCounts["ESTABLISHED"] != 2 {
+		t.Errorf("ESTABLISHED: want 2 (two ESTAB rows), got %d", s.StateCounts["ESTABLISHED"])
+	}
+	// "TIME-WAIT" must normalise to "TIME_WAIT".
+	if s.StateCounts["TIME_WAIT"] != 1 {
+		t.Errorf("TIME_WAIT: want 1, got %d", s.StateCounts["TIME_WAIT"])
+	}
+	if !s.RecvQNonZero {
+		t.Errorf("RecvQNonZero: want true (one ESTAB row had Recv-Q=42)")
+	}
+}
+
+func TestParseNetstat_ParsesSSNAPRows(t *testing.T) {
+	// `ss -nap`: proto is col[0] AND state is col[1]. Must parse the
+	// state from col[1], not fall through to col[5] like netstat.
+	input := `Netid State   Recv-Q Send-Q Local Address:Port    Peer Address:Port
+tcp    LISTEN  0      128    0.0.0.0:22            0.0.0.0:*
+tcp    ESTAB   0      0      10.0.0.1:5678         10.0.0.2:80
+udp    UNCONN  0      0      0.0.0.0:68            0.0.0.0:*
+`
+	snapshotStart := time.Unix(1769702259, 0).UTC()
+	samples, _ := parseNetstat(strings.NewReader(input), snapshotStart, "test-ss-nap")
+	if len(samples) != 1 {
+		t.Fatalf("want 1 sample, got %d", len(samples))
+	}
+	s := samples[0]
+	if s.StateCounts["LISTEN"] != 1 {
+		t.Errorf("LISTEN: want 1, got %d", s.StateCounts["LISTEN"])
+	}
+	if s.StateCounts["ESTABLISHED"] != 1 {
+		t.Errorf("ESTABLISHED: want 1, got %d", s.StateCounts["ESTABLISHED"])
+	}
+	if s.StateCounts["UDP"] != 1 {
+		t.Errorf("UDP: want 1, got %d", s.StateCounts["UDP"])
+	}
+}
+
 func TestParseNetstatS_NoTSFallsBackToSnapshotStart(t *testing.T) {
 	input := `Tcp:
     50 active connection openings

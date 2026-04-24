@@ -82,18 +82,55 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 			curStates = map[string]int{}
 			continue
 		}
-		// Skip header and banner lines; we only care about rows
-		// starting with a known protocol token.
+		// We recognise three row shapes:
+		//
+		//   1. `netstat -an` / `netstat -antp`:
+		//         tcp 0 0 local foreign STATE pid/prog
+		//      → col[0] = "tcp"/"tcp6"/"udp"/"udp6"
+		//
+		//   2. `ss -nap`:
+		//         tcp LISTEN 0 128 local foreign users:("sshd",pid=1)
+		//      → col[0] = proto, col[1] = state, col[2]/[3] = q
+		//
+		//   3. `ss -tan` / `ss -uan`:
+		//         LISTEN 0 128 local foreign
+		//      → col[0] = state (proto implied), col[1]/[2] = q
+		//
+		// We sniff the shape from the first token and fall through to
+		// the right branch. Unknown first tokens are skipped.
 		fields := strings.Fields(line)
 		if len(fields) < 4 {
 			continue
 		}
-		proto := fields[0]
-		isTCP := strings.HasPrefix(proto, "tcp")
-		isUDP := strings.HasPrefix(proto, "udp")
-		if !isTCP && !isUDP {
-			continue
+		var (
+			state              string
+			tcpRowNoState      bool
+			recvQIdx, sendQIdx = 1, 2
+		)
+		first := fields[0]
+		switch {
+		case strings.HasPrefix(first, "tcp"):
+			// ss -nap has state in col[1]; netstat -an has state in
+			// col[5]. Try the ss shape first — if col[1] isn't a
+			// recognised state, fall back to the netstat position.
+			if canon, _, ok := normalizeSSState(fields[1]); ok {
+				state = canon
+			} else if len(fields) >= 6 {
+				state = fields[5]
+			} else {
+				tcpRowNoState = true
+			}
+		case strings.HasPrefix(first, "udp"):
+			state = "UDP"
+		default:
+			// `ss -tan` / `ss -uan` rows — first column is the state.
+			canon, _, ok := normalizeSSState(first)
+			if !ok {
+				continue // not a socket row (header, blank, etc.)
+			}
+			state = canon
 		}
+
 		// No TS seen yet — treat the whole file as one sample
 		// timestamped at snapshotStart. Keeps backward compat with
 		// single-poll fixtures that omit the TS header.
@@ -102,30 +139,21 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 			curTS = snapshotStart
 		}
 
-		// `netstat -an` row:
-		//   tcp 0 0 local foreign STATE pid/prog
-		// `netstat -tulpn` can also appear; same first columns.
-		// Recv-Q and Send-Q are columns 1 and 2 (0-indexed).
-		if len(fields) < 5 {
-			addDiag(lineNum, fmt.Sprintf("unexpected netstat row with %d fields: %q", len(fields), line))
+		if len(fields) <= sendQIdx {
+			addDiag(lineNum, fmt.Sprintf("netstat row missing Recv-Q/Send-Q: %q", line))
 			continue
 		}
-		if fields[1] != "0" {
+		if fields[recvQIdx] != "0" {
 			curRecvNZ = true
 		}
-		if fields[2] != "0" {
+		if fields[sendQIdx] != "0" {
 			curSendNZ = true
 		}
-
-		// UDP rows have no State column; bucket them as "UDP".
-		var state string
-		switch {
-		case isUDP:
-			state = "UDP"
-		case len(fields) >= 6:
-			state = fields[5]
-		default:
+		if tcpRowNoState {
 			addDiag(lineNum, fmt.Sprintf("tcp row missing state column: %q", line))
+			continue
+		}
+		if state == "" {
 			continue
 		}
 		curStates[state]++
@@ -157,6 +185,60 @@ func epochToTime(epoch string, fallback time.Time) time.Time {
 	secs := int64(math.Floor(v))
 	ns := int64(math.Round((v - float64(secs)) * 1e9))
 	return time.Unix(secs, ns).UTC()
+}
+
+// normalizeSSState maps an `ss`-style state token (e.g. "ESTAB",
+// "TIME-WAIT", "UNCONN") onto the netstat-style canonical label used
+// by the rest of the pipeline ("ESTABLISHED", "TIME_WAIT", "UDP").
+// Returns (canonical, isUDP, ok). Unknown tokens return ok=false so
+// callers can decide whether to skip the row as a banner/header.
+func normalizeSSState(tok string) (string, bool, bool) {
+	switch tok {
+	case "ESTAB":
+		return "ESTABLISHED", false, true
+	case "ESTABLISHED":
+		return "ESTABLISHED", false, true
+	case "TIME-WAIT":
+		return "TIME_WAIT", false, true
+	case "TIME_WAIT":
+		return "TIME_WAIT", false, true
+	case "CLOSE-WAIT":
+		return "CLOSE_WAIT", false, true
+	case "CLOSE_WAIT":
+		return "CLOSE_WAIT", false, true
+	case "FIN-WAIT-1":
+		return "FIN_WAIT1", false, true
+	case "FIN_WAIT1":
+		return "FIN_WAIT1", false, true
+	case "FIN-WAIT-2":
+		return "FIN_WAIT2", false, true
+	case "FIN_WAIT2":
+		return "FIN_WAIT2", false, true
+	case "SYN-SENT":
+		return "SYN_SENT", false, true
+	case "SYN_SENT":
+		return "SYN_SENT", false, true
+	case "SYN-RECV":
+		return "SYN_RECV", false, true
+	case "SYN_RECV":
+		return "SYN_RECV", false, true
+	case "LAST-ACK":
+		return "LAST_ACK", false, true
+	case "LAST_ACK":
+		return "LAST_ACK", false, true
+	case "LISTEN":
+		return "LISTEN", false, true
+	case "CLOSING":
+		return "CLOSING", false, true
+	case "CLOSED":
+		return "CLOSED", false, true
+	// UDP has no TCP state — `ss -uan` reports "UNCONN" for every
+	// unconnected socket. Map to the same bucket our netstat path
+	// uses so mixed captures combine cleanly.
+	case "UNCONN":
+		return "UDP", true, true
+	}
+	return "", false, false
 }
 
 // canonicalStateOrder returns a sort.Interface-friendly comparator for

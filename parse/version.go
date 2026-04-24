@@ -47,14 +47,21 @@ func DetectFormat(peeked []byte, suffix model.Suffix) model.FormatVersion {
 }
 
 func detectNetstat(peeked []byte) model.FormatVersion {
-	// `netstat -an` output always begins with an "Active Internet
-	// connections" banner OR starts directly with "Proto" / "tcp " /
-	// "Netid". We accept any of these since pt-stalk occasionally
-	// trims the banner.
+	// pt-stalk captures socket tables with `netstat -antp` by default
+	// and falls back to `ss -tan` / `ss -nap` on hosts that lack
+	// net-tools. Accept any of the recognised banners / first-row
+	// signatures so both formats are parsed — otherwise ss captures
+	// are silently classified as FormatUnknown and skipped.
 	if bytes.Contains(peeked, []byte("Active Internet")) ||
 		bytes.Contains(peeked, []byte("Proto ")) ||
 		bytes.Contains(peeked, []byte("\ntcp ")) ||
-		bytes.HasPrefix(peeked, []byte("tcp ")) {
+		bytes.HasPrefix(peeked, []byte("tcp ")) ||
+		// `ss -nap` banner starts with "Netid"; `ss -tan`/`ss -uan`
+		// banners start with "State".
+		bytes.Contains(peeked, []byte("Netid ")) ||
+		bytes.HasPrefix(peeked, []byte("Netid")) ||
+		bytes.Contains(peeked, []byte("\nState ")) ||
+		bytes.HasPrefix(peeked, []byte("State ")) {
 		return model.FormatV1
 	}
 	return model.FormatUnknown
