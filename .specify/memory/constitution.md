@@ -1,6 +1,51 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.1.0 → 1.2.0
+Bump rationale: MINOR-level addition of a new Core Principle — XIV.
+  English-Only Durable Artifacts — and a companion 8th entry in the
+  Development Workflow & Quality Gates section. The principle
+  codifies the pre-existing CLAUDE.md "Language convention" rule at
+  constitution level so reviewers, the pre-review-constitution-guard
+  agent, and the /pr-review-fix-my-gather skill all gate on it. It
+  explicitly exempts content under `testdata/` and `_references/`
+  (raw pt-stalk input, preserved by Principle II) and out-of-band
+  chat with the user. No existing principle is weakened or
+  redefined; this is additive, hence MINOR rather than MAJOR.
+
+Added principles:
+  - XIV. English-Only Durable Artifacts
+
+Modified sections:
+  - Development Workflow & Quality Gates → added 8th merge gate:
+      "No non-English content is introduced into any checked-in
+      artifact outside `testdata/` and `_references/` (Principle XIV)."
+
+Downstream cleanups folded into this amendment:
+  - .claude/skills/pr-review-fix-my-gather/SKILL.md → removed the
+      Spanish <example> block from the description (artifact MUST
+      be English under XIV).
+  - CLAUDE.md → replaced the 13-line "Language convention" block
+      with a one-line pointer to Principle XIV, eliminating the
+      duplicated authority.
+
+Templates requiring updates:
+  - .specify/templates/plan-template.md      ✅ compatible
+  - .specify/templates/spec-template.md      ✅ compatible
+  - .specify/templates/tasks-template.md     ✅ compatible
+  - .specify/templates/checklist-template.md ✅ compatible
+  - .claude/skills/speckit-*/                ✅ compatible
+  - README.md                                ⚠ pending (update when
+      README documents principles explicitly)
+
+Deferred items / follow-up TODOs:
+  - Consider a mechanical English-only grep in
+      scripts/hooks/pre-push-constitution-guard.sh once drift is
+      observed. Skip until a real violation shows up — start with
+      governance teeth, add mechanical enforcement only if needed.
+
+Prior Sync Impact Report (1.1.0) follows for history:
+-----------------------------------------------------
 Version change: 1.0.1 → 1.1.0
 Bump rationale: MINOR-level addition of a new Core Principle — XIII.
   Canonical Code Path (NON-NEGOTIABLE) — and a companion 7th entry in
@@ -234,6 +279,23 @@ driven by genuine input variation (e.g., distinct pt-stalk file format
 versions) or platform primitives (`path/filepath`), provided the branches
 converge into a single typed model as early as possible.
 
+### XIV. English-Only Durable Artifacts
+
+All artifacts checked into this repository MUST be written in English.
+This covers source code (identifiers, comments, godoc), commit messages,
+branch names, tags, pull-request titles and descriptions, pull-request
+and issue review comments, GitHub issues opened from this repo, and
+every file under `specs/`, `.specify/`, `docs/`, `.claude/` (agent
+definitions, skill descriptions and their example trigger phrases,
+settings), `scripts/` (including hook scripts), `README.md`, and
+`CHANGELOG.md`. The following are exempt: (a) content under `testdata/`
+and `_references/`, which reproduces raw pt-stalk input and MUST NOT be
+modified (Principle II); (b) out-of-band chat with the user via the
+Claude Code TUI or another interactive channel, which is not a
+checked-in artifact. A change that introduces non-English text into any
+other artifact MUST be rejected unless the same pull request carries a
+constitution amendment adopting a named exception.
+
 ## Distribution & Platform Support
 
 Release artifacts MUST be produced reproducibly from tagged commits and
@@ -264,6 +326,10 @@ The following gates MUST pass before any change is merged:
    behaviour in place (Principle XIII). Replaced functions, types, and
    code paths MUST be deleted in the same change; internal re-exports and
    compatibility shims after a rename are prohibited.
+8. No change introduces non-English content into any checked-in artifact
+   outside `testdata/` and `_references/` (Principle XIV). Source code,
+   comments, commit messages, branch names, specs, docs, `.claude/` agent
+   and skill definitions, and shell scripts MUST be English-only.
 
 Reviewers MUST reject changes that violate any Core Principle unless the
 change is accompanied by a constitution amendment adopted under the
@@ -296,4 +362,4 @@ invocation via the Constitution Check gate. Runtime development guidance
 and feature-local `plan.md` / `quickstart.md` files and MUST defer to this
 constitution when conflicts arise.
 
-**Version**: 1.1.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-24
+**Version**: 1.2.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-24

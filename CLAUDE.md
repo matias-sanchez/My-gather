@@ -16,17 +16,9 @@ CLI and package contracts, and shell commands, read the current plan:
 
 ## Language convention
 
-All artifacts that live inside this repository MUST be written in English:
-
-- Source code, comments, and identifiers.
-- Commit messages, branch names, tags.
-- Pull request titles, descriptions, and review comments.
-- `specs/`, `.specify/`, `README.md`, and any other checked-in documentation.
-- GitHub issues opened from this repo.
-
-Out-of-band conversation with the user (chat/UI) may be in any language
-the user chooses — only the durable, shared artifacts are required to
-be English so contributors and tooling have a single consistent language.
+English-only for all checked-in artifacts (Principle XIV of
+`.specify/memory/constitution.md`). Out-of-band chat with the user is
+not an artifact and may be in any language.
 
 ## Repo-local Claude Code tooling
 
