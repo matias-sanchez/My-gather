@@ -2475,6 +2475,51 @@ details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
   overflow: hidden;
 }
 .callout { overflow: hidden; }
+
+/* Severity-tinted callouts. Used by the InnoDB status grid when a
+   metric crosses a contention threshold (e.g. Semaphores with non-zero
+   waiting threads). Colour tokens reuse --warn / --err from the root
+   palette so the InnoDB card matches the Advisor severity chips. */
+.callout.sev-warn {
+  border-color: color-mix(in srgb, var(--warn) 55%, var(--border));
+  background: color-mix(in srgb, var(--warn) 8%, var(--bg));
+  border-left: 3px solid var(--warn);
+}
+.callout.sev-warn .k {
+  color: var(--warn);
+}
+.callout.sev-warn .v {
+  color: color-mix(in srgb, var(--warn) 85%, var(--fg));
+}
+.callout.sev-crit {
+  border-color: color-mix(in srgb, var(--err) 60%, var(--border));
+  background: color-mix(in srgb, var(--err) 10%, var(--bg));
+  border-left: 3px solid var(--err);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--err) 25%, transparent);
+}
+.callout.sev-crit .k {
+  color: var(--err);
+  letter-spacing: 0.08em;
+}
+.callout.sev-crit .v {
+  color: color-mix(in srgb, var(--err) 85%, var(--fg));
+}
+.callout.sev-crit .stats {
+  color: color-mix(in srgb, var(--err) 55%, var(--fg-muted));
+}
+.callout.sev-crit::before {
+  content: "CRITICAL";
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font: 700 9px/1 var(--mono);
+  letter-spacing: 0.12em;
+  color: #fff;
+  background: var(--err);
+  padding: 3px 6px;
+  border-radius: 3px;
+}
+.callout { position: relative; }
 .hll-sparkline .hll-spark-single {
   display: inline-flex;
   align-items: center;

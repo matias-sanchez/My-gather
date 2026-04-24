@@ -29,6 +29,14 @@ func aggregateInnoDBMetrics(snaps []model.SnapshotInnoDB) []innoDBMetricView {
 	semMetric := innoDBIntMetric("Semaphores", "waiting", sem)
 	semMetric.Key = "semaphores"
 	attachSemaphoreBreakdown(&semMetric, snaps)
+	// Peak semaphore waits is a reliable contention signal — any
+	// non-zero reading is a yellow flag, and high peaks indicate a
+	// hotspot bad enough to surface as a red callout.
+	if peak := maxOfInts(sem); peak >= 500 {
+		semMetric.Severity = "crit"
+	} else if peak > 0 {
+		semMetric.Severity = "warn"
+	}
 	pioMetric := innoDBIntMetric("Pending I/O", "reads + writes", pio)
 	pioMetric.Key = "pending_io"
 	ahiMetric := buildAHIMetric(snaps)
@@ -227,6 +235,16 @@ func buildSiteRows(sites []model.SemaphoreSite, total int) []semaphoreSiteRow {
 		})
 	}
 	return out
+}
+
+func maxOfInts(vals []int) int {
+	m := 0
+	for _, v := range vals {
+		if v > m {
+			m = v
+		}
+	}
+	return m
 }
 
 func innoDBIntMetric(label, hint string, vals []int) innoDBMetricView {

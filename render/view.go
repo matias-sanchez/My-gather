@@ -121,6 +121,10 @@ type innoDBMetricView struct {
 	Min   string
 	Avg   string
 	Max   string
+	// Severity drives the callout's red/yellow visual accent. Empty
+	// string means the card renders in the neutral surface colour.
+	// Valid values: "" | "warn" | "crit".
+	Severity string
 	// Semaphores-only: per-site wait breakdowns. When populated,
 	// db.html.tmpl renders a collapsible "contention breakdown"
 	// <details> under the card with two toggleable views:
