@@ -2978,7 +2978,16 @@
     if (!data || !Array.isArray(data.values) || data.values.length === 0) return;
     var vals = data.values;
     var ts   = Array.isArray(data.timestamps) ? data.timestamps : null;
-    var W = 320, H = 64;
+    // Fit the sparkline to its container (the surrounding .callout card).
+    // Fixed width used to overflow the card at narrow grid widths and on
+    // browser zoom-in. Floor keeps the plot legible on small cards.
+    function measureW() {
+      var w = el.clientWidth || (el.parentNode && el.parentNode.clientWidth) || 0;
+      if (!w || w < 160) w = 220;
+      if (w > 360) w = 360;
+      return w;
+    }
+    var W = measureW(), H = 64;
     // Clear any prior render (idempotent if initCharts re-runs).
     while (el.firstChild) el.removeChild(el.firstChild);
     el.classList.add("hll-sparkline-ready");
@@ -2998,7 +3007,7 @@
       // network fetches).
       var single = document.createElement("div");
       single.className = "hll-spark-single";
-      single.style.width  = W + "px";
+      single.style.width  = "100%";
       single.style.height = H + "px";
       var dot = document.createElement("span");
       dot.className = "hll-spark-dot";
@@ -3109,8 +3118,19 @@
     var plot = new uPlot(opts, [xs, vals.map(function (v) { return +v; })], el);
     // Hide tooltip when leaving the sparkline entirely.
     el.addEventListener("mouseleave", function () { tip.style.display = "none"; });
-    // Do NOT registerChart — sparkline is fixed-width and should not
-    // participate in global resize/reset-zoom flows.
+    // Resize to follow its .callout container (page zoom, grid reflow).
+    if (typeof ResizeObserver !== "undefined") {
+      var ro = new ResizeObserver(function () {
+        var nw = measureW();
+        if (Math.abs(nw - W) > 2) {
+          W = nw;
+          plot.setSize({ width: W, height: H });
+        }
+      });
+      ro.observe(el);
+    }
+    // Do NOT registerChart — sparkline follows its own container and
+    // should not participate in global reset-zoom flows.
     if (vals.length === 2) {
       // Label the two endpoints with their values so a two-snapshot
       // capture still reads as a trend rather than a bare stub.

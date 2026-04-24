@@ -2470,7 +2470,11 @@ details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
   margin-top: 8px;
   min-height: 48px;
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
+.callout { overflow: hidden; }
 .hll-sparkline .hll-spark-single {
   display: inline-flex;
   align-items: center;
