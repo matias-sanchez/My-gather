@@ -3501,26 +3501,16 @@
         setErr("Voice recording is not supported by this browser."); return;
       }
       recordBtn.disabled = true;
-<<<<<<< Updated upstream
-      // getUserMedia resolves after the browser permission prompt,
-      // which can take seconds to minutes (user reads it; or the OS
-      // device dialog is slow). If the dialog is dismissed in
-      // between, the .then callback must NOT create a recorder /
-      // start capture for a dialog the user already closed. Capture
-      // the session identity here and bail if the dialog is no
-      // longer open, stopping the stream tracks so the mic
-      // indicator doesn't keep flashing.
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
-        if (!dialog.open) {
-          try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
-          recordBtn.disabled = false;
-=======
       // Claim a new session id so the getUserMedia .then below can
       // detect "dialog closed while we were awaiting mic permission"
       // by comparing against the module-level recSessionId. If the
       // user dismisses the dialog before permission resolves,
       // closeDialog bumps recSessionId and our captured mySession
       // won't match → we tear down the stream and exit cleanly.
+      // (The cloud-Claude variant used just `!dialog.open` to detect
+      // the dismissed-dialog race; the session counter also catches a
+      // second recording started before the first permission resolves,
+      // which dialog.open alone would miss.)
       var mySession = ++recSessionId;
       navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
         if (mySession !== recSessionId || !dialog.open) {
@@ -3529,7 +3519,6 @@
           // browser's recording indicator goes away and return
           // without touching module state.
           try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
->>>>>>> Stashed changes
           return;
         }
         recStream = stream;
@@ -3759,7 +3748,6 @@
       var genMeta = document.querySelector('meta[name="generator"]');
       if (genMeta && genMeta.content) reportVersion = genMeta.content.slice(0, 64);
 
-<<<<<<< Updated upstream
       // Mint the idempotency key once at the TOP of the submit
       // flow, before any async work. Doing it inside the
       // Promise.all().then() callback means every retry of the
@@ -3789,24 +3777,6 @@
       }) : Promise.resolve(null);
       var voiceP = voiceBlobAtSubmit ? blobToBase64(voiceBlobAtSubmit).then(function (b64) {
         return { mime: voiceBlobAtSubmit.type || "audio/webm", base64: b64 };
-=======
-      // Snapshot the attachment blobs BEFORE kicking off the async
-      // base64 encoding. The user can Remove/replace attachments while
-      // the encoder is still running; if we read imgBlob.type inside
-      // the `.then` the global might be null (→ throws) or point at a
-      // different blob (→ MIME/data mismatch). Capturing locals fixes
-      // both races — the in-flight submission always carries the blob
-      // that was present at Submit click.
-      var imgSnap = imgBlob, voiceSnap = voiceBlob;
-      var imgMime = imgSnap ? (imgSnap.type || "image/png") : null;
-      var voiceMime = voiceSnap ? (voiceSnap.type || "audio/webm") : null;
-
-      var imgP = imgSnap ? blobToBase64(imgSnap).then(function (b64) {
-        return { mime: imgMime, base64: b64 };
-      }) : Promise.resolve(null);
-      var voiceP = voiceSnap ? blobToBase64(voiceSnap).then(function (b64) {
-        return { mime: voiceMime, base64: b64 };
->>>>>>> Stashed changes
       }) : Promise.resolve(null);
 
       Promise.all([imgP, voiceP]).then(function (parts) {
