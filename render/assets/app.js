@@ -3369,27 +3369,25 @@
       show(hint);
     }
     function updateSubmitEnabled() {
-      var hasTitle = titleInput.value.trim().length > 0;
-      if (!hasTitle) { submitBtn.disabled = true; return; }
+      // URL_MAX guards the LEGACY window.open pre-fill path where the
+      // title+body ride as query parameters under GitHub's ~8 KB URL
+      // cap. The Worker path accepts a ~10 KB body as plain JSON —
+      // much more headroom — so gating Submit on the encoded URL
+      // length there would block genuinely-valid submissions whose
+      // bodies fit the Worker but bloat past the URL budget (long
+      // paragraphs, code blocks, etc). Gate by the runtime path.
+      var titleOK = titleInput.value.trim().length > 0;
+      if (!titleOK) { submitBtn.disabled = true; return; }
       if (WORKER_URL) {
-        // Worker mode: the payload travels as a JSON POST, so the
-        // legacy URL length is irrelevant. Gate on the backend's
-        // real caps (feedback-worker/src/validate.ts):
-        //   title  ≤ 200 chars
-        //   body   ≤ 10_240 UTF-8 bytes
-        // URL_MAX-based gating here would incorrectly block valid
-        // long-body submissions that the Worker would happily
-        // accept.
-        var titleOK = titleInput.value.length <= 200;
-        var bodyBytes = typeof TextEncoder !== "undefined"
-          ? new TextEncoder().encode(bodyInput.value).length
-          : bodyInput.value.length; // conservative approximation
-        submitBtn.disabled = !(titleOK && bodyBytes <= 10240);
-        return;
+        // Worker path — cap by body UTF-8 byte length matching the
+        // Worker's BODY_MAX_BYTES (10,240). Use TextEncoder for exact
+        // UTF-8 size (multi-byte glyphs don't collapse to .length).
+        var bodyBytes = new TextEncoder().encode(bodyInput.value).byteLength;
+        submitBtn.disabled = bodyBytes > 10240;
+      } else {
+        // Legacy fallback path — gate by GitHub URL length.
+        submitBtn.disabled = buildURL().length > URL_MAX;
       }
-      // Legacy fallback path: submission happens by opening the
-      // GitHub Issues URL, so the effective cap IS the URL length.
-      submitBtn.disabled = buildURL().length > URL_MAX;
     }
 
     // --- Attachments (single helper, kind-parameterised) ----------

@@ -13,6 +13,33 @@
 // the key out forever — a retry after that window re-reserves and
 // proceeds.
 //
+// Residual race (accepted, not closed)
+// ------------------------------------
+// reserveResponse is read-then-put — KV exposes no compare-and-put
+// (CAS) primitive, so two concurrent same-key submissions arriving
+// before either PUT completes can both observe a miss and both
+// write "inflight", then both create issues. Closing this race
+// requires Durable Objects (single-writer coordination). The
+// project deliberately sticks to KV — see spec 003 §"Scale/Scope"
+// and the constitution Principle X (minimal dependencies / minimal
+// infra surface). The practical risk is narrow:
+//
+//   * The dialog mints a fresh `crypto.randomUUID()` per Submit
+//     click (render/assets/app.js generateIdempotencyKey), so
+//     cross-tab / double-click races use DIFFERENT keys and don't
+//     collide here.
+//   * Two HTTP clients POSTing the SAME idempotencyKey within the
+//     ~100 ms KV propagation window are the only code path that
+//     hits the race. In practice this means a deliberately-crafted
+//     retry racing itself (e.g., a client-side retry loop with
+//     `fetch` that doesn't `await` the first response).
+//   * Even if both proceed, the rate-limit (5 per IP per hour)
+//     bounds the blast radius to the same client.
+//
+// If the residual risk ever becomes material, the migration path is
+// a Durable Object wrapping this file's three entry points; the
+// calling code in index.ts would not change.
+//
 // Why there is no releaseReservation
 // ----------------------------------
 // A previous iteration of this file exposed a releaseReservation
