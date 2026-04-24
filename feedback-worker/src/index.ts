@@ -135,9 +135,59 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
   }
   const payload = validation.data;
 
+  // --- Idempotency reservation (must run BEFORE the rate limit) ---------------
+  // A retry of an already-successful submission MUST replay the
+  // cached 200 regardless of whether the caller has since hit their
+  // hourly quota, and an inflight duplicate MUST return 409 without
+  // consuming rate-limit budget. So we check idempotency first and
+  // only charge the rate-limit for genuinely new submissions. See
+  // idempotency.ts for the KV-consistency trade-off on the
+  // reservation write.
+  const reservation = await reserveResponse(env, payload.idempotencyKey);
+  if (reservation.kind === "done") {
+    logRequest({
+      status: 200,
+      error: null,
+      duration_ms: Date.now() - startedAt,
+      ip_hash: ipHash,
+      issue_number: reservation.response.issueNumber,
+      report_version: payload.reportVersion,
+      has_image: !!payload.image,
+      has_voice: !!payload.voice,
+    });
+    return jsonResponse({
+      ok: true,
+      issueUrl: reservation.response.issueUrl,
+      issueNumber: reservation.response.issueNumber,
+    });
+  }
+  if (reservation.kind === "inflight") {
+    logRequest({
+      status: 409,
+      error: "duplicate_inflight",
+      duration_ms: Date.now() - startedAt,
+      ip_hash: ipHash,
+      report_version: payload.reportVersion,
+      has_image: !!payload.image,
+      has_voice: !!payload.voice,
+    });
+    return errorResponse(
+      409,
+      "duplicate_inflight",
+      "A previous submission with the same idempotency key is still being processed. Retry in a few seconds.",
+    );
+  }
+
   // --- Rate limit -------------------------------------------------------------
+  // Only genuinely new submissions (reservation.kind === "reserved")
+  // reach this point, so an abusive burst is still bounded but
+  // innocent retries of a successful key don't consume quota.
   const rl = await checkRateLimit(env, ip);
   if (!rl.allowed) {
+    // Release the reservation we just planted so a later retry (after
+    // the hour rolls over) can re-enter instead of getting stuck on
+    // "duplicate_inflight" until the inflight TTL expires.
+    await releaseReservation(env, payload.idempotencyKey).catch(() => undefined);
     const retryAfter = rl.retryAfterSeconds ?? 3600;
     logRequest({
       status: 429,
@@ -159,49 +209,19 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
     );
   }
 
-  // --- Idempotency (reserve before side effects) ------------------------------
-  // reserveResponse writes an "inflight" placeholder on the happy
-  // path so a concurrent duplicate submit sees a slot already taken
-  // instead of creating a second GitHub issue. See idempotency.ts
-  // for the KV-consistency trade-off.
-  const reservation = await reserveResponse(env, payload.idempotencyKey);
-  if (reservation.kind === "done") {
-    logRequest({
-      status: 200,
-      error: null,
-      duration_ms: Date.now() - startedAt,
-      ip_hash: ipHash,
-      issue_number: reservation.response.issueNumber,
-      report_version: payload.reportVersion,
-      rate_limit_count: rl.count,
-      has_image: !!payload.image,
-      has_voice: !!payload.voice,
-    });
-    return jsonResponse({
-      ok: true,
-      issueUrl: reservation.response.issueUrl,
-      issueNumber: reservation.response.issueNumber,
-    });
-  }
-  if (reservation.kind === "inflight") {
-    logRequest({
-      status: 409,
-      error: "duplicate_inflight",
-      duration_ms: Date.now() - startedAt,
-      ip_hash: ipHash,
-      report_version: payload.reportVersion,
-      rate_limit_count: rl.count,
-      has_image: !!payload.image,
-      has_voice: !!payload.voice,
-    });
-    return errorResponse(
-      409,
-      "duplicate_inflight",
-      "A previous submission with the same idempotency key is still being processed. Retry in a few seconds.",
-    );
-  }
-
   // --- Uploads + GitHub issue creation ----------------------------------------
+  // Structure:
+  //   1. pre-create phase (uploads + GraphQL call). Failures here MUST
+  //      release the reservation so the client can retry and
+  //      eventually create the issue.
+  //   2. post-create phase (cacheResponse + log). The issue already
+  //      exists on GitHub; a failure here MUST NOT release the
+  //      reservation — if it did, the client's retry would create a
+  //      duplicate ticket, exactly the failure window idempotency is
+  //      meant to prevent. We return 200 with the real URL and
+  //      swallow the cache error; the inflight marker stays until
+  //      its TTL expires.
+  let issue: { id: string; number: number; url: string };
   try {
     let imageUrl: string | undefined;
     let voiceUrl: string | undefined;
@@ -228,38 +248,15 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
     const labelIds = await resolveLabelIds(env, token, labelNames);
 
     const body = buildIssueBody({ payload, imageUrl, voiceUrl });
-    const issue = await createIssue(env, token, {
+    issue = await createIssue(env, token, {
       repositoryId: env.GITHUB_REPO_ID,
       title: payload.title,
       body,
       labelIds,
     });
-
-    await cacheResponse(env, payload.idempotencyKey, {
-      issueUrl: issue.url,
-      issueNumber: issue.number,
-    });
-
-    logRequest({
-      status: 200,
-      error: null,
-      duration_ms: Date.now() - startedAt,
-      ip_hash: ipHash,
-      issue_id: issue.id,
-      issue_number: issue.number,
-      report_version: payload.reportVersion,
-      rate_limit_count: rl.count,
-      has_image: !!payload.image,
-      has_voice: !!payload.voice,
-    });
-
-    return jsonResponse({ ok: true, issueUrl: issue.url, issueNumber: issue.number });
   } catch (err) {
-    // Processing failed before we could cache a final response. Drop
-    // the inflight reservation so the client's retry (with the same
-    // idempotencyKey) can proceed instead of being bounced by the
-    // duplicate_inflight guard. Swallow release errors — we still
-    // want to return the actual upstream failure to the client.
+    // Pre-create failure — nothing landed on GitHub yet, so it's
+    // safe to release the reservation and let the client retry.
     await releaseReservation(env, payload.idempotencyKey).catch(() => undefined);
     if (err instanceof GitHubError) {
       logRequest({
@@ -290,6 +287,29 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
     });
     return errorResponse(500, "worker_error", "Internal error. Please try again later.");
   }
+
+  // Issue now exists on GitHub. Best-effort cache of the response;
+  // failures here must NOT release the reservation (see block comment
+  // above) and must NOT turn a success into a 500 — the client has
+  // an actionable issue URL either way.
+  await cacheResponse(env, payload.idempotencyKey, {
+    issueUrl: issue.url,
+    issueNumber: issue.number,
+  }).catch(() => undefined);
+
+  logRequest({
+    status: 200,
+    error: null,
+    duration_ms: Date.now() - startedAt,
+    ip_hash: ipHash,
+    issue_id: issue.id,
+    issue_number: issue.number,
+    report_version: payload.reportVersion,
+    rate_limit_count: rl.count,
+    has_image: !!payload.image,
+    has_voice: !!payload.voice,
+  });
+  return jsonResponse({ ok: true, issueUrl: issue.url, issueNumber: issue.number });
 }
 
 export default {
