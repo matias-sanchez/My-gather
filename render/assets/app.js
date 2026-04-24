@@ -3374,7 +3374,12 @@
         }
         recChunks = [];
         recorder.addEventListener("dataavailable", function (ev) {
-          if (ev.data && ev.data.size) recChunks.push(ev.data);
+          // recChunks is nulled by closeDialog on cancel to silence the
+          // async stop listener; a final dataavailable event can still
+          // fire between cancel and stop, so null-guard the push to
+          // keep an unconditional push from throwing TypeError and
+          // breaking the dialog flow.
+          if (recChunks && ev.data && ev.data.size) recChunks.push(ev.data);
         });
         recorder.addEventListener("stop", function () {
           var mime = recorder.mimeType || "audio/webm";
