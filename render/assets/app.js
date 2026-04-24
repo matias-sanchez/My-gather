@@ -3234,8 +3234,11 @@
     var fallback = document.getElementById("feedback-fallback");
     var fallbackLink = document.getElementById("feedback-fallback-link");
 
-    var BASE_URL = dialog.dataset.feedbackUrl ||
-      "https://github.com/matias-sanchez/My-gather/discussions/new?category=ideas";
+    // Single source of truth for the GitHub Ideas URL: rendered onto
+    // the <dialog> by the Go template from FeedbackView.GitHubURL
+    // (Principle XIII — no duplicate constant in JS).
+    var BASE_URL = dialog.dataset.feedbackUrl;
+    if (!BASE_URL) return; // template didn't render the attr → abort init
     var URL_MAX = 7500;
 
     var imgBlob = null, imgURL = null;
@@ -3310,10 +3313,14 @@
       }
       media.src = url;
       var wrap = document.createElement("div");
-      wrap.className = "feedback-attachment";
+      // Base class + per-kind modifier (see contracts/ui.md).
+      wrap.className = "feedback-attachment feedback-attachment--" + kind;
       wrap.setAttribute("data-kind", kind);
       var rm = document.createElement("button");
-      rm.type = "button"; rm.className = "feedback-remove"; rm.textContent = "Remove";
+      rm.type = "button";
+      rm.className = "feedback-attachment-remove";
+      rm.setAttribute("aria-label", kind === "image" ? "Remove image" : "Remove voice note");
+      rm.textContent = "×";
       rm.addEventListener("click", function () { clearAttachment(kind); });
       wrap.appendChild(media); wrap.appendChild(rm);
       attachments.appendChild(wrap);
@@ -3331,9 +3338,14 @@
         try { recStream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
         recStream = null;
       }
-      if (recLabel && recLabel.parentNode) recLabel.parentNode.removeChild(recLabel);
+      // Remove the whole .feedback-attachment--recording wrapper, not
+      // just the timer span, so the pulsing dot and Stop button come
+      // off together.
+      if (recLabel && recLabel.parentNode) {
+        var w = recLabel.parentNode;
+        if (w.parentNode) w.parentNode.removeChild(w);
+      }
       recLabel = null;
-      recordBtn.textContent = "Record voice note";
       recordBtn.disabled = false;
     }
     function tickTimer() {
@@ -3371,12 +3383,25 @@
         });
         recorder.start();
         recStart = performance.now();
+        // Contract markup: wrapper + pulsing dot + timer + Stop button
+        // (see specs/002-report-feedback-button/contracts/ui.md).
+        var wrap = document.createElement("div");
+        wrap.className = "feedback-attachment feedback-attachment--recording";
+        wrap.setAttribute("data-kind", "recording");
+        var dot = document.createElement("span");
+        dot.className = "feedback-recording-dot";
+        dot.setAttribute("aria-hidden", "true");
         recLabel = document.createElement("span");
-        recLabel.className = "feedback-rec-timer";
+        recLabel.className = "feedback-recording-time";
         recLabel.textContent = "0:00 / 2:00";
-        recordBtn.parentNode.insertBefore(recLabel, recordBtn.nextSibling);
-        recordBtn.textContent = "Stop recording";
-        recordBtn.disabled = false;
+        var stopBtn = document.createElement("button");
+        stopBtn.type = "button";
+        stopBtn.className = "feedback-record-stop";
+        stopBtn.textContent = "Stop";
+        stopBtn.addEventListener("click", stopRecording);
+        wrap.appendChild(dot); wrap.appendChild(recLabel); wrap.appendChild(stopBtn);
+        attachments.appendChild(wrap);
+        recordBtn.disabled = true;
         recRAF = requestAnimationFrame(tickTimer);
       }).catch(function (err) {
         setErr("Microphone access denied: " + (err && err.message ? err.message : err));
@@ -3402,13 +3427,17 @@
     function renderImageDownload() {
       if (!imgBlob || !imgURL) return;
       if (attachments.querySelector('[data-kind="image-download"]')) return;
+      // Reuse the existing .feedback-attachment surface so the download
+      // fallback inherits its padding/border. No separate CSS class.
+      var wrap = document.createElement("div");
+      wrap.className = "feedback-attachment";
+      wrap.setAttribute("data-kind", "image-download");
       var a = document.createElement("a");
-      a.setAttribute("data-kind", "image-download");
-      a.className = "feedback-img-download";
       a.href = imgURL;
       a.download = "feedback-image-" + shortID() + ".png";
       a.textContent = "Download image";
-      attachments.appendChild(a);
+      wrap.appendChild(a);
+      attachments.appendChild(wrap);
       hint.textContent = "Clipboard blocked — download the image and drop it into GitHub's body.";
       show(hint);
     }

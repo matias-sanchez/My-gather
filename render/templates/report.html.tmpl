@@ -141,6 +141,7 @@
        specs/002-report-feedback-button/contracts/ui.md. */}}
 <dialog id="feedback-dialog"
         class="feedback-dialog"
+        data-feedback-url="{{ .Feedback.GitHubURL }}"
         aria-labelledby="feedback-title"
         aria-describedby="feedback-help">
   <form id="feedback-form" method="dialog">
