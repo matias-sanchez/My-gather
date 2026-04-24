@@ -3646,9 +3646,15 @@
       }) : Promise.resolve(null);
 
       Promise.all([imgP, voiceP]).then(function (parts) {
+        // Send the RAW textarea body here — the worker adds the
+        // "> Category: …" prefix itself when payload.category is
+        // present (see feedback-worker/src/body.ts). maybePrefixBody
+        // is only for the fallback GitHub URL, where the worker
+        // isn't in the loop. Sending the prefixed body here would
+        // double-prepend the category block in worker submissions.
         var payload = {
           title: titleInput.value,
-          body: maybePrefixBody(),
+          body: bodyInput.value,
           idempotencyKey: generateIdempotencyKey(),
           reportVersion: reportVersion
         };

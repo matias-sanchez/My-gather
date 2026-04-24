@@ -64,7 +64,13 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
   // Pre-compute ip_hash for logging even when we short-circuit on size / JSON.
   const ipHash = await hashIp(ip, env.GITHUB_APP_ID ?? "no-salt").catch(() => "unknown");
 
-  // --- Size gate (Content-Length, when present) -------------------------------
+  // --- Size gate --------------------------------------------------------------
+  // Content-Length alone is not enough: chunked / non-browser clients
+  // can omit the header entirely. Fast-reject on the header when
+  // present (cheap pre-flight), then always verify the actual body
+  // byte length before JSON decode so a missing/lying Content-Length
+  // can't slip past the cap and exhaust isolate memory on this
+  // public endpoint.
   const contentLength = req.headers.get("Content-Length");
   if (contentLength !== null) {
     const n = Number.parseInt(contentLength, 10);
@@ -79,10 +85,33 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
     }
   }
 
+  // --- Read body bytes (authoritative size check) -----------------------------
+  let bodyBuf: ArrayBuffer;
+  try {
+    bodyBuf = await req.arrayBuffer();
+  } catch {
+    logRequest({
+      status: 400,
+      error: "malformed_payload",
+      duration_ms: Date.now() - startedAt,
+      ip_hash: ipHash,
+    });
+    return errorResponse(400, "malformed_payload", "Request body could not be read.");
+  }
+  if (bodyBuf.byteLength > MAX_REQUEST_BYTES) {
+    logRequest({
+      status: 413,
+      error: "payload_too_large",
+      duration_ms: Date.now() - startedAt,
+      ip_hash: ipHash,
+    });
+    return errorResponse(413, "payload_too_large", "Request body exceeds 17 MB.");
+  }
+
   // --- JSON parse --------------------------------------------------------------
   let raw: unknown;
   try {
-    raw = await req.json();
+    raw = JSON.parse(new TextDecoder().decode(bodyBuf));
   } catch {
     logRequest({
       status: 400,
