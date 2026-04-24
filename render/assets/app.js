@@ -3109,7 +3109,9 @@
             var t = ts ? ts[idx] : null;
             tip.innerHTML =
               '<strong>' + escapeHTML(fmt(v)) + '</strong>' +
-              (t != null ? '<span>' + escapeHTML(fmtTs(t)) + '</span>' : '');
+              (t != null
+                ? '<span class="hll-spark-tip-sep">·</span><span>' + escapeHTML(fmtTs(t)) + '</span>'
+                : '');
             tip.style.display = "block";
             // Position tip near cursor, clamped inside the sparkline rect.
             var left = u.cursor.left;

@@ -2681,10 +2681,11 @@ details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
 }
 .hll-sparkline .hll-spark-tip {
   position: absolute;
-  top: 4px;
-  display: flex;
-  gap: 6px;
-  padding: 3px 7px;
+  top: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 8px;
   background: var(--panel, #131824);
   border: 1px solid var(--border, #263047);
   border-radius: 4px;
@@ -2694,6 +2695,10 @@ details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
   pointer-events: none;
   z-index: 2;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+.hll-sparkline .hll-spark-tip-sep {
+  color: var(--fg-muted, #6c7588);
+  opacity: 0.7;
 }
 .hll-sparkline .hll-spark-tip strong {
   color: #6b8eff;
