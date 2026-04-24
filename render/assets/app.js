@@ -2979,15 +2979,22 @@
     var vals = data.values;
     var ts   = Array.isArray(data.timestamps) ? data.timestamps : null;
     // Fit the sparkline to its container (the surrounding .callout card).
-    // Fixed width used to overflow the card at narrow grid widths and on
-    // browser zoom-in. Floor keeps the plot legible on small cards.
+    // Both dimensions are dynamic so the chart fills whatever box the
+    // flex column grants it — avoids the narrow-strip look when the
+    // sibling callouts (Semaphores / Pending I/O) stretch the grid row.
     function measureW() {
       var w = el.clientWidth || (el.parentNode && el.parentNode.clientWidth) || 0;
-      if (!w || w < 160) w = 220;
-      if (w > 360) w = 360;
+      if (!w || w < 180) w = 240;
+      if (w > 720) w = 720;
       return w;
     }
-    var W = measureW(), H = 64;
+    function measureH() {
+      var h = el.clientHeight || 0;
+      if (!h || h < 80) h = 80;
+      if (h > 260) h = 260;
+      return h;
+    }
+    var W = measureW(), H = measureH();
     // Clear any prior render (idempotent if initCharts re-runs).
     while (el.firstChild) el.removeChild(el.firstChild);
     el.classList.add("hll-sparkline-ready");
@@ -3122,8 +3129,10 @@
     if (typeof ResizeObserver !== "undefined") {
       var ro = new ResizeObserver(function () {
         var nw = measureW();
-        if (Math.abs(nw - W) > 2) {
+        var nh = measureH();
+        if (Math.abs(nw - W) > 2 || Math.abs(nh - H) > 2) {
           W = nw;
+          H = nh;
           plot.setSize({ width: W, height: H });
         }
       });

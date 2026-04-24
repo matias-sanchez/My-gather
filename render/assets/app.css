@@ -750,6 +750,8 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
 }
 .callout .k {
   font-size: 11.5px;
@@ -2480,11 +2482,16 @@ details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
 /* ---------- History list length sparkline ---------- */
 .hll-sparkline {
   margin-top: 8px;
-  min-height: 48px;
+  min-height: 64px;
   position: relative;
   width: 100%;
   max-width: 100%;
   overflow: hidden;
+  /* Grow to fill any spare vertical space the .callout flex column
+     leaves us — this keeps the History-list card body from looking
+     empty when its neighbours (Semaphores, Pending I/O) are tall due
+     to their own breakdown panels. */
+  flex: 1 1 auto;
 }
 .callout { overflow: hidden; }
 
