@@ -151,10 +151,10 @@ describe("validatePayload", () => {
     if (res.ok) expect(res.data.voice?.mime).toBe("audio/webm;codecs=opus");
   });
 
-  it("rejects a voice over 10MB decoded as voice_too_large", () => {
+  it("rejects a voice over 15MB decoded as voice_too_large", () => {
     const res = validatePayload(
       goodPayload({
-        voice: { mime: "audio/mp4", base64: bigBase64(10_485_761) },
+        voice: { mime: "audio/mp4", base64: bigBase64(15_728_641) },
       }),
     );
     expect(res.ok).toBe(false);

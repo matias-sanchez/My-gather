@@ -45,7 +45,7 @@ export type ValidationResult =
 const TITLE_MAX = 200;
 const BODY_MAX_BYTES = 10_240;
 const IMAGE_MAX_BYTES = 5_242_880; // 5 MB
-const VOICE_MAX_BYTES = 10_485_760; // 10 MB
+const VOICE_MAX_BYTES = 15_728_640; // 15 MB — 10 min Opus at the browser's default bitrate fits with margin
 const REPORT_VERSION_MAX = 64;
 
 const CATEGORIES: readonly Category[] = ["UI", "Parser", "Advisor", "Other"];

@@ -18,7 +18,7 @@ import { validatePayload } from "./validate";
 export type { Env } from "./env";
 
 const WORKER_VERSION = "0.1.0";
-const MAX_REQUEST_BYTES = 17_000_000; // see contracts/api.md §"Request size limit"
+const MAX_REQUEST_BYTES = 30_000_000; // accommodates 15MB voice + 5MB image after base64 overhead (see contracts/api.md §"Request size limit")
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",

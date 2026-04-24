@@ -3344,11 +3344,29 @@
         "&body=" + encodeURIComponent(maybePrefixBody());
     }
     function refreshHint() {
-      var parts = [];
-      if (imgBlob) parts.push("Image will be on your clipboard — paste into GitHub's body.");
-      if (voiceBlob) parts.push("Voice note will be downloaded — drag it into GitHub's body.");
-      if (!parts.length) { hint.textContent = ""; hide(hint); return; }
-      hint.textContent = parts.join(" "); show(hint);
+      // With the Worker path the attachments travel as part of the
+      // POST body — nothing for the user to paste or drag. We only
+      // surface the legacy clipboard/download copy if the Worker URL
+      // wasn't emitted by the template (very old reports), because
+      // that's the one case where doLegacyFallback does the handoff.
+      if (!WORKER_URL) {
+        var parts = [];
+        if (imgBlob) parts.push("Image will be on your clipboard — paste into GitHub's body.");
+        if (voiceBlob) parts.push("Voice note will be downloaded — drag it into GitHub's body.");
+        if (!parts.length) { hint.textContent = ""; hide(hint); return; }
+        hint.textContent = parts.join(" "); show(hint);
+        return;
+      }
+      // Worker path: the hint doubles as a small "attachments will be
+      // uploaded" reassurance so the user knows the media is part of
+      // the submission and not lost in clipboard limbo.
+      var items = [];
+      if (imgBlob) items.push("image");
+      if (voiceBlob) items.push("voice note");
+      if (!items.length) { hint.textContent = ""; hide(hint); return; }
+      hint.textContent = "Your " + items.join(" and ") +
+        (items.length === 1 ? " will be attached to the issue." : " will be attached to the issue.");
+      show(hint);
     }
     function updateSubmitEnabled() {
       submitBtn.disabled = !(titleInput.value.trim().length > 0 && buildURL().length <= URL_MAX);
@@ -3437,10 +3455,10 @@
     function tickTimer() {
       if (!recLabel) return;
       var elapsed = (performance.now() - recStart) / 1000;
-      if (elapsed >= 120) { stopRecording(); return; }
+      if (elapsed >= 600) { stopRecording(); return; }
       var m = Math.floor(elapsed / 60);
       var s = Math.floor(elapsed % 60);
-      recLabel.textContent = m + ":" + (s < 10 ? "0" : "") + s + " / 2:00";
+      recLabel.textContent = m + ":" + (s < 10 ? "0" : "") + s + " / 10:00";
       recRAF = requestAnimationFrame(tickTimer);
     }
     function startRecording() {
@@ -3506,7 +3524,7 @@
         dot.setAttribute("aria-hidden", "true");
         recLabel = document.createElement("span");
         recLabel.className = "feedback-recording-time";
-        recLabel.textContent = "0:00 / 2:00";
+        recLabel.textContent = "0:00 / 10:00";
         var stopBtn = document.createElement("button");
         stopBtn.type = "button";
         stopBtn.className = "feedback-record-stop";
