@@ -656,7 +656,15 @@ func concatNetstatS(perFile [][]*model.NetstatCountersSample) *model.NetstatCoun
 	n := len(flat)
 	ts := make([]float64, n)
 	for i, s := range flat {
-		ts[i] = float64(s.Timestamp.Unix())
+		// Sub-second precision: pt-stalk TS headers carry nanosecond
+		// epoch values and two polls can land within the same whole
+		// second. networkCountersChartPayload divides per-slot deltas
+		// by Timestamps[i]-Timestamps[i-1] to produce rates, so
+		// truncating to whole seconds collapses the gap to 0 and the
+		// rate slot becomes NaN / dropped. Store float seconds built
+		// from UnixNano to keep rate math correct on high-frequency
+		// or jittery captures.
+		ts[i] = float64(s.Timestamp.UnixNano()) / 1e9
 	}
 	deltas := make(map[string][]float64, len(labels))
 	for _, name := range labels {
