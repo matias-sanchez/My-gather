@@ -122,12 +122,11 @@ func buildEnvironmentSection(c *model.Collection) *model.EnvironmentSection {
 	}
 	if s := contents["top"]; s != "" {
 		if th := parse.ParseTopHeader(s); th != nil {
-			host.LoadAvg1 = th.Loadavg1
-			host.LoadAvg5 = th.Loadavg5
-			host.LoadAvg15 = th.Loadavg15
-			if th.Loadavg1 != 0 || th.Loadavg5 != 0 || th.Loadavg15 != 0 {
-				populated = true
-			}
+			// A non-nil result means a real `top -` header was parsed;
+			// an all-zero reading is a valid idle sample and must still
+			// render, so presence is pointer-nil vs non-nil.
+			host.LoadAvg = th
+			populated = true
 		}
 	}
 	if s := contents["meminfo"]; s != "" {
@@ -494,8 +493,8 @@ func buildEnvironmentView(r *model.Report) envView {
 		if h.LogicalCPUs > 0 {
 			v.LogicalCPUs = strconv.Itoa(h.LogicalCPUs)
 		}
-		if h.LoadAvg1 != 0 || h.LoadAvg5 != 0 || h.LoadAvg15 != 0 {
-			v.LoadAverage = fmt.Sprintf("%.2f / %.2f / %.2f", h.LoadAvg1, h.LoadAvg5, h.LoadAvg15)
+		if h.LoadAvg != nil {
+			v.LoadAverage = fmt.Sprintf("%.2f / %.2f / %.2f", h.LoadAvg.Loadavg1, h.LoadAvg.Loadavg5, h.LoadAvg.Loadavg15)
 		}
 		if h.OSUptimeSeconds > 0 {
 			v.OSUptime = formatDurationHuman(h.OSUptimeSeconds)

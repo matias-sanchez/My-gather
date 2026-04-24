@@ -389,20 +389,26 @@ func loadEnvSidecars(rootPath string, snapshots []*model.Snapshot) (map[string]s
 		}
 		sort.Sort(sort.Reverse(sort.StringSlice(matches)))
 		for _, path := range matches {
+			// The glob "*-<suf>" also matches unrelated files such as
+			// `notes-hostname` that happen to end in "-<suf>". Skip any
+			// filename whose prefix isn't a pt-stalk timestamp — otherwise
+			// a stray file could sort last and win over the real sidecar,
+			// and we'd also lose the timestamp anchor used for uptime.
+			name := filepath.Base(path)
+			m := snapshotPrefix.FindStringSubmatch(name)
+			if m == nil {
+				continue
+			}
+			ts, err := parseSnapshotTimestamp(m[1])
+			if err != nil {
+				continue
+			}
 			data, err := os.ReadFile(path)
 			if err != nil || len(data) == 0 {
 				continue
 			}
 			out[suf] = string(data)
-			// Extract the prefix — filename is "<prefix>-<suffix>" — and
-			// parse it into a time. Failures leave the timestamp absent;
-			// the renderer will fall back to the last snapshot's clock.
-			name := filepath.Base(path)
-			if m := snapshotPrefix.FindStringSubmatch(name); m != nil {
-				if ts, err := parseSnapshotTimestamp(m[1]); err == nil {
-					timestamps[suf] = ts
-				}
-			}
+			timestamps[suf] = ts
 			break
 		}
 	}

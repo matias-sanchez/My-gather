@@ -23,10 +23,8 @@ type HostEnv struct {
 	Kernel          string
 	Architecture    string
 	LogicalCPUs     int
-	LoadAvg1        float64
-	LoadAvg5        float64
-	LoadAvg15       float64
-	OSUptimeSeconds int64 // capture-timestamp minus btime; 0 when unknown
+	LoadAvg         *EnvTopHeader // nil when no -top sample parsed; non-nil all-zero is a valid idle reading
+	OSUptimeSeconds int64         // capture-timestamp minus btime; 0 when unknown
 	Meminfo         *EnvMeminfo
 	Timezone        string
 

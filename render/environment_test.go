@@ -12,9 +12,7 @@ func TestBuildEnvironmentView_FormatsHumanUnits(t *testing.T) {
 		Host: &model.HostEnv{
 			Hostname:        "host-01",
 			LogicalCPUs:     4,
-			LoadAvg1:        0.41,
-			LoadAvg5:        0.49,
-			LoadAvg15:       0.64,
+			LoadAvg:         &model.EnvTopHeader{Loadavg1: 0.41, Loadavg5: 0.49, Loadavg15: 0.64},
 			OSUptimeSeconds: 5*86400 + 3*3600 + 17*60,
 			Meminfo: &model.EnvMeminfo{
 				MemTotalKB:     32654396,
