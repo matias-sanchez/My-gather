@@ -1,19 +1,21 @@
 <!-- SPECKIT START -->
-Active feature: **002-report-feedback-button**
+Active feature: **003-feedback-backend-worker**
 
 For technologies, project structure, constitution gates, data model,
-UI contract, and shell commands, read the current plan:
+API contract, and shell commands, read the current plan:
 
-- Plan: `specs/002-report-feedback-button/plan.md`
-- Spec: `specs/002-report-feedback-button/spec.md`
-- Research (Phase 0): `specs/002-report-feedback-button/research.md`
-- Data model (Phase 1): `specs/002-report-feedback-button/data-model.md`
-- Contract (Phase 1): `specs/002-report-feedback-button/contracts/ui.md`
-- Quickstart (Phase 1): `specs/002-report-feedback-button/quickstart.md`
+- Plan: `specs/003-feedback-backend-worker/plan.md`
+- Spec: `specs/003-feedback-backend-worker/spec.md`
+- Research (Phase 0): `specs/003-feedback-backend-worker/research.md`
+- Data model (Phase 1): `specs/003-feedback-backend-worker/data-model.md`
+- Contract (Phase 1): `specs/003-feedback-backend-worker/contracts/api.md`
+- Quickstart (Phase 1): `specs/003-feedback-backend-worker/quickstart.md`
+- Tasks (Phase 2): `specs/003-feedback-backend-worker/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
-Prior feature (shipped): **001-ptstalk-report-mvp**
-- Plan: `specs/001-ptstalk-report-mvp/plan.md`
+Prior features (shipped):
+- **002-report-feedback-button** — `specs/002-report-feedback-button/plan.md`
+- **001-ptstalk-report-mvp** — `specs/001-ptstalk-report-mvp/plan.md`
 <!-- SPECKIT END -->
 
 ## Language convention
