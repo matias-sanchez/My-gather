@@ -30,6 +30,13 @@ be English so contributors and tooling have a single consistent language.
 
 ## Repo-local Claude Code tooling
 
+- `/pr-review-trigger-my-gather` (skill at
+  `.claude/skills/pr-review-trigger-my-gather/`) — start an external
+  Codex + Copilot review cycle on the current PR. Pre-flights with
+  the constitution guard, preserves resolved bot threads from prior
+  cycles, and posts trigger comments that cite the constitution and
+  list the My-gather-specific anti-patterns so bots can self-filter.
+  **Use this in this repo, not the global `/pr-review-trigger`.**
 - `/pr-review-fix-my-gather` (skill at `.claude/skills/pr-review-fix-my-gather/`)
   — the My-gather variant of the PR review-fix workflow. Walks the 13
   principles in `.specify/memory/constitution.md`, uses Go-native
