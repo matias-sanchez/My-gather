@@ -3259,6 +3259,7 @@
     var fallbackLink = document.getElementById("feedback-fallback-link");
     var successEl = document.getElementById("feedback-success");
     var successLink = document.getElementById("feedback-success-link");
+    var successCloseBtn = document.getElementById("feedback-success-close");
 
     // Single source of truth for both URLs: rendered onto the
     // <dialog> by the Go template from FeedbackView.GitHubURL and
@@ -3393,7 +3394,21 @@
       rm.setAttribute("aria-label", kind === "image" ? "Remove image" : "Remove voice note");
       rm.textContent = "×";
       rm.addEventListener("click", function () { clearAttachment(kind); });
-      wrap.appendChild(media); wrap.appendChild(rm);
+      if (kind === "image") {
+        // Wrap the <img> in a thumb-wrap so CSS can contain it inside
+        // a bordered card without ripping the aspect ratio. The remove
+        // button is positioned absolutely over the top-right corner.
+        var thumbWrap = document.createElement("div");
+        thumbWrap.className = "feedback-thumb-wrap";
+        media.className = "feedback-thumb";
+        thumbWrap.appendChild(media);
+        wrap.appendChild(thumbWrap);
+        wrap.appendChild(rm);
+      } else {
+        media.className = "feedback-audio";
+        wrap.appendChild(media);
+        wrap.appendChild(rm);
+      }
       attachments.appendChild(wrap);
       refreshHint(); updateSubmitEnabled();
     }
@@ -3744,6 +3759,9 @@
 
     openBtn.addEventListener("click", openDialog);
     cancelBtn.addEventListener("click", function () { closeDialog(); });
+    if (successCloseBtn) {
+      successCloseBtn.addEventListener("click", function () { closeDialog(); });
+    }
     // Escape fires "cancel"; funnel it through our cleanup path.
     dialog.addEventListener("cancel", function (ev) { ev.preventDefault(); closeDialog(); });
     dialog.addEventListener("close", function () { closeDialog(); });
