@@ -109,6 +109,7 @@ var allRules = []rule{
 	ruleBPLRUFlushing,
 	ruleBPWaitFree,
 	ruleBPDirtyPct,
+	ruleInnoDBFlushing,
 
 	// Redo Log
 	ruleRedoCheckpointAge,

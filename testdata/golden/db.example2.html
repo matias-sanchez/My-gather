@@ -65,10 +65,61 @@
           </div>
         </details>
       </div>
-      <div class="callout">
+      <div class="callout sev-warn">
         <p class="k">Pending I/O</p>
         <p class="v">14</p><p class="sub">reads &#43; writes</p>
         <p class="stats"><span>min 13</span> · <span>avg 13.5</span> · <span>max 14</span></p>
+        <div class="pio-chips" aria-label="Pending I/O breakdown summary">
+          <span class="pio-chip"><span class="pio-k">reads</span><span class="pio-v">1</span></span>
+          <span class="pio-chip has"><span class="pio-k">writes</span><span class="pio-v">14</span></span>
+          <span class="pio-chip has"><span class="pio-k">fsyncs</span><span class="pio-v">1</span></span>
+        </div>
+        <details class="pio-breakdown">
+          <summary>Flushing breakdown <span class="cb-chev" aria-hidden="true">▸</span></summary>
+          <div class="cb-body">
+            <p class="cb-caption">peak snapshot <code>2026_04_21_16_52_11</code></p>
+            <table class="pio-table">
+              <thead><tr><th>Path</th><th class="num">peak</th><th>what it means</th></tr></thead>
+              <tbody>
+                <tr class="row-warn">
+                  <td class="mono">LRU flush</td>
+                  <td class="mono num">7</td>
+                  <td>Buffer-pool free list exhausted — eviction path backlog.</td>
+                </tr>
+                <tr class="row-warn">
+                  <td class="mono">Flush list</td>
+                  <td class="mono num">7</td>
+                  <td>Checkpoint-age pressure — redo is close to its limit.</td>
+                </tr>
+                <tr class="">
+                  <td class="mono">Single page</td>
+                  <td class="mono num">–</td>
+                  <td>Synchronous stall — a user thread waited on a clean page.</td>
+                </tr>
+                <tr class="">
+                  <td class="mono">fsync · log</td>
+                  <td class="mono num">–</td>
+                  <td>Redo fsync backlog — commits are waiting on disk.</td>
+                </tr>
+                <tr class="row-warn">
+                  <td class="mono">fsync · buffer pool</td>
+                  <td class="mono num">1</td>
+                  <td>Page cleaners can't keep up with the I/O layer.</td>
+                </tr>
+                <tr>
+                  <td class="mono">Modified pages</td>
+                  <td class="mono num">8,524</td>
+                  <td>Dirty-page backlog across buffer pool instances.</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="cb-note">
+              LRU / flush-list / single-page split shows <em>which</em> flushing path is
+              backed up. Single-page flushes &gt; 0 and pending log fsyncs &gt; 0 are the
+              user-visible stall signals.
+            </p>
+          </div>
+        </details>
       </div>
       <div class="callout">
         <p class="k">AHI</p>

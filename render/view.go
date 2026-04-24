@@ -157,6 +157,40 @@ type innoDBMetricView struct {
 	// AHIHashTableSize against the dash placeholder.
 	AHIHasHashTable bool
 	AHINoActivity   bool // true when every snapshot had hash+non-hash == 0
+
+	// Pending I/O card — peak values (and their source snapshots) for
+	// the richer breakdown. All formatted strings so the template does
+	// no arithmetic.
+	PendingIO *pendingIOView
+}
+
+// pendingIOView carries the peak-across-window scalars surfaced on
+// the Pending I/O callout, plus a human-readable "at peak" caption
+// identifying the snapshot where the worst pending-writes total was
+// observed. All numbers are pre-formatted (thousands commas applied)
+// so the template stays pure presentation. A nil pointer means the
+// capture had no snapshots with any pending-I/O numbers at all.
+type pendingIOView struct {
+	PeakReads           string // peak pending buffer-pool reads
+	PeakWrites          string // peak total pending writes (LRU+FL+SP)
+	PeakFsyncs          string // peak (log + buffer-pool) pending fsyncs
+	PeakLRU             string // peak LRU-flush pending
+	PeakFlushList       string // peak flush-list pending (checkpoint-age pressure)
+	PeakSinglePage      string // peak single-page flushes (stall signal)
+	PeakFsyncLog        string
+	PeakFsyncBufferPool string
+	PeakModifiedPages   string // peak dirty-page backlog
+	PeakSnapshot        string // snapshot prefix that saw PeakWrites
+	// Row-level presence flags. The template uses these to paint
+	// per-row severity in the flushing breakdown without having to
+	// parse the formatted peak strings back into numbers.
+	HasLRU           bool
+	HasFlushList     bool
+	HasSinglePage    bool
+	HasFsyncLog      bool
+	HasFsyncBP       bool
+	HasPendingFsync  bool
+	HasPendingWrite  bool
 }
 
 // semaphoreSiteRow is one row in the contention-breakdown sub-panel.

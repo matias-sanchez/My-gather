@@ -392,9 +392,30 @@ type MeminfoData struct {
 // time-series — "-innodbstatus1" is a snapshot taken once per
 // pt-stalk collection pass.
 type InnodbStatusData struct {
-	SemaphoreCount    int         // total threads currently waiting (sum of SemaphoreSites[*].WaitCount)
-	PendingReads      int         // aggregate pending IO reads
-	PendingWrites     int         // aggregate pending IO writes
+	SemaphoreCount int // total threads currently waiting (sum of SemaphoreSites[*].WaitCount)
+	PendingReads   int // aggregate pending IO reads (summed across BP instances)
+	PendingWrites  int // aggregate pending IO writes (summed across BP instances)
+	// Pending writes broken down by flushing path. Summed across BP
+	// instances. Each path maps to a distinct diagnostic story — see
+	// render/innodb.go for how they drive the Pending I/O card colour.
+	//
+	//   LRU        → eviction-path pressure (free list exhausted)
+	//   FlushList  → checkpoint-age pressure (redo saturation)
+	//   SinglePage → synchronous stall — a user thread waited for a
+	//                clean page (ALWAYS bad; promotes to critical).
+	PendingWritesLRU        int
+	PendingWritesFlushList  int
+	PendingWritesSinglePage int
+	// Pending fsync queues from the FILE I/O section's
+	// "Pending flushes (fsync) log: X; buffer pool: Y" line. Non-zero
+	// log fsync backlog is a user-visible commit stall; non-zero
+	// buffer-pool fsync backlog indicates the page cleaners can't keep
+	// up with the I/O layer.
+	PendingFsyncLog        int
+	PendingFsyncBufferPool int
+	// ModifiedDBPages is the total dirty-page backlog across all BP
+	// instances at the snapshot moment.
+	ModifiedDBPages   int
 	AHIActivity       AHIActivity // adaptive-hash-index view
 	HistoryListLength int         // "HLL"
 	// SemaphoreSites groups the SEMAPHORES-section "--Thread … has
