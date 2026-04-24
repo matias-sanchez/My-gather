@@ -31,6 +31,7 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 		EmbeddedAppJS:      template.JS(embeddedAppJS),
 		LogoDataURI:        template.URL("data:image/png;base64," + base64.StdEncoding.EncodeToString(embeddedLogoPNG)),
 		MysqladminSelectID: "mysqladmin-select",
+		Feedback:           BuildFeedbackView(),
 	}
 
 	if r.EnvironmentSection != nil {

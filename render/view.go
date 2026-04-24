@@ -31,6 +31,10 @@ type reportView struct {
 	VariablesBadge string
 	EnvBadge       string
 
+	// Feedback carries the static values for the "Report feedback"
+	// header control and its dialog. See render/feedback.go.
+	Feedback FeedbackView
+
 	// Environment section payload (Host + MySQL panels).
 	HasEnvironment bool
 	Environment    envView
