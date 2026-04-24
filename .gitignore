@@ -9,3 +9,9 @@ dist/
 # IDE
 .vscode/
 .idea/
+
+# Claude Code — personal overrides and transient hook artefacts
+.claude/settings.local.json
+.claude/pre-review.log
+.claude/agent-memory/
+.claude/scheduled_tasks.lock
