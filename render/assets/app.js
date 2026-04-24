@@ -3369,7 +3369,27 @@
       show(hint);
     }
     function updateSubmitEnabled() {
-      submitBtn.disabled = !(titleInput.value.trim().length > 0 && buildURL().length <= URL_MAX);
+      var hasTitle = titleInput.value.trim().length > 0;
+      if (!hasTitle) { submitBtn.disabled = true; return; }
+      if (WORKER_URL) {
+        // Worker mode: the payload travels as a JSON POST, so the
+        // legacy URL length is irrelevant. Gate on the backend's
+        // real caps (feedback-worker/src/validate.ts):
+        //   title  ≤ 200 chars
+        //   body   ≤ 10_240 UTF-8 bytes
+        // URL_MAX-based gating here would incorrectly block valid
+        // long-body submissions that the Worker would happily
+        // accept.
+        var titleOK = titleInput.value.length <= 200;
+        var bodyBytes = typeof TextEncoder !== "undefined"
+          ? new TextEncoder().encode(bodyInput.value).length
+          : bodyInput.value.length; // conservative approximation
+        submitBtn.disabled = !(titleOK && bodyBytes <= 10240);
+        return;
+      }
+      // Legacy fallback path: submission happens by opening the
+      // GitHub Issues URL, so the effective cap IS the URL length.
+      submitBtn.disabled = buildURL().length > URL_MAX;
     }
 
     // --- Attachments (single helper, kind-parameterised) ----------
