@@ -16,12 +16,17 @@ import (
 func buildNavigation(r *model.Report, sigs []string) []model.NavEntry {
 	var nav []model.NavEntry
 
+	// Environment section — rendered first in the report, so the nav rail
+	// mirrors that order.
+	nav = append(nav, model.NavEntry{ID: "sec-environment", Title: "Environment", Level: 1})
+
 	// OS section.
 	nav = append(nav, model.NavEntry{ID: "sec-os", Title: "OS Usage", Level: 1})
 	nav = append(nav, model.NavEntry{ID: "sub-os-iostat", Title: "Disk utilization", Level: 2, ParentID: "sec-os"})
 	nav = append(nav, model.NavEntry{ID: "sub-os-top", Title: "Top CPU processes", Level: 2, ParentID: "sec-os"})
 	nav = append(nav, model.NavEntry{ID: "sub-os-vmstat", Title: "vmstat saturation", Level: 2, ParentID: "sec-os"})
 	nav = append(nav, model.NavEntry{ID: "sub-os-meminfo", Title: "Memory usage", Level: 2, ParentID: "sec-os"})
+	nav = append(nav, model.NavEntry{ID: "sub-os-network", Title: "Network", Level: 2, ParentID: "sec-os"})
 
 	// Variables section (one Level-2 per *unique* snapshot — adjacent
 	// snapshots with identical variables are collapsed, matching the
@@ -46,7 +51,7 @@ func buildNavigation(r *model.Report, sigs []string) []model.NavEntry {
 	// DB section.
 	nav = append(nav, model.NavEntry{ID: "sec-db", Title: "Database Usage", Level: 1})
 	nav = append(nav, model.NavEntry{ID: "sub-db-innodb", Title: "InnoDB status", Level: 2, ParentID: "sec-db"})
-	nav = append(nav, model.NavEntry{ID: "sub-db-mysqladmin", Title: "Counter deltas", Level: 2, ParentID: "sec-db"})
+	nav = append(nav, model.NavEntry{ID: "sub-db-mysqladmin", Title: "Status counters", Level: 2, ParentID: "sec-db"})
 	nav = append(nav, model.NavEntry{ID: "sub-db-processlist", Title: "Thread states", Level: 2, ParentID: "sec-db"})
 
 	// Advisor section — rule-based findings.

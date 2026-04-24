@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/parse"
 )
 
 // concatIostat merges multiple per-Snapshot *IostatData into one.
@@ -532,4 +533,165 @@ func concatProcesslist(ins []*model.ProcesslistData) *model.ProcesslistData {
 func isMysqldCommand(cmd string) bool {
 	trimmed := strings.TrimSpace(cmd)
 	return strings.EqualFold(trimmed, "mysqld") || strings.EqualFold(trimmed, "mariadbd")
+}
+
+// concatNetstat merges per-file NetstatSocketsSample slices into a
+// single NetstatSocketsData with proper SnapshotBoundaries. Each
+// inner slice holds the polls (TS blocks) from one -netstat file;
+// boundaries are emitted at the index of each file's FIRST retained
+// poll so the renderer's dashed divider lines land on snapshot
+// transitions — not on every per-poll sample.
+func concatNetstat(perFile [][]*model.NetstatSocketsSample) *model.NetstatSocketsData {
+	var flat []*model.NetstatSocketsSample
+	var boundaries []int
+	for _, file := range perFile {
+		firstIdx := len(flat)
+		fileHadAny := false
+		for _, s := range file {
+			if s == nil || len(s.StateCounts) == 0 {
+				continue
+			}
+			flat = append(flat, s)
+			fileHadAny = true
+		}
+		if fileHadAny {
+			boundaries = append(boundaries, firstIdx)
+		}
+	}
+	if len(flat) == 0 {
+		return nil
+	}
+	out := &model.NetstatSocketsData{
+		Samples:            make([]model.NetstatSocketsSample, 0, len(flat)),
+		SnapshotBoundaries: boundaries,
+	}
+	stateSet := map[string]bool{}
+	hasOther := false
+	for _, s := range flat {
+		out.Samples = append(out.Samples, *s)
+		for st := range s.StateCounts {
+			if st == "Other" {
+				hasOther = true
+			} else {
+				stateSet[st] = true
+			}
+		}
+	}
+	states := make([]string, 0, len(stateSet)+1)
+	for st := range stateSet {
+		states = append(states, st)
+	}
+	sort.Strings(states)
+	if hasOther {
+		states = append(states, "Other")
+	}
+	out.States = states
+	return out
+}
+
+// concatNetstatS merges per-file NetstatCountersSample slices into a
+// single delta-across-time NetstatCountersData. Each inner slice is
+// one -netstat_s file's per-poll samples (one per TS block). Deltas
+// are current - previous at each slot with slot 0 forced to NaN (no
+// prior baseline). A sample where a counter is missing or went
+// backwards emits NaN for that slot — matching the mysqladmin
+// ext-status approach. SnapshotBoundaries mark the first retained
+// poll index of each new file so the renderer draws dashed dividers
+// at snapshot transitions, not between every pair of polls.
+func concatNetstatS(perFile [][]*model.NetstatCountersSample) *model.NetstatCountersData {
+	var flat []*model.NetstatCountersSample
+	var boundaries []int
+	for _, file := range perFile {
+		firstIdx := len(flat)
+		fileHadAny := false
+		for _, s := range file {
+			if s == nil || len(s.Values) == 0 {
+				continue
+			}
+			flat = append(flat, s)
+			fileHadAny = true
+		}
+		if fileHadAny {
+			boundaries = append(boundaries, firstIdx)
+		}
+	}
+	if len(flat) == 0 {
+		return nil
+	}
+
+	// Stable rendering order: curated list first (names in
+	// parse.NetstatSCounters), then any additional names observed
+	// alphabetically. That future-proofs the render for kernels that
+	// expose counters we haven't curated yet.
+	have := map[string]bool{}
+	for _, s := range flat {
+		for name := range s.Values {
+			have[name] = true
+		}
+	}
+	labels := make([]string, 0, len(have))
+	seen := map[string]bool{}
+	for _, name := range parse.NetstatSCounters {
+		if have[name] && !seen[name] {
+			labels = append(labels, name)
+			seen[name] = true
+		}
+	}
+	extras := make([]string, 0)
+	for name := range have {
+		if !seen[name] {
+			extras = append(extras, name)
+		}
+	}
+	sort.Strings(extras)
+	labels = append(labels, extras...)
+
+	// Boundary index map: slot 0 at each file boundary resets the
+	// delta chain (no cross-snapshot delta), mirroring MysqladminData.
+	boundarySet := make(map[int]bool, len(boundaries))
+	for _, b := range boundaries {
+		boundarySet[b] = true
+	}
+
+	n := len(flat)
+	ts := make([]float64, n)
+	for i, s := range flat {
+		// Sub-second precision: pt-stalk TS headers carry nanosecond
+		// epoch values and two polls can land within the same whole
+		// second. networkCountersChartPayload divides per-slot deltas
+		// by Timestamps[i]-Timestamps[i-1] to produce rates, so
+		// truncating to whole seconds collapses the gap to 0 and the
+		// rate slot becomes NaN / dropped. Store float seconds built
+		// from UnixNano to keep rate math correct on high-frequency
+		// or jittery captures.
+		ts[i] = float64(s.Timestamp.UnixNano()) / 1e9
+	}
+	deltas := make(map[string][]float64, len(labels))
+	for _, name := range labels {
+		arr := make([]float64, n)
+		arr[0] = math.NaN()
+		prev, havePrev := flat[0].Values[name]
+		for i := 1; i < n; i++ {
+			curr, haveCurr := flat[i].Values[name]
+			switch {
+			case boundarySet[i]:
+				// Counters reset across snapshot boundaries (pt-stalk
+				// files are separate kernel sample streams in the
+				// general case); emit NaN so the chart draws a gap.
+				arr[i] = math.NaN()
+			case !havePrev || !haveCurr || curr < prev:
+				arr[i] = math.NaN()
+			default:
+				arr[i] = curr - prev
+			}
+			prev, havePrev = curr, haveCurr
+		}
+		deltas[name] = arr
+	}
+	return &model.NetstatCountersData{
+		Labels:             labels,
+		Timestamps:         ts,
+		Deltas:             deltas,
+		SnapshotBoundaries: boundaries,
+	}
 }

@@ -1,29 +1,56 @@
 <!-- SPECKIT START -->
-Active feature: **001-ptstalk-report-mvp**
+Active feature: **003-feedback-backend-worker**
 
 For technologies, project structure, constitution gates, data model,
-CLI and package contracts, and shell commands, read the current plan:
+API contract, and shell commands, read the current plan:
 
-- Plan: `specs/001-ptstalk-report-mvp/plan.md`
-- Spec: `specs/001-ptstalk-report-mvp/spec.md`
-- Research (Phase 0): `specs/001-ptstalk-report-mvp/research.md`
-- Data model (Phase 1): `specs/001-ptstalk-report-mvp/data-model.md`
-- Contracts (Phase 1): `specs/001-ptstalk-report-mvp/contracts/cli.md`,
-  `specs/001-ptstalk-report-mvp/contracts/packages.md`
-- Quickstart (Phase 1): `specs/001-ptstalk-report-mvp/quickstart.md`
+- Plan: `specs/003-feedback-backend-worker/plan.md`
+- Spec: `specs/003-feedback-backend-worker/spec.md`
+- Research (Phase 0): `specs/003-feedback-backend-worker/research.md`
+- Data model (Phase 1): `specs/003-feedback-backend-worker/data-model.md`
+- Contract (Phase 1): `specs/003-feedback-backend-worker/contracts/api.md`
+- Quickstart (Phase 1): `specs/003-feedback-backend-worker/quickstart.md`
+- Tasks (Phase 2): `specs/003-feedback-backend-worker/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
+
+Prior features (shipped):
+- **002-report-feedback-button** — `specs/002-report-feedback-button/plan.md`
+- **001-ptstalk-report-mvp** — `specs/001-ptstalk-report-mvp/plan.md`
 <!-- SPECKIT END -->
 
 ## Language convention
 
-All artifacts that live inside this repository MUST be written in English:
+English-only for all checked-in artifacts (Principle XIV of
+`.specify/memory/constitution.md`). Out-of-band chat with the user is
+not an artifact and may be in any language.
 
-- Source code, comments, and identifiers.
-- Commit messages, branch names, tags.
-- Pull request titles, descriptions, and review comments.
-- `specs/`, `.specify/`, `README.md`, and any other checked-in documentation.
-- GitHub issues opened from this repo.
+## Repo-local Claude Code tooling
 
-Out-of-band conversation with the user (chat/UI) may be in any language
-the user chooses — only the durable, shared artifacts are required to
-be English so contributors and tooling have a single consistent language.
+- `/pr-review-trigger-my-gather` (skill at
+  `.claude/skills/pr-review-trigger-my-gather/`) — start an external
+  Codex + Copilot review cycle on the current PR. Pre-flights with
+  the constitution guard, preserves resolved bot threads from prior
+  cycles, and posts trigger comments that cite the constitution and
+  list the My-gather-specific anti-patterns so bots can self-filter.
+  **Use this in this repo, not the global `/pr-review-trigger`.**
+- `/pr-review-fix-my-gather` (skill at `.claude/skills/pr-review-fix-my-gather/`)
+  — the My-gather variant of the PR review-fix workflow. Walks the 14
+  principles in `.specify/memory/constitution.md`, uses Go-native
+  validation, and marks review threads resolved on GitHub. **Use this
+  in this repo, not the global `/pr-review-fix`** — the global one
+  targets Python projects and would apply the wrong rules here.
+- `/pr-review-loop-my-gather` (skill at
+  `.claude/skills/pr-review-loop-my-gather/`) — bounded convergence
+  loop that composes `/pr-review-fix-my-gather` and
+  `/pr-review-trigger-my-gather` and self-schedules via
+  ScheduleWakeup until Codex reports zero open threads on the PR.
+  One-shot invocation; safety rails on max iterations, non-progress,
+  guard failure, and Codex response timeout. Use when you want the
+  PR driven to green unattended.
+- `@agent-pre-review-constitution-guard` (agent at
+  `.claude/agents/pre-review-constitution-guard.md`) — local pre-push
+  reviewer that emits P1/P2/P3 findings against the constitution
+  before you push.
+- Pre-push hook (`scripts/hooks/pre-push-constitution-guard.sh`) wired
+  via `.claude/settings.json` — mechanical checks that block pushes
+  violating Principles I, VIII, or X.

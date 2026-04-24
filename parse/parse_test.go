@@ -59,6 +59,47 @@ func TestEmptyButValid(t *testing.T) {
 	}
 }
 
+// TestEnvSidecarFallbackEmitsDiagnostic — Principle III: when the
+// newest env sidecar is empty/unreadable and the loader silently
+// falls back to an older file, a structured diagnostic MUST be
+// attached so the degraded fallback is visible in the report.
+func TestEnvSidecarFallbackEmitsDiagnostic(t *testing.T) {
+	dir := t.TempDir()
+	must := func(path string, content string) {
+		if err := os.WriteFile(filepath.Join(dir, path), []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// Two -hostname sidecars: newer one is empty (common truncation
+	// mode), older one has content. Also include a pt-summary so the
+	// directory is recognised as a pt-stalk dump.
+	must("2026_04_21_16_51_41-hostname", "example-db-01\n")
+	must("2026_04_21_16_52_11-hostname", "")
+	must("pt-summary.out", "# pt-summary\n")
+
+	c, err := parse.Discover(context.Background(), dir, parse.DiscoverOptions{})
+	if err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	// The loader must have fallen back to the older, non-empty file.
+	if got := c.RawEnvSidecars["hostname"]; got != "example-db-01\n" {
+		t.Errorf("RawEnvSidecars[hostname] = %q, want fallback content", got)
+	}
+	// And it MUST have left a diagnostic on the collection so the
+	// render layer (or CLI verbose mode) can surface the degradation.
+	found := false
+	for _, d := range c.Diagnostics {
+		if d.Severity == 1 /* SeverityWarning */ &&
+			filepath.Base(d.SourceFile) == "2026_04_21_16_51_41-hostname" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected a warning diagnostic naming the older fallback file, got: %+v", c.Diagnostics)
+	}
+}
+
 // TestSizeBoundTotalExceeded — FR-025: collection total exceeds limit.
 func TestSizeBoundTotalExceeded(t *testing.T) {
 	dir := t.TempDir()
@@ -136,5 +177,30 @@ func TestHappyPathAgainstFixtures(t *testing.T) {
 	}
 	if c.Hostname == "" {
 		t.Errorf("Hostname empty; expected anonymised value")
+	}
+}
+
+// TestContextCanceledDuringParsePropagates — regression guard for
+// the P2 codex flagged on 31f91da: runParsers returned void, so a
+// deadline/cancel that fired AFTER directory enumeration but DURING
+// per-collector parsing let Discover return (collection, nil) — a
+// silent partial success. Discover now forwards the context error.
+func TestContextCanceledDuringParsePropagates(t *testing.T) {
+	root := goldens.RepoRoot(t)
+	fixtureDir := filepath.Join(root, "testdata", "example2")
+
+	// Cancel immediately so the ctx.Err() check inside runParsers'
+	// inner loop fires on the first SourceFile. Directory
+	// enumeration ran synchronously before runParsers, so it
+	// completes before the check trips.
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := parse.Discover(ctx, fixtureDir, parse.DiscoverOptions{})
+	if err == nil {
+		t.Fatalf("expected cancellation error, got nil (Discover silently returned a partial Collection)")
+	}
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("expected context.Canceled, got %v", err)
 	}
 }

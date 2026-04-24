@@ -53,6 +53,12 @@ func keepOnly(c *model.Collection, keep ...model.Suffix) *model.Collection {
 	out := &model.Collection{
 		RootPath: c.RootPath,
 		Hostname: c.Hostname,
+		// Env-sidecar data is not keyed by Suffix (it lives outside the
+		// Snapshot.SourceFiles tree) and is shared across sections. Pass
+		// it through so per-section goldens that touch the Environment
+		// section still have the host facts they need.
+		RawEnvSidecars:       c.RawEnvSidecars,
+		EnvSidecarTimestamps: c.EnvSidecarTimestamps,
 	}
 	for _, s := range c.Snapshots {
 		filtered := make(map[model.Suffix]*model.SourceFile, len(keep))

@@ -28,7 +28,8 @@ func TestOSGoldenHTML(t *testing.T) {
 	root := goldens.RepoRoot(t)
 	goldenPath := filepath.Join(root, "testdata", "golden", "os.example2.html")
 
-	html := renderGolden(t, model.SuffixIostat, model.SuffixTop, model.SuffixVmstat)
+	html := renderGolden(t, model.SuffixIostat, model.SuffixTop, model.SuffixVmstat,
+		model.SuffixNetstat, model.SuffixNetstatS)
 	section := extractDetailsSection(t, html, "sec-os")
 
 	goldens.Compare(t, goldenPath, []byte(section))

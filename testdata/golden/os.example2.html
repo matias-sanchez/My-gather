@@ -58,6 +58,20 @@
   </div>
 </details>
 
+<details id="sub-os-network" class="subview" open>
+  <summary><span>Network</span><span class="badge">-netstat</span></summary>
+  <div class="body">
+    <div class="chart-summary"><span class="stat"><span class="k">peak TIME_WAIT</span> <span class="v">3</span> <span class="ctx">sockets</span></span><span class="stat"><span class="k">peak CLOSE_WAIT</span> <span class="v">2</span> <span class="ctx">sockets</span></span>
+      <span class="stat"><span class="k">samples</span> <span class="v">2</span></span>
+    </div>
+    <h4 class="subview-h">TCP / UDP rates</h4>
+    <div class="chart" id="chart-network-counters" data-chart="network-counters" aria-label="TCP and UDP counter rates over time"></div>
+    <h4 class="subview-h">Socket states</h4>
+    <div class="chart" id="chart-network-sockets" data-chart="network-sockets" aria-label="Socket state counts over time"></div>
+    <noscript><p class="banner">Charts require JavaScript. Raw netstat data is embedded in the page.</p></noscript>
+  </div>
+</details>
+
 
       </div>
     </details>

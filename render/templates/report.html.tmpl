@@ -34,6 +34,17 @@
     <span><span class="k">generated</span> <span class="v">{{.GeneratedAtDisplay}}</span></span>
     <span><span class="k">my-gather</span> <span class="v">{{.Version}}{{if .GitCommit}} · {{.GitCommit}}{{end}}</span></span>
   </div>
+  {{- /* Report-feedback control. See specs/002-report-feedback-button/.
+         Static markup, deterministic across runs (Principle IV). Dialog
+         markup lives at end of <body>. */}}
+  <button type="button"
+          class="feedback-btn"
+          id="feedback-open"
+          aria-haspopup="dialog"
+          aria-controls="feedback-dialog"
+          aria-label="Report feedback — file an idea on GitHub">
+    <span class="feedback-btn-label">Report feedback</span>
+  </button>
 </header>
 
 <div class="layout" id="app-layout">
@@ -66,6 +77,18 @@
   </nav>
 
   <main class="content">
+
+    {{/* Environment section — rendered first so the reader lands on
+         the host / MySQL context before any time-series charts. */}}
+    <details id="sec-environment" class="section">
+      <summary>
+        <span>Environment</span>
+        {{- if .EnvBadge}}<span class="badge">{{.EnvBadge}}</span>{{end}}
+      </summary>
+      <div class="body">
+        {{template "environment" .}}
+      </div>
+    </details>
 
     {{/* OS Usage section */}}
     <details id="sec-os" class="section">
@@ -111,6 +134,74 @@
 
   </main>
 </div>
+
+{{- /* Report-feedback dialog. Placed at end of <body> so native
+       showModal()'s focus trap doesn't collide with the nav drawer.
+       All IDs and class names are part of the UI contract — see
+       specs/002-report-feedback-button/contracts/ui.md. */}}
+<dialog id="feedback-dialog"
+        class="feedback-dialog"
+        data-feedback-url="{{ .Feedback.GitHubURL }}"
+        data-feedback-worker-url="{{ .Feedback.WorkerURL }}"
+        aria-labelledby="feedback-title"
+        aria-describedby="feedback-help">
+  <form id="feedback-form" method="dialog">
+    <header class="feedback-dialog-header">
+      <h2 id="feedback-title">Report feedback</h2>
+      <button type="button" class="feedback-close-x" id="feedback-cancel" aria-label="Close">×</button>
+    </header>
+    <p id="feedback-help" class="feedback-help">
+      Posts a new issue to GitHub. You can paste an image and record a voice note to attach them.
+    </p>
+
+    <div class="feedback-field">
+      <label for="feedback-field-title">Title</label>
+      <input id="feedback-field-title" name="title" type="text" autocomplete="off" placeholder="Short summary…" required>
+    </div>
+
+    <div class="feedback-field">
+      <label for="feedback-field-body">Body</label>
+      <textarea id="feedback-field-body" name="body" rows="5" placeholder="Describe the idea or issue. Markdown supported on GitHub."></textarea>
+    </div>
+
+    <div class="feedback-field feedback-field--row">
+      <label for="feedback-field-category">Category <span class="feedback-field-opt">optional</span></label>
+      <select id="feedback-field-category" name="category">
+        <option value="">—</option>
+        {{- range $i, $c := .Feedback.Categories }}
+        <option value="{{ $c }}">{{ $c }}</option>
+        {{- end }}
+      </select>
+    </div>
+
+    <div class="feedback-attachments" id="feedback-attachments"></div>
+
+    <p class="feedback-hint" id="feedback-hint" hidden></p>
+    <p class="feedback-error" id="feedback-error" hidden></p>
+
+    {{- /* Fallback link surface for popup-blocker / clipboard-blocked
+           paths. JS fills href and unhides when needed. */}}
+    <p class="feedback-fallback" id="feedback-fallback" hidden>
+      <a id="feedback-fallback-link" href="#" target="_blank" rel="noopener noreferrer">Open GitHub manually</a>
+    </p>
+
+    <footer class="feedback-actions">
+      <button type="button" class="feedback-record" id="feedback-record">🎙 Record voice</button>
+      <span class="feedback-actions-spacer"></span>
+      <button type="submit" class="feedback-submit" id="feedback-submit" disabled>Post to GitHub</button>
+    </footer>
+  </form>
+
+  {{- /* Inline success state (spec 003). The form is removed from the
+         layout flow via JS on 200, so this takes over the dialog. */}}
+  <div class="feedback-success" id="feedback-success" hidden>
+    <div class="feedback-success-icon" aria-hidden="true">✓</div>
+    <h2>Feedback posted</h2>
+    <p>Your issue has been created on GitHub.</p>
+    <a id="feedback-success-link" class="feedback-success-link" href="#" target="_blank" rel="noopener noreferrer">View issue on GitHub →</a>
+    <button type="button" class="feedback-success-close" id="feedback-success-close">Close</button>
+  </div>
+</dialog>
 
 <script>{{.EmbeddedChartJS}}</script>
 <script>{{.EmbeddedAppJS}}</script>

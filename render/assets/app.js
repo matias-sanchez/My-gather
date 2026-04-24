@@ -64,14 +64,14 @@
   // --- 1. Collapse persistence ------------------------------------
 
   function initCollapsePersistence() {
-    // Scope strictly to main-content details; nav groups have their
-    // own namespace under initNavGroups().
+    // Always land with every main section collapsed — ignore any
+    // previously persisted state. Persistence still tracks toggles
+    // within the session so re-rendering charts etc. behaves, but
+    // the next page load starts fresh.
     var blocks = document.querySelectorAll(MAIN_SECTIONS_SELECTOR);
     for (var i = 0; i < blocks.length; i++) {
       (function (d) {
-        var saved = storageGet(collapseKey(d.id));
-        if (saved === "open") d.open = true;
-        else if (saved === "closed") d.open = false;
+        d.open = false;
         d.addEventListener("toggle", function () {
           storageSet(collapseKey(d.id), d.open ? "open" : "closed");
         });
@@ -392,12 +392,25 @@
   // can catch the unit in the corner without the tick column getting
   // wider. No-op when unit is empty so mysqladmin counters with
   // heterogeneous units don't get a misleading label.
+  //
+  // `unit` accepts either a plain string (label only) or an object
+  // { label, title }. When `title` is provided it hydrates both the
+  // native tooltip (hover) and aria-label (screen readers) so the
+  // terse axis label can be expanded into a full sentence without
+  // widening the chip.
   function makeUnitBadgeHook(unit) {
     return function (u) {
       if (!unit) return;
       var badge = document.createElement("span");
       badge.className = "chart-unit";
-      badge.textContent = unit;
+      var label = typeof unit === "string" ? unit : unit.label;
+      var title = typeof unit === "string" ? ""   : (unit.title || "");
+      if (!label) return;
+      badge.textContent = label;
+      if (title) {
+        badge.setAttribute("title", title);
+        badge.setAttribute("aria-label", label + " — " + title);
+      }
       u.root.appendChild(badge);
     };
   }
@@ -589,7 +602,7 @@
     return v.toLocaleString(undefined, { maximumFractionDigits: 4 });
   }
 
-  // mountResetZoomButton pins a small "↺" button on the top-right of
+  // mountResetZoomButton pins a small "⛶" button on the top-right of
   // a chart container. Clicking it (or double-clicking the chart
   // itself, via uPlot's built-in) resets the horizontal zoom.
   // getPlot is a getter because the plot instance is replaced on
@@ -600,7 +613,7 @@
     var btn = document.createElement("button");
     btn.type = "button";
     btn.className = "chart-zoom-reset";
-    btn.textContent = "↺";
+    btn.textContent = "⛶";
     btn.title = "Reset zoom to full capture window (you can also double-click anywhere on the chart)";
     btn.setAttribute("aria-label", "Reset zoom");
     // Stop mousedown from reaching uPlot's .u-over, which would
@@ -798,6 +811,13 @@
           renderVmstatTabs(containers[i], data);
         } else if (name === "innodb-hll") {
           renderHLLSparkline(containers[i], data);
+        } else if (name === "network-counters") {
+          renderTimeSeries(containers[i], data, {
+            label: "events/s",
+            title: "Events per second — deltas between kernel counters divided by the time gap between snapshots",
+          });
+        } else if (name === "network-sockets") {
+          renderNetworkSockets(containers[i], data);
         } else {
           renderTimeSeries(containers[i], data, unitForChart(name));
         }
@@ -808,10 +828,25 @@
   }
 
   function unitForChart(name) {
-    if (name === "top")         return "%CPU";
-    if (name === "processlist") return "threads";
-    if (name === "vmstat")      return "";
-    if (name === "meminfo")     return "GB";
+    if (name === "top") {
+      return {
+        label: "%CPU",
+        title: "Per-process CPU utilisation — percent of one logical core",
+      };
+    }
+    if (name === "processlist") {
+      return {
+        label: "threads",
+        title: "Number of connections in each processlist state at each snapshot",
+      };
+    }
+    if (name === "meminfo") {
+      return {
+        label: "GB",
+        title: "Memory value in gigabytes — scaled from /proc/meminfo's kB entries",
+      };
+    }
+    if (name === "vmstat") return "";
     return "";
   }
 
@@ -852,10 +887,80 @@
   // onRebuild: callback fired when the user toggles legend visibility
   //            so the caller can destroy + reconstruct with the new
   //            hidden set.
+  // bucketizeStackSeries collapses dense samples into uniform wall-clock
+  // buckets so each time slot contributes a single stacked bar rather
+  // than several thin ones competing for pixels. The bucket size scales
+  // with the capture span — short windows keep 30s granularity, long
+  // windows coarsen up to ~5 minutes — and we aim to end with around
+  // 20–60 visible bars across any capture length.
+  //
+  // Returns { timestamps, series[] } with the same shape as `data` but
+  // re-indexed on bucket edges. Within a bucket each series' value is
+  // the MEAN of its non-NaN samples (%CPU averages naturally). Empty
+  // buckets are dropped so the x-axis has no gaps.
+  function bucketizeStackSeries(data) {
+    var ts  = data.timestamps || [];
+    var ser = data.series || [];
+    if (ts.length === 0) return { timestamps: [], series: ser.map(function (s) { return { label: s.label, values: [] }; }) };
+
+    var span = ts[ts.length - 1] - ts[0];
+    // Choose a bucket size (seconds) targeting ~30 bars. Snap to a
+    // human-friendly step so ticks land on round wall-clock values.
+    var STEPS = [30, 60, 120, 300, 600, 1800, 3600];
+    var target = Math.max(1, Math.floor(span / 30));
+    var step = STEPS[STEPS.length - 1];
+    for (var i = 0; i < STEPS.length; i++) { if (STEPS[i] >= target) { step = STEPS[i]; break; } }
+
+    // If samples are already sparser than the step, bucketing would be
+    // a no-op that only introduces averaging error — keep the raw data.
+    if (ts.length >= 2) {
+      var avgGap = span / (ts.length - 1);
+      if (avgGap >= step * 0.9) return data;
+    }
+
+    var buckets = {}; // key = floor(ts/step)*step → { sums[], counts[] }
+    var keys = [];
+    for (var j = 0; j < ts.length; j++) {
+      var key = Math.floor(ts[j] / step) * step;
+      var b = buckets[key];
+      if (!b) {
+        b = { sums: new Array(ser.length), counts: new Array(ser.length) };
+        for (var k = 0; k < ser.length; k++) { b.sums[k] = 0; b.counts[k] = 0; }
+        buckets[key] = b;
+        keys.push(key);
+      }
+      for (var k2 = 0; k2 < ser.length; k2++) {
+        var v = +ser[k2].values[j];
+        if (!isNaN(v)) { b.sums[k2] += v; b.counts[k2] += 1; }
+      }
+    }
+    keys.sort(function (a, b) { return a - b; });
+
+    var outTs = keys;
+    var outSeries = ser.map(function (s, k) {
+      var vals = new Array(keys.length);
+      for (var r = 0; r < keys.length; r++) {
+        var bk = buckets[keys[r]];
+        vals[r] = bk.counts[k] > 0 ? bk.sums[k] / bk.counts[k] : NaN;
+      }
+      return { label: s.label, values: vals };
+    });
+    return { timestamps: outTs, series: outSeries };
+  }
+
   function buildStackedChart(el, data, unit, hiddenLabels, onRebuild) {
-    var series = data.series;
-    var n = data.timestamps.length;
-    var stackedPath = uPlot.paths.bars({ size: [1.0, 64], align: 0, radius: 0.25 });
+    // Coalesce dense samples into uniform wall-clock buckets so we get
+    // ONE stacked bar per time slot instead of several thin ones fighting
+    // for space. Bucket size is chosen from the capture span so short
+    // captures stay granular and long ones don't drown in ticks.
+    var bucketed = bucketizeStackSeries(data);
+    var series   = bucketed.series;
+    var n        = bucketed.timestamps.length;
+
+    // Bar sizing: size[0] = 0.85 of the gap (small breathing room between
+    // bars so neighbours don't kiss); size[1] caps the bar at 160px so
+    // long captures with few buckets still look proportional.
+    var stackedPath = uPlot.paths.bars({ size: [0.85, 160], align: 0, radius: 0.3 });
 
     // Raw per-series values, zero'd when hidden.
     var rawValues = series.map(function (s) {
@@ -897,7 +1002,7 @@
     // each smaller stack covers it — yielding the visual layering a
     // reader expects and putting the legend in top→bottom stack order.
     var plotSeries = [{ label: "time" }];
-    var plotData = [data.timestamps.slice()];
+    var plotData = [bucketed.timestamps.slice()];
     var plotRawByIdx = [null];
     for (var k = series.length - 1; k >= 0; k--) {
       var stroke = SERIES_COLORS[k % SERIES_COLORS.length];
@@ -915,6 +1020,13 @@
     }
 
     var w = measureChartWidth(el);
+    // Boundary lookup (drawSnapshotBoundariesWith) indexes into this
+    // timestamps array with `data.snapshotBoundaries[i]` — which are
+    // positions in the ORIGINAL unbucketed sample stream. The bucketed
+    // x-axis has different indices and a shorter length, so pass the
+    // original data.timestamps: the boundary index still resolves to
+    // the correct wall-clock time, and u.valToPos maps that time to a
+    // pixel on the bucketed plot independently of the data arrays.
     var opts = basePlotOpts(w, 320, plotSeries, unit, data.snapshotBoundaries, data.timestamps);
     var plot = new uPlot(opts, plotData, el);
     plot.__rawData = plotRawByIdx; // consumed by updateTooltipOnCursor
@@ -1004,10 +1116,14 @@
 
     function draw() {
       cleanup();
+      var topUnit = {
+        label: "%CPU",
+        title: "Per-process CPU utilisation — percent of one logical core",
+      };
       if (current === "stacked") {
-        plot = buildStackedChart(el, data, "%CPU", stackedHidden, draw);
+        plot = buildStackedChart(el, data, topUnit, stackedHidden, draw);
       } else {
-        plot = buildLineChart(el, data, "%CPU");
+        plot = buildLineChart(el, data, topUnit);
       }
       legendEl = el.nextSibling;
     }
@@ -1025,6 +1141,40 @@
     }
     btnLine.addEventListener("click",  function () { switchTo("line"); });
     btnStack.addEventListener("click", function () { switchTo("stacked"); });
+  }
+
+  // renderNetworkSockets: stacked-bar chart of socket-state counts
+  // over time. Each sample becomes one bar; stack segments are the
+  // per-state counts (ESTABLISHED / TIME_WAIT / CLOSE_WAIT / LISTEN /
+  // UDP / …). Reuses buildStackedChart so the bar sizing, bucketing,
+  // and legend behaviour match the other stacked views (mysqladmin,
+  // processlist, top).
+  function renderNetworkSockets(el, data) {
+    if (!data || !Array.isArray(data.timestamps) || !Array.isArray(data.series)) return;
+    var hidden = new Set();
+    var plot = null;
+    var legendEl = null;
+    function draw() {
+      if (plot) { unregisterChart(plot); plot.destroy(); plot = null; }
+      // buildStackedChart appends a fresh .series-legend sibling after
+      // el on every call. Without removing the previous one, toggling
+      // a legend chip (which re-enters draw()) stacks duplicate legend
+      // rows under the chart — see the bug report with 5 rows.
+      if (legendEl && legendEl.parentNode) {
+        legendEl.parentNode.removeChild(legendEl);
+        legendEl = null;
+      }
+      plot = buildStackedChart(el, data, {
+        label: "sockets",
+        title: "Socket count — number of sockets in each TCP state at each snapshot (absolute, not a rate)",
+      }, hidden, draw);
+      var next = el.nextSibling;
+      if (next && next.classList && next.classList.contains("series-legend")) {
+        legendEl = next;
+      }
+    }
+    draw();
+    mountResetZoomButton(el, function () { return plot; });
   }
 
   // renderIostat: split into two charts sharing the same pill legend —
@@ -1075,7 +1225,9 @@
       if (legendEl && legendEl.parentNode) { legendEl.parentNode.removeChild(legendEl); legendEl = null; }
       var labels = currentView === "util" ? utilLabels : aquLabels;
       var rows   = currentView === "util" ? utilSeries : aquSeries;
-      var unit   = currentView === "util" ? "% util"   : "aqu-sz";
+      var unit   = currentView === "util"
+        ? { label: "%util",  title: "Percent of wall time the block device was busy servicing any I/O (iostat -x `%util`)" }
+        : { label: "aqu-sz", title: "Average queue depth — mean number of requests in the device queue over the sample interval (iostat -x `aqu-sz`)" };
       var series = [{ label: "time" }].concat(labels.map(function (lbl, i) { return decorateSeries(lbl, i); }));
       var values = [data.timestamps.slice()].concat(rows);
       var w = measureChartWidth(el);
@@ -2043,7 +2195,7 @@
       var btnZoom = document.createElement("button");
       btnZoom.type = "button";
       btnZoom.className = "ma-card-btn ma-card-zoom";
-      btnZoom.textContent = "↺";
+      btnZoom.textContent = "⛶";
       btnZoom.title = "Reset this chart's zoom to the full capture window (you can also double-click the chart)";
       btnZoom.setAttribute("aria-label", "Reset zoom");
       btnZoom.addEventListener("click", function (ev) {
@@ -2671,6 +2823,81 @@
     }
   }
 
+  // initEnvTabs wires the Host / MySQL tab switcher in the Environment
+  // section. Mirrors the ARIA tablist pattern used by vmstat. Selection
+  // persists in localStorage under the v2 namespace so reopening the
+  // report remembers which panel was on screen.
+  function initEnvTabs() {
+    var roots = document.querySelectorAll("[data-env-root]");
+    if (!roots.length) return;
+    var KEY = "mygather:v2:" + REPORT_ID + ":env-tab";
+    roots.forEach(function (root) {
+      var tabs   = root.querySelectorAll("[role='tab'][data-env-tab]");
+      var panels = root.querySelectorAll("[role='tabpanel'][data-env-panel]");
+      function select(which, opts) {
+        opts = opts || {};
+        var ok = false;
+        tabs.forEach(function (t) {
+          var on = t.getAttribute("data-env-tab") === which;
+          if (on) ok = true;
+          t.classList.toggle("active", on);
+          t.setAttribute("aria-selected", on ? "true" : "false");
+          t.setAttribute("tabindex", on ? "0" : "-1");
+          if (on && opts.focus) { try { t.focus({ preventScroll: true }); } catch (_) { t.focus(); } }
+        });
+        if (!ok) return;
+        panels.forEach(function (p) {
+          p.hidden = p.getAttribute("data-env-panel") !== which;
+        });
+        try { storageSet(KEY, which); } catch (_) {}
+      }
+      tabs.forEach(function (t) {
+        t.addEventListener("click", function () { select(t.getAttribute("data-env-tab")); });
+      });
+      root.addEventListener("keydown", function (ev) {
+        if (ev.target.getAttribute("role") !== "tab") return;
+        var order = Array.from(tabs);
+        var idx = order.indexOf(ev.target);
+        if (idx < 0) return;
+        var next = null;
+        if      (ev.key === "ArrowRight") next = order[(idx + 1) % order.length];
+        else if (ev.key === "ArrowLeft")  next = order[(idx - 1 + order.length) % order.length];
+        else if (ev.key === "Home")       next = order[0];
+        else if (ev.key === "End")        next = order[order.length - 1];
+        if (next) { ev.preventDefault(); select(next.getAttribute("data-env-tab"), { focus: true }); }
+      });
+      var saved = null;
+      try { saved = storageGet(KEY); } catch (_) {}
+      // "mysql only" captures (host sidecars absent/unreadable but
+      // -variables parsed) leave the Host panel as an all-"—" block
+      // and the MySQL panel populated. If we blindly default to host
+      // the reader lands on an empty view and can misread the whole
+      // Environment section as unavailable. Detect panel emptiness
+      // (no <dd> with content other than the missing marker) and
+      // prefer the populated side when no persisted choice exists.
+      function panelHasData(which) {
+        var panel = root.querySelector("[data-env-panel='" + which + "']");
+        if (!panel) return false;
+        var dds = panel.querySelectorAll("dd");
+        for (var i = 0; i < dds.length; i++) {
+          var txt = (dds[i].textContent || "").trim();
+          if (txt && txt !== "—") return true;
+        }
+        return false;
+      }
+      var initial = "host";
+      if (saved === "host" || saved === "mysql") {
+        initial = saved;
+      } else if (!panelHasData("host") && panelHasData("mysql")) {
+        initial = "mysql";
+      }
+      // Template renders both panels visible so no-JS readers can reach
+      // MySQL content. Always call select() once JS is running so the
+      // inactive panel is hidden and the tab UX matches other tablists.
+      select(initial);
+    });
+  }
+
   function initPrintHook() {
     var beforeState = null;
     function stash() {
@@ -2827,7 +3054,23 @@
     if (!data || !Array.isArray(data.values) || data.values.length === 0) return;
     var vals = data.values;
     var ts   = Array.isArray(data.timestamps) ? data.timestamps : null;
-    var W = 320, H = 64;
+    // Fit the sparkline to its container (the surrounding .callout card).
+    // Both dimensions are dynamic so the chart fills whatever box the
+    // flex column grants it — avoids the narrow-strip look when the
+    // sibling callouts (Semaphores / Pending I/O) stretch the grid row.
+    function measureW() {
+      var w = el.clientWidth || (el.parentNode && el.parentNode.clientWidth) || 0;
+      if (!w || w < 180) w = 240;
+      if (w > 720) w = 720;
+      return w;
+    }
+    function measureH() {
+      var h = el.clientHeight || 0;
+      if (!h || h < 80) h = 80;
+      if (h > 260) h = 260;
+      return h;
+    }
+    var W = measureW(), H = measureH();
     // Clear any prior render (idempotent if initCharts re-runs).
     while (el.firstChild) el.removeChild(el.firstChild);
     el.classList.add("hll-sparkline-ready");
@@ -2847,7 +3090,7 @@
       // network fetches).
       var single = document.createElement("div");
       single.className = "hll-spark-single";
-      single.style.width  = W + "px";
+      single.style.width  = "100%";
       single.style.height = H + "px";
       var dot = document.createElement("span");
       dot.className = "hll-spark-dot";
@@ -2942,7 +3185,9 @@
             var t = ts ? ts[idx] : null;
             tip.innerHTML =
               '<strong>' + escapeHTML(fmt(v)) + '</strong>' +
-              (t != null ? '<span>' + escapeHTML(fmtTs(t)) + '</span>' : '');
+              (t != null
+                ? '<span class="hll-spark-tip-sep">·</span><span>' + escapeHTML(fmtTs(t)) + '</span>'
+                : '');
             tip.style.display = "block";
             // Position tip near cursor, clamped inside the sparkline rect.
             var left = u.cursor.left;
@@ -2958,8 +3203,21 @@
     var plot = new uPlot(opts, [xs, vals.map(function (v) { return +v; })], el);
     // Hide tooltip when leaving the sparkline entirely.
     el.addEventListener("mouseleave", function () { tip.style.display = "none"; });
-    // Do NOT registerChart — sparkline is fixed-width and should not
-    // participate in global resize/reset-zoom flows.
+    // Resize to follow its .callout container (page zoom, grid reflow).
+    if (typeof ResizeObserver !== "undefined") {
+      var ro = new ResizeObserver(function () {
+        var nw = measureW();
+        var nh = measureH();
+        if (Math.abs(nw - W) > 2 || Math.abs(nh - H) > 2) {
+          W = nw;
+          H = nh;
+          plot.setSize({ width: W, height: H });
+        }
+      });
+      ro.observe(el);
+    }
+    // Do NOT registerChart — sparkline follows its own container and
+    // should not participate in global reset-zoom flows.
     if (vals.length === 2) {
       // Label the two endpoints with their values so a two-snapshot
       // capture still reads as a trend rather than a bare stub.
@@ -2972,6 +3230,741 @@
     }
     // Prevent "unused plot" linter concerns — handle kept for future reuse.
     void plot;
+  }
+
+  // --- Feedback dialog ---------------------------------------------
+  // Wires the static <dialog id="feedback-dialog"> emitted by the
+  // template. See specs/002-report-feedback-button and
+  // specs/003-feedback-backend-worker. One submit code path
+  // (Principle XIII): doSubmit() POSTs JSON to the Worker; on any
+  // failure it calls doLegacyFallback() (feature-002 window.open +
+  // clipboard/download handoff) so the feature degrades gracefully
+  // (Principle III). Static-node mutations are limited to form
+  // values, `disabled`, `hidden`, `href`, `textContent`.
+  function initFeedbackDialog() {
+    var dialog = document.getElementById("feedback-dialog");
+    var openBtn = document.getElementById("feedback-open");
+    if (!dialog || !openBtn || typeof dialog.showModal !== "function") return;
+    var form = document.getElementById("feedback-form");
+    var titleInput = document.getElementById("feedback-field-title");
+    var bodyInput = document.getElementById("feedback-field-body");
+    var catSelect = document.getElementById("feedback-field-category");
+    var submitBtn = document.getElementById("feedback-submit");
+    var cancelBtn = document.getElementById("feedback-cancel");
+    var recordBtn = document.getElementById("feedback-record");
+    var attachments = document.getElementById("feedback-attachments");
+    var hint = document.getElementById("feedback-hint");
+    var errEl = document.getElementById("feedback-error");
+    var fallback = document.getElementById("feedback-fallback");
+    var fallbackLink = document.getElementById("feedback-fallback-link");
+    var successEl = document.getElementById("feedback-success");
+    var successLink = document.getElementById("feedback-success-link");
+    var successCloseBtn = document.getElementById("feedback-success-close");
+
+    // Single source of truth for both URLs: rendered onto the
+    // <dialog> by the Go template from FeedbackView.GitHubURL and
+    // FeedbackView.WorkerURL (Principle XIII — no duplicate constant
+    // in JS).
+    var BASE_URL = dialog.dataset.feedbackUrl;
+    var WORKER_URL = dialog.dataset.feedbackWorkerUrl;
+    if (!BASE_URL) return; // template didn't render the attr → abort init
+    var URL_MAX = 7500;
+    // 15s is deliberately large: base64-encoding a 5 MB image + voice
+    // note in the fetch body takes real time on slow uplinks. Short
+    // enough that a dead Worker still surfaces a fallback within the
+    // user's attention window.
+    var WORKER_TIMEOUT_MS = 15000;
+
+    var imgBlob = null, imgURL = null;
+    var voiceBlob = null, voiceURL = null;
+    var recorder = null, recStream = null, recChunks = null;
+    // idempotencyKey persists across doSubmit retries of the SAME
+    // logical submission attempt. Without this, a timeout/network
+    // error on the first POST would let the user re-click Submit
+    // and the Worker — whose 5-minute replay cache is keyed on the
+    // idempotencyKey — would see a new key and create a duplicate
+    // issue in the common case where the first request actually
+    // reached the backend but the client gave up waiting. The key
+    // is minted lazily inside doSubmit the first time it's needed,
+    // cleared when the submission lands a definitive success
+    // (renderSuccess) and when the dialog is dismissed (closeDialog)
+    // — both signals mean the next submit is a different logical
+    // attempt that deserves a fresh key.
+    var idempotencyKey = null;
+    // Monotonic session counter: bumped by startRecording (claims a
+    // fresh session) and closeDialog (invalidates any in-flight
+    // permission grant). stopRecording does NOT bump because it runs
+    // after the stream is already attached (past the getUserMedia
+    // session guard), so there's no stale-promise to invalidate at
+    // that point. Captured in the getUserMedia promise's `.then` so a
+    // delayed permission grant that lands on a dismissed dialog can
+    // detect it and tear down the stream instead of attaching a
+    // recorder to a closed session.
+    var recSessionId = 0;
+    var recStart = 0, recRAF = 0, recLabel = null;
+
+    function show(el) { if (el) el.hidden = false; }
+    function hide(el) { if (el) el.hidden = true; }
+    function setErr(msg) {
+      if (!msg) { errEl.textContent = ""; hide(errEl); return; }
+      errEl.textContent = msg; show(errEl);
+    }
+    function shortID() {
+      try {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          return window.crypto.randomUUID().slice(0, 8);
+        }
+      } catch (_) { /* fall through */ }
+      return Math.random().toString(36).slice(2, 10);
+    }
+    function extFromMime(m) { return (m && m.indexOf("mp4") !== -1) ? "mp4" : "webm"; }
+    // generateIdempotencyKey emits an RFC4122 v4 UUID per call. The
+    // native crypto.randomUUID path handles modern browsers; the
+    // fallback fills 16 bytes from crypto.getRandomValues and
+    // formats them with the v4 variant bits so the key is still
+    // unique per submission. A constant fallback (previous code)
+    // collided across every submission in browsers that ship fetch
+    // but lack randomUUID (older WebViews), letting the worker's
+    // 5-minute idempotency cache return another user's cached
+    // success or a stale duplicate_inflight — i.e., lost
+    // submissions and cross-user response mixups.
+    function generateIdempotencyKey() {
+      try {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          return window.crypto.randomUUID();
+        }
+        if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+          var b = new Uint8Array(16);
+          window.crypto.getRandomValues(b);
+          b[6] = (b[6] & 0x0f) | 0x40; // version 4
+          b[8] = (b[8] & 0x3f) | 0x80; // variant 1 (RFC 4122)
+          var h = "";
+          for (var i = 0; i < 16; i++) h += (b[i] + 0x100).toString(16).slice(1);
+          return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" +
+                 h.slice(16, 20) + "-" + h.slice(20, 32);
+        }
+      } catch (_) { /* fall through */ }
+      // Math.random is not cryptographically strong but still emits
+      // a unique-per-call value — strictly better than a constant
+      // fallback for idempotency-key purposes. Reachable only on
+      // environments where crypto.getRandomValues is also absent.
+      function rhex(n) {
+        var s = "";
+        for (var i = 0; i < n; i++) s += Math.floor(Math.random() * 16).toString(16);
+        return s;
+      }
+      return rhex(8) + "-" + rhex(4) + "-4" + rhex(3) + "-" +
+             ((Math.floor(Math.random() * 4) + 8).toString(16)) + rhex(3) + "-" + rhex(12);
+    }
+    function maybePrefixBody() {
+      var cat = catSelect.value;
+      return cat ? "> Category: " + cat + "\n\n" + bodyInput.value : bodyInput.value;
+    }
+    function buildURL() {
+      var sep = BASE_URL.indexOf("?") === -1 ? "?" : "&";
+      return BASE_URL + sep +
+        "title=" + encodeURIComponent(titleInput.value) +
+        "&body=" + encodeURIComponent(maybePrefixBody());
+    }
+    function refreshHint() {
+      // With the Worker path the attachments travel as part of the
+      // POST body — nothing for the user to paste or drag. We only
+      // surface the legacy clipboard/download copy if the Worker URL
+      // wasn't emitted by the template (very old reports), because
+      // that's the one case where doLegacyFallback does the handoff.
+      if (!WORKER_URL) {
+        var parts = [];
+        if (imgBlob) parts.push("Image will be on your clipboard — paste into GitHub's body.");
+        if (voiceBlob) parts.push("Voice note will be downloaded — drag it into GitHub's body.");
+        if (!parts.length) { hint.textContent = ""; hide(hint); return; }
+        hint.textContent = parts.join(" "); show(hint);
+        return;
+      }
+      // Worker path: the hint doubles as a small "attachments will be
+      // uploaded" reassurance so the user knows the media is part of
+      // the submission and not lost in clipboard limbo.
+      var items = [];
+      if (imgBlob) items.push("image");
+      if (voiceBlob) items.push("voice note");
+      if (!items.length) { hint.textContent = ""; hide(hint); return; }
+      hint.textContent = "Your " + items.join(" and ") +
+        (items.length === 1 ? " will be attached to the issue." : " will be attached to the issue.");
+      show(hint);
+    }
+    function updateSubmitEnabled() {
+      // URL_MAX guards the LEGACY window.open pre-fill path where the
+      // title+body ride as query parameters under GitHub's ~8 KB URL
+      // cap. The Worker path accepts a ~10 KB body as plain JSON —
+      // much more headroom — so gating Submit on the encoded URL
+      // length there would block genuinely-valid submissions whose
+      // bodies fit the Worker but bloat past the URL budget (long
+      // paragraphs, code blocks, etc). Gate by the runtime path.
+      var titleLen = titleInput.value.trim().length;
+      if (titleLen === 0) { submitBtn.disabled = true; return; }
+      if (WORKER_URL) {
+        // Worker path — cap by the backend's real limits from
+        // feedback-worker/src/validate.ts:
+        //   title  ≤ 200 chars (TITLE_MAX)
+        //   body   ≤ 10_240 UTF-8 bytes (BODY_MAX_BYTES)
+        // Leaving the button enabled past 200 chars would let the
+        // user submit a payload the Worker immediately rejects with
+        // 400 `title_too_long` — not a silent failure, but a broken
+        // invariant: the gate is supposed to mirror the contract.
+        // Use TextEncoder for exact UTF-8 size (multi-byte glyphs
+        // don't collapse to .length).
+        var titleOK = titleInput.value.length <= 200;
+        var bodyBytes = new TextEncoder().encode(bodyInput.value).byteLength;
+        submitBtn.disabled = !(titleOK && bodyBytes <= 10240);
+      } else {
+        // Legacy fallback path — gate by GitHub URL length.
+        submitBtn.disabled = buildURL().length > URL_MAX;
+      }
+    }
+
+    // --- Attachments (single helper, kind-parameterised) ----------
+
+    function clearAttachment(kind) {
+      // Attachment mutation changes the payload the Worker would
+      // cache, so invalidate the sticky idempotencyKey so the next
+      // Submit mints a fresh key instead of replaying the old
+      // issueUrl against edited content. Covers addAttachment too,
+      // which starts by calling clearAttachment(kind).
+      idempotencyKey = null;
+      if (kind === "image") {
+        if (imgURL) { try { URL.revokeObjectURL(imgURL); } catch (_) {} }
+        imgBlob = null; imgURL = null;
+      } else {
+        if (voiceURL) { try { URL.revokeObjectURL(voiceURL); } catch (_) {} }
+        voiceBlob = null; voiceURL = null;
+      }
+      var n = attachments.querySelector('[data-kind="' + kind + '"]');
+      if (n) n.parentNode.removeChild(n);
+      var dl = attachments.querySelector('[data-kind="image-download"]');
+      if (kind === "image" && dl) dl.parentNode.removeChild(dl);
+      refreshHint(); updateSubmitEnabled();
+    }
+    function addAttachment(kind, blob) {
+      clearAttachment(kind);
+      var url = URL.createObjectURL(blob);
+      var media;
+      if (kind === "image") {
+        imgBlob = blob; imgURL = url;
+        media = document.createElement("img");
+        media.alt = "Pasted screenshot preview";
+      } else {
+        voiceBlob = blob; voiceURL = url;
+        media = document.createElement("audio");
+        media.controls = true;
+      }
+      media.src = url;
+      var wrap = document.createElement("div");
+      // Base class + per-kind modifier (see contracts/ui.md).
+      wrap.className = "feedback-attachment feedback-attachment--" + kind;
+      wrap.setAttribute("data-kind", kind);
+      var rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "feedback-attachment-remove";
+      rm.setAttribute("aria-label", kind === "image" ? "Remove image" : "Remove voice note");
+      rm.textContent = "×";
+      rm.addEventListener("click", function () { clearAttachment(kind); });
+      if (kind === "image") {
+        // Wrap the <img> in a thumb-wrap so CSS can contain it inside
+        // a bordered card without ripping the aspect ratio. The remove
+        // button is positioned absolutely over the top-right corner.
+        var thumbWrap = document.createElement("div");
+        thumbWrap.className = "feedback-thumb-wrap";
+        media.className = "feedback-thumb";
+        thumbWrap.appendChild(media);
+        wrap.appendChild(thumbWrap);
+        wrap.appendChild(rm);
+      } else {
+        media.className = "feedback-audio";
+        wrap.appendChild(media);
+        wrap.appendChild(rm);
+      }
+      attachments.appendChild(wrap);
+      refreshHint(); updateSubmitEnabled();
+    }
+
+    // --- Recording ------------------------------------------------
+
+    function stopRecording() {
+      if (recRAF) { cancelAnimationFrame(recRAF); recRAF = 0; }
+      if (recorder && recorder.state === "recording") {
+        try { recorder.stop(); } catch (_) {}
+      }
+      if (recStream) {
+        try { recStream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
+        recStream = null;
+      }
+      // Remove the whole .feedback-attachment--recording wrapper, not
+      // just the timer span, so the pulsing dot and Stop button come
+      // off together.
+      if (recLabel && recLabel.parentNode) {
+        var w = recLabel.parentNode;
+        if (w.parentNode) w.parentNode.removeChild(w);
+      }
+      recLabel = null;
+      recordBtn.disabled = false;
+    }
+    function tickTimer() {
+      if (!recLabel) return;
+      var elapsed = (performance.now() - recStart) / 1000;
+      if (elapsed >= 600) { stopRecording(); return; }
+      var m = Math.floor(elapsed / 60);
+      var s = Math.floor(elapsed % 60);
+      recLabel.textContent = m + ":" + (s < 10 ? "0" : "") + s + " / 10:00";
+      recRAF = requestAnimationFrame(tickTimer);
+    }
+    function startRecording() {
+      setErr("");
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia ||
+          typeof window.MediaRecorder === "undefined") {
+        setErr("Voice recording is not supported by this browser."); return;
+      }
+      recordBtn.disabled = true;
+      // Claim a new session id so the getUserMedia .then below can
+      // detect "dialog closed while we were awaiting mic permission"
+      // by comparing against the module-level recSessionId. If the
+      // user dismisses the dialog before permission resolves,
+      // closeDialog bumps recSessionId and our captured mySession
+      // won't match → we tear down the stream and exit cleanly.
+      // (The cloud-Claude variant used just `!dialog.open` to detect
+      // the dismissed-dialog race; the session counter also catches a
+      // second recording started before the first permission resolves,
+      // which dialog.open alone would miss.)
+      var mySession = ++recSessionId;
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+        if (mySession !== recSessionId || !dialog.open) {
+          // Dialog was closed (or another startRecording superseded
+          // us) before permission resolved. Drop the stream so the
+          // browser's recording indicator goes away, re-enable
+          // recordBtn so the next dialog open can start a fresh
+          // recording (recordBtn is persistent DOM across open/close
+          // — closeDialog doesn't reset its disabled state, so a
+          // stale-session exit that skips this line strands the
+          // button disabled for the rest of the page session), and
+          // return without touching module recorder state.
+          try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
+          recordBtn.disabled = false;
+          return;
+        }
+        recStream = stream;
+        try { recorder = new MediaRecorder(stream); }
+        catch (e) {
+          setErr("Could not start recorder: " + (e && e.message ? e.message : e));
+          try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
+          recStream = null; recordBtn.disabled = false; return;
+        }
+        // Bind the async recorder listeners to THIS session's locals
+        // so a delayed event from a previous recording can't
+        // clobber a new session's state. If the user cancels
+        // mid-recording, quickly reopens the dialog, and starts a
+        // second recording before the first MediaRecorder dispatches
+        // its `stop` event, the old callback would otherwise reach
+        // through to the module-level `recorder` / `recChunks`
+        // variables (which now hold the NEW session's state) and
+        // null them out — the new recording would lose its chunks
+        // mid-stream.
+        var sessionRecorder = recorder;
+        var sessionChunks = [];
+        recChunks = sessionChunks; // closeDialog nulls this to silence cancel
+        sessionRecorder.addEventListener("dataavailable", function (ev) {
+          // A cancel sets recChunks = null on the module-level. Our
+          // own sessionChunks is still allocated — check the module
+          // reference to decide whether to collect or drop chunks.
+          if (recChunks === sessionChunks && ev.data && ev.data.size) {
+            sessionChunks.push(ev.data);
+          }
+        });
+        sessionRecorder.addEventListener("stop", function () {
+          var mime = sessionRecorder.mimeType || "audio/webm";
+          // Only materialise an attachment when THIS session is
+          // still the active one AND wasn't silenced by closeDialog.
+          // sessionChunks.length === 0 covers a clean cancel (data
+          // path silenced) and the "mic never produced any data"
+          // case alike.
+          if (recChunks === sessionChunks && sessionChunks.length > 0) {
+            addAttachment("voice", new Blob(sessionChunks, { type: mime }));
+          }
+          if (recorder === sessionRecorder) {
+            recorder = null;
+            recChunks = null;
+          }
+        });
+        sessionRecorder.start();
+        recStart = performance.now();
+        // Contract markup: wrapper + pulsing dot + timer + Stop button
+        // (see specs/002-report-feedback-button/contracts/ui.md).
+        var wrap = document.createElement("div");
+        wrap.className = "feedback-attachment feedback-attachment--recording";
+        wrap.setAttribute("data-kind", "recording");
+        var dot = document.createElement("span");
+        dot.className = "feedback-recording-dot";
+        dot.setAttribute("aria-hidden", "true");
+        recLabel = document.createElement("span");
+        recLabel.className = "feedback-recording-time";
+        recLabel.textContent = "0:00 / 10:00";
+        var stopBtn = document.createElement("button");
+        stopBtn.type = "button";
+        stopBtn.className = "feedback-record-stop";
+        stopBtn.textContent = "Stop";
+        stopBtn.addEventListener("click", stopRecording);
+        wrap.appendChild(dot); wrap.appendChild(recLabel); wrap.appendChild(stopBtn);
+        attachments.appendChild(wrap);
+        recordBtn.disabled = true;
+        recRAF = requestAnimationFrame(tickTimer);
+      }).catch(function (err) {
+        setErr("Microphone access denied: " + (err && err.message ? err.message : err));
+        recordBtn.disabled = false;
+      });
+    }
+
+    // --- Open / close / submit ------------------------------------
+
+    function openDialog() {
+      setErr(""); hide(fallback); hide(hint);
+      if (successEl) hide(successEl);
+      form.hidden = false;
+      dialog.showModal();
+      try { titleInput.focus(); } catch (_) {}
+    }
+    function closeDialog() {
+      // Invalidate any in-flight getUserMedia permission prompt so its
+      // delayed .then callback won't attach a recorder to the
+      // now-dismissed dialog. The bumped recSessionId is what the
+      // callback compares against.
+      recSessionId++;
+      if (recorder || recStream || recRAF) {
+        // MediaRecorder.stop is async: the "stop" listener below runs
+        // on a later tick and — if it finds a non-empty recChunks —
+        // calls addAttachment("voice", …). When the user cancels
+        // mid-recording we've already cleared attachments by the time
+        // that callback fires, so a canceled recording would
+        // silently repopulate the voice attachment on the NEXT
+        // dialog open. Null recChunks first so the stop guard
+        // (`if (recChunks && recChunks.length)`) is false and the
+        // late callback is a no-op.
+        recChunks = null;
+        stopRecording();
+      }
+      clearAttachment("image"); clearAttachment("voice");
+      titleInput.value = ""; bodyInput.value = ""; catSelect.value = "";
+      setErr(""); hide(fallback); hide(hint);
+      // Dialog dismissal ends the current logical submission. The
+      // next time the user opens the dialog and clicks Submit, they
+      // are composing a fresh message and deserve a fresh
+      // idempotencyKey — not a replay of whatever the backend
+      // cached against the old key.
+      idempotencyKey = null;
+      // Reset the success panel so reopening the dialog after a
+      // successful submit starts back at the form, not the stale
+      // "Feedback posted" state.
+      if (successEl) hide(successEl);
+      if (successLink) successLink.href = "#";
+      form.hidden = false;
+      updateSubmitEnabled();
+      if (dialog.open) { try { dialog.close(); } catch (_) {} }
+    }
+    function renderImageDownload() {
+      if (!imgBlob || !imgURL) return;
+      if (attachments.querySelector('[data-kind="image-download"]')) return;
+      // Reuse the existing .feedback-attachment surface so the download
+      // fallback inherits its padding/border. No separate CSS class.
+      var wrap = document.createElement("div");
+      wrap.className = "feedback-attachment";
+      wrap.setAttribute("data-kind", "image-download");
+      var a = document.createElement("a");
+      a.href = imgURL;
+      a.download = "feedback-image-" + shortID() + ".png";
+      a.textContent = "Download image";
+      wrap.appendChild(a);
+      attachments.appendChild(wrap);
+      hint.textContent = "Clipboard blocked — download the image and drop it into GitHub's body.";
+      show(hint);
+    }
+    // blobToBase64 reads the given Blob via FileReader.readAsDataURL
+    // and returns the raw base64 payload (the "data:<mime>;base64,"
+    // prefix stripped). Rejects if the reader errors. Used to pack
+    // image + voice attachments into the Worker JSON payload (spec
+    // 003, research R6).
+    function blobToBase64(blob) {
+      return new Promise(function (resolve, reject) {
+        var reader = new FileReader();
+        reader.onerror = function () { reject(reader.error || new Error("FileReader error")); };
+        reader.onload = function () {
+          var s = String(reader.result || "");
+          var comma = s.indexOf(",");
+          resolve(comma === -1 ? s : s.slice(comma + 1));
+        };
+        try { reader.readAsDataURL(blob); } catch (e) { reject(e); }
+      });
+    }
+
+    // renderSuccess hides the form and reveals the post-submit panel
+    // with a link to the freshly-created GitHub issue.
+    function renderSuccess(issueUrl) {
+      if (!successEl || !successLink) return;
+      // Definitive success — the next Submit (after a form reset or
+      // dialog close) is a new logical attempt and deserves a fresh
+      // idempotencyKey. Clear the cached key so lazy-init in
+      // doSubmit mints a new one.
+      idempotencyKey = null;
+      successLink.href = issueUrl;
+      form.hidden = true;
+      show(successEl);
+    }
+
+    // doLegacyFallback is the feature-002 submit path: open GitHub's
+    // new-issue URL in a new tab and hand media off via clipboard
+    // (images) or programmatic download (voice). Invoked only on the
+    // Worker-path failure arm of doSubmit() (Principle III graceful
+    // degradation; Principle XIII single code path — this is the
+    // failure branch of doSubmit, not a parallel handler).
+    function doLegacyFallback() {
+      var url = buildURL();
+
+      // 1. Try to open GitHub. Attempt this FIRST so the user-gesture
+      //    is consumed on a real navigation, not on a download that
+      //    might satisfy the browser's popup heuristic instead.
+      var win;
+      try { win = window.open(url, "_blank", "noopener,noreferrer"); } catch (_) { win = null; }
+      if (!win) {
+        fallbackLink.href = url; show(fallback);
+        setErr("Popup blocked. Use the link below to open GitHub — your attachments are ready to paste/drop.");
+      }
+
+      // 2. Hand media off regardless of the popup outcome. The same
+      //    user-click is still an active gesture, so clipboard-write
+      //    and programmatic <a download> both work. When the popup is
+      //    blocked, the user still gets the image on the clipboard
+      //    and the voice file on disk, so by the time they click the
+      //    fallback link everything is ready to paste/drop on GitHub.
+      if (imgBlob) {
+        var wrote = false;
+        try {
+          if (navigator.clipboard && typeof navigator.clipboard.write === "function" &&
+              typeof window.ClipboardItem !== "undefined") {
+            navigator.clipboard.write([new window.ClipboardItem({ "image/png": imgBlob })])
+              .catch(function () { renderImageDownload(); });
+            wrote = true;
+          }
+        } catch (_) { /* fall through */ }
+        if (!wrote) renderImageDownload();
+      }
+      if (voiceBlob && voiceURL) {
+        var a = document.createElement("a");
+        a.href = voiceURL;
+        a.download = "feedback-voice-" + shortID() + "." + extFromMime(voiceBlob.type);
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      }
+    }
+
+    // doSubmit — single code path for the Submit gesture (Principle
+    // XIII). Validates (via updateSubmitEnabled gating the button),
+    // POSTs a JSON payload to the Worker, and routes by response:
+    //   200 → inline success panel, no auto-close
+    //   400 → inline validation error, no fallback (R8)
+    //   429 → throttle message with retryAfterSeconds, no fallback
+    //   everything else (5xx, network error, timeout, abort) →
+    //     doLegacyFallback() with a note in #feedback-hint.
+    function doSubmit() {
+      if (submitBtn.disabled) return;
+      setErr(""); hide(fallback); hide(hint);
+      if (successEl) hide(successEl);
+
+      // If the template didn't emit a Worker URL (older report), go
+      // straight to the legacy flow. Still one code path — the "no
+      // worker" case is just a pre-computed failure.
+      if (!WORKER_URL || typeof window.fetch !== "function") {
+        doLegacyFallback();
+        return;
+      }
+
+      submitBtn.disabled = true;
+      var hadImage = !!imgBlob, hadVoice = !!voiceBlob;
+      var reportVersion = "unknown";
+      var genMeta = document.querySelector('meta[name="generator"]');
+      if (genMeta && genMeta.content) reportVersion = genMeta.content.slice(0, 64);
+
+      // Mint the idempotency key lazily, and only if we don't
+      // already have one. A persisted key carried across retries is
+      // the entire point of the Worker's 5-minute replay cache:
+      // when a first POST actually reaches the backend but the
+      // client times out waiting for the response, the retry with
+      // the SAME key replays the original success instead of
+      // creating a duplicate issue. The enclosing scope resets
+      // idempotencyKey to null on definitive success and on
+      // closeDialog — those are the only two events that mean
+      // "the next Submit is a new logical attempt".
+      if (!idempotencyKey) {
+        idempotencyKey = generateIdempotencyKey();
+      }
+
+      // Snapshot the attachment blob references up front so the
+      // async base64 encoding reads a frozen view even if the user
+      // clears or replaces the attachment mid-submit. Without
+      // these locals, imgBlob/voiceBlob could go null (throwing
+      // on `.type`) or swap to a different blob between the
+      // `blobToBase64(imgBlob)` kick-off and the `imgBlob.type`
+      // read inside the .then callback — so the POST would carry
+      // base64 bytes from one blob but a MIME type from another.
+      var imgBlobAtSubmit = imgBlob;
+      var voiceBlobAtSubmit = voiceBlob;
+
+      // Build attachment promises first; any base64 encoding error
+      // routes through the same fallback arm as a Worker failure.
+      var imgP = imgBlobAtSubmit ? blobToBase64(imgBlobAtSubmit).then(function (b64) {
+        return { mime: imgBlobAtSubmit.type || "image/png", base64: b64 };
+      }) : Promise.resolve(null);
+      var voiceP = voiceBlobAtSubmit ? blobToBase64(voiceBlobAtSubmit).then(function (b64) {
+        return { mime: voiceBlobAtSubmit.type || "audio/webm", base64: b64 };
+      }) : Promise.resolve(null);
+
+      Promise.all([imgP, voiceP]).then(function (parts) {
+        // Send the RAW textarea body here — the worker adds the
+        // "> Category: …" prefix itself when payload.category is
+        // present (see feedback-worker/src/body.ts). maybePrefixBody
+        // is only for the fallback GitHub URL, where the worker
+        // isn't in the loop. Sending the prefixed body here would
+        // double-prepend the category block in worker submissions.
+        var payload = {
+          title: titleInput.value,
+          body: bodyInput.value,
+          idempotencyKey: idempotencyKey,
+          reportVersion: reportVersion
+        };
+        if (catSelect.value) payload.category = catSelect.value;
+        if (parts[0]) payload.image = parts[0];
+        if (parts[1]) payload.voice = parts[1];
+
+        var controller = new AbortController();
+        var timer = setTimeout(function () { try { controller.abort(); } catch (_) {} }, WORKER_TIMEOUT_MS);
+
+        return fetch(WORKER_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+          // `no-store` mirrors the Worker's cache contract.
+          cache: "no-store",
+          mode: "cors"
+        }).then(function (res) {
+          clearTimeout(timer);
+          return res.json().then(function (data) { return { res: res, data: data }; },
+            function () { return { res: res, data: null }; });
+        }, function (err) {
+          clearTimeout(timer);
+          throw err;
+        });
+      }).then(function (r) {
+        var res = r.res, data = r.data || {};
+        if (res.status === 200 && data && data.ok && data.issueUrl) {
+          renderSuccess(data.issueUrl);
+          return;
+        }
+        if (res.status === 400) {
+          var msg = (data && data.message) || "Your submission was rejected.";
+          setErr(msg);
+          submitBtn.disabled = false;
+          return;
+        }
+        if (res.status === 429) {
+          var retry = (data && typeof data.retryAfterSeconds === "number") ? data.retryAfterSeconds : 0;
+          var base = (data && data.message) || "Rate limit reached.";
+          var suffix = retry > 0 ? " Try again in " + Math.ceil(retry / 60) + " minute(s)." : "";
+          setErr(base + suffix);
+          submitBtn.disabled = false;
+          return;
+        }
+        if (res.status === 409) {
+          // duplicate_inflight: the Worker is still processing a
+          // prior request with the SAME idempotencyKey and hasn't
+          // decided yet whether it succeeded. Opening the legacy
+          // GitHub URL now would let the user post a second manual
+          // issue even if the first request lands successfully on
+          // the Worker side — the very duplicate the key is meant
+          // to prevent. Show a "still processing" message, keep
+          // submitBtn enabled, and keep the sticky idempotencyKey
+          // so a retry a few seconds later either replays the
+          // cached 200 (first request succeeded) or creates a
+          // single issue (inflight marker expired).
+          var msg409 = (data && data.message) ||
+            "A previous submission with the same key is still being processed. Please wait a few seconds and try again.";
+          setErr(msg409);
+          submitBtn.disabled = false;
+          return;
+        }
+        // 5xx, 413, unexpected status → fall back.
+        doLegacyFallback();
+        hint.textContent = "Backend unavailable — opened GitHub with pre-filled form.";
+        show(hint);
+        submitBtn.disabled = false;
+      }).catch(function () {
+        // Network error, timeout, abort, or JSON parse/encoding failure.
+        doLegacyFallback();
+        hint.textContent = "Backend unavailable — opened GitHub with pre-filled form.";
+        show(hint);
+        submitBtn.disabled = false;
+      });
+      // Silence unused-var warnings in branches that don't reach them.
+      void hadImage; void hadVoice;
+      // Do not auto-close; the user decides when to dismiss the dialog.
+    }
+
+    // --- Wiring ---------------------------------------------------
+
+    openBtn.addEventListener("click", openDialog);
+    cancelBtn.addEventListener("click", function () { closeDialog(); });
+    if (successCloseBtn) {
+      successCloseBtn.addEventListener("click", function () { closeDialog(); });
+    }
+    // Escape fires "cancel"; funnel it through our cleanup path.
+    dialog.addEventListener("cancel", function (ev) { ev.preventDefault(); closeDialog(); });
+    dialog.addEventListener("close", function () { closeDialog(); });
+    // Backdrop click: target is the dialog element itself.
+    dialog.addEventListener("click", function (ev) { if (ev.target === dialog) closeDialog(); });
+    // Single submit path — catches button click, Enter-in-input, and Cmd/Ctrl+Enter.
+    form.addEventListener("submit", function (ev) { ev.preventDefault(); doSubmit(); });
+    dialog.addEventListener("keydown", function (ev) {
+      if ((ev.metaKey || ev.ctrlKey) && ev.key === "Enter") {
+        ev.preventDefault();
+        if (!submitBtn.disabled) { form.requestSubmit ? form.requestSubmit() : doSubmit(); }
+      }
+    });
+    // Any content mutation invalidates the current idempotencyKey —
+    // the Worker deduplicates by key alone (reserveResponse /
+    // cacheResponse replay don't compare payload content). Without
+    // this, a retry after an in-flight timeout where the first POST
+    // actually succeeded would replay the ORIGINAL cached issueUrl
+    // even though the user corrected the title / body / category /
+    // attachments before the retry, silently dropping the edits.
+    // Calling this on every input/change event is cheap (a single
+    // assignment) and the key is re-minted lazily on the next
+    // doSubmit.
+    function onFormContentChange() {
+      idempotencyKey = null;
+      updateSubmitEnabled();
+    }
+    titleInput.addEventListener("input", onFormContentChange);
+    bodyInput.addEventListener("input", onFormContentChange);
+    catSelect.addEventListener("change", onFormContentChange);
+    dialog.addEventListener("paste", function (ev) {
+      var items = ev.clipboardData && ev.clipboardData.items;
+      if (!items) return;
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        if (it.kind === "file" && it.type && it.type.indexOf("image/") === 0) {
+          var blob = it.getAsFile();
+          if (blob) { ev.preventDefault(); addAttachment("image", blob); return; }
+        }
+      }
+    });
+    recordBtn.addEventListener("click", function () {
+      if (recorder && recorder.state === "recording") stopRecording();
+      else startRecording();
+    });
+    updateSubmitEnabled();
   }
 
   if (document.readyState === "loading") {
@@ -2988,7 +3981,9 @@
     initNavScrollSpy();
     initAdvisorFilter();
     initSemaphoreBreakdown();
+    initEnvTabs();
     initPrintHook();
+    initFeedbackDialog();
     observeContentColumn();
     // Also re-fit on any <details> toggle (open/close affects
     // content-column scrollbar which affects chart width).

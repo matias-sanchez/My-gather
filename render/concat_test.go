@@ -370,6 +370,46 @@ func TestConcatProcesslistUnionsDimensions(t *testing.T) {
 	}
 }
 
+// TestConcatNetstatSPreservesSubSecondTimestamps — regression guard
+// for the rate-math collapse Codex flagged on bf7e8fc. pt-stalk polls
+// can land within the same whole second; if concatNetstatS truncates
+// to Unix() seconds the downstream rate divisor
+// Timestamps[i]-Timestamps[i-1] collapses to 0 and the rate chart
+// silently drops per-second samples. Preserving sub-second precision
+// is a correctness requirement, and this test locks it in.
+func TestConcatNetstatSPreservesSubSecondTimestamps(t *testing.T) {
+	_ = math.NaN // keep the math import tied to this file even if the
+	// only user above is deleted later.
+
+	// Two polls 400ms apart, both in the same whole calendar second.
+	t0 := time.Date(2026, 4, 21, 16, 51, 41, 100_000_000 /* 0.1s */, time.UTC)
+	t1 := t0.Add(400 * time.Millisecond) // 0.5s — still the same Unix() second
+	if t0.Unix() != t1.Unix() {
+		t.Fatalf("setup: both polls must share the same Unix() second; got %d and %d", t0.Unix(), t1.Unix())
+	}
+	perFile := [][]*model.NetstatCountersSample{
+		{
+			{Timestamp: t0, Values: map[string]float64{"tcp_segs_in": 1000}},
+			{Timestamp: t1, Values: map[string]float64{"tcp_segs_in": 1200}},
+		},
+	}
+	data := concatNetstatS(perFile)
+	if data == nil {
+		t.Fatalf("concatNetstatS returned nil")
+	}
+	if len(data.Timestamps) != 2 {
+		t.Fatalf("want 2 timestamps, got %d", len(data.Timestamps))
+	}
+	gap := data.Timestamps[1] - data.Timestamps[0]
+	if gap <= 0 {
+		t.Fatalf("sub-second gap collapsed to %.9f — rate math would divide by zero (Timestamp.Unix() truncation regression)", gap)
+	}
+	// ~0.4s expected; allow a small tolerance for IEEE-754 round-trip.
+	if gap < 0.39 || gap > 0.41 {
+		t.Errorf("gap = %.9f s, want ~0.4 s (sub-second precision not preserved)", gap)
+	}
+}
+
 func eqInts(a, b []int) bool {
 	if len(a) != len(b) {
 		return false

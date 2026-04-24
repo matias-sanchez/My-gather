@@ -1,6 +1,121 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.2.0 → 1.3.0
+Bump rationale: MINOR-level named exception added to Principle IX
+  (Zero Network at Runtime). The exception permits a single outbound
+  POST to a project-controlled endpoint on explicit user Submit of
+  the Report Feedback dialog, enabling feature 003-feedback-backend-worker
+  to hand the feedback off to a Cloudflare Worker that posts the
+  GitHub Issue server-side (the only path that avoids shipping a
+  token in the report). The broader no-network baseline is unchanged;
+  nothing already-compliant becomes non-compliant.
+
+Added principles: none.
+
+Modified principles:
+  - IX. Zero Network at Runtime → adds a "Named exceptions" subsection
+    describing the user-initiated-Submit path. Baseline rule
+    ("MUST NOT perform any network I/O during normal operation") is
+    preserved verbatim. Only additive text.
+
+Modified sections: none outside the principle body itself.
+
+Downstream cleanups folded into this amendment:
+  - None. The amendment lands alongside the feature that needs it,
+    per plan.md.
+
+Templates requiring updates:
+  - .specify/templates/plan-template.md      ✅ compatible
+  - .specify/templates/spec-template.md      ✅ compatible
+  - .specify/templates/tasks-template.md     ✅ compatible
+  - .specify/templates/checklist-template.md ✅ compatible
+  - .claude/skills/speckit-*/                ✅ compatible
+
+Deferred items / follow-up TODOs: none.
+
+Prior Sync Impact Report (1.2.0) follows for history:
+-----------------------------------------------------
+Version change: 1.1.0 → 1.2.0
+Bump rationale: MINOR-level addition of a new Core Principle — XIV.
+  English-Only Durable Artifacts — and a companion 8th entry in the
+  Development Workflow & Quality Gates section. The principle
+  codifies the pre-existing CLAUDE.md "Language convention" rule at
+  constitution level so reviewers, the pre-review-constitution-guard
+  agent, and the /pr-review-fix-my-gather skill all gate on it. It
+  explicitly exempts content under `testdata/` and `_references/`
+  (raw pt-stalk input, preserved by Principle II) and out-of-band
+  chat with the user. No existing principle is weakened or
+  redefined; this is additive, hence MINOR rather than MAJOR.
+
+Added principles:
+  - XIV. English-Only Durable Artifacts
+
+Modified sections:
+  - Development Workflow & Quality Gates → added 8th merge gate:
+      "No non-English content is introduced into any checked-in
+      artifact outside `testdata/` and `_references/` (Principle XIV)."
+
+Downstream cleanups folded into this amendment:
+  - .claude/skills/pr-review-fix-my-gather/SKILL.md → removed the
+      Spanish <example> block from the description (artifact MUST
+      be English under XIV).
+  - CLAUDE.md → replaced the 13-line "Language convention" block
+      with a one-line pointer to Principle XIV, eliminating the
+      duplicated authority.
+
+Templates requiring updates:
+  - .specify/templates/plan-template.md      ✅ compatible
+  - .specify/templates/spec-template.md      ✅ compatible
+  - .specify/templates/tasks-template.md     ✅ compatible
+  - .specify/templates/checklist-template.md ✅ compatible
+  - .claude/skills/speckit-*/                ✅ compatible
+  - README.md                                ⚠ pending (update when
+      README documents principles explicitly)
+
+Deferred items / follow-up TODOs:
+  - Consider a mechanical English-only grep in
+      scripts/hooks/pre-push-constitution-guard.sh once drift is
+      observed. Skip until a real violation shows up — start with
+      governance teeth, add mechanical enforcement only if needed.
+
+Prior Sync Impact Report (1.1.0) follows for history:
+-----------------------------------------------------
+Version change: 1.0.1 → 1.1.0
+Bump rationale: MINOR-level addition of a new Core Principle — XIII.
+  Canonical Code Path (NON-NEGOTIABLE) — and a companion 7th entry in
+  the Development Workflow & Quality Gates section enforcing it at
+  merge time. The principle forbids duplicated implementations, silent
+  fallbacks, and compatibility shims for internal identifiers, while
+  preserving legitimate branching at true system boundaries (distinct
+  pt-stalk file format versions, platform primitives) and structured
+  diagnostic reporting under Principle III. No existing principle is
+  weakened or redefined; this is additive, hence MINOR rather than
+  MAJOR.
+
+Added principles:
+  - XIII. Canonical Code Path (NON-NEGOTIABLE)
+
+Modified sections:
+  - Development Workflow & Quality Gates → added 7th merge gate:
+      "No change leaves a duplicated or fallback implementation of an
+      existing behaviour in place (Principle XIII)."
+
+Templates requiring updates:
+  - .specify/templates/plan-template.md      ✅ compatible (generic
+      Constitution Check gate; no principle names hard-coded)
+  - .specify/templates/spec-template.md      ✅ compatible
+  - .specify/templates/tasks-template.md     ✅ compatible
+  - .specify/templates/checklist-template.md ✅ compatible
+  - .claude/skills/speckit-*/                ✅ compatible (reference
+      the constitution file path, not principle names)
+  - README.md                                ⚠ pending (update when
+      README documents principles explicitly)
+
+Deferred items / follow-up TODOs: none.
+
+Prior Sync Impact Report (1.0.1) follows for history:
+-----------------------------------------------------
 Version change: 1.0.0 → 1.0.1
 Bump rationale: PATCH-level wording fix. Principle VIII referenced the
   fixture source path as `references/examples/`; the repository actually
@@ -155,6 +270,22 @@ outbound HTTP. Network code paths (e.g., `net/http` client usage) are
 prohibited in the shipped binary except behind build tags used exclusively
 for development tooling that is NOT compiled into release artifacts.
 
+**Named exceptions**: The following runtime network calls are allowed
+when the user has an explicit intent expressed by a UI action:
+
+- **Feedback submission (ratified 2026-04-24 for feature
+  003-feedback-backend-worker)**: On the user clicking the "Submit"
+  button of the Report Feedback dialog, the report MAY perform a
+  single outbound `POST` to a project-controlled HTTPS endpoint. The
+  endpoint URL MUST be a build-time constant. The payload MUST be
+  scoped to the user's explicit feedback (title, body, attachments);
+  it MUST NOT include telemetry, report metadata beyond the feedback
+  itself, or any data the user did not type into the dialog. On any
+  failure of the endpoint, the report MUST fall back to a non-network
+  path that delivers equivalent value (feature 002's `window.open`
+  pre-fill URL flow satisfies this). The Go binary itself remains
+  subject to the baseline rule above — it performs no network I/O.
+
 ### X. Minimal Dependencies
 
 The standard library is the default. Third-party modules MUST be justified
@@ -184,6 +315,38 @@ MUST go through `path/filepath`). Upgrading the Go version MUST be
 performed as an explicit, reviewed change, not as an incidental side effect
 of another commit.
 
+### XIII. Canonical Code Path (NON-NEGOTIABLE)
+
+Every behaviour in My-gather MUST have exactly one implementation. When a
+function, type, or code path is replaced, the old one MUST be deleted in
+the same change — not left behind, not guarded by an internal flag, not
+retained "for safety". Silent fallbacks (try A, on failure silently try B)
+are prohibited; recoverable failures MUST surface as typed errors
+(Principle VII) or structured diagnostics in the report (Principle III),
+never as a second hidden attempt. Re-exports and compatibility shims for
+internal identifiers after a rename are prohibited; all call sites MUST
+be updated in the same commit. This principle does not forbid branching
+driven by genuine input variation (e.g., distinct pt-stalk file format
+versions) or platform primitives (`path/filepath`), provided the branches
+converge into a single typed model as early as possible.
+
+### XIV. English-Only Durable Artifacts
+
+All artifacts checked into this repository MUST be written in English.
+This covers source code (identifiers, comments, godoc), commit messages,
+branch names, tags, pull-request titles and descriptions, pull-request
+and issue review comments, GitHub issues opened from this repo, and
+every file under `specs/`, `.specify/`, `docs/`, `.claude/` (agent
+definitions, skill descriptions and their example trigger phrases,
+settings), `scripts/` (including hook scripts), `README.md`, and
+`CHANGELOG.md`. The following are exempt: (a) content under `testdata/`
+and `_references/`, which reproduces raw pt-stalk input and MUST NOT be
+modified (Principle II); (b) out-of-band chat with the user via the
+Claude Code TUI or another interactive channel, which is not a
+checked-in artifact. A change that introduces non-English text into any
+other artifact MUST be rejected unless the same pull request carries a
+constitution amendment adopting a named exception.
+
 ## Distribution & Platform Support
 
 Release artifacts MUST be produced reproducibly from tagged commits and
@@ -210,6 +373,14 @@ The following gates MUST pass before any change is merged:
    their contract (Principle VI).
 6. No build introduces a CGO requirement, a network call at runtime, or a
    write under the input tree (Principles I, IX, II).
+7. No change leaves a duplicated or fallback implementation of an existing
+   behaviour in place (Principle XIII). Replaced functions, types, and
+   code paths MUST be deleted in the same change; internal re-exports and
+   compatibility shims after a rename are prohibited.
+8. No change introduces non-English content into any checked-in artifact
+   outside `testdata/` and `_references/` (Principle XIV). Source code,
+   comments, commit messages, branch names, specs, docs, `.claude/` agent
+   and skill definitions, and shell scripts MUST be English-only.
 
 Reviewers MUST reject changes that violate any Core Principle unless the
 change is accompanied by a constitution amendment adopted under the
@@ -242,4 +413,4 @@ invocation via the Constitution Check gate. Runtime development guidance
 and feature-local `plan.md` / `quickstart.md` files and MUST defer to this
 constitution when conflicts arise.
 
-**Version**: 1.0.1 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-22
+**Version**: 1.3.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-24

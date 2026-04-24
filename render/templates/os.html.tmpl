@@ -89,4 +89,32 @@
   </div>
 </details>
 
+<details id="sub-os-network" class="subview" open>
+  <summary><span>Network</span><span class="badge">-netstat</span></summary>
+  <div class="body">
+    {{- if .HasNetwork }}
+    {{- with .NetworkSummary }}
+    <div class="chart-summary">
+      {{- if .PeakRetransmits }}<span class="stat"><span class="k">peak retransmits</span> <span class="v">{{.PeakRetransmits}}</span> <span class="ctx">/s</span></span>{{- end }}
+      {{- if .PeakListenOverflows }}<span class="stat"><span class="k">peak listen overflows</span> <span class="v">{{.PeakListenOverflows}}</span> <span class="ctx">/s</span></span>{{- end }}
+      {{- if .PeakTimeWait }}<span class="stat"><span class="k">peak TIME_WAIT</span> <span class="v">{{.PeakTimeWait}}</span> <span class="ctx">sockets</span></span>{{- end }}
+      {{- if .PeakCloseWait }}<span class="stat"><span class="k">peak CLOSE_WAIT</span> <span class="v">{{.PeakCloseWait}}</span> <span class="ctx">sockets</span></span>{{- end }}
+      <span class="stat"><span class="k">samples</span> <span class="v">{{.SampleCount}}</span></span>
+    </div>
+    {{- end }}
+    {{- if .HasNetworkCounters }}
+    <h4 class="subview-h">TCP / UDP rates</h4>
+    <div class="chart" id="chart-network-counters" data-chart="network-counters" aria-label="TCP and UDP counter rates over time"></div>
+    {{- end }}
+    {{- if .HasNetworkSockets }}
+    <h4 class="subview-h">Socket states</h4>
+    <div class="chart" id="chart-network-sockets" data-chart="network-sockets" aria-label="Socket state counts over time"></div>
+    {{- end }}
+    <noscript><p class="banner">Charts require JavaScript. Raw netstat data is embedded in the page.</p></noscript>
+    {{- else }}
+    <p class="banner missing">Data not available — <code>-netstat</code> and <code>-netstat_s</code> were missing or unparseable in this collection.</p>
+    {{- end }}
+  </div>
+</details>
+
 {{ end }}

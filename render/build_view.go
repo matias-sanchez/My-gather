@@ -31,6 +31,27 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 		EmbeddedAppJS:      template.JS(embeddedAppJS),
 		LogoDataURI:        template.URL("data:image/png;base64," + base64.StdEncoding.EncodeToString(embeddedLogoPNG)),
 		MysqladminSelectID: "mysqladmin-select",
+		Feedback:           BuildFeedbackView(),
+	}
+
+	if r.EnvironmentSection != nil {
+		v.Environment = buildEnvironmentView(r)
+		v.HasEnvironment = v.Environment.HasHost || v.Environment.HasMySQL
+		// Badge only calls out degraded captures; a complete
+		// environment (host + mysql) leaves the badge empty so the
+		// header stays visually clean.
+		switch {
+		case v.Environment.HasHost && v.Environment.HasMySQL:
+			v.EnvBadge = ""
+		case v.Environment.HasHost:
+			v.EnvBadge = "host only"
+		case v.Environment.HasMySQL:
+			v.EnvBadge = "mysql only"
+		default:
+			v.EnvBadge = "missing"
+		}
+	} else {
+		v.EnvBadge = "missing"
 	}
 
 	if r.OSSection != nil {
@@ -49,6 +70,12 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 		}
 		if v.HasMeminfo {
 			v.MeminfoSummary = summariseMeminfo(r.OSSection.Meminfo)
+		}
+		v.HasNetworkCounters = r.OSSection.NetCounters != nil
+		v.HasNetworkSockets = r.OSSection.NetSockets != nil
+		v.HasNetwork = v.HasNetworkCounters || v.HasNetworkSockets
+		if v.HasNetwork {
+			v.NetworkSummary = summariseNetwork(r.OSSection.NetCounters, r.OSSection.NetSockets)
 		}
 	}
 	totalSnaps := 0

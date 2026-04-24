@@ -29,6 +29,15 @@ type reportView struct {
 
 	AdvisorBadge   string
 	VariablesBadge string
+	EnvBadge       string
+
+	// Feedback carries the static values for the "Report feedback"
+	// header control and its dialog. See render/feedback.go.
+	Feedback FeedbackView
+
+	// Environment section payload (Host + MySQL panels).
+	HasEnvironment bool
+	Environment    envView
 
 	// Advisor section payload.
 	Findings      []findingView
@@ -36,14 +45,18 @@ type reportView struct {
 	HasFindings   bool
 
 	// OS section payload
-	HasIostat      bool
-	HasTop         bool
-	HasVmstat      bool
-	HasMeminfo     bool
-	IostatSummary  *iostatSummaryView
-	TopSummary     *topSummaryView
-	VmstatSummary  *vmstatSummaryView
-	MeminfoSummary *meminfoSummaryView
+	HasIostat          bool
+	HasTop             bool
+	HasVmstat          bool
+	HasMeminfo         bool
+	HasNetwork         bool
+	HasNetworkCounters bool
+	HasNetworkSockets  bool
+	IostatSummary      *iostatSummaryView
+	TopSummary         *topSummaryView
+	VmstatSummary      *vmstatSummaryView
+	MeminfoSummary     *meminfoSummaryView
+	NetworkSummary     *networkSummaryView
 
 	// Variables section payload
 	HasVariables      bool
@@ -112,6 +125,10 @@ type innoDBMetricView struct {
 	Min   string
 	Avg   string
 	Max   string
+	// Severity drives the callout's red/yellow visual accent. Empty
+	// string means the card renders in the neutral surface colour.
+	// Valid values: "" | "warn" | "crit".
+	Severity string
 	// Semaphores-only: per-site wait breakdowns. When populated,
 	// db.html.tmpl renders a collapsible "contention breakdown"
 	// <details> under the card with two toggleable views:
@@ -144,6 +161,40 @@ type innoDBMetricView struct {
 	// AHIHashTableSize against the dash placeholder.
 	AHIHasHashTable bool
 	AHINoActivity   bool // true when every snapshot had hash+non-hash == 0
+
+	// Pending I/O card — peak values (and their source snapshots) for
+	// the richer breakdown. All formatted strings so the template does
+	// no arithmetic.
+	PendingIO *pendingIOView
+}
+
+// pendingIOView carries the peak-across-window scalars surfaced on
+// the Pending I/O callout, plus a human-readable "at peak" caption
+// identifying the snapshot where the worst pending-writes total was
+// observed. All numbers are pre-formatted (thousands commas applied)
+// so the template stays pure presentation. A nil pointer means the
+// capture had no snapshots with any pending-I/O numbers at all.
+type pendingIOView struct {
+	PeakReads           string // peak pending buffer-pool reads
+	PeakWrites          string // peak total pending writes (LRU+FL+SP)
+	PeakFsyncs          string // peak (log + buffer-pool) pending fsyncs
+	PeakLRU             string // peak LRU-flush pending
+	PeakFlushList       string // peak flush-list pending (checkpoint-age pressure)
+	PeakSinglePage      string // peak single-page flushes (stall signal)
+	PeakFsyncLog        string
+	PeakFsyncBufferPool string
+	PeakModifiedPages   string // peak dirty-page backlog
+	PeakSnapshot        string // snapshot prefix that saw PeakWrites
+	// Row-level presence flags. The template uses these to paint
+	// per-row severity in the flushing breakdown without having to
+	// parse the formatted peak strings back into numbers.
+	HasLRU          bool
+	HasFlushList    bool
+	HasSinglePage   bool
+	HasFsyncLog     bool
+	HasFsyncBP      bool
+	HasPendingFsync bool
+	HasPendingWrite bool
 }
 
 // semaphoreSiteRow is one row in the contention-breakdown sub-panel.
@@ -239,4 +290,17 @@ type meminfoSummaryView struct {
 	MaxDirty     string // peak dirty-page backlog (fsync pressure)
 	MaxSwapUsed  string // peak swap pressure
 	SampleCount  int
+}
+
+// networkSummaryView is the chip-strip atop the Network subview.
+// Every field is a pre-formatted string or empty when the underlying
+// metric wasn't observed — the template suppresses the chip for empty
+// strings. SampleCount is the total number of snapshots that produced
+// at least one network artifact (counters OR sockets).
+type networkSummaryView struct {
+	PeakRetransmits     string
+	PeakListenOverflows string
+	PeakTimeWait        string
+	PeakCloseWait       string
+	SampleCount         int
 }

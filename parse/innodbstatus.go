@@ -19,6 +19,14 @@ var (
 	reInnodbHashRate         = regexp.MustCompile(`([\d.]+)\s+hash searches/s,\s+([\d.]+)\s+non-hash searches/s`)
 	reInnodbHashTblSize      = regexp.MustCompile(`^Hash table size\s+(\d+)`)
 	reInnodbHLL              = regexp.MustCompile(`^History list length (\d+)`)
+	// "Pending flushes (fsync) log: 0; buffer pool: 81358" lives in the
+	// FILE I/O section and is emitted once per snapshot (not per BP
+	// instance). Captures (log_pending, buffer_pool_pending).
+	reInnodbPendingFsync = regexp.MustCompile(`^Pending flushes \(fsync\) log:\s*(\d+);\s*buffer pool:\s*(\d+)`)
+	// "Modified db pages 382934" appears once per buffer pool instance
+	// inside BUFFER POOL AND MEMORY; summed across instances gives the
+	// total dirty-page backlog for the server.
+	reInnodbModifiedPages = regexp.MustCompile(`^Modified db pages\s+(\d+)`)
 	// SEMAPHORES entry: "--Thread 140148200982272 has waited at
 	// ibuf0ibuf.cc line 3922 for 0 seconds the semaphore:" — capture
 	// <file> and <line>.
@@ -135,17 +143,37 @@ func parseInnodbStatus(r io.Reader, sourcePath string) (*model.InnodbStatusData,
 				data.HistoryListLength = v
 			}
 		case "BUFFER POOL AND MEMORY":
+			// BUFFER POOL AND MEMORY emits one block per innodb_buffer_pool_instance.
+			// Every scalar below must ACCUMULATE across those blocks so
+			// the card represents the whole server's state, not just the
+			// last instance.
 			if m := reInnodbPendingReads.FindStringSubmatch(trimmed); m != nil {
 				v, _ := strconv.Atoi(m[1])
-				data.PendingReads = v
+				data.PendingReads += v
 			}
 			if strings.HasPrefix(trimmed, "Pending writes:") {
 				if m := reInnodbPendingWritesSum.FindStringSubmatch(trimmed); m != nil {
 					lru, _ := strconv.Atoi(m[1])
 					fl, _ := strconv.Atoi(m[2])
 					sp, _ := strconv.Atoi(m[3])
-					data.PendingWrites = lru + fl + sp
+					data.PendingWritesLRU += lru
+					data.PendingWritesFlushList += fl
+					data.PendingWritesSinglePage += sp
+					data.PendingWrites += lru + fl + sp
 				}
+			}
+			if m := reInnodbModifiedPages.FindStringSubmatch(trimmed); m != nil {
+				v, _ := strconv.Atoi(m[1])
+				data.ModifiedDBPages += v
+			}
+		case "FILE I/O":
+			// Emitted once per snapshot (not per instance) — assign
+			// directly, ignore any duplicate lines.
+			if m := reInnodbPendingFsync.FindStringSubmatch(trimmed); m != nil {
+				log, _ := strconv.Atoi(m[1])
+				bp, _ := strconv.Atoi(m[2])
+				data.PendingFsyncLog = log
+				data.PendingFsyncBufferPool = bp
 			}
 		case "INSERT BUFFER AND ADAPTIVE HASH INDEX":
 			// The first Hash table size line gives the configured size;

@@ -109,12 +109,16 @@ var allRules = []rule{
 	ruleBPLRUFlushing,
 	ruleBPWaitFree,
 	ruleBPDirtyPct,
+	ruleInnoDBFlushing,
 
 	// Redo Log
 	ruleRedoCheckpointAge,
 	ruleRedoPendingWrites,
 	ruleRedoPendingFsyncs,
 	ruleRedoLogWaits,
+
+	// InnoDB Semaphores (contention detection)
+	ruleSemaphoreWaits,
 
 	// Binlog Cache
 	ruleBinlogCacheDiskUse,
@@ -124,6 +128,7 @@ var allRules = []rule{
 	ruleThreadCacheHitRatio,
 
 	// Table Open Cache
+	ruleTableCacheUsage,
 	ruleTableCacheOverflows,
 	ruleTableCacheMissRatio,
 
@@ -182,20 +187,22 @@ func subsystemOrder(s string) int {
 		return 0
 	case "Redo Log":
 		return 1
-	case "Binlog Cache":
+	case "InnoDB Semaphores":
 		return 2
-	case "Thread Cache":
+	case "Binlog Cache":
 		return 3
-	case "Table Open Cache":
+	case "Thread Cache":
 		return 4
-	case "Temp Tables":
+	case "Table Open Cache":
 		return 5
-	case "Query Shape":
+	case "Temp Tables":
 		return 6
-	case "Connections":
+	case "Query Shape":
 		return 7
-	case "Configuration":
+	case "Connections":
 		return 8
+	case "Configuration":
+		return 9
 	}
 	return 99
 }

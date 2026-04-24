@@ -97,6 +97,7 @@ func buildReport(c *model.Collection, opts RenderOptions) (*model.Report, []stri
 	rpt.OSSection = buildOSSection(c)
 	rpt.VariablesSection = buildVariablesSection(c)
 	rpt.DBSection = buildDBSection(c)
+	rpt.EnvironmentSection = buildEnvironmentSection(c)
 	sigs := computeVariableSignatures(rpt.VariablesSection)
 	rpt.Navigation = buildNavigation(rpt, sigs)
 	return rpt, sigs

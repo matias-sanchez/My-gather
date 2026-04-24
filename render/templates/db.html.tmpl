@@ -10,11 +10,68 @@
     {{- if .HasInnoDB }}
     <div class="callouts">
       {{- range .InnoDBMetrics }}
-      <div class="callout">
+      <div class="callout{{if .Severity}} sev-{{.Severity}}{{end}}">
         <p class="k">{{.Label}}</p>
         <p class="v">{{.Worst}}</p>
         {{- if .Hint }}<p class="sub">{{.Hint}}</p>{{- end }}
         <p class="stats"><span>min {{.Min}}</span> · <span>avg {{.Avg}}</span> · <span>max {{.Max}}</span></p>
+        {{- if and (eq .Key "pending_io") .PendingIO }}
+        {{- with .PendingIO }}
+        <div class="pio-chips" aria-label="Pending I/O breakdown summary">
+          <span class="pio-chip"><span class="pio-k">reads</span><span class="pio-v">{{.PeakReads}}</span></span>
+          <span class="pio-chip{{if .HasPendingWrite}} has{{end}}"><span class="pio-k">writes</span><span class="pio-v">{{.PeakWrites}}</span></span>
+          <span class="pio-chip{{if .HasPendingFsync}} has{{end}}"><span class="pio-k">fsyncs</span><span class="pio-v">{{.PeakFsyncs}}</span></span>
+        </div>
+        <details class="pio-breakdown">
+          <summary>Flushing breakdown <span class="cb-chev" aria-hidden="true">▸</span></summary>
+          <div class="cb-body">
+            {{- if .PeakSnapshot }}
+            <p class="cb-caption">peak snapshot <code>{{.PeakSnapshot}}</code></p>
+            {{- end }}
+            <table class="pio-table">
+              <thead><tr><th>Path</th><th class="num">peak</th><th>what it means</th></tr></thead>
+              <tbody>
+                <tr class="{{if .HasLRU}}row-warn{{end}}">
+                  <td class="mono">LRU flush</td>
+                  <td class="mono num">{{.PeakLRU}}</td>
+                  <td>Buffer-pool free list exhausted — eviction path backlog.</td>
+                </tr>
+                <tr class="{{if .HasFlushList}}row-warn{{end}}">
+                  <td class="mono">Flush list</td>
+                  <td class="mono num">{{.PeakFlushList}}</td>
+                  <td>Checkpoint-age pressure — redo is close to its limit.</td>
+                </tr>
+                <tr class="{{if .HasSinglePage}}row-crit{{end}}">
+                  <td class="mono">Single page</td>
+                  <td class="mono num">{{.PeakSinglePage}}</td>
+                  <td>Synchronous stall — a user thread waited on a clean page.</td>
+                </tr>
+                <tr class="{{if .HasFsyncLog}}row-crit{{end}}">
+                  <td class="mono">fsync · log</td>
+                  <td class="mono num">{{.PeakFsyncLog}}</td>
+                  <td>Redo fsync backlog — commits are waiting on disk.</td>
+                </tr>
+                <tr class="{{if .HasFsyncBP}}row-warn{{end}}">
+                  <td class="mono">fsync · buffer pool</td>
+                  <td class="mono num">{{.PeakFsyncBufferPool}}</td>
+                  <td>Page cleaners can't keep up with the I/O layer.</td>
+                </tr>
+                <tr>
+                  <td class="mono">Modified pages</td>
+                  <td class="mono num">{{.PeakModifiedPages}}</td>
+                  <td>Dirty-page backlog across buffer pool instances.</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="cb-note">
+              LRU / flush-list / single-page split shows <em>which</em> flushing path is
+              backed up. Single-page flushes &gt; 0 and pending log fsyncs &gt; 0 are the
+              user-visible stall signals.
+            </p>
+          </div>
+        </details>
+        {{- end }}
+        {{- end }}
         {{- if eq .Key "history_list" }}
         <div class="hll-sparkline" data-chart="innodb-hll" aria-label="History list length trend across snapshots"></div>
         {{- end }}
@@ -118,7 +175,7 @@
 </details>
 
 <details id="sub-db-mysqladmin" class="subview" open>
-  <summary><span>Counter deltas</span><span class="badge">-mysqladmin</span></summary>
+  <summary><span>Status counters</span><span class="badge">-mysqladmin</span></summary>
   <div class="body" data-mysqladmin-host>
     {{- if .HasMysqladmin }}
     <div class="ma-charts-host" id="chart-mysqladmin" data-chart="mysqladmin"

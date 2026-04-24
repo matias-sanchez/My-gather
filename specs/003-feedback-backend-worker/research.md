@@ -1,0 +1,126 @@
+# Phase 0 Research — Feedback Backend Worker
+
+## R1: GitHub App auth — `octokit` library vs hand-rolled?
+
+**Decision**: hand-rolled client using `jose` for JWT signing + `fetch` for the two GitHub calls we make (installation token exchange + GraphQL mutation). ~80 LOC.
+
+**Rationale**:
+- We make exactly 2 GitHub calls per Submit. Pulling in all of `@octokit/app` (~400 KB) to save 80 LOC is an enormous bundle tax on a Worker with a 1 MB size limit and a 10ms CPU budget.
+- `jose` is 8 KB, widely used, only provides the RS256 JWT signing we need.
+- `octokit` handles caching of installation tokens, which we don't need (each request re-exchanges; cost is negligible at our rate).
+
+**Alternatives considered**:
+- `@octokit/app`: rejected. 50× the size for zero ergonomic gain.
+- Bring GitHub's JWT signing into the Worker via a full JWT library (`jsonwebtoken`, etc.): rejected. None of them are Workers-compatible out of the box (they need Node.js crypto); `jose` is Web-Crypto-native.
+
+## R2: Attachment hosting — GitHub's user-content endpoint vs Cloudflare R2?
+
+**Decision**: **upload to R2** and embed public URLs in the markdown body.
+
+**Rationale**:
+- GitHub's image upload endpoint used by the web form (`POST https://uploads.github.com/upload/...`) is **undocumented**. Depending on it is a liability.
+- R2 is free to 10 GB. One Worker binding. Signed public URLs are trivial. Files live forever (or until explicit deletion).
+- R2 objects can have metadata; we attach `{submitted_at, content_hash}` for audit.
+
+**Alternatives considered**:
+- Embed base64 data URIs in the markdown body: **rejected**. GitHub strips `data:` URIs from markdown for security. Only `https://` URLs render as images.
+- Upload to GitHub via the REST API (`POST /repos/{owner}/{repo}/issues/{number}/attachments`): **rejected — does not exist**. GitHub does not have a public REST attachments API.
+- Use the feature-002 existing "clipboard + download" UX: regressive. User experience has to be one-click.
+- Host on a dedicated `matias-sanchez/My-gather-feedback-assets` GitHub repo via the Contents API: possible. Worker commits the blob as a file, links to the raw URL. Simpler than R2 but pulls every attachment into a repo forever. Size bloat risk.
+
+### Chosen flow
+
+1. Worker receives payload with base64 image + voice.
+2. Worker decodes; puts each blob into R2 under a content-hashed key `attachments/<sha256>.<ext>`. Idempotent by content — same image posted twice hits the same R2 key.
+3. Worker builds the discussion body markdown with `![image](https://feedback-assets.cf/attachments/<hash>.png)` and `<audio src="https://feedback-assets.cf/attachments/<hash>.webm" controls></audio>`.
+4. Worker creates the discussion via GraphQL.
+
+R2 bucket is publicly readable. Privacy note: these assets *are* the user's feedback content already being posted publicly in a GitHub Discussion; R2's public read is equivalent.
+
+## R3: Rate-limiting — fixed window vs sliding window?
+
+**Decision**: **fixed window** (simpler) keyed by `<ip>:<current-hour-UTC>`.
+
+**Rationale**:
+- Sliding-window requires storing N timestamps per IP; fixed-window stores one counter.
+- At our rate-limit threshold (5/hour), the worst edge case of fixed-window is "a user gets 10 submits across a minute that spans :59 → :00". Not a problem for actual attack scenarios.
+- Cloudflare KV TTLs are per-key; one `SET ratelimit:<ip>:<hour> ttl=3600` per increment.
+
+**Alternatives considered**:
+- Sliding-window: marginal benefit, complex implementation.
+- Durable Objects: strong consistency guarantees but not free tier. Overkill.
+- Turnstile (Cloudflare's CAPTCHA): adds user friction, reintroducing the "clicks" problem we're trying to eliminate.
+
+## R4: Idempotency — how long to cache?
+
+**Decision**: **5 minutes** TTL.
+
+**Rationale**:
+- Long enough to cover network retries and browser double-click.
+- Short enough that if the user legitimately wants to submit a second discussion with identical title + body (not generating a new idempotency key), they can within 5 minutes. (In practice JS generates a new UUID per Submit-click, so this isn't an issue.)
+
+## R5: CORS — allowlist or `*`?
+
+**Decision**: `Access-Control-Allow-Origin: *` with restrictions on method (POST only) and content-type.
+
+**Rationale**:
+- Reports are shipped to arbitrary machines; we don't know the origins. The report may be served from `file://`, which presents `Origin: null`.
+- Allowing any origin is fine because the endpoint is already public (anyone can POST with curl). CORS adds no real security — rate-limit + payload validation + App-scoped token do.
+
+**Alternatives considered**:
+- Allowlist `https://*.my-gather.dev` + `null`: restricts to our reports but makes embeddable third-party usage impossible. Marginal security win.
+- No CORS headers: breaks browsers silently. Bad.
+
+## R6: How does the browser build the payload?
+
+**Decision**: after the existing `buildURL` helper in `render/assets/app.js`, add a `buildPayload()` helper that assembles `{title, body, category, image: base64, voice: base64, idempotencyKey: uuid, reportVersion: "0.3.x"}`. Base64-encode blobs via `FileReader.readAsDataURL()` (the URI prefix is stripped before sending).
+
+**Rationale**:
+- Base64 is the only JSON-safe blob representation without a separate multipart flow.
+- Expanded size (~33% overhead) is acceptable at the caps (5 MB image becomes 6.6 MB JSON — well under practical body size limits, still fast on broadband).
+
+**Alternatives considered**:
+- `multipart/form-data`: more efficient but requires manual boundary management in Workers (no built-in `FormData` parser). Not worth the complexity.
+
+## R7: Where does the Worker URL live?
+
+**Decision**: a Go `const feedbackWorkerURL` in `render/feedback.go`. The URL is chosen at GitHub-App setup time by the project owner and is a public endpoint.
+
+**Rationale**:
+- Build-time constant → Principle IV determinism preserved.
+- One place to change if we redeploy the Worker (which is rare).
+
+**Alternatives considered**:
+- `-ldflags -X` at build time: more flexible but complicates dev builds. The URL is effectively permanent; a constant is simpler.
+- Environment variable read at runtime: **rejected**. The Go binary runs on arbitrary customer jump hosts; it can't reach a config service.
+
+## R8: Fallback trigger — what counts as "Worker failure"?
+
+**Decision**: fall back to `window.open` on any of:
+- Network error (fetch rejected).
+- Timeout > 5s (implemented via `AbortController`).
+- HTTP 5xx response.
+- HTTP 4xx that is NOT a validation error that the user can fix (422, 429).
+
+For 429 (rate-limit), show the throttle message; don't fall back — the user will retry after the cooldown.
+For 400 (validation error), show the field-specific error inline; the user fixes it and retries.
+
+**Rationale**: fallback protects availability. Validation errors are the user's data shape issue; fallback would silently paper over them.
+
+## R9: Worker cold-start impact
+
+**Decision**: acceptable. Cloudflare Workers have essentially zero cold-start (<5ms isolate boot). `jose` JWT signing adds ~20ms. GitHub GraphQL call ~200ms p95. Total p95 end-to-end ~300ms on a warm path.
+
+**Alternatives considered**: pre-warming (Durable Object that pings itself periodically) — unnecessary at this latency.
+
+## R10: Observability — how do we know Submits are working?
+
+**Decision**: Worker logs structured JSON (no user content — just `{timestamp, status, discussion_url_hash, ip_hash, duration_ms}`) to Cloudflare's Tail. Alarm if error rate > 10% over 1 hour.
+
+**Rationale**:
+- Free tier includes logs.
+- Never log user text — Principle-adjacent privacy preservation.
+
+## Outcome
+
+All unknowns resolved. Feature is ready for Phase 1 (data-model + contracts).

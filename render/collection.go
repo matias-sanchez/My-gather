@@ -31,6 +31,12 @@ func buildOSSection(c *model.Collection) *model.OSSection {
 	var tops []*model.TopData
 	var vms []*model.VmstatData
 	var mems []*model.MeminfoData
+	// Per-file groupings so concat* can emit SnapshotBoundaries at the
+	// first poll of each new -netstat / -netstat_s file. Each inner
+	// slice is one file's polls (TS blocks), parsers emit one sample
+	// per poll.
+	var netSockets [][]*model.NetstatSocketsSample
+	var netCounters [][]*model.NetstatCountersSample
 	for _, snap := range c.Snapshots {
 		if sf, ok := snap.SourceFiles[model.SuffixIostat]; ok && sf.Parsed != nil {
 			if v, ok := sf.Parsed.(*model.IostatData); ok {
@@ -52,11 +58,23 @@ func buildOSSection(c *model.Collection) *model.OSSection {
 				mems = append(mems, v)
 			}
 		}
+		if sf, ok := snap.SourceFiles[model.SuffixNetstat]; ok && sf.Parsed != nil {
+			if v, ok := sf.Parsed.([]*model.NetstatSocketsSample); ok && len(v) > 0 {
+				netSockets = append(netSockets, v)
+			}
+		}
+		if sf, ok := snap.SourceFiles[model.SuffixNetstatS]; ok && sf.Parsed != nil {
+			if v, ok := sf.Parsed.([]*model.NetstatCountersSample); ok && len(v) > 0 {
+				netCounters = append(netCounters, v)
+			}
+		}
 	}
 	sec.Iostat = concatIostat(ios)
 	sec.Top = concatTop(tops)
 	sec.Vmstat = concatVmstat(vms)
 	sec.Meminfo = concatMeminfo(mems)
+	sec.NetSockets = concatNetstat(netSockets)
+	sec.NetCounters = concatNetstatS(netCounters)
 	if sec.Iostat == nil {
 		sec.Missing = append(sec.Missing, "-iostat")
 	}
@@ -68,6 +86,9 @@ func buildOSSection(c *model.Collection) *model.OSSection {
 	}
 	if sec.Meminfo == nil {
 		sec.Missing = append(sec.Missing, "-meminfo")
+	}
+	if sec.NetSockets == nil && sec.NetCounters == nil {
+		sec.Missing = append(sec.Missing, "-netstat")
 	}
 	sort.Strings(sec.Missing)
 	return sec

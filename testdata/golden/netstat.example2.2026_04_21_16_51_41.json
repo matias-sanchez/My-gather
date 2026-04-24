@@ -1,0 +1,17 @@
+{
+  "samples": [
+    {
+      "Timestamp": "2026-04-21T16:51:41Z",
+      "StateCounts": {
+        "CLOSE_WAIT": 1,
+        "ESTABLISHED": 3,
+        "LISTEN": 2,
+        "TIME_WAIT": 3,
+        "UDP": 2
+      },
+      "RecvQNonZero": false,
+      "SendQNonZero": false
+    }
+  ],
+  "diagnostics": null
+}

@@ -35,6 +35,8 @@ const (
 	SuffixInnodbStatus Suffix = "innodbstatus1" // parses the first innodb-status snapshot; -innodbstatus2 is out of scope for v1
 	SuffixMysqladmin   Suffix = "mysqladmin"
 	SuffixProcesslist  Suffix = "processlist"
+	SuffixNetstat      Suffix = "netstat"   // per-sample socket dump (ss / netstat -an)
+	SuffixNetstatS     Suffix = "netstat_s" // aggregate kernel counters (netstat -s)
 )
 
 // KnownSuffixes is the declared iteration order used by render-side
@@ -50,6 +52,8 @@ var KnownSuffixes = []Suffix{
 	SuffixInnodbStatus,
 	SuffixMysqladmin,
 	SuffixProcesslist,
+	SuffixNetstat,
+	SuffixNetstatS,
 }
 
 // FormatVersion identifies which pt-stalk release produced a given
@@ -144,6 +148,23 @@ type Collection struct {
 	// unreadable subdir). Per-file diagnostics live on their
 	// SourceFile.
 	Diagnostics []Diagnostic
+
+	// RawEnvSidecars caches the raw contents of the environment-only
+	// sidecar files (-hostname, -meminfo, -procstat, -sysctl, -top,
+	// -df, -output) at Discover time. Keyed by suffix. The render
+	// layer consumes it instead of re-reading from disk so two
+	// renders of the same Collection stay byte-identical even if the
+	// underlying files are later modified or removed.
+	RawEnvSidecars map[string]string
+
+	// EnvSidecarTimestamps records the timestamp parsed from the
+	// prefix of the sidecar file selected for each suffix in
+	// RawEnvSidecars. Keyed by the same suffix. Used by the
+	// Environment renderer to anchor point-in-time derivations (e.g.
+	// OS uptime from /proc/stat btime) to the clock of the sample the
+	// sidecar was taken from — NOT the last Collection snapshot,
+	// which can be a newer snapshot without these sidecars.
+	EnvSidecarTimestamps map[string]time.Time
 }
 
 // Snapshot is one timestamped pt-stalk collection pass within a
@@ -371,9 +392,30 @@ type MeminfoData struct {
 // time-series — "-innodbstatus1" is a snapshot taken once per
 // pt-stalk collection pass.
 type InnodbStatusData struct {
-	SemaphoreCount    int         // total threads currently waiting (sum of SemaphoreSites[*].WaitCount)
-	PendingReads      int         // aggregate pending IO reads
-	PendingWrites     int         // aggregate pending IO writes
+	SemaphoreCount int // total threads currently waiting (sum of SemaphoreSites[*].WaitCount)
+	PendingReads   int // aggregate pending IO reads (summed across BP instances)
+	PendingWrites  int // aggregate pending IO writes (summed across BP instances)
+	// Pending writes broken down by flushing path. Summed across BP
+	// instances. Each path maps to a distinct diagnostic story — see
+	// render/innodb.go for how they drive the Pending I/O card colour.
+	//
+	//   LRU        → eviction-path pressure (free list exhausted)
+	//   FlushList  → checkpoint-age pressure (redo saturation)
+	//   SinglePage → synchronous stall — a user thread waited for a
+	//                clean page (ALWAYS bad; promotes to critical).
+	PendingWritesLRU        int
+	PendingWritesFlushList  int
+	PendingWritesSinglePage int
+	// Pending fsync queues from the FILE I/O section's
+	// "Pending flushes (fsync) log: X; buffer pool: Y" line. Non-zero
+	// log fsync backlog is a user-visible commit stall; non-zero
+	// buffer-pool fsync backlog indicates the page cleaners can't keep
+	// up with the I/O layer.
+	PendingFsyncLog        int
+	PendingFsyncBufferPool int
+	// ModifiedDBPages is the total dirty-page backlog across all BP
+	// instances at the snapshot moment.
+	ModifiedDBPages   int
 	AHIActivity       AHIActivity // adaptive-hash-index view
 	HistoryListLength int         // "HLL"
 	// SemaphoreSites groups the SEMAPHORES-section "--Thread … has
@@ -513,4 +555,77 @@ type ThreadStateSample struct {
 	HostCounts    map[string]int
 	CommandCounts map[string]int
 	DbCounts      map[string]int
+}
+
+// NetstatSocketsData is the typed payload merged from every
+// -netstat SourceFile in the collection. One record per captured
+// snapshot, carrying the socket-state histogram plus a flag set when
+// any socket had a non-zero Recv-Q or Send-Q at that moment.
+type NetstatSocketsData struct {
+	// Samples ordered by Timestamp ascending, one per -netstat file.
+	Samples []NetstatSocketsSample
+
+	// States is the canonical rendering order across the collection
+	// (union of every sample's keys, sorted alphabetically with
+	// "Other" always last if present).
+	States []string
+
+	// SnapshotBoundaries lists the sample indexes at which a new
+	// Snapshot's first sample sits. Same semantics as
+	// IostatData.SnapshotBoundaries.
+	SnapshotBoundaries []int
+}
+
+// NetstatSocketsSample is one per-POLL summary of the socket table.
+// pt-stalk writes multiple `netstat -antp` dumps per file separated
+// by `TS <epoch>` headers, and parseNetstat emits one sample per TS
+// block; counting across polls would inflate state totals and let
+// Recv-Q / Send-Q flags sticky-latch from older polls. State counts
+// aggregate tcp + tcp6; udp sockets are counted under an "UDP"
+// pseudo-state. Recv-Q / Send-Q flags are set when ANY socket in
+// that single poll had non-zero queues — a coarse but actionable
+// indicator that application draining or kernel send-buffer flushing
+// was backlogged at that moment.
+type NetstatSocketsSample struct {
+	Timestamp    time.Time
+	StateCounts  map[string]int
+	RecvQNonZero bool
+	SendQNonZero bool
+}
+
+// NetstatCountersSample is one per-POLL observation of the curated
+// `netstat -s` counter set. parseNetstatS emits one sample per TS
+// block so concatNetstatS can compute per-poll deltas; collapsing all
+// polls in a file into a single endpoint would lose the rate signal
+// between snapshot boundaries.
+type NetstatCountersSample struct {
+	Timestamp time.Time
+	Values    map[string]float64
+}
+
+// NetstatCountersData is the typed payload merged from every
+// -netstat_s SourceFile — aggregate kernel network counters (IP,
+// ICMP, TCP, UDP, TcpExt). Shape mirrors MysqladminData so the same
+// rendering pipeline (deltas-per-sample stacked/line charts) can
+// consume both.
+type NetstatCountersData struct {
+	// Labels is the canonical counter-name rendering order: curated
+	// list we know how to interpret, followed by any additional
+	// labels observed in the captures sorted alphabetically.
+	Labels []string
+
+	// Timestamps is one epoch-seconds value per sample observed
+	// across all snapshots, ascending.
+	Timestamps []float64
+
+	// Deltas[name] has len(Timestamps) entries. Slot 0 is always NaN
+	// (there is no prior sample to delta against); subsequent slots
+	// hold current - previous delta. NaN is also emitted for a slot
+	// when either endpoint was missing or the counter went
+	// backwards (e.g., counter reset).
+	Deltas map[string][]float64
+
+	// SnapshotBoundaries lists the sample indexes at which a new
+	// Snapshot's first sample sits.
+	SnapshotBoundaries []int
 }

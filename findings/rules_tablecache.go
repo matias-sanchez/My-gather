@@ -6,6 +6,67 @@ import (
 	"github.com/matias-sanchez/My-gather/model"
 )
 
+// ruleTableCacheUsage flags a table cache that is approaching or at
+// its configured ceiling: Open_tables / table_open_cache. A saturated
+// cache is proactively critical — the next new table opened forces
+// an eviction (counted as a Table_open_cache_overflow), so this rule
+// fires BEFORE ruleTableCacheOverflows and explains why overflows
+// are about to start. Thresholds: warn ≥ 80 %, crit ≥ 95 %.
+func ruleTableCacheUsage(r *model.Report) Finding {
+	const (
+		warnAbove = 0.80
+		critAbove = 0.95
+	)
+	size, ok1 := variableFloat(r, "table_open_cache")
+	open, ok2 := gaugeLast(r, "Open_tables")
+	if !ok1 || !ok2 || size <= 0 {
+		return Finding{Severity: SeveritySkip}
+	}
+	ratio := open / size
+	if ratio < 0 {
+		ratio = 0
+	}
+	if ratio > 1 {
+		ratio = 1
+	}
+	var (
+		sev     = SeverityOK
+		summary = fmt.Sprintf("Table cache is at %s of capacity.", formatPercent(ratio))
+	)
+	switch {
+	case ratio >= critAbove:
+		sev = SeverityCrit
+		summary = fmt.Sprintf("Table cache is saturated at %s — evictions are imminent.", formatPercent(ratio))
+	case ratio >= warnAbove:
+		sev = SeverityWarn
+		summary = fmt.Sprintf("Table cache is running hot at %s of capacity.", formatPercent(ratio))
+	}
+	return Finding{
+		ID:        "tablecache.usage",
+		Subsystem: "Table Open Cache",
+		Title:     "Table cache saturation",
+		Severity:  sev,
+		Summary:   summary,
+		Explanation: "Open_tables counts how many table descriptors are held in the cache right now; " +
+			"table_open_cache is the ceiling. Once the ratio reaches 100 %, any new table reference forces " +
+			"MySQL to evict an existing descriptor (recorded as a Table_open_cache_overflow) before opening " +
+			"the new one — adding latency to the query that triggered it.",
+		FormulaText: "usage = Open_tables / table_open_cache",
+		FormulaComputed: fmt.Sprintf("%s / %s = %s",
+			formatNum(open), formatNum(size), formatPercent(ratio)),
+		Metrics: []MetricRef{
+			{Name: "Open_tables", Value: open, Unit: "entries", Note: "last sample"},
+			{Name: "table_open_cache", Value: size, Unit: "entries"},
+		},
+		Recommendations: []string{
+			"Increase table_open_cache. Raise open_files_limit at the OS level first if it's near the current cache size.",
+			"Check how many distinct tables the workload touches; a sharp fan-out (e.g. sharded per-tenant tables) will keep the cache pinned.",
+			"If the workload has heavy concurrent access to a small table set, consider lowering table_open_cache_instances so each instance holds a larger share.",
+		},
+		Source: "Rosetta Stone — Table Open Cache §Utilization (capacity), Part B Open_tables",
+	}
+}
+
 // ruleTableCacheOverflows flags any non-zero rate of table cache
 // overflows — the cache is too small for the workload and MySQL is
 // evicting entries to make room.

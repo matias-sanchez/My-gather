@@ -1,0 +1,14 @@
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1234/sshd
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      2083848/mysqld
+tcp        0      0 10.0.0.5:3306           10.0.0.10:40134         ESTABLISHED 2083848/mysqld
+tcp        0      0 10.0.0.5:3306           10.0.0.10:40142         ESTABLISHED 2083848/mysqld
+tcp        0      0 10.0.0.5:3306           10.0.0.11:32900         ESTABLISHED 2083848/mysqld
+tcp        0      0 10.0.0.5:3306           10.0.0.12:51111         ESTABLISHED 2083848/mysqld
+tcp       12      0 10.0.0.5:3306           10.0.0.13:29888         ESTABLISHED 2083848/mysqld
+tcp        0      0 127.0.0.1:55600         127.0.0.1:3306          TIME_WAIT   -
+tcp        0      0 127.0.0.1:55622         127.0.0.1:3306          TIME_WAIT   -
+tcp        0      0 10.0.0.5:44456          10.0.0.99:443           CLOSE_WAIT  5566/some-agent
+tcp        0      0 10.0.0.5:44512          10.0.0.99:443           CLOSE_WAIT  5566/some-agent
+udp        0      0 0.0.0.0:68              0.0.0.0:*                           1/systemd

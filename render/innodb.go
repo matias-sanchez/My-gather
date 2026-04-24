@@ -29,8 +29,17 @@ func aggregateInnoDBMetrics(snaps []model.SnapshotInnoDB) []innoDBMetricView {
 	semMetric := innoDBIntMetric("Semaphores", "waiting", sem)
 	semMetric.Key = "semaphores"
 	attachSemaphoreBreakdown(&semMetric, snaps)
+	// Peak semaphore waits is a reliable contention signal — any
+	// non-zero reading is a yellow flag, and high peaks indicate a
+	// hotspot bad enough to surface as a red callout.
+	if peak := maxOfInts(sem); peak >= 500 {
+		semMetric.Severity = "crit"
+	} else if peak > 0 {
+		semMetric.Severity = "warn"
+	}
 	pioMetric := innoDBIntMetric("Pending I/O", "reads + writes", pio)
 	pioMetric.Key = "pending_io"
+	attachPendingIOBreakdown(&pioMetric, snaps)
 	ahiMetric := buildAHIMetric(snaps)
 	ahiMetric.Key = "ahi"
 	hllMetric := innoDBIntMetric("History list", "HLL (undo depth)", hll)
@@ -227,6 +236,114 @@ func buildSiteRows(sites []model.SemaphoreSite, total int) []semaphoreSiteRow {
 		})
 	}
 	return out
+}
+
+// attachPendingIOBreakdown enriches the Pending I/O callout with the
+// full flushing picture and picks a severity tint:
+//
+//	sev-crit  — any snapshot saw >0 single-page flushes or >0 pending log fsyncs
+//	sev-warn  — any snapshot saw pending writes or pending fsyncs
+//	""        — every snapshot was clean
+//
+// Each pending-* peak is the max observed across snapshots, so a
+// transient backlog stays visible even if the capture also covered
+// quiescent periods. PeakSnapshot is the snapshot whose combined
+// pending-writes total matched the window peak; it anchors the
+// "at peak" caption in the expanded breakdown.
+func attachPendingIOBreakdown(m *innoDBMetricView, snaps []model.SnapshotInnoDB) {
+	var (
+		peakReads, peakWrites, peakFsyncs    int
+		peakLRU, peakFL, peakSP              int
+		peakFsyncLog, peakFsyncBP            int
+		peakModified                         int
+		peakWritesSnap                       string
+		anyFsync, anySingle, anyPendingWrite bool
+	)
+	peakWritesCombined := -1
+	for _, si := range snaps {
+		if si.Data == nil {
+			continue
+		}
+		d := si.Data
+		if d.PendingReads > peakReads {
+			peakReads = d.PendingReads
+		}
+		writes := d.PendingWrites
+		if writes > peakWrites {
+			peakWrites = writes
+		}
+		if writes > peakWritesCombined {
+			peakWritesCombined = writes
+			peakWritesSnap = si.SnapshotPrefix
+		}
+		if d.PendingWritesLRU > peakLRU {
+			peakLRU = d.PendingWritesLRU
+		}
+		if d.PendingWritesFlushList > peakFL {
+			peakFL = d.PendingWritesFlushList
+		}
+		if d.PendingWritesSinglePage > peakSP {
+			peakSP = d.PendingWritesSinglePage
+		}
+		if d.PendingFsyncLog > peakFsyncLog {
+			peakFsyncLog = d.PendingFsyncLog
+		}
+		if d.PendingFsyncBufferPool > peakFsyncBP {
+			peakFsyncBP = d.PendingFsyncBufferPool
+		}
+		if fs := d.PendingFsyncLog + d.PendingFsyncBufferPool; fs > peakFsyncs {
+			peakFsyncs = fs
+		}
+		if d.ModifiedDBPages > peakModified {
+			peakModified = d.ModifiedDBPages
+		}
+		if d.PendingFsyncLog > 0 || d.PendingFsyncBufferPool > 0 {
+			anyFsync = true
+		}
+		if d.PendingWritesSinglePage > 0 {
+			anySingle = true
+		}
+		if writes > 0 || d.PendingReads > 0 {
+			anyPendingWrite = true
+		}
+	}
+
+	m.PendingIO = &pendingIOView{
+		PeakReads:           formatThousands(peakReads),
+		PeakWrites:          formatThousands(peakWrites),
+		PeakFsyncs:          formatThousands(peakFsyncs),
+		PeakLRU:             formatThousands(peakLRU),
+		PeakFlushList:       formatThousands(peakFL),
+		PeakSinglePage:      formatThousands(peakSP),
+		PeakFsyncLog:        formatThousands(peakFsyncLog),
+		PeakFsyncBufferPool: formatThousands(peakFsyncBP),
+		PeakModifiedPages:   formatThousands(peakModified),
+		PeakSnapshot:        peakWritesSnap,
+		HasLRU:              peakLRU > 0,
+		HasFlushList:        peakFL > 0,
+		HasSinglePage:       anySingle,
+		HasFsyncLog:         peakFsyncLog > 0,
+		HasFsyncBP:          peakFsyncBP > 0,
+		HasPendingFsync:     anyFsync,
+		HasPendingWrite:     anyPendingWrite,
+	}
+
+	switch {
+	case anySingle || peakFsyncLog > 0:
+		m.Severity = "crit"
+	case anyFsync || anyPendingWrite:
+		m.Severity = "warn"
+	}
+}
+
+func maxOfInts(vals []int) int {
+	m := 0
+	for _, v := range vals {
+		if v > m {
+			m = v
+		}
+	}
+	return m
 }
 
 func innoDBIntMetric(label, hint string, vals []int) innoDBMetricView {

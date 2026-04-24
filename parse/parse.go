@@ -337,19 +337,131 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 	// Invoke per-collector parsers for every SourceFile. Each parser is
 	// self-contained and captures its own diagnostics on the SourceFile;
 	// the overall Discover call still returns err==nil.
+	sidecarContents, sidecarTimestamps, sidecarDiags := loadEnvSidecars(absRoot)
 	collection := &model.Collection{
-		RootPath:    absRoot,
-		Hostname:    hostname,
-		PtStalkSize: totalBytes,
-		Snapshots:   snapshots,
+		RootPath:             absRoot,
+		Hostname:             hostname,
+		PtStalkSize:          totalBytes,
+		Snapshots:            snapshots,
+		RawEnvSidecars:       sidecarContents,
+		EnvSidecarTimestamps: sidecarTimestamps,
 	}
-	runParsers(ctx, collection, opts.Sink)
+	for _, d := range sidecarDiags {
+		collection.Diagnostics = append(collection.Diagnostics, d)
+		if opts.Sink != nil {
+			opts.Sink.OnDiagnostic(d)
+		}
+	}
+	// Propagate ctx cancellation out of runParsers so a
+	// deadline/cancel during per-collector parsing surfaces to the
+	// caller instead of returning a half-populated Collection as a
+	// silent success. Without this, timeout-controlled invocations
+	// would get (collection, nil) with many SourceFiles still at
+	// their default zero-value status, producing incomplete
+	// reports without any signal that the run was aborted.
+	if err := runParsers(ctx, collection, opts.Sink); err != nil {
+		return nil, err
+	}
 	return collection, nil
 }
 
+// envSidecarSuffixes are the pt-stalk per-snapshot files the
+// Environment panel consumes. They are not part of model.KnownSuffixes
+// because they aren't time-series collectors — they're one-shot
+// machine-inventory dumps. Loaded once at Discover time into
+// Collection.RawEnvSidecars so render is a pure function of the model.
+var envSidecarSuffixes = []string{
+	"hostname", "meminfo", "procstat", "sysctl", "top", "df", "output",
+}
+
+// loadEnvSidecars reads the env-only sidecar files once, picking the
+// newest file that matches "<prefix>-<suffix>" across the entire root
+// directory — NOT just across the Collection's Snapshots. Partial
+// captures sometimes have newer timestamp prefixes that only carry
+// environment sidecars (no KnownSuffixes data), so the Collection's
+// Snapshots slice may omit them; scanning the directory directly
+// ensures those are considered. Prefix sort order is lexicographic,
+// which matches chronological order for pt-stalk's
+// `YYYY_MM_DD_HH_MM_SS` timestamp scheme.
+//
+// Missing/unreadable files map to absent keys in the returned maps;
+// the render layer treats them as "data unavailable". The second
+// returned map carries the timestamp parsed from the prefix of the
+// chosen file — consumers that anchor point-in-time derivations (e.g.
+// OS uptime from /proc/stat btime) should prefer it over the last
+// snapshot's timestamp, since sidecar files can come from newer
+// sidecar-only prefixes. The third return value is the diagnostic
+// list (SeverityWarning) emitted when the loader falls back past a
+// newer empty/unreadable file to an older readable one, so the
+// degraded path is never silent.
+func loadEnvSidecars(rootPath string) (map[string]string, map[string]time.Time, []model.Diagnostic) {
+	if rootPath == "" {
+		return nil, nil, nil
+	}
+	out := make(map[string]string, len(envSidecarSuffixes))
+	timestamps := make(map[string]time.Time, len(envSidecarSuffixes))
+	var diagnostics []model.Diagnostic
+	for _, suf := range envSidecarSuffixes {
+		matches, err := filepath.Glob(filepath.Join(rootPath, "*-"+suf))
+		if err != nil || len(matches) == 0 {
+			continue
+		}
+		sort.Sort(sort.Reverse(sort.StringSlice(matches)))
+		// Track newer-but-skipped timestamp-prefixed files so that if we
+		// end up using an older sidecar we can emit a single structured
+		// diagnostic naming which newer files were rejected (and why).
+		// Principle III: graceful degradation is allowed, silent
+		// fallback is not.
+		var skippedNewer []string
+		for _, path := range matches {
+			// The glob "*-<suf>" also matches unrelated files such as
+			// `notes-hostname` that happen to end in "-<suf>". Skip any
+			// filename whose prefix isn't a pt-stalk timestamp — otherwise
+			// a stray file could sort last and win over the real sidecar,
+			// and we'd also lose the timestamp anchor used for uptime.
+			name := filepath.Base(path)
+			m := snapshotPrefix.FindStringSubmatch(name)
+			if m == nil {
+				continue
+			}
+			ts, err := parseSnapshotTimestamp(m[1])
+			if err != nil {
+				continue
+			}
+			data, readErr := os.ReadFile(path)
+			if readErr != nil {
+				skippedNewer = append(skippedNewer, fmt.Sprintf("%s (read: %v)", name, readErr))
+				continue
+			}
+			if len(data) == 0 {
+				skippedNewer = append(skippedNewer, name+" (empty)")
+				continue
+			}
+			out[suf] = string(data)
+			timestamps[suf] = ts
+			if len(skippedNewer) > 0 {
+				diagnostics = append(diagnostics, model.Diagnostic{
+					SourceFile: path,
+					Severity:   model.SeverityWarning,
+					Message: fmt.Sprintf(
+						"env sidecar -%s: fell back past %d newer file(s) that were empty or unreadable (%s); Environment panel values may not reflect the latest capture",
+						suf, len(skippedNewer), strings.Join(skippedNewer, ", "),
+					),
+				})
+			}
+			break
+		}
+	}
+	return out, timestamps, diagnostics
+}
+
 // runParsers iterates every SourceFile in every Snapshot and invokes
-// its per-collector parser. Invoked from Discover.
-func runParsers(ctx context.Context, c *model.Collection, sink DiagnosticSink) {
+// its per-collector parser. Invoked from Discover. Returns ctx.Err()
+// if the context is cancelled mid-iteration; per-collector parse
+// failures are attached to the SourceFile as diagnostics, not
+// returned, matching Constitution Principle III (graceful
+// degradation).
+func runParsers(ctx context.Context, c *model.Collection, sink DiagnosticSink) error {
 	for _, snap := range c.Snapshots {
 		for _, suffix := range model.KnownSuffixes {
 			sf, ok := snap.SourceFiles[suffix]
@@ -357,11 +469,12 @@ func runParsers(ctx context.Context, c *model.Collection, sink DiagnosticSink) {
 				continue
 			}
 			if err := ctx.Err(); err != nil {
-				return
+				return err
 			}
 			runOneParser(snap, sf, sink)
 		}
 	}
+	return nil
 }
 
 func runOneParser(snap *model.Snapshot, sf *model.SourceFile, sink DiagnosticSink) {
@@ -421,6 +534,10 @@ func runOneParser(snap *model.Snapshot, sf *model.SourceFile, sink DiagnosticSin
 		parsed, diagnostics = parseMysqladmin(file, snap.Timestamp, sf.Path)
 	case model.SuffixProcesslist:
 		parsed, diagnostics = parseProcesslist(file, sf.Path)
+	case model.SuffixNetstat:
+		parsed, diagnostics = parseNetstat(file, snap.Timestamp, sf.Path)
+	case model.SuffixNetstatS:
+		parsed, diagnostics = parseNetstatS(file, snap.Timestamp, sf.Path)
 	default:
 		sf.Status = model.ParseFailed
 		return

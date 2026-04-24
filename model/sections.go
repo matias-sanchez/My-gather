@@ -9,11 +9,13 @@ import "time"
 // names whose subview should render the "data not available" banner,
 // sorted alphabetically for determinism.
 type OSSection struct {
-	Iostat  *IostatData
-	Top     *TopData
-	Vmstat  *VmstatData
-	Meminfo *MeminfoData
-	Missing []string
+	Iostat      *IostatData
+	Top         *TopData
+	Vmstat      *VmstatData
+	Meminfo     *MeminfoData
+	NetSockets  *NetstatSocketsData
+	NetCounters *NetstatCountersData
+	Missing     []string
 }
 
 // VariablesSection is the render-ready view of the Variables content,
@@ -72,9 +74,10 @@ type Report struct {
 	Collection *Collection
 
 	// Section views, each built from Collection's snapshots.
-	OSSection        *OSSection
-	VariablesSection *VariablesSection
-	DBSection        *DBSection
+	EnvironmentSection *EnvironmentSection
+	OSSection          *OSSection
+	VariablesSection   *VariablesSection
+	DBSection          *DBSection
 
 	// Navigation is a flat, ordered list of NavEntry items. Render-
 	// side code consumes it directly; templates iterate the slice in
