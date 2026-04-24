@@ -50,7 +50,7 @@ func buildNavigation(r *model.Report, sigs []string) []model.NavEntry {
 	// DB section.
 	nav = append(nav, model.NavEntry{ID: "sec-db", Title: "Database Usage", Level: 1})
 	nav = append(nav, model.NavEntry{ID: "sub-db-innodb", Title: "InnoDB status", Level: 2, ParentID: "sec-db"})
-	nav = append(nav, model.NavEntry{ID: "sub-db-mysqladmin", Title: "Counter deltas", Level: 2, ParentID: "sec-db"})
+	nav = append(nav, model.NavEntry{ID: "sub-db-mysqladmin", Title: "Status counters", Level: 2, ParentID: "sec-db"})
 	nav = append(nav, model.NavEntry{ID: "sub-db-processlist", Title: "Thread states", Level: 2, ParentID: "sec-db"})
 
 	// Advisor section — rule-based findings.
