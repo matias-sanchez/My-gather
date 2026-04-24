@@ -274,9 +274,12 @@ func lookupVar(c *model.Collection, name string) string {
 // case). Returns (0, zeroTime) when unknown.
 func latestUptimeSeconds(c *model.Collection) (int64, time.Time) {
 	// Walk snapshots newest-first; take the last non-NaN Uptime slot
-	// from the mysqladmin delta series. The caller uses the snapshot's
-	// own timestamp as the clock anchor for StartTimeUTC so a newer
-	// snapshot without -mysqladmin doesn't shift start time forward.
+	// from the mysqladmin delta series. Anchor StartTimeUTC to the
+	// per-sample timestamp (ma.Timestamps[j]) — not the snapshot prefix
+	// time — because a -mysqladmin file holds many samples per snapshot
+	// and the last non-NaN slot can sit seconds-to-minutes later than
+	// the snapshot boundary. Fall back to sn.Timestamp only if the
+	// per-slot timestamp is unavailable.
 	for i := len(c.Snapshots) - 1; i >= 0; i-- {
 		sn := c.Snapshots[i]
 		sf, ok := sn.SourceFiles[model.SuffixMysqladmin]
@@ -290,7 +293,11 @@ func latestUptimeSeconds(c *model.Collection) (int64, time.Time) {
 		if slots, ok := ma.Deltas["Uptime"]; ok {
 			for j := len(slots) - 1; j >= 0; j-- {
 				if !math.IsNaN(slots[j]) {
-					return int64(slots[j]), sn.Timestamp
+					ts := sn.Timestamp
+					if j < len(ma.Timestamps) && !ma.Timestamps[j].IsZero() {
+						ts = ma.Timestamps[j]
+					}
+					return int64(slots[j]), ts
 				}
 			}
 		}
@@ -506,11 +513,18 @@ func buildEnvironmentView(r *model.Report) envView {
 			if m.BuffersKB > 0 || m.CachedKB > 0 {
 				v.BuffersCached = humanKBBytes(m.BuffersKB + m.CachedKB)
 			}
-			v.SwapTotal = humanKBBytes(m.SwapTotalKB)
-			used := m.SwapTotalKB - m.SwapFreeKB
-			if used > 0 {
-				v.SwapUsed = humanKBBytes(used)
-			} else if m.SwapTotalKB > 0 {
+			// Swap: a swapless host is a real configuration, not missing
+			// data — render "0 B" explicitly instead of "—" when the
+			// meminfo sample is present.
+			if m.SwapTotalKB > 0 {
+				v.SwapTotal = humanKBBytes(m.SwapTotalKB)
+				if used := m.SwapTotalKB - m.SwapFreeKB; used > 0 {
+					v.SwapUsed = humanKBBytes(used)
+				} else {
+					v.SwapUsed = "0 B"
+				}
+			} else {
+				v.SwapTotal = "0 B"
 				v.SwapUsed = "0 B"
 			}
 		}
