@@ -1,11 +1,11 @@
 ---
 name: pr-review-fix-my-gather
-description: "Triage Codex / Copilot findings on the current My-gather PR, verify each one, apply fixes that respect the 13-principle constitution in .specify/memory/constitution.md, mark resolved threads as resolved on GitHub, clean stale trigger comments, and optionally re-trigger the review cycle. Use in the My-gather repo whenever the user says `/pr-review-fix-my-gather`, `address review findings`, `fix codex comments`, `fix copilot comments`, `resolve PR review`, or is cycling through a codex-review round on the current branch. Prefer this over the generic `/pr-review-fix` when working in this repo — only this variant walks the 13 principles and uses Go-native validation. <example>Context: Codex has posted findings on the current PR. user: \"address the codex findings\" assistant: \"Invoking /pr-review-fix-my-gather to triage each finding, walk the constitution, apply valid fixes, mark the threads resolved, and commit.\"</example> <example>Context: User wants to clear an iteration. user: \"fix review comments and resolve them\" assistant: \"Launching /pr-review-fix-my-gather — will verify each comment against the code, apply only principle-compliant fixes, resolve the threads on GitHub, and push.\"</example> <example>Context: After a fresh codex round lands. user: \"process the codex round and push the fixes\" assistant: \"Running /pr-review-fix-my-gather: verify, principle-walk, fix, resolve threads, push.\"</example>"
+description: "Triage Codex / Copilot findings on the current My-gather PR, verify each one, apply fixes that respect the 14-principle constitution in .specify/memory/constitution.md, mark resolved threads as resolved on GitHub, clean stale trigger comments, and optionally re-trigger the review cycle. Use in the My-gather repo whenever the user says `/pr-review-fix-my-gather`, `address review findings`, `fix codex comments`, `fix copilot comments`, `resolve PR review`, or is cycling through a codex-review round on the current branch. Prefer this over the generic `/pr-review-fix` when working in this repo — only this variant walks the 14 principles and uses Go-native validation. <example>Context: Codex has posted findings on the current PR. user: \"address the codex findings\" assistant: \"Invoking /pr-review-fix-my-gather to triage each finding, walk the constitution, apply valid fixes, mark the threads resolved, and commit.\"</example> <example>Context: User wants to clear an iteration. user: \"fix review comments and resolve them\" assistant: \"Launching /pr-review-fix-my-gather — will verify each comment against the code, apply only principle-compliant fixes, resolve the threads on GitHub, and push.\"</example> <example>Context: After a fresh codex round lands. user: \"process the codex round and push the fixes\" assistant: \"Running /pr-review-fix-my-gather: verify, principle-walk, fix, resolve threads, push.\"</example>"
 ---
 
 # PR Review Fix (My-gather)
 
-Read Codex / Copilot findings on the current PR, verify each against the code, apply only fixes that satisfy the 13-principle constitution, mark fixed review threads resolved on GitHub, clean stale trigger comments, and optionally re-trigger the review cycle.
+Read Codex / Copilot findings on the current PR, verify each against the code, apply only fixes that satisfy the 14-principle constitution, mark fixed review threads resolved on GitHub, clean stale trigger comments, and optionally re-trigger the review cycle.
 
 This skill is one half of the review loop:
 
@@ -97,6 +97,7 @@ Re-read `.specify/memory/constitution.md` at the start of each run; the version 
 | XI. Reports Optimized for Humans Under Pressure | Does the fix promote an exhaustive dump above the "what triggered / state at trigger / deltas" spine? |
 | XII. Pinned Go Version | Does the fix change `go.mod`'s `go` directive as a side effect of another change? |
 | **XIII. Canonical Code Path (NON-NEGOTIABLE)** | Does the fix leave an old function, type, or code path alongside a replacement? Add a fallback (`try A, on error silently try B`)? Introduce an `if useNew { ... } else { ... }` internal flag? Keep a re-export or alias after a rename? Preserve a compat shim for internal callers? |
+| XIV. English-Only Durable Artifacts | Does the fix add non-English content (identifiers, comments, godoc, commit message, docs, skill/agent/hook text) anywhere outside `testdata/` and `_references/`? Rewrite in English, keeping the fix intact. |
 
 Any yes means: **do not apply this fix as proposed**. Your options are:
 
@@ -247,6 +248,7 @@ Dismiss these when codex / copilot proposes them. Cite the principle in the dism
 10. **"Add a retry loop around this operation."** → Dismiss unless the operation is a boundary I/O (the tool is offline-first and deterministic — retries hide real failures).
 11. **"Bump Go to the latest tip as part of this fix."** → Dismiss. Principle XII — Go upgrades are their own reviewed commit.
 12. **"Add a pre-existing-pattern refactor."** → Dismiss. Out of scope for a review-fix cycle; propose it as a separate issue if worth doing.
+13. **"Localize this comment / message / identifier to Spanish (or any non-English language)."** → Dismiss. Principle XIV — checked-in artifacts are English-only.
 
 ## Convergence metric
 

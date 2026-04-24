@@ -126,6 +126,7 @@ Code review requested on `${BRANCH}` — ${COMMIT_COUNT} commits, ${DIFF_STAT}, 
 - **Principle IV (Deterministic Output)**: output MUST be byte-identical across runs. No map iteration without sorted keys, no unstable sort, no `time.Now()` reaching the render path, no locale-dependent float formatting, no random IDs.
 - **Principle VIII (Reference Fixtures & Golden Tests)**: new parsers MUST ship with a fixture under `testdata/` and a golden under `testdata/golden/` in the same change.
 - **Principle XIII (Canonical Code Path, NON-NEGOTIABLE)**: exactly one implementation per behaviour. No duplicated code, no silent fallbacks (`try A, on error try B`), no post-rename compatibility shims, no `if useNew { ... } else { ... }` internal flags. When a function is replaced, the old one is deleted in the same change.
+- **Principle XIV (English-Only Durable Artifacts)**: all checked-in code, comments, commit messages, docs, and configuration MUST be English. The only exempt content is under `testdata/` and `_references/` (raw pt-stalk input).
 
 **Focus:** real bugs, correctness, determinism regressions, exception handling, behavioural drift from deleted code, principle violations.
 
@@ -141,6 +142,7 @@ Code review requested on `${BRANCH}` — ${COMMIT_COUNT} commits, ${DIFF_STAT}, 
 - CGO, `import "C"`, or any dynamic-link assumption (Principle I).
 - `fmt.Errorf` for branchable conditions — use typed errors with `%w` (Principle VII).
 - Bumping the Go directive in `go.mod` as a side effect (Principle XII).
+- Non-English content in code, comments, commit messages, docs, or configuration outside `testdata/` and `_references/` (Principle XIV).
 - Style, formatting, or import ordering — CI and `gofmt` already enforce those.
 
 **Do NOT implement or push changes.** Review-only. Findings as inline comments, please.

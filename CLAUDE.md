@@ -30,7 +30,7 @@ not an artifact and may be in any language.
   list the My-gather-specific anti-patterns so bots can self-filter.
   **Use this in this repo, not the global `/pr-review-trigger`.**
 - `/pr-review-fix-my-gather` (skill at `.claude/skills/pr-review-fix-my-gather/`)
-  — the My-gather variant of the PR review-fix workflow. Walks the 13
+  — the My-gather variant of the PR review-fix workflow. Walks the 14
   principles in `.specify/memory/constitution.md`, uses Go-native
   validation, and marks review threads resolved on GitHub. **Use this
   in this repo, not the global `/pr-review-fix`** — the global one
