@@ -1,6 +1,41 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.2.0 → 1.3.0
+Bump rationale: MINOR-level named exception added to Principle IX
+  (Zero Network at Runtime). The exception permits a single outbound
+  POST to a project-controlled endpoint on explicit user Submit of
+  the Report Feedback dialog, enabling feature 003-feedback-backend-worker
+  to hand the feedback off to a Cloudflare Worker that posts the
+  GitHub Issue server-side (the only path that avoids shipping a
+  token in the report). The broader no-network baseline is unchanged;
+  nothing already-compliant becomes non-compliant.
+
+Added principles: none.
+
+Modified principles:
+  - IX. Zero Network at Runtime → adds a "Named exceptions" subsection
+    describing the user-initiated-Submit path. Baseline rule
+    ("MUST NOT perform any network I/O during normal operation") is
+    preserved verbatim. Only additive text.
+
+Modified sections: none outside the principle body itself.
+
+Downstream cleanups folded into this amendment:
+  - None. The amendment lands alongside the feature that needs it,
+    per plan.md.
+
+Templates requiring updates:
+  - .specify/templates/plan-template.md      ✅ compatible
+  - .specify/templates/spec-template.md      ✅ compatible
+  - .specify/templates/tasks-template.md     ✅ compatible
+  - .specify/templates/checklist-template.md ✅ compatible
+  - .claude/skills/speckit-*/                ✅ compatible
+
+Deferred items / follow-up TODOs: none.
+
+Prior Sync Impact Report (1.2.0) follows for history:
+-----------------------------------------------------
 Version change: 1.1.0 → 1.2.0
 Bump rationale: MINOR-level addition of a new Core Principle — XIV.
   English-Only Durable Artifacts — and a companion 8th entry in the
@@ -235,6 +270,22 @@ outbound HTTP. Network code paths (e.g., `net/http` client usage) are
 prohibited in the shipped binary except behind build tags used exclusively
 for development tooling that is NOT compiled into release artifacts.
 
+**Named exceptions**: The following runtime network calls are allowed
+when the user has an explicit intent expressed by a UI action:
+
+- **Feedback submission (ratified 2026-04-24 for feature
+  003-feedback-backend-worker)**: On the user clicking the "Submit"
+  button of the Report Feedback dialog, the report MAY perform a
+  single outbound `POST` to a project-controlled HTTPS endpoint. The
+  endpoint URL MUST be a build-time constant. The payload MUST be
+  scoped to the user's explicit feedback (title, body, attachments);
+  it MUST NOT include telemetry, report metadata beyond the feedback
+  itself, or any data the user did not type into the dialog. On any
+  failure of the endpoint, the report MUST fall back to a non-network
+  path that delivers equivalent value (feature 002's `window.open`
+  pre-fill URL flow satisfies this). The Go binary itself remains
+  subject to the baseline rule above — it performs no network I/O.
+
 ### X. Minimal Dependencies
 
 The standard library is the default. Third-party modules MUST be justified
@@ -362,4 +413,4 @@ invocation via the Constitution Check gate. Runtime development guidance
 and feature-local `plan.md` / `quickstart.md` files and MUST defer to this
 constitution when conflicts arise.
 
-**Version**: 1.2.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-24
+**Version**: 1.3.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-24
