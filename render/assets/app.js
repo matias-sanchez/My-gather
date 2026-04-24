@@ -3278,6 +3278,19 @@
     var imgBlob = null, imgURL = null;
     var voiceBlob = null, voiceURL = null;
     var recorder = null, recStream = null, recChunks = null;
+    // idempotencyKey persists across doSubmit retries of the SAME
+    // logical submission attempt. Without this, a timeout/network
+    // error on the first POST would let the user re-click Submit
+    // and the Worker — whose 5-minute replay cache is keyed on the
+    // idempotencyKey — would see a new key and create a duplicate
+    // issue in the common case where the first request actually
+    // reached the backend but the client gave up waiting. The key
+    // is minted lazily inside doSubmit the first time it's needed,
+    // cleared when the submission lands a definitive success
+    // (renderSuccess) and when the dialog is dismissed (closeDialog)
+    // — both signals mean the next submit is a different logical
+    // attempt that deserves a fresh key.
+    var idempotencyKey = null;
     // Monotonic session counter: bumped by startRecording (claims a
     // fresh session) and closeDialog (invalidates any in-flight
     // permission grant). stopRecording does NOT bump because it runs
@@ -3632,6 +3645,12 @@
       clearAttachment("image"); clearAttachment("voice");
       titleInput.value = ""; bodyInput.value = ""; catSelect.value = "";
       setErr(""); hide(fallback); hide(hint);
+      // Dialog dismissal ends the current logical submission. The
+      // next time the user opens the dialog and clicks Submit, they
+      // are composing a fresh message and deserve a fresh
+      // idempotencyKey — not a replay of whatever the backend
+      // cached against the old key.
+      idempotencyKey = null;
       // Reset the success panel so reopening the dialog after a
       // successful submit starts back at the form, not the stale
       // "Feedback posted" state.
@@ -3680,6 +3699,11 @@
     // with a link to the freshly-created GitHub issue.
     function renderSuccess(issueUrl) {
       if (!successEl || !successLink) return;
+      // Definitive success — the next Submit (after a form reset or
+      // dialog close) is a new logical attempt and deserves a fresh
+      // idempotencyKey. Clear the cached key so lazy-init in
+      // doSubmit mints a new one.
+      idempotencyKey = null;
       successLink.href = issueUrl;
       form.hidden = true;
       show(successEl);
@@ -3757,16 +3781,19 @@
       var genMeta = document.querySelector('meta[name="generator"]');
       if (genMeta && genMeta.content) reportVersion = genMeta.content.slice(0, 64);
 
-      // Mint the idempotency key once at the TOP of the submit
-      // flow, before any async work. Doing it inside the
-      // Promise.all().then() callback means every retry of the
-      // same logical submit attempt (e.g. submitBtn re-enabled
-      // after a network error, user re-clicks) generates a fresh
-      // key, so the Worker's 5-minute idempotency replay can't
-      // deduplicate them. Closing the key in scope here ensures
-      // one gesture ↔ one key ↔ one durable record regardless of
-      // how the async chain below schedules.
-      var idempotencyKey = generateIdempotencyKey();
+      // Mint the idempotency key lazily, and only if we don't
+      // already have one. A persisted key carried across retries is
+      // the entire point of the Worker's 5-minute replay cache:
+      // when a first POST actually reaches the backend but the
+      // client times out waiting for the response, the retry with
+      // the SAME key replays the original success instead of
+      // creating a duplicate issue. The enclosing scope resets
+      // idempotencyKey to null on definitive success and on
+      // closeDialog — those are the only two events that mean
+      // "the next Submit is a new logical attempt".
+      if (!idempotencyKey) {
+        idempotencyKey = generateIdempotencyKey();
+      }
 
       // Snapshot the attachment blob references up front so the
       // async base64 encoding reads a frozen view even if the user
