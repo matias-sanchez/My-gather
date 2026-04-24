@@ -1301,20 +1301,28 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
 .ma-strip-hint {
   margin-left: auto;
   color: var(--fg-dim);
-  font-size: 10.5px;
+  font-size: 11.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .ma-strip-hint kbd {
-  display: inline-block;
-  min-width: 18px;
-  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 4px;
   background: var(--bg);
-  color: var(--fg-muted);
+  color: var(--fg);
   font-family: var(--mono);
-  font-size: 10px;
-  margin: 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 1px;
   text-align: center;
+  box-shadow: 0 1px 0 color-mix(in srgb, #000 30%, transparent);
 }
 
 /* Option A: the panel is a viewport-fixed popover. JS (positionMaPanel)
