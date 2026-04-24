@@ -311,16 +311,37 @@ func latestUptimeSeconds(c *model.Collection) (int64, time.Time) {
 		}
 	}
 	// Fallback: variable dump sometimes carries Uptime via -variables.
-	// Anchor to the last snapshot's timestamp — variables are a
-	// point-in-time dump so we don't have a per-sample timestamp.
-	if raw := lookupVar(c, "Uptime"); raw != "" {
-		if v, err := strconv.ParseInt(raw, 10, 64); err == nil {
-			var ts time.Time
-			if len(c.Snapshots) > 0 {
-				ts = c.Snapshots[len(c.Snapshots)-1].Timestamp
-			}
-			return v, ts
+	// Walk snapshots newest-first and anchor StartTimeUTC to the
+	// snapshot that actually supplied the variables row — not blindly
+	// to the last snapshot. In partial captures where the newest
+	// snapshot lacks -variables (or has it unparseable) but an older
+	// one carries Uptime, anchoring to c.Snapshots[last].Timestamp
+	// would shift StartTimeUTC forward by the inter-snapshot gap.
+	for i := len(c.Snapshots) - 1; i >= 0; i-- {
+		sn := c.Snapshots[i]
+		sf, ok := sn.SourceFiles[model.SuffixVariables]
+		if !ok || sf == nil || sf.Parsed == nil {
+			continue
 		}
+		vd, ok := sf.Parsed.(*model.VariablesData)
+		if !ok {
+			continue
+		}
+		var raw string
+		for _, e := range vd.Entries {
+			if e.Name == "Uptime" {
+				raw = e.Value
+				break
+			}
+		}
+		if raw == "" {
+			continue
+		}
+		v, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil {
+			continue
+		}
+		return v, sn.Timestamp
 	}
 	return 0, time.Time{}
 }
