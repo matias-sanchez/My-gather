@@ -535,28 +535,40 @@ func isMysqldCommand(cmd string) bool {
 	return strings.EqualFold(trimmed, "mysqld") || strings.EqualFold(trimmed, "mariadbd")
 }
 
-// concatNetstat merges per-snapshot NetstatSocketsSample into a single
-// merged NetstatSocketsData, preserving snapshot boundaries for the
-// renderer.
-func concatNetstat(samples []*model.NetstatSocketsSample) *model.NetstatSocketsData {
-	nonNil := samples[:0]
-	for _, s := range samples {
-		if s != nil && len(s.StateCounts) > 0 {
-			nonNil = append(nonNil, s)
+// concatNetstat merges per-file NetstatSocketsSample slices into a
+// single NetstatSocketsData with proper SnapshotBoundaries. Each
+// inner slice holds the polls (TS blocks) from one -netstat file;
+// boundaries are emitted at the index of each file's FIRST retained
+// poll so the renderer's dashed divider lines land on snapshot
+// transitions — not on every per-poll sample.
+func concatNetstat(perFile [][]*model.NetstatSocketsSample) *model.NetstatSocketsData {
+	var flat []*model.NetstatSocketsSample
+	var boundaries []int
+	for _, file := range perFile {
+		firstIdx := len(flat)
+		fileHadAny := false
+		for _, s := range file {
+			if s == nil || len(s.StateCounts) == 0 {
+				continue
+			}
+			flat = append(flat, s)
+			fileHadAny = true
+		}
+		if fileHadAny {
+			boundaries = append(boundaries, firstIdx)
 		}
 	}
-	if len(nonNil) == 0 {
+	if len(flat) == 0 {
 		return nil
 	}
 	out := &model.NetstatSocketsData{
-		Samples:            make([]model.NetstatSocketsSample, 0, len(nonNil)),
-		SnapshotBoundaries: make([]int, 0, len(nonNil)),
+		Samples:            make([]model.NetstatSocketsSample, 0, len(flat)),
+		SnapshotBoundaries: boundaries,
 	}
 	stateSet := map[string]bool{}
 	hasOther := false
-	for i, s := range nonNil {
+	for _, s := range flat {
 		out.Samples = append(out.Samples, *s)
-		out.SnapshotBoundaries = append(out.SnapshotBoundaries, i)
 		for st := range s.StateCounts {
 			if st == "Other" {
 				hasOther = true
@@ -577,19 +589,33 @@ func concatNetstat(samples []*model.NetstatSocketsSample) *model.NetstatSocketsD
 	return out
 }
 
-// concatNetstatS merges per-snapshot NetstatCountersSample into the
-// delta-across-time NetstatCountersData. Deltas are current - previous
-// at each slot, with slot 0 forced to NaN (no prior baseline). A
-// sample where a counter is missing or went backwards emits NaN for
-// that slot — matching the mysqladmin ext-status approach.
-func concatNetstatS(samples []*model.NetstatCountersSample) *model.NetstatCountersData {
-	nonNil := samples[:0]
-	for _, s := range samples {
-		if s != nil && len(s.Values) > 0 {
-			nonNil = append(nonNil, s)
+// concatNetstatS merges per-file NetstatCountersSample slices into a
+// single delta-across-time NetstatCountersData. Each inner slice is
+// one -netstat_s file's per-poll samples (one per TS block). Deltas
+// are current - previous at each slot with slot 0 forced to NaN (no
+// prior baseline). A sample where a counter is missing or went
+// backwards emits NaN for that slot — matching the mysqladmin
+// ext-status approach. SnapshotBoundaries mark the first retained
+// poll index of each new file so the renderer draws dashed dividers
+// at snapshot transitions, not between every pair of polls.
+func concatNetstatS(perFile [][]*model.NetstatCountersSample) *model.NetstatCountersData {
+	var flat []*model.NetstatCountersSample
+	var boundaries []int
+	for _, file := range perFile {
+		firstIdx := len(flat)
+		fileHadAny := false
+		for _, s := range file {
+			if s == nil || len(s.Values) == 0 {
+				continue
+			}
+			flat = append(flat, s)
+			fileHadAny = true
+		}
+		if fileHadAny {
+			boundaries = append(boundaries, firstIdx)
 		}
 	}
-	if len(nonNil) == 0 {
+	if len(flat) == 0 {
 		return nil
 	}
 
@@ -598,7 +624,7 @@ func concatNetstatS(samples []*model.NetstatCountersSample) *model.NetstatCounte
 	// alphabetically. That future-proofs the render for kernels that
 	// expose counters we haven't curated yet.
 	have := map[string]bool{}
-	for _, s := range nonNil {
+	for _, s := range flat {
 		for name := range s.Values {
 			have[name] = true
 		}
@@ -620,30 +646,39 @@ func concatNetstatS(samples []*model.NetstatCountersSample) *model.NetstatCounte
 	sort.Strings(extras)
 	labels = append(labels, extras...)
 
-	n := len(nonNil)
+	// Boundary index map: slot 0 at each file boundary resets the
+	// delta chain (no cross-snapshot delta), mirroring MysqladminData.
+	boundarySet := make(map[int]bool, len(boundaries))
+	for _, b := range boundaries {
+		boundarySet[b] = true
+	}
+
+	n := len(flat)
 	ts := make([]float64, n)
-	for i, s := range nonNil {
+	for i, s := range flat {
 		ts[i] = float64(s.Timestamp.Unix())
 	}
 	deltas := make(map[string][]float64, len(labels))
 	for _, name := range labels {
 		arr := make([]float64, n)
 		arr[0] = math.NaN()
-		prev, havePrev := nonNil[0].Values[name]
+		prev, havePrev := flat[0].Values[name]
 		for i := 1; i < n; i++ {
-			curr, haveCurr := nonNil[i].Values[name]
-			if !havePrev || !haveCurr || curr < prev {
+			curr, haveCurr := flat[i].Values[name]
+			switch {
+			case boundarySet[i]:
+				// Counters reset across snapshot boundaries (pt-stalk
+				// files are separate kernel sample streams in the
+				// general case); emit NaN so the chart draws a gap.
 				arr[i] = math.NaN()
-			} else {
+			case !havePrev || !haveCurr || curr < prev:
+				arr[i] = math.NaN()
+			default:
 				arr[i] = curr - prev
 			}
 			prev, havePrev = curr, haveCurr
 		}
 		deltas[name] = arr
-	}
-	boundaries := make([]int, len(nonNil))
-	for i := range nonNil {
-		boundaries[i] = i
 	}
 	return &model.NetstatCountersData{
 		Labels:             labels,

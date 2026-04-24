@@ -555,12 +555,16 @@ type NetstatSocketsData struct {
 	SnapshotBoundaries []int
 }
 
-// NetstatSocketsSample is one per-snapshot summary of the socket
-// table. State counts aggregate tcp + tcp6; udp sockets are counted
-// under an "UDP" pseudo-state. Recv-Q / Send-Q flags are set when
-// ANY socket in that sample had non-zero queues — a coarse but
-// actionable indicator that application draining or kernel
-// send-buffer flushing was backlogged.
+// NetstatSocketsSample is one per-POLL summary of the socket table.
+// pt-stalk writes multiple `netstat -antp` dumps per file separated
+// by `TS <epoch>` headers, and parseNetstat emits one sample per TS
+// block; counting across polls would inflate state totals and let
+// Recv-Q / Send-Q flags sticky-latch from older polls. State counts
+// aggregate tcp + tcp6; udp sockets are counted under an "UDP"
+// pseudo-state. Recv-Q / Send-Q flags are set when ANY socket in
+// that single poll had non-zero queues — a coarse but actionable
+// indicator that application draining or kernel send-buffer flushing
+// was backlogged at that moment.
 type NetstatSocketsSample struct {
 	Timestamp    time.Time
 	StateCounts  map[string]int
@@ -568,11 +572,11 @@ type NetstatSocketsSample struct {
 	SendQNonZero bool
 }
 
-// NetstatCountersSample is the per-snapshot intermediate emitted by
-// parseNetstatS — a single observation of every curated counter.
-// concatNetstatS merges a slice of these into the final merged
-// NetstatCountersData (with deltas-per-sample on the collection
-// timeline).
+// NetstatCountersSample is one per-POLL observation of the curated
+// `netstat -s` counter set. parseNetstatS emits one sample per TS
+// block so concatNetstatS can compute per-poll deltas; collapsing all
+// polls in a file into a single endpoint would lose the rate signal
+// between snapshot boundaries.
 type NetstatCountersSample struct {
 	Timestamp time.Time
 	Values    map[string]float64

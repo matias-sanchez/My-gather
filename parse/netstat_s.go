@@ -14,10 +14,16 @@ import (
 // parseNetstatS reads one pt-stalk -netstat_s file and extracts the
 // curated set of TCP counters we surface in the Network subview.
 //
-// The file is the verbatim output of `netstat -s` captured at the
-// snapshot moment, with a "TS <epoch>" header on the first line added
-// by pt-stalk. Each indented line under a section header is a named
-// counter: either
+// The file is a concatenation of `netstat -s` dumps separated by
+// `TS <epoch> …` headers written by pt-stalk on every poll. One
+// NetstatCountersSample is emitted per TS block so concatNetstatS can
+// compute per-poll deltas (not per-snapshot): otherwise a ~30-second
+// pt-stalk window with dozens of polls would collapse into a single
+// point and the rate charts would render flat lines between snapshot
+// boundaries.
+//
+// Each indented line under a section header is a named counter:
+// either
 //
 //	"    12345 active connection openings"
 //	"    TCPListenOverflows: 23"
@@ -28,10 +34,9 @@ import (
 // map bounded and deterministic regardless of kernel-version
 // variation in the `netstat -s` report.
 //
-// One call parses ONE sample; the merge across snapshots happens in
-// concatNetstatS (render/concat.go) where per-sample counters become
-// deltas on the collection's timeline.
-func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) (*model.NetstatCountersSample, []model.Diagnostic) {
+// Files with no TS header at all (single-poll captures or simplified
+// fixtures) are treated as one sample timestamped at snapshotStart.
+func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*model.NetstatCountersSample, []model.Diagnostic) {
 	scanner := newLineScanner(r)
 	var diagnostics []model.Diagnostic
 	addDiag := func(line int, msg string) {
@@ -43,10 +48,24 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) (*mo
 		})
 	}
 
-	values := map[string]float64{}
-	any := false
-	lineNum := 0
+	var (
+		samples []*model.NetstatCountersSample
+		curTS   = snapshotStart
+		curVals map[string]float64
+		curAny  bool
+	)
+	flush := func() {
+		if curVals != nil && curAny {
+			samples = append(samples, &model.NetstatCountersSample{
+				Timestamp: curTS,
+				Values:    curVals,
+			})
+		}
+		curVals = nil
+		curAny = false
+	}
 
+	lineNum := 0
 	for scanner.Scan() {
 		lineNum++
 		raw := scanner.Text()
@@ -54,10 +73,23 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) (*mo
 		if line == "" {
 			continue
 		}
-		// Skip section headers; labels tie directly to counter
-		// keywords so we don't need the section context.
+		if m := reTimestampLine.FindStringSubmatch(line); m != nil {
+			flush()
+			curTS = epochToTime(m[1], snapshotStart)
+			curVals = map[string]float64{}
+			continue
+		}
+		// Section headers like "Tcp:", "TcpExt:" start at column 0;
+		// counter lines are indented. Skip headers — labels tie
+		// directly to counter keywords so we don't need the section
+		// context.
 		if !strings.HasPrefix(raw, " ") && !strings.HasPrefix(raw, "\t") {
 			continue
+		}
+		if curVals == nil {
+			// No TS seen yet — treat the whole file as one sample.
+			curVals = map[string]float64{}
+			curTS = snapshotStart
 		}
 
 		// Try "LABEL: N"
@@ -68,8 +100,8 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) (*mo
 			if len(toks) == 1 {
 				if name, ok := netstatSLookup[label]; ok {
 					if v, err := strconv.ParseFloat(toks[0], 64); err == nil {
-						values[name] = v
-						any = true
+						curVals[name] = v
+						curAny = true
 						continue
 					} else {
 						addDiag(lineNum, fmt.Sprintf("non-numeric value for %q: %q", label, toks[0]))
@@ -87,10 +119,11 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) (*mo
 		}
 		rest := strings.TrimSpace(strings.TrimPrefix(line, first))
 		if name, ok := netstatSLookup[rest]; ok {
-			values[name] = v
-			any = true
+			curVals[name] = v
+			curAny = true
 		}
 	}
+	flush()
 	if err := scanner.Err(); err != nil {
 		diagnostics = append(diagnostics, model.Diagnostic{
 			SourceFile: sourcePath,
@@ -98,10 +131,10 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) (*mo
 			Message:    fmt.Sprintf("netstat_s read: %v", err),
 		})
 	}
-	if !any {
+	if len(samples) == 0 {
 		return nil, diagnostics
 	}
-	return &model.NetstatCountersSample{Timestamp: snapshotStart, Values: values}, diagnostics
+	return samples, diagnostics
 }
 
 // netstatSLookup maps the raw `netstat -s` label (as it appears in
