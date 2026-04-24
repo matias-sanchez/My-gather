@@ -98,11 +98,20 @@ func buildEnvironmentSection(c *model.Collection) *model.EnvironmentSection {
 				host.LogicalCPUs = ps.LogicalCPUs
 				populated = true
 			}
-			// OS uptime — btime vs capture timestamp (last snapshot).
-			if ps.BTime > 0 && len(c.Snapshots) > 0 {
-				last := c.Snapshots[len(c.Snapshots)-1]
-				if !last.Timestamp.IsZero() {
-					diff := last.Timestamp.Unix() - ps.BTime
+			// OS uptime — btime vs the procstat sample's own clock.
+			// Prefer the timestamp of the sidecar file the sample came
+			// from; only fall back to the last snapshot's timestamp if
+			// the sidecar prefix is unavailable. Sidecar files can
+			// come from newer prefixes than the newest Collection
+			// snapshot, and anchoring to the wrong clock understates
+			// uptime by the inter-prefix gap.
+			if ps.BTime > 0 {
+				anchor := c.EnvSidecarTimestamps["procstat"]
+				if anchor.IsZero() && len(c.Snapshots) > 0 {
+					anchor = c.Snapshots[len(c.Snapshots)-1].Timestamp
+				}
+				if !anchor.IsZero() {
+					diff := anchor.Unix() - ps.BTime
 					if diff > 0 {
 						host.OSUptimeSeconds = diff
 						populated = true

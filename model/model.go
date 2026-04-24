@@ -152,6 +152,15 @@ type Collection struct {
 	// renders of the same Collection stay byte-identical even if the
 	// underlying files are later modified or removed.
 	RawEnvSidecars map[string]string
+
+	// EnvSidecarTimestamps records the timestamp parsed from the
+	// prefix of the sidecar file selected for each suffix in
+	// RawEnvSidecars. Keyed by the same suffix. Used by the
+	// Environment renderer to anchor point-in-time derivations (e.g.
+	// OS uptime from /proc/stat btime) to the clock of the sample the
+	// sidecar was taken from — NOT the last Collection snapshot,
+	// which can be a newer snapshot without these sidecars.
+	EnvSidecarTimestamps map[string]time.Time
 }
 
 // Snapshot is one timestamped pt-stalk collection pass within a

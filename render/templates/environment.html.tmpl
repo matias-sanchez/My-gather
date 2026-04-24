@@ -72,7 +72,10 @@
     {{- end }}
   </section>
 
-  <section class="env-pane" role="tabpanel" aria-label="MySQL environment" data-env-panel="mysql" hidden>
+  {{- /* No `hidden` attribute here: progressive-enhancement. Without JS
+         both panels are scrollable; `initEnvTabs` will flip `hidden` on
+         the inactive panel once the tab switcher is wired up. */ -}}
+  <section class="env-pane" role="tabpanel" aria-label="MySQL environment" data-env-panel="mysql">
     <div class="env-group">
       <h4>Identity</h4>
       <dl class="env-kv">

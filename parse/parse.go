@@ -337,12 +337,14 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 	// Invoke per-collector parsers for every SourceFile. Each parser is
 	// self-contained and captures its own diagnostics on the SourceFile;
 	// the overall Discover call still returns err==nil.
+	sidecarContents, sidecarTimestamps := loadEnvSidecars(absRoot, snapshots)
 	collection := &model.Collection{
-		RootPath:       absRoot,
-		Hostname:       hostname,
-		PtStalkSize:    totalBytes,
-		Snapshots:      snapshots,
-		RawEnvSidecars: loadEnvSidecars(absRoot, snapshots),
+		RootPath:             absRoot,
+		Hostname:             hostname,
+		PtStalkSize:          totalBytes,
+		Snapshots:            snapshots,
+		RawEnvSidecars:       sidecarContents,
+		EnvSidecarTimestamps: sidecarTimestamps,
 	}
 	runParsers(ctx, collection, opts.Sink)
 	return collection, nil
@@ -367,13 +369,19 @@ var envSidecarSuffixes = []string{
 // chronological order for pt-stalk's `YYYY_MM_DD_HH_MM_SS` timestamp
 // scheme.
 //
-// Missing/unreadable files map to absent keys in the returned map;
-// the render layer treats them as "data unavailable".
-func loadEnvSidecars(rootPath string, snapshots []*model.Snapshot) map[string]string {
+// Missing/unreadable files map to absent keys in the returned maps;
+// the render layer treats them as "data unavailable". The second
+// returned map carries the timestamp parsed from the prefix of the
+// chosen file — consumers that anchor point-in-time derivations (e.g.
+// OS uptime from /proc/stat btime) should prefer it over the last
+// snapshot's timestamp, since sidecar files can come from newer
+// sidecar-only prefixes.
+func loadEnvSidecars(rootPath string, snapshots []*model.Snapshot) (map[string]string, map[string]time.Time) {
 	if rootPath == "" {
-		return nil
+		return nil, nil
 	}
 	out := make(map[string]string, len(envSidecarSuffixes))
+	timestamps := make(map[string]time.Time, len(envSidecarSuffixes))
 	for _, suf := range envSidecarSuffixes {
 		matches, err := filepath.Glob(filepath.Join(rootPath, "*-"+suf))
 		if err != nil || len(matches) == 0 {
@@ -386,11 +394,20 @@ func loadEnvSidecars(rootPath string, snapshots []*model.Snapshot) map[string]st
 				continue
 			}
 			out[suf] = string(data)
+			// Extract the prefix — filename is "<prefix>-<suffix>" — and
+			// parse it into a time. Failures leave the timestamp absent;
+			// the renderer will fall back to the last snapshot's clock.
+			name := filepath.Base(path)
+			if m := snapshotPrefix.FindStringSubmatch(name); m != nil {
+				if ts, err := parseSnapshotTimestamp(m[1]); err == nil {
+					timestamps[suf] = ts
+				}
+			}
 			break
 		}
 	}
 	_ = snapshots // retained for call-site symmetry; no longer required
-	return out
+	return out, timestamps
 }
 
 // runParsers iterates every SourceFile in every Snapshot and invokes

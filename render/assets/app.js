@@ -2716,7 +2716,10 @@
       });
       var saved = null;
       try { saved = storageGet(KEY); } catch (_) {}
-      if (saved === "host" || saved === "mysql") select(saved);
+      // Template renders both panels visible so no-JS readers can reach
+      // MySQL content. Always call select() once JS is running so the
+      // inactive panel is hidden and the tab UX matches other tablists.
+      select(saved === "host" || saved === "mysql" ? saved : "host");
     });
   }
 
