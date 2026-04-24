@@ -798,6 +798,10 @@
           renderVmstatTabs(containers[i], data);
         } else if (name === "innodb-hll") {
           renderHLLSparkline(containers[i], data);
+        } else if (name === "network-counters") {
+          renderTimeSeries(containers[i], data, "/s");
+        } else if (name === "network-sockets") {
+          renderNetworkSockets(containers[i], data);
         } else {
           renderTimeSeries(containers[i], data, unitForChart(name));
         }
@@ -1102,6 +1106,24 @@
     }
     btnLine.addEventListener("click",  function () { switchTo("line"); });
     btnStack.addEventListener("click", function () { switchTo("stacked"); });
+  }
+
+  // renderNetworkSockets: stacked-bar chart of socket-state counts
+  // over time. Each sample becomes one bar; stack segments are the
+  // per-state counts (ESTABLISHED / TIME_WAIT / CLOSE_WAIT / LISTEN /
+  // UDP / …). Reuses buildStackedChart so the bar sizing, bucketing,
+  // and legend behaviour match the other stacked views (mysqladmin,
+  // processlist, top).
+  function renderNetworkSockets(el, data) {
+    if (!data || !Array.isArray(data.timestamps) || !Array.isArray(data.series)) return;
+    var hidden = new Set();
+    var plot = null;
+    function draw() {
+      if (plot) { unregisterChart(plot); plot.destroy(); plot = null; }
+      plot = buildStackedChart(el, data, "sockets", hidden, draw);
+    }
+    draw();
+    mountResetZoomButton(el, function () { return plot; });
   }
 
   // renderIostat: split into two charts sharing the same pill legend —

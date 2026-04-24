@@ -41,14 +41,18 @@ type reportView struct {
 	HasFindings   bool
 
 	// OS section payload
-	HasIostat      bool
-	HasTop         bool
-	HasVmstat      bool
-	HasMeminfo     bool
-	IostatSummary  *iostatSummaryView
-	TopSummary     *topSummaryView
-	VmstatSummary  *vmstatSummaryView
-	MeminfoSummary *meminfoSummaryView
+	HasIostat          bool
+	HasTop             bool
+	HasVmstat          bool
+	HasMeminfo         bool
+	HasNetwork         bool
+	HasNetworkCounters bool
+	HasNetworkSockets  bool
+	IostatSummary      *iostatSummaryView
+	TopSummary         *topSummaryView
+	VmstatSummary      *vmstatSummaryView
+	MeminfoSummary     *meminfoSummaryView
+	NetworkSummary     *networkSummaryView
 
 	// Variables section payload
 	HasVariables      bool
@@ -244,4 +248,17 @@ type meminfoSummaryView struct {
 	MaxDirty     string // peak dirty-page backlog (fsync pressure)
 	MaxSwapUsed  string // peak swap pressure
 	SampleCount  int
+}
+
+// networkSummaryView is the chip-strip atop the Network subview.
+// Every field is a pre-formatted string or empty when the underlying
+// metric wasn't observed — the template suppresses the chip for empty
+// strings. SampleCount is the total number of snapshots that produced
+// at least one network artifact (counters OR sockets).
+type networkSummaryView struct {
+	PeakRetransmits     string
+	PeakListenOverflows string
+	PeakTimeWait        string
+	PeakCloseWait       string
+	SampleCount         int
 }

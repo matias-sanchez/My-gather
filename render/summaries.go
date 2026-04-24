@@ -2,10 +2,15 @@ package render
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/matias-sanchez/My-gather/model"
 )
+
+func isNaNOrInf(v float64) bool {
+	return math.IsNaN(v) || math.IsInf(v, 0)
+}
 
 func truncateCommand(s string) string {
 	const max = 20
@@ -181,4 +186,66 @@ func maxInt(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// summariseNetwork produces the chip-strip atop the Network subview.
+// Inputs come from both -netstat_s (rate-derived peaks) and -netstat
+// (socket-state absolute peaks). Accepts nil inputs and degrades
+// gracefully (fields stay empty → template omits the chip).
+func summariseNetwork(counters *model.NetstatCountersData, sockets *model.NetstatSocketsData) *networkSummaryView {
+	sum := &networkSummaryView{}
+
+	peakRate := func(name string) float64 {
+		if counters == nil {
+			return 0
+		}
+		arr, ok := counters.Deltas[name]
+		if !ok {
+			return 0
+		}
+		var peak, gap float64
+		for i := 1; i < len(arr); i++ {
+			if isNaNOrInf(arr[i]) {
+				continue
+			}
+			gap = counters.Timestamps[i] - counters.Timestamps[i-1]
+			if gap <= 0 {
+				continue
+			}
+			rate := arr[i] / gap
+			if rate > peak {
+				peak = rate
+			}
+		}
+		return peak
+	}
+	if r := peakRate("tcp_retransmits"); r > 0 {
+		sum.PeakRetransmits = fmt.Sprintf("%.2f", r)
+	}
+	if r := peakRate("tcp_listen_overflows"); r > 0 {
+		sum.PeakListenOverflows = fmt.Sprintf("%.2f", r)
+	}
+
+	if sockets != nil {
+		var peakTW, peakCW int
+		for _, s := range sockets.Samples {
+			if v := s.StateCounts["TIME_WAIT"]; v > peakTW {
+				peakTW = v
+			}
+			if v := s.StateCounts["CLOSE_WAIT"]; v > peakCW {
+				peakCW = v
+			}
+		}
+		if peakTW > 0 {
+			sum.PeakTimeWait = fmt.Sprintf("%d", peakTW)
+		}
+		if peakCW > 0 {
+			sum.PeakCloseWait = fmt.Sprintf("%d", peakCW)
+		}
+		sum.SampleCount = len(sockets.Samples)
+	}
+	if sum.SampleCount == 0 && counters != nil {
+		sum.SampleCount = len(counters.Timestamps)
+	}
+	return sum
 }

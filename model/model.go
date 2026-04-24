@@ -35,6 +35,8 @@ const (
 	SuffixInnodbStatus Suffix = "innodbstatus1" // parses the first innodb-status snapshot; -innodbstatus2 is out of scope for v1
 	SuffixMysqladmin   Suffix = "mysqladmin"
 	SuffixProcesslist  Suffix = "processlist"
+	SuffixNetstat      Suffix = "netstat"   // per-sample socket dump (ss / netstat -an)
+	SuffixNetstatS     Suffix = "netstat_s" // aggregate kernel counters (netstat -s)
 )
 
 // KnownSuffixes is the declared iteration order used by render-side
@@ -50,6 +52,8 @@ var KnownSuffixes = []Suffix{
 	SuffixInnodbStatus,
 	SuffixMysqladmin,
 	SuffixProcesslist,
+	SuffixNetstat,
+	SuffixNetstatS,
 }
 
 // FormatVersion identifies which pt-stalk release produced a given
@@ -530,4 +534,73 @@ type ThreadStateSample struct {
 	HostCounts    map[string]int
 	CommandCounts map[string]int
 	DbCounts      map[string]int
+}
+
+// NetstatSocketsData is the typed payload merged from every
+// -netstat SourceFile in the collection. One record per captured
+// snapshot, carrying the socket-state histogram plus a flag set when
+// any socket had a non-zero Recv-Q or Send-Q at that moment.
+type NetstatSocketsData struct {
+	// Samples ordered by Timestamp ascending, one per -netstat file.
+	Samples []NetstatSocketsSample
+
+	// States is the canonical rendering order across the collection
+	// (union of every sample's keys, sorted alphabetically with
+	// "Other" always last if present).
+	States []string
+
+	// SnapshotBoundaries lists the sample indexes at which a new
+	// Snapshot's first sample sits. Same semantics as
+	// IostatData.SnapshotBoundaries.
+	SnapshotBoundaries []int
+}
+
+// NetstatSocketsSample is one per-snapshot summary of the socket
+// table. State counts aggregate tcp + tcp6; udp sockets are counted
+// under an "UDP" pseudo-state. Recv-Q / Send-Q flags are set when
+// ANY socket in that sample had non-zero queues — a coarse but
+// actionable indicator that application draining or kernel
+// send-buffer flushing was backlogged.
+type NetstatSocketsSample struct {
+	Timestamp   time.Time
+	StateCounts map[string]int
+	RecvQNonZero bool
+	SendQNonZero bool
+}
+
+// NetstatCountersSample is the per-snapshot intermediate emitted by
+// parseNetstatS — a single observation of every curated counter.
+// concatNetstatS merges a slice of these into the final merged
+// NetstatCountersData (with deltas-per-sample on the collection
+// timeline).
+type NetstatCountersSample struct {
+	Timestamp time.Time
+	Values    map[string]float64
+}
+
+// NetstatCountersData is the typed payload merged from every
+// -netstat_s SourceFile — aggregate kernel network counters (IP,
+// ICMP, TCP, UDP, TcpExt). Shape mirrors MysqladminData so the same
+// rendering pipeline (deltas-per-sample stacked/line charts) can
+// consume both.
+type NetstatCountersData struct {
+	// Labels is the canonical counter-name rendering order: curated
+	// list we know how to interpret, followed by any additional
+	// labels observed in the captures sorted alphabetically.
+	Labels []string
+
+	// Timestamps is one epoch-seconds value per sample observed
+	// across all snapshots, ascending.
+	Timestamps []float64
+
+	// Deltas[name] has len(Timestamps) entries. Slot 0 is always NaN
+	// (there is no prior sample to delta against); subsequent slots
+	// hold current - previous delta. NaN is also emitted for a slot
+	// when either endpoint was missing or the counter went
+	// backwards (e.g., counter reset).
+	Deltas map[string][]float64
+
+	// SnapshotBoundaries lists the sample indexes at which a new
+	// Snapshot's first sample sits.
+	SnapshotBoundaries []int
 }

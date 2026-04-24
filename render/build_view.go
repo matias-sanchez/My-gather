@@ -70,6 +70,12 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 		if v.HasMeminfo {
 			v.MeminfoSummary = summariseMeminfo(r.OSSection.Meminfo)
 		}
+		v.HasNetworkCounters = r.OSSection.NetCounters != nil
+		v.HasNetworkSockets = r.OSSection.NetSockets != nil
+		v.HasNetwork = v.HasNetworkCounters || v.HasNetworkSockets
+		if v.HasNetwork {
+			v.NetworkSummary = summariseNetwork(r.OSSection.NetCounters, r.OSSection.NetSockets)
+		}
 	}
 	totalSnaps := 0
 	if r.VariablesSection != nil {

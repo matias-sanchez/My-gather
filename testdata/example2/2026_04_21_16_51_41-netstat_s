@@ -1,0 +1,30 @@
+Ip:
+    Forwarding: 2
+    100 total packets received
+    0 forwarded
+    0 incoming packets discarded
+    100 incoming packets delivered
+    90 requests sent out
+Tcp:
+    50 active connection openings
+    30 passive connection openings
+    5 failed connection attempts
+    2 connection resets received
+    40 connections established
+    5000 segments received
+    4500 segments sent out
+    10 segments retransmitted
+    0 bad segments received
+    12 resets sent
+Udp:
+    120 packets received
+    0 packets to unknown port received
+    0 packet receive errors
+    118 packets sent
+    0 receive buffer errors
+    0 send buffer errors
+TcpExt:
+    TCPListenOverflows: 0
+    TCPBacklogDrop: 0
+    SyncookiesSent: 0
+    TCPSynRetrans: 2

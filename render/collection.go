@@ -31,6 +31,8 @@ func buildOSSection(c *model.Collection) *model.OSSection {
 	var tops []*model.TopData
 	var vms []*model.VmstatData
 	var mems []*model.MeminfoData
+	var netSockets []*model.NetstatSocketsSample
+	var netCounters []*model.NetstatCountersSample
 	for _, snap := range c.Snapshots {
 		if sf, ok := snap.SourceFiles[model.SuffixIostat]; ok && sf.Parsed != nil {
 			if v, ok := sf.Parsed.(*model.IostatData); ok {
@@ -52,11 +54,23 @@ func buildOSSection(c *model.Collection) *model.OSSection {
 				mems = append(mems, v)
 			}
 		}
+		if sf, ok := snap.SourceFiles[model.SuffixNetstat]; ok && sf.Parsed != nil {
+			if v, ok := sf.Parsed.(*model.NetstatSocketsSample); ok {
+				netSockets = append(netSockets, v)
+			}
+		}
+		if sf, ok := snap.SourceFiles[model.SuffixNetstatS]; ok && sf.Parsed != nil {
+			if v, ok := sf.Parsed.(*model.NetstatCountersSample); ok {
+				netCounters = append(netCounters, v)
+			}
+		}
 	}
 	sec.Iostat = concatIostat(ios)
 	sec.Top = concatTop(tops)
 	sec.Vmstat = concatVmstat(vms)
 	sec.Meminfo = concatMeminfo(mems)
+	sec.NetSockets = concatNetstat(netSockets)
+	sec.NetCounters = concatNetstatS(netCounters)
 	if sec.Iostat == nil {
 		sec.Missing = append(sec.Missing, "-iostat")
 	}
@@ -68,6 +82,9 @@ func buildOSSection(c *model.Collection) *model.OSSection {
 	}
 	if sec.Meminfo == nil {
 		sec.Missing = append(sec.Missing, "-meminfo")
+	}
+	if sec.NetSockets == nil && sec.NetCounters == nil {
+		sec.Missing = append(sec.Missing, "-netstat")
 	}
 	sort.Strings(sec.Missing)
 	return sec

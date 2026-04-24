@@ -490,6 +490,10 @@ func runOneParser(snap *model.Snapshot, sf *model.SourceFile, sink DiagnosticSin
 		parsed, diagnostics = parseMysqladmin(file, snap.Timestamp, sf.Path)
 	case model.SuffixProcesslist:
 		parsed, diagnostics = parseProcesslist(file, sf.Path)
+	case model.SuffixNetstat:
+		parsed, diagnostics = parseNetstat(file, snap.Timestamp, sf.Path)
+	case model.SuffixNetstatS:
+		parsed, diagnostics = parseNetstatS(file, snap.Timestamp, sf.Path)
 	default:
 		sf.Status = model.ParseFailed
 		return

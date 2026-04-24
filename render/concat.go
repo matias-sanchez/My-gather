@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/parse"
 )
 
 // concatIostat merges multiple per-Snapshot *IostatData into one.
@@ -532,4 +533,122 @@ func concatProcesslist(ins []*model.ProcesslistData) *model.ProcesslistData {
 func isMysqldCommand(cmd string) bool {
 	trimmed := strings.TrimSpace(cmd)
 	return strings.EqualFold(trimmed, "mysqld") || strings.EqualFold(trimmed, "mariadbd")
+}
+
+// concatNetstat merges per-snapshot NetstatSocketsSample into a single
+// merged NetstatSocketsData, preserving snapshot boundaries for the
+// renderer.
+func concatNetstat(samples []*model.NetstatSocketsSample) *model.NetstatSocketsData {
+	nonNil := samples[:0]
+	for _, s := range samples {
+		if s != nil && len(s.StateCounts) > 0 {
+			nonNil = append(nonNil, s)
+		}
+	}
+	if len(nonNil) == 0 {
+		return nil
+	}
+	out := &model.NetstatSocketsData{
+		Samples:            make([]model.NetstatSocketsSample, 0, len(nonNil)),
+		SnapshotBoundaries: make([]int, 0, len(nonNil)),
+	}
+	stateSet := map[string]bool{}
+	hasOther := false
+	for i, s := range nonNil {
+		out.Samples = append(out.Samples, *s)
+		out.SnapshotBoundaries = append(out.SnapshotBoundaries, i)
+		for st := range s.StateCounts {
+			if st == "Other" {
+				hasOther = true
+			} else {
+				stateSet[st] = true
+			}
+		}
+	}
+	states := make([]string, 0, len(stateSet)+1)
+	for st := range stateSet {
+		states = append(states, st)
+	}
+	sort.Strings(states)
+	if hasOther {
+		states = append(states, "Other")
+	}
+	out.States = states
+	return out
+}
+
+// concatNetstatS merges per-snapshot NetstatCountersSample into the
+// delta-across-time NetstatCountersData. Deltas are current - previous
+// at each slot, with slot 0 forced to NaN (no prior baseline). A
+// sample where a counter is missing or went backwards emits NaN for
+// that slot — matching the mysqladmin ext-status approach.
+func concatNetstatS(samples []*model.NetstatCountersSample) *model.NetstatCountersData {
+	nonNil := samples[:0]
+	for _, s := range samples {
+		if s != nil && len(s.Values) > 0 {
+			nonNil = append(nonNil, s)
+		}
+	}
+	if len(nonNil) == 0 {
+		return nil
+	}
+
+	// Stable rendering order: curated list first (names in
+	// parse.NetstatSCounters), then any additional names observed
+	// alphabetically. That future-proofs the render for kernels that
+	// expose counters we haven't curated yet.
+	have := map[string]bool{}
+	for _, s := range nonNil {
+		for name := range s.Values {
+			have[name] = true
+		}
+	}
+	labels := make([]string, 0, len(have))
+	seen := map[string]bool{}
+	for _, name := range parse.NetstatSCounters {
+		if have[name] && !seen[name] {
+			labels = append(labels, name)
+			seen[name] = true
+		}
+	}
+	extras := make([]string, 0)
+	for name := range have {
+		if !seen[name] {
+			extras = append(extras, name)
+		}
+	}
+	sort.Strings(extras)
+	labels = append(labels, extras...)
+
+	n := len(nonNil)
+	ts := make([]float64, n)
+	for i, s := range nonNil {
+		ts[i] = float64(s.Timestamp.Unix())
+	}
+	deltas := make(map[string][]float64, len(labels))
+	for _, name := range labels {
+		arr := make([]float64, n)
+		arr[0] = math.NaN()
+		prev, havePrev := nonNil[0].Values[name]
+		for i := 1; i < n; i++ {
+			curr, haveCurr := nonNil[i].Values[name]
+			if !havePrev || !haveCurr || curr < prev {
+				arr[i] = math.NaN()
+			} else {
+				arr[i] = curr - prev
+			}
+			prev, havePrev = curr, haveCurr
+		}
+		deltas[name] = arr
+	}
+	boundaries := make([]int, len(nonNil))
+	for i := range nonNil {
+		boundaries[i] = i
+	}
+	return &model.NetstatCountersData{
+		Labels:             labels,
+		Timestamps:         ts,
+		Deltas:             deltas,
+		SnapshotBoundaries: boundaries,
+	}
 }

@@ -26,6 +26,7 @@ func buildNavigation(r *model.Report, sigs []string) []model.NavEntry {
 	nav = append(nav, model.NavEntry{ID: "sub-os-top", Title: "Top CPU processes", Level: 2, ParentID: "sec-os"})
 	nav = append(nav, model.NavEntry{ID: "sub-os-vmstat", Title: "vmstat saturation", Level: 2, ParentID: "sec-os"})
 	nav = append(nav, model.NavEntry{ID: "sub-os-meminfo", Title: "Memory usage", Level: 2, ParentID: "sec-os"})
+	nav = append(nav, model.NavEntry{ID: "sub-os-network", Title: "Network", Level: 2, ParentID: "sec-os"})
 
 	// Variables section (one Level-2 per *unique* snapshot — adjacent
 	// snapshots with identical variables are collapsed, matching the

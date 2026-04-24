@@ -37,9 +37,36 @@ func DetectFormat(peeked []byte, suffix model.Suffix) model.FormatVersion {
 		return detectMysqladmin(peeked)
 	case model.SuffixProcesslist:
 		return detectProcesslist(peeked)
+	case model.SuffixNetstat:
+		return detectNetstat(peeked)
+	case model.SuffixNetstatS:
+		return detectNetstatS(peeked)
 	default:
 		return model.FormatUnknown
 	}
+}
+
+func detectNetstat(peeked []byte) model.FormatVersion {
+	// `netstat -an` output always begins with an "Active Internet
+	// connections" banner OR starts directly with "Proto" / "tcp " /
+	// "Netid". We accept any of these since pt-stalk occasionally
+	// trims the banner.
+	if bytes.Contains(peeked, []byte("Active Internet")) ||
+		bytes.Contains(peeked, []byte("Proto ")) ||
+		bytes.Contains(peeked, []byte("\ntcp ")) ||
+		bytes.HasPrefix(peeked, []byte("tcp ")) {
+		return model.FormatV1
+	}
+	return model.FormatUnknown
+}
+
+func detectNetstatS(peeked []byte) model.FormatVersion {
+	// `netstat -s` output always contains a TCP section header. The
+	// string "Tcp:" appears in every kernel release we care about.
+	if bytes.Contains(peeked, []byte("Tcp:")) || bytes.Contains(peeked, []byte("TcpExt:")) {
+		return model.FormatV1
+	}
+	return model.FormatUnknown
 }
 
 // Per-collector detection heuristics.

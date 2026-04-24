@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/parse"
 )
 
 func buildChartPayload(r *model.Report) map[string]any {
@@ -21,6 +22,12 @@ func buildChartPayload(r *model.Report) map[string]any {
 		}
 		if r.OSSection.Meminfo != nil {
 			payload["meminfo"] = meminfoChartPayload(r.OSSection.Meminfo)
+		}
+		if r.OSSection.NetCounters != nil {
+			payload["network-counters"] = networkCountersChartPayload(r.OSSection.NetCounters)
+		}
+		if r.OSSection.NetSockets != nil {
+			payload["network-sockets"] = networkSocketsChartPayload(r.OSSection.NetSockets)
 		}
 	}
 	if r.DBSection != nil {
@@ -362,6 +369,80 @@ func meminfoChartPayload(d *model.MeminfoData) map[string]any {
 		}
 		series = append(series, map[string]any{
 			"label":  s.Metric,
+			"values": vals,
+		})
+	}
+	return map[string]any{
+		"timestamps":         timestamps,
+		"series":             series,
+		"snapshotBoundaries": d.SnapshotBoundaries,
+	}
+}
+
+// networkCountersChartPayload emits per-sample rates for the curated
+// TCP/UDP counters. Raw Deltas are divided by the per-slot wall-clock
+// gap so the chart axis reads as "events/s" rather than raw deltas
+// (inflated by longer snapshot gaps). Slot 0 stays NaN (no baseline);
+// the frontend treats NaN as "no sample".
+func networkCountersChartPayload(d *model.NetstatCountersData) map[string]any {
+	n := len(d.Timestamps)
+	if n == 0 {
+		return nil
+	}
+	gapSec := make([]float64, n)
+	for i := 1; i < n; i++ {
+		dt := d.Timestamps[i] - d.Timestamps[i-1]
+		if dt > 0 {
+			gapSec[i] = dt
+		}
+	}
+	series := make([]map[string]any, 0, len(d.Labels))
+	for _, name := range d.Labels {
+		raw := d.Deltas[name]
+		// Emit a JSON-safe value stream: NaN → nil (the frontend
+		// treats nil as "no sample", same convention used by
+		// mysqladminChartPayload).
+		vals := make([]any, n)
+		vals[0] = nil
+		for i := 1; i < n; i++ {
+			if math.IsNaN(raw[i]) || gapSec[i] == 0 {
+				vals[i] = nil
+			} else {
+				vals[i] = raw[i] / gapSec[i]
+			}
+		}
+		series = append(series, map[string]any{
+			"label":  parse.NetstatSDisplayName(name),
+			"values": vals,
+		})
+	}
+	return map[string]any{
+		"timestamps":         d.Timestamps,
+		"series":             series,
+		"snapshotBoundaries": d.SnapshotBoundaries,
+	}
+}
+
+// networkSocketsChartPayload emits one series per observed socket
+// state — each a count-per-snapshot timeseries rendered as a stacked
+// bar chart showing socket-state composition across the capture.
+func networkSocketsChartPayload(d *model.NetstatSocketsData) map[string]any {
+	n := len(d.Samples)
+	if n == 0 {
+		return nil
+	}
+	timestamps := make([]float64, n)
+	for i, s := range d.Samples {
+		timestamps[i] = float64(s.Timestamp.Unix())
+	}
+	series := make([]map[string]any, 0, len(d.States))
+	for _, st := range d.States {
+		vals := make([]float64, n)
+		for i, s := range d.Samples {
+			vals[i] = float64(s.StateCounts[st])
+		}
+		series = append(series, map[string]any{
+			"label":  st,
 			"values": vals,
 		})
 	}
