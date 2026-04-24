@@ -124,6 +124,7 @@ var allRules = []rule{
 	ruleThreadCacheHitRatio,
 
 	// Table Open Cache
+	ruleTableCacheUsage,
 	ruleTableCacheOverflows,
 	ruleTableCacheMissRatio,
 
