@@ -56,6 +56,31 @@ func TestBuildEnvironmentView_FormatsHumanUnits(t *testing.T) {
 	}
 }
 
+func TestIsKnownArch(t *testing.T) {
+	cases := []struct {
+		in   string
+		want bool
+	}{
+		{"x86_64", true},
+		{"aarch64", true},
+		{"ppc64le", true},
+		{"s390x", true},
+		// Ubuntu/Debian kernels have no arch suffix in osrelease; the
+		// tail after the last dot is a flavour tag that must NOT be
+		// treated as an architecture (regression guard for
+		// `6.8.0-1018-azure` → tail `0-1018-azure`).
+		{"0-1018-azure", false},
+		{"el8_10", false},
+		{"generic", false},
+		{"", false},
+	}
+	for _, c := range cases {
+		if got := isKnownArch(c.in); got != c.want {
+			t.Errorf("isKnownArch(%q)=%v want %v", c.in, got, c.want)
+		}
+	}
+}
+
 func TestInferDistribution(t *testing.T) {
 	cases := []struct {
 		name                    string

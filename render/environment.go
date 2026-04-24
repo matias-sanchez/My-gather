@@ -54,11 +54,19 @@ func buildEnvironmentSection(c *model.Collection) *model.EnvironmentSection {
 			host.Kernel = k
 			populated = true
 		}
-		// Architecture: tail of kernel.osrelease after last dot.
+		// Architecture: only accept the osrelease's last-dot suffix
+		// when it matches a known arch token. Kernel naming varies
+		// (RHEL uses `…x86_64`, but Debian/Ubuntu kernels like
+		// `6.8.0-1018-azure` have no arch suffix at all), so a blind
+		// "tail after last dot" would surface meaningless flavour
+		// strings like `0-1018-azure`. Leave the field empty when no
+		// known token is found; the template renders "—".
 		if v := keys["kernel.osrelease"]; v != "" {
 			if idx := strings.LastIndex(v, "."); idx >= 0 && idx+1 < len(v) {
-				host.Architecture = v[idx+1:]
-				populated = true
+				if a := v[idx+1:]; isKnownArch(a) {
+					host.Architecture = a
+					populated = true
+				}
 			}
 		}
 		// OS best-effort via crypto.fips_name (RHEL/Rocky/OL hint).
@@ -345,6 +353,26 @@ func inferDistribution(wsrepOn, clusterSize, comment, version string) string {
 		return "MySQL Community"
 	}
 	return ""
+}
+
+// isKnownArch reports whether s is a recognised architecture token
+// that can legitimately appear as the tail of kernel.osrelease
+// (RHEL/Rocky/OL/CentOS convention). Kept narrow on purpose — any
+// token outside this set is treated as "architecture not encoded in
+// osrelease" and the Environment panel shows "—" instead of a bogus
+// value.
+func isKnownArch(s string) bool {
+	switch s {
+	case "x86_64", "amd64",
+		"aarch64", "arm64",
+		"armv7l", "armv7hl", "armv6l",
+		"i686", "i386",
+		"ppc64le", "ppc64",
+		"s390x",
+		"riscv64":
+		return true
+	}
+	return false
 }
 
 // guessOSFromOutput greps a -output dump for distro-name lines. Best
