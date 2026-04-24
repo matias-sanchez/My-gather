@@ -39,6 +39,14 @@ not an artifact and may be in any language.
   validation, and marks review threads resolved on GitHub. **Use this
   in this repo, not the global `/pr-review-fix`** — the global one
   targets Python projects and would apply the wrong rules here.
+- `/pr-review-loop-my-gather` (skill at
+  `.claude/skills/pr-review-loop-my-gather/`) — bounded convergence
+  loop that composes `/pr-review-fix-my-gather` and
+  `/pr-review-trigger-my-gather` and self-schedules via
+  ScheduleWakeup until Codex reports zero open threads on the PR.
+  One-shot invocation; safety rails on max iterations, non-progress,
+  guard failure, and Codex response timeout. Use when you want the
+  PR driven to green unattended.
 - `@agent-pre-review-constitution-guard` (agent at
   `.claude/agents/pre-review-constitution-guard.md`) — local pre-push
   reviewer that emits P1/P2/P3 findings against the constitution
