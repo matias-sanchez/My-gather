@@ -392,12 +392,25 @@
   // can catch the unit in the corner without the tick column getting
   // wider. No-op when unit is empty so mysqladmin counters with
   // heterogeneous units don't get a misleading label.
+  //
+  // `unit` accepts either a plain string (label only) or an object
+  // { label, title }. When `title` is provided it hydrates both the
+  // native tooltip (hover) and aria-label (screen readers) so the
+  // terse axis label can be expanded into a full sentence without
+  // widening the chip.
   function makeUnitBadgeHook(unit) {
     return function (u) {
       if (!unit) return;
       var badge = document.createElement("span");
       badge.className = "chart-unit";
-      badge.textContent = unit;
+      var label = typeof unit === "string" ? unit : unit.label;
+      var title = typeof unit === "string" ? ""   : (unit.title || "");
+      if (!label) return;
+      badge.textContent = label;
+      if (title) {
+        badge.setAttribute("title", title);
+        badge.setAttribute("aria-label", label + " — " + title);
+      }
       u.root.appendChild(badge);
     };
   }
@@ -799,7 +812,10 @@
         } else if (name === "innodb-hll") {
           renderHLLSparkline(containers[i], data);
         } else if (name === "network-counters") {
-          renderTimeSeries(containers[i], data, "/s");
+          renderTimeSeries(containers[i], data, {
+            label: "events/s",
+            title: "Events per second — deltas between kernel counters divided by the time gap between snapshots",
+          });
         } else if (name === "network-sockets") {
           renderNetworkSockets(containers[i], data);
         } else {
@@ -812,10 +828,25 @@
   }
 
   function unitForChart(name) {
-    if (name === "top")         return "%CPU";
-    if (name === "processlist") return "threads";
-    if (name === "vmstat")      return "";
-    if (name === "meminfo")     return "GB";
+    if (name === "top") {
+      return {
+        label: "%CPU",
+        title: "Per-process CPU utilisation — percent of one logical core",
+      };
+    }
+    if (name === "processlist") {
+      return {
+        label: "threads",
+        title: "Number of connections in each processlist state at each snapshot",
+      };
+    }
+    if (name === "meminfo") {
+      return {
+        label: "GB",
+        title: "Memory value in gigabytes — scaled from /proc/meminfo's kB entries",
+      };
+    }
+    if (name === "vmstat") return "";
     return "";
   }
 
@@ -1085,10 +1116,14 @@
 
     function draw() {
       cleanup();
+      var topUnit = {
+        label: "%CPU",
+        title: "Per-process CPU utilisation — percent of one logical core",
+      };
       if (current === "stacked") {
-        plot = buildStackedChart(el, data, "%CPU", stackedHidden, draw);
+        plot = buildStackedChart(el, data, topUnit, stackedHidden, draw);
       } else {
-        plot = buildLineChart(el, data, "%CPU");
+        plot = buildLineChart(el, data, topUnit);
       }
       legendEl = el.nextSibling;
     }
@@ -1120,7 +1155,10 @@
     var plot = null;
     function draw() {
       if (plot) { unregisterChart(plot); plot.destroy(); plot = null; }
-      plot = buildStackedChart(el, data, "sockets", hidden, draw);
+      plot = buildStackedChart(el, data, {
+        label: "sockets",
+        title: "Socket count — number of sockets in each TCP state at each snapshot (absolute, not a rate)",
+      }, hidden, draw);
     }
     draw();
     mountResetZoomButton(el, function () { return plot; });
@@ -1174,7 +1212,9 @@
       if (legendEl && legendEl.parentNode) { legendEl.parentNode.removeChild(legendEl); legendEl = null; }
       var labels = currentView === "util" ? utilLabels : aquLabels;
       var rows   = currentView === "util" ? utilSeries : aquSeries;
-      var unit   = currentView === "util" ? "% util"   : "aqu-sz";
+      var unit   = currentView === "util"
+        ? { label: "%util",  title: "Percent of wall time the block device was busy servicing any I/O (iostat -x `%util`)" }
+        : { label: "aqu-sz", title: "Average queue depth — mean number of requests in the device queue over the sample interval (iostat -x `aqu-sz`)" };
       var series = [{ label: "time" }].concat(labels.map(function (lbl, i) { return decorateSeries(lbl, i); }));
       var values = [data.timestamps.slice()].concat(rows);
       var w = measureChartWidth(el);
