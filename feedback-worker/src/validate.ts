@@ -101,7 +101,10 @@ function validateBlob(
   }
   if (bytes.byteLength > maxBytes) {
     const code: ValidationError = label === "image" ? "image_too_large" : "voice_too_large";
-    const mb = label === "image" ? 5 : 10;
+    // Derive the human-readable limit from the configured cap so a
+    // future bump to IMAGE_MAX_BYTES / VOICE_MAX_BYTES doesn't leave
+    // the error message stale.
+    const mb = Math.round(maxBytes / 1_048_576);
     return fail(code, `${label[0]?.toUpperCase()}${label.slice(1)} exceeds ${mb} MB.`);
   }
   return { ok: true, blob: { mime, base64, bytes } };

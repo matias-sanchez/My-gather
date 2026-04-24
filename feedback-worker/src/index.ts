@@ -109,7 +109,7 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
         duration_ms: Date.now() - startedAt,
         ip_hash: ipHash,
       });
-      return errorResponse(413, "payload_too_large", "Request body exceeds 17 MB.");
+      return errorResponse(413, "payload_too_large", "Request body exceeds 30 MB.");
     }
   }
 
@@ -144,7 +144,7 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
           duration_ms: Date.now() - startedAt,
           ip_hash: ipHash,
         });
-        return errorResponse(413, "payload_too_large", "Request body exceeds 17 MB.");
+        return errorResponse(413, "payload_too_large", "Request body exceeds 30 MB.");
       }
       chunks.push(value);
     }
