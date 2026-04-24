@@ -213,6 +213,14 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
   height: 52px;
   object-fit: contain;
   pointer-events: none;
+  /* Use the browser's high-quality downscaler when the page is
+     zoomed — the embedded asset is intentionally 4× the display
+     size (512×384 baked into logo.png) so every zoom level up to
+     ~400 % stays in the downscaling regime instead of flipping to
+     a blurry upscale at high zoom. */
+  image-rendering: auto;
+  image-rendering: high-quality;
+  image-rendering: -webkit-optimize-contrast;
   transition: transform 260ms cubic-bezier(.34,1.56,.64,1),
               filter 220ms ease;
   filter:
