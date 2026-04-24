@@ -337,7 +337,7 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 	// Invoke per-collector parsers for every SourceFile. Each parser is
 	// self-contained and captures its own diagnostics on the SourceFile;
 	// the overall Discover call still returns err==nil.
-	sidecarContents, sidecarTimestamps := loadEnvSidecars(absRoot, snapshots)
+	sidecarContents, sidecarTimestamps, sidecarDiags := loadEnvSidecars(absRoot, snapshots)
 	collection := &model.Collection{
 		RootPath:             absRoot,
 		Hostname:             hostname,
@@ -345,6 +345,12 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 		Snapshots:            snapshots,
 		RawEnvSidecars:       sidecarContents,
 		EnvSidecarTimestamps: sidecarTimestamps,
+	}
+	for _, d := range sidecarDiags {
+		collection.Diagnostics = append(collection.Diagnostics, d)
+		if opts.Sink != nil {
+			opts.Sink.OnDiagnostic(d)
+		}
 	}
 	runParsers(ctx, collection, opts.Sink)
 	return collection, nil
@@ -376,18 +382,25 @@ var envSidecarSuffixes = []string{
 // OS uptime from /proc/stat btime) should prefer it over the last
 // snapshot's timestamp, since sidecar files can come from newer
 // sidecar-only prefixes.
-func loadEnvSidecars(rootPath string, snapshots []*model.Snapshot) (map[string]string, map[string]time.Time) {
+func loadEnvSidecars(rootPath string, snapshots []*model.Snapshot) (map[string]string, map[string]time.Time, []model.Diagnostic) {
 	if rootPath == "" {
-		return nil, nil
+		return nil, nil, nil
 	}
 	out := make(map[string]string, len(envSidecarSuffixes))
 	timestamps := make(map[string]time.Time, len(envSidecarSuffixes))
+	var diagnostics []model.Diagnostic
 	for _, suf := range envSidecarSuffixes {
 		matches, err := filepath.Glob(filepath.Join(rootPath, "*-"+suf))
 		if err != nil || len(matches) == 0 {
 			continue
 		}
 		sort.Sort(sort.Reverse(sort.StringSlice(matches)))
+		// Track newer-but-skipped timestamp-prefixed files so that if we
+		// end up using an older sidecar we can emit a single structured
+		// diagnostic naming which newer files were rejected (and why).
+		// Principle III: graceful degradation is allowed, silent
+		// fallback is not.
+		var skippedNewer []string
 		for _, path := range matches {
 			// The glob "*-<suf>" also matches unrelated files such as
 			// `notes-hostname` that happen to end in "-<suf>". Skip any
@@ -403,17 +416,32 @@ func loadEnvSidecars(rootPath string, snapshots []*model.Snapshot) (map[string]s
 			if err != nil {
 				continue
 			}
-			data, err := os.ReadFile(path)
-			if err != nil || len(data) == 0 {
+			data, readErr := os.ReadFile(path)
+			if readErr != nil {
+				skippedNewer = append(skippedNewer, fmt.Sprintf("%s (read: %v)", name, readErr))
+				continue
+			}
+			if len(data) == 0 {
+				skippedNewer = append(skippedNewer, name+" (empty)")
 				continue
 			}
 			out[suf] = string(data)
 			timestamps[suf] = ts
+			if len(skippedNewer) > 0 {
+				diagnostics = append(diagnostics, model.Diagnostic{
+					SourceFile: path,
+					Severity:   model.SeverityWarning,
+					Message: fmt.Sprintf(
+						"env sidecar -%s: fell back past %d newer file(s) that were empty or unreadable (%s); Environment panel values may not reflect the latest capture",
+						suf, len(skippedNewer), strings.Join(skippedNewer, ", "),
+					),
+				})
+			}
 			break
 		}
 	}
 	_ = snapshots // retained for call-site symmetry; no longer required
-	return out, timestamps
+	return out, timestamps, diagnostics
 }
 
 // runParsers iterates every SourceFile in every Snapshot and invokes

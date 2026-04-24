@@ -44,11 +44,37 @@ CHANGED="$(git diff --name-only "$RANGE" 2>/dev/null || true)"
 
 VIOLATIONS=()
 
-# Rule 1 (Principle VIII): a new parser file under parse/ MUST ship with
-# a fixture and a golden in the same push.
+# Rule 1 (Principle VIII): a new top-level collector parser under parse/
+# MUST ship with a fixture and a golden in the same push. Scoped to
+# the basenames that match model.KnownSuffixes — helper parsers
+# (envhostname, sysctl, topheader, envmeminfo, procstat, dfsnapshot,
+# version, parse, …) consume snippets embedded in other collectors'
+# files and have no top-level fixture of their own.
+COLLECTOR_PARSERS=(
+  iostat
+  top
+  vmstat
+  meminfo
+  variables
+  innodbstatus
+  mysqladmin
+  processlist
+  netstat
+  netstat_s
+)
 NEW_PARSERS="$(git diff --name-only --diff-filter=A "$RANGE" -- 'parse/*.go' ':!parse/*_test.go' 2>/dev/null || true)"
 for f in $NEW_PARSERS; do
   base="$(basename "$f" .go)"
+  is_collector=0
+  for c in "${COLLECTOR_PARSERS[@]}"; do
+    if [ "$base" = "$c" ]; then
+      is_collector=1
+      break
+    fi
+  done
+  if [ "$is_collector" -eq 0 ]; then
+    continue
+  fi
   if ! printf '%s\n' "$CHANGED" | grep -qE "^testdata/.*${base}"; then
     VIOLATIONS+=("VIII: new parser $f added without a matching fixture under testdata/ (expected testdata/*${base}*)")
   fi
