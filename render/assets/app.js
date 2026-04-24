@@ -3424,6 +3424,12 @@
     // --- Attachments (single helper, kind-parameterised) ----------
 
     function clearAttachment(kind) {
+      // Attachment mutation changes the payload the Worker would
+      // cache, so invalidate the sticky idempotencyKey so the next
+      // Submit mints a fresh key instead of replaying the old
+      // issueUrl against edited content. Covers addAttachment too,
+      // which starts by calling clearAttachment(kind).
+      idempotencyKey = null;
       if (kind === "image") {
         if (imgURL) { try { URL.revokeObjectURL(imgURL); } catch (_) {} }
         imgBlob = null; imgURL = null;
@@ -3908,9 +3914,23 @@
         if (!submitBtn.disabled) { form.requestSubmit ? form.requestSubmit() : doSubmit(); }
       }
     });
-    titleInput.addEventListener("input", updateSubmitEnabled);
-    bodyInput.addEventListener("input", updateSubmitEnabled);
-    catSelect.addEventListener("change", updateSubmitEnabled);
+    // Any content mutation invalidates the current idempotencyKey —
+    // the Worker deduplicates by key alone (reserveResponse /
+    // cacheResponse replay don't compare payload content). Without
+    // this, a retry after an in-flight timeout where the first POST
+    // actually succeeded would replay the ORIGINAL cached issueUrl
+    // even though the user corrected the title / body / category /
+    // attachments before the retry, silently dropping the edits.
+    // Calling this on every input/change event is cheap (a single
+    // assignment) and the key is re-minted lazily on the next
+    // doSubmit.
+    function onFormContentChange() {
+      idempotencyKey = null;
+      updateSubmitEnabled();
+    }
+    titleInput.addEventListener("input", onFormContentChange);
+    bodyInput.addEventListener("input", onFormContentChange);
+    catSelect.addEventListener("change", onFormContentChange);
     dialog.addEventListener("paste", function (ev) {
       var items = ev.clipboardData && ev.clipboardData.items;
       if (!items) return;
