@@ -51,6 +51,33 @@ function readClientIp(req: Request): string {
   return req.headers.get("CF-Connecting-IP") ?? req.headers.get("X-Forwarded-For") ?? "unknown";
 }
 
+// cacheResponseWithRetry wraps cacheResponse with a short retry
+// loop so a transient KV write glitch right after a successful
+// GitHub issue creation doesn't drop the idempotency record and
+// let a client retry create a duplicate issue after the 30s
+// inflight TTL expires. 3 attempts with 50/100/150 ms spacing keep
+// total added latency modest on the happy-failure-to-happy path;
+// on a persistent KV outage the function still returns eventually
+// and the caller logs a "cache_write_failed" diagnostic.
+async function cacheResponseWithRetry(
+  env: Env,
+  idempotencyKey: string,
+  response: { issueUrl: string; issueNumber: number },
+  maxAttempts = 3,
+): Promise<boolean> {
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      await cacheResponse(env, idempotencyKey, response);
+      return true;
+    } catch (_) {
+      if (i < maxAttempts - 1) {
+        await new Promise((r) => setTimeout(r, 50 * (i + 1)));
+      }
+    }
+  }
+  return false;
+}
+
 function categoryLabel(category: string | undefined): string | null {
   // Labels in the repo live as lowercase (area/ui, area/parser, …). The
   // payload uses Title-case enum values (UI, Parser, …) for human
@@ -67,10 +94,11 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
   // --- Size gate --------------------------------------------------------------
   // Content-Length alone is not enough: chunked / non-browser clients
   // can omit the header entirely. Fast-reject on the header when
-  // present (cheap pre-flight), then always verify the actual body
-  // byte length before JSON decode so a missing/lying Content-Length
-  // can't slip past the cap and exhaust isolate memory on this
-  // public endpoint.
+  // present (cheap pre-flight), then STREAM the body and abort as
+  // soon as the accumulated byte count crosses MAX_REQUEST_BYTES so
+  // a header-less oversized upload can't be fully buffered into the
+  // isolate before we notice. Only once we're past the cap do we
+  // concatenate the chunks and hand them to JSON.parse.
   const contentLength = req.headers.get("Content-Length");
   if (contentLength !== null) {
     const n = Number.parseInt(contentLength, 10);
@@ -85,11 +113,43 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
     }
   }
 
-  // --- Read body bytes (authoritative size check) -----------------------------
-  let bodyBuf: ArrayBuffer;
+  // Stream-read with an early-abort size check.
+  const reader = req.body?.getReader();
+  if (!reader) {
+    logRequest({
+      status: 400,
+      error: "malformed_payload",
+      duration_ms: Date.now() - startedAt,
+      ip_hash: ipHash,
+    });
+    return errorResponse(400, "malformed_payload", "Request body is missing.");
+  }
+  const chunks: Uint8Array[] = [];
+  let received = 0;
   try {
-    bodyBuf = await req.arrayBuffer();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      received += value.byteLength;
+      if (received > MAX_REQUEST_BYTES) {
+        // Stop pulling more bytes; the stream is oversized. The
+        // already-buffered chunks go out of scope at function exit
+        // and the isolate never holds more than MAX_REQUEST_BYTES +
+        // one chunk of memory for this request.
+        await reader.cancel().catch(() => undefined);
+        logRequest({
+          status: 413,
+          error: "payload_too_large",
+          duration_ms: Date.now() - startedAt,
+          ip_hash: ipHash,
+        });
+        return errorResponse(413, "payload_too_large", "Request body exceeds 17 MB.");
+      }
+      chunks.push(value);
+    }
   } catch {
+    await reader.cancel().catch(() => undefined);
     logRequest({
       status: 400,
       error: "malformed_payload",
@@ -98,20 +158,19 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
     });
     return errorResponse(400, "malformed_payload", "Request body could not be read.");
   }
-  if (bodyBuf.byteLength > MAX_REQUEST_BYTES) {
-    logRequest({
-      status: 413,
-      error: "payload_too_large",
-      duration_ms: Date.now() - startedAt,
-      ip_hash: ipHash,
-    });
-    return errorResponse(413, "payload_too_large", "Request body exceeds 17 MB.");
+  const bodyBytes = new Uint8Array(received);
+  {
+    let off = 0;
+    for (const c of chunks) {
+      bodyBytes.set(c, off);
+      off += c.byteLength;
+    }
   }
 
-  // --- JSON parse --------------------------------------------------------------
+  // --- JSON parse -------------------------------------------------------------
   let raw: unknown;
   try {
-    raw = JSON.parse(new TextDecoder().decode(bodyBuf));
+    raw = JSON.parse(new TextDecoder().decode(bodyBytes));
   } catch {
     logRequest({
       status: 400,
@@ -292,10 +351,34 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
   // failures here must NOT release the reservation (see block comment
   // above) and must NOT turn a success into a 500 — the client has
   // an actionable issue URL either way.
-  await cacheResponse(env, payload.idempotencyKey, {
+  //
+  // A naive `await cacheResponse(...).catch(…)` that swallowed the
+  // error was not enough: on a transient KV write failure the key
+  // would still hold only the 30s inflight marker, and any retry
+  // after that TTL would be seen as a brand-new submission and
+  // create a duplicate — exactly the failure window the 5-minute
+  // idempotency replay contract promises to cover. Retry a few
+  // times before giving up, and log the outcome so an operator can
+  // diagnose a persistent KV outage.
+  const cached = await cacheResponseWithRetry(env, payload.idempotencyKey, {
     issueUrl: issue.url,
     issueNumber: issue.number,
-  }).catch(() => undefined);
+  });
+  if (!cached) {
+    logRequest({
+      status: 200,
+      error: "cache_write_failed",
+      duration_ms: Date.now() - startedAt,
+      ip_hash: ipHash,
+      issue_id: issue.id,
+      issue_number: issue.number,
+      report_version: payload.reportVersion,
+      rate_limit_count: rl.count,
+      has_image: !!payload.image,
+      has_voice: !!payload.voice,
+    });
+    return jsonResponse({ ok: true, issueUrl: issue.url, issueNumber: issue.number });
+  }
 
   logRequest({
     status: 200,
