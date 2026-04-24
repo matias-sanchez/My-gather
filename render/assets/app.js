@@ -985,7 +985,14 @@
     }
 
     var w = measureChartWidth(el);
-    var opts = basePlotOpts(w, 320, plotSeries, unit, data.snapshotBoundaries, bucketed.timestamps);
+    // Boundary lookup (drawSnapshotBoundariesWith) indexes into this
+    // timestamps array with `data.snapshotBoundaries[i]` — which are
+    // positions in the ORIGINAL unbucketed sample stream. The bucketed
+    // x-axis has different indices and a shorter length, so pass the
+    // original data.timestamps: the boundary index still resolves to
+    // the correct wall-clock time, and u.valToPos maps that time to a
+    // pixel on the bucketed plot independently of the data arrays.
+    var opts = basePlotOpts(w, 320, plotSeries, unit, data.snapshotBoundaries, data.timestamps);
     var plot = new uPlot(opts, plotData, el);
     plot.__rawData = plotRawByIdx; // consumed by updateTooltipOnCursor
     registerChart(plot, el, opts);
