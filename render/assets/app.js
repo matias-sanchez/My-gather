@@ -589,7 +589,7 @@
     return v.toLocaleString(undefined, { maximumFractionDigits: 4 });
   }
 
-  // mountResetZoomButton pins a small "↺" button on the top-right of
+  // mountResetZoomButton pins a small "⛶" button on the top-right of
   // a chart container. Clicking it (or double-clicking the chart
   // itself, via uPlot's built-in) resets the horizontal zoom.
   // getPlot is a getter because the plot instance is replaced on
@@ -600,7 +600,7 @@
     var btn = document.createElement("button");
     btn.type = "button";
     btn.className = "chart-zoom-reset";
-    btn.textContent = "↺";
+    btn.textContent = "⛶";
     btn.title = "Reset zoom to full capture window (you can also double-click anywhere on the chart)";
     btn.setAttribute("aria-label", "Reset zoom");
     // Stop mousedown from reaching uPlot's .u-over, which would
@@ -2142,7 +2142,7 @@
       var btnZoom = document.createElement("button");
       btnZoom.type = "button";
       btnZoom.className = "ma-card-btn ma-card-zoom";
-      btnZoom.textContent = "↺";
+      btnZoom.textContent = "⛶";
       btnZoom.title = "Reset this chart's zoom to the full capture window (you can also double-click the chart)";
       btnZoom.setAttribute("aria-label", "Reset zoom");
       btnZoom.addEventListener("click", function (ev) {

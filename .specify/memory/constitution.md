@@ -1,6 +1,41 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.0.1 → 1.1.0
+Bump rationale: MINOR-level addition of a new Core Principle — XIII.
+  Canonical Code Path (NON-NEGOTIABLE) — and a companion 7th entry in
+  the Development Workflow & Quality Gates section enforcing it at
+  merge time. The principle forbids duplicated implementations, silent
+  fallbacks, and compatibility shims for internal identifiers, while
+  preserving legitimate branching at true system boundaries (distinct
+  pt-stalk file format versions, platform primitives) and structured
+  diagnostic reporting under Principle III. No existing principle is
+  weakened or redefined; this is additive, hence MINOR rather than
+  MAJOR.
+
+Added principles:
+  - XIII. Canonical Code Path (NON-NEGOTIABLE)
+
+Modified sections:
+  - Development Workflow & Quality Gates → added 7th merge gate:
+      "No change leaves a duplicated or fallback implementation of an
+      existing behaviour in place (Principle XIII)."
+
+Templates requiring updates:
+  - .specify/templates/plan-template.md      ✅ compatible (generic
+      Constitution Check gate; no principle names hard-coded)
+  - .specify/templates/spec-template.md      ✅ compatible
+  - .specify/templates/tasks-template.md     ✅ compatible
+  - .specify/templates/checklist-template.md ✅ compatible
+  - .claude/skills/speckit-*/                ✅ compatible (reference
+      the constitution file path, not principle names)
+  - README.md                                ⚠ pending (update when
+      README documents principles explicitly)
+
+Deferred items / follow-up TODOs: none.
+
+Prior Sync Impact Report (1.0.1) follows for history:
+-----------------------------------------------------
 Version change: 1.0.0 → 1.0.1
 Bump rationale: PATCH-level wording fix. Principle VIII referenced the
   fixture source path as `references/examples/`; the repository actually
@@ -184,6 +219,21 @@ MUST go through `path/filepath`). Upgrading the Go version MUST be
 performed as an explicit, reviewed change, not as an incidental side effect
 of another commit.
 
+### XIII. Canonical Code Path (NON-NEGOTIABLE)
+
+Every behaviour in My-gather MUST have exactly one implementation. When a
+function, type, or code path is replaced, the old one MUST be deleted in
+the same change — not left behind, not guarded by an internal flag, not
+retained "for safety". Silent fallbacks (try A, on failure silently try B)
+are prohibited; recoverable failures MUST surface as typed errors
+(Principle VII) or structured diagnostics in the report (Principle III),
+never as a second hidden attempt. Re-exports and compatibility shims for
+internal identifiers after a rename are prohibited; all call sites MUST
+be updated in the same commit. This principle does not forbid branching
+driven by genuine input variation (e.g., distinct pt-stalk file format
+versions) or platform primitives (`path/filepath`), provided the branches
+converge into a single typed model as early as possible.
+
 ## Distribution & Platform Support
 
 Release artifacts MUST be produced reproducibly from tagged commits and
@@ -210,6 +260,10 @@ The following gates MUST pass before any change is merged:
    their contract (Principle VI).
 6. No build introduces a CGO requirement, a network call at runtime, or a
    write under the input tree (Principles I, IX, II).
+7. No change leaves a duplicated or fallback implementation of an existing
+   behaviour in place (Principle XIII). Replaced functions, types, and
+   code paths MUST be deleted in the same change; internal re-exports and
+   compatibility shims after a rename are prohibited.
 
 Reviewers MUST reject changes that violate any Core Principle unless the
 change is accompanied by a constitution amendment adopted under the
@@ -242,4 +296,4 @@ invocation via the Constitution Check gate. Runtime development guidance
 and feature-local `plan.md` / `quickstart.md` files and MUST defer to this
 constitution when conflicts arise.
 
-**Version**: 1.0.1 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-22
+**Version**: 1.1.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-24

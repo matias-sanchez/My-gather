@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git push*)",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-push-constitution-guard.sh\"",
+            "timeout": 20,
+            "statusMessage": "Running constitution guard..."
+          }
+        ]
+      }
+    ]
+  }
+}
