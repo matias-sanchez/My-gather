@@ -1,0 +1,113 @@
+<details id="sec-environment" class="section">
+      <summary>
+        <span>Environment</span>
+      </summary>
+      <div class="body">
+        <div class="env-card" data-env-root>
+  <div class="env-tablist" role="tablist" aria-label="Environment view">
+    <button type="button" role="tab" class="env-tab active" aria-selected="true"  tabindex="0"  data-env-tab="host">Host</button>
+    <button type="button" role="tab" class="env-tab"        aria-selected="false" tabindex="-1" data-env-tab="mysql">MySQL</button>
+  </div>
+
+  <section class="env-pane" role="tabpanel" aria-label="Host environment" data-env-panel="host">
+    <div class="env-group">
+      <h4>Identity</h4>
+      <dl class="env-kv">
+        <dt>Hostname</dt>           <dd class="mono">node0</dd>
+        <dt>Timezone</dt>           <dd>UTC</dd>
+        <dt>OS uptime</dt>          <dd>—</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Platform</h4>
+      <dl class="env-kv">
+        <dt>OS</dt>                 <dd>—</dd>
+        <dt>Kernel</dt>             <dd class="mono">—</dd>
+        <dt>Architecture</dt>       <dd class="mono">—</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Compute</h4>
+      <dl class="env-kv">
+        <dt>Logical CPUs</dt>       <dd>—</dd>
+        <dt>Load avg <span class="env-sub">1/5/15m</span></dt>
+                                    <dd class="mono">11.65 / 9.56 / 6.89</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Memory</h4>
+      <dl class="env-kv">
+        <dt>Total</dt>              <dd class="env-strong">31.14 GiB</dd>
+        <dt>Available</dt>          <dd>26.82 GiB</dd>
+        <dt>Free</dt>               <dd>11.00 GiB</dd>
+        <dt>Buffers + cached</dt>   <dd>16.00 GiB</dd>
+        <dt>Swap total</dt>         <dd>32.00 GiB</dd>
+        <dt>Swap used</dt>          <dd>0 B</dd>
+        <dt>vm.swappiness</dt>               <dd class="mono">—</dd>
+      </dl>
+    </div>
+  </section><section class="env-pane" role="tabpanel" aria-label="MySQL environment" data-env-panel="mysql">
+    <div class="env-group">
+      <h4>Identity</h4>
+      <dl class="env-kv">
+        <dt>Version</dt>            <dd class="env-strong mono">8.0.42-33</dd>
+        <dt>Distribution</dt>       <dd>Percona Server</dd>
+        <dt>Version comment</dt>    <dd>Percona Server (GPL), Release 33, Revision 9dc49998</dd>
+        <dt>Compile OS / machine</dt>
+        <dd class="mono">Linux / x86_64</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Runtime</h4>
+      <dl class="env-kv">
+        <dt>Uptime</dt>             <dd>—</dd>
+        <dt>Start time <span class="env-sub">UTC</span></dt>
+                                    <dd class="mono">—</dd>
+        <dt>Server ID</dt>          <dd class="mono">2887715330</dd>
+        <dt>Port</dt>               <dd class="mono">3306</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Files</h4>
+      <dl class="env-kv">
+        <dt>Data directory</dt>     <dd class="mono">/var/lib/mysql/</dd>
+        <dt>Socket</dt>             <dd class="mono">/var/lib/mysql/mysql.sock</dd>
+        <dt>Pid file</dt>           <dd class="mono">/var/run/mysqld/mysqld.pid</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>InnoDB</h4>
+      <dl class="env-kv">
+        <dt>Default engine</dt>     <dd>InnoDB</dd>
+        <dt>Buffer pool size</dt>   <dd class="env-strong">512 MiB</dd>
+        <dt>Buffer pool instances</dt><dd class="mono">1</dd>
+        <dt>Max connections</dt>    <dd class="mono">151</dd>
+        <dt>Transaction isolation</dt><dd class="mono">REPEATABLE-READ</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Table cache</h4>
+      <dl class="env-kv">
+        <dt>Size</dt>               <dd class="mono">4000</dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Logging</h4>
+      <dl class="env-kv">
+        <dt>Slow query log</dt>     <dd><span class="env-chip env-chip-off">OFF</span></dd>
+        <dt>Long query time</dt>    <dd class="mono">10.000000</dd>
+        <dt>Binary logging</dt>     <dd class="mono">log_bin=ON, format=ROW, sync_binlog=1</dd>
+        <dt>Performance Schema</dt> <dd><span class="env-chip env-chip-on">ON</span></dd>
+      </dl>
+    </div>
+    <div class="env-group">
+      <h4>Replication</h4>
+      <dl class="env-kv">
+        <dt>GTID</dt>               <dd class="mono">gtid_mode=ON, enforce_gtid_consistency=ON</dd>
+        <dt>Read-only</dt>          <dd class="mono">read_only=OFF, super_read_only=OFF</dd>
+      </dl>
+    </div>
+  </section>
+</div>
+      </div>
+    </details>

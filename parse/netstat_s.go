@@ -98,7 +98,7 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 			rest := strings.TrimSpace(line[idx+1:])
 			toks := strings.Fields(rest)
 			if len(toks) == 1 {
-				if name, ok := netstatSLookup[label]; ok {
+				if name, ok := netstatSRawToCanon[label]; ok {
 					if v, err := strconv.ParseFloat(toks[0], 64); err == nil {
 						curVals[name] = v
 						curAny = true
@@ -118,7 +118,7 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 			continue
 		}
 		rest := strings.TrimSpace(strings.TrimPrefix(line, first))
-		if name, ok := netstatSLookup[rest]; ok {
+		if name, ok := netstatSRawToCanon[rest]; ok {
 			curVals[name] = v
 			curAny = true
 		}
@@ -137,21 +137,12 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 	return samples, diagnostics
 }
 
-// netstatSLookup maps the raw `netstat -s` label (as it appears in
-// the file) to the canonical name we render. We curate only counters
-// that have clear operational meaning and are stable across supported
-// kernels.
-var netstatSLookup = func() map[string]string {
-	m := map[string]string{}
-	for raw, canon := range netstatSRawToCanon {
-		m[raw] = canon
-	}
-	return m
-}()
-
 // netstatSRawToCanon declares the canonical counter names and the
 // raw-label forms we translate from. Keep the ordering deterministic
 // by populating netstatSCounters as the render-side display order.
+// We curate only counters that have clear operational meaning and are
+// stable across supported kernels — parser lookups reference this map
+// directly.
 var netstatSRawToCanon = map[string]string{
 	// TCP section
 	"active connection openings":  "tcp_active_opens",

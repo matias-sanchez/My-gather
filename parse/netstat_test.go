@@ -1,10 +1,82 @@
 package parse
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/matias-sanchez/My-gather/tests/goldens"
 )
+
+// netstatSnapshotStart anchors the committed -netstat / -netstat_s
+// fixtures to a fixed virtual wall-clock so goldens stay stable
+// across developers. Matches the other parsers' snapshot helpers.
+func netstatSnapshotStart() time.Time {
+	return time.Date(2026, 4, 21, 16, 51, 41, 0, time.UTC)
+}
+
+// TestNetstatGolden — Principle VIII: the committed
+// testdata/example2 -netstat fixture is driven through parseNetstat
+// and snapshot-compared against a golden. Catches regressions in the
+// real-fixture socket-state histogram that the in-memory
+// strings.NewReader tests above cannot see.
+func TestNetstatGolden(t *testing.T) {
+	root := goldens.RepoRoot(t)
+	fixture := filepath.Join(root, "testdata", "example2", "2026_04_21_16_51_41-netstat")
+	goldenPath := filepath.Join(root, "testdata", "golden", "netstat.example2.2026_04_21_16_51_41.json")
+
+	f, err := os.Open(fixture)
+	if err != nil {
+		t.Fatalf("open fixture: %v", err)
+	}
+	defer f.Close()
+
+	samples, diags := parseNetstat(f, netstatSnapshotStart(), fixture)
+	if len(samples) == 0 {
+		t.Fatalf("parseNetstat returned zero samples (diagnostics: %+v)", diags)
+	}
+
+	got := goldens.MarshalDeterministic(t, struct {
+		Samples     any `json:"samples"`
+		Diagnostics any `json:"diagnostics"`
+	}{
+		Samples:     samples,
+		Diagnostics: diags,
+	})
+	goldens.Compare(t, goldenPath, got)
+}
+
+// TestNetstatSGolden — Principle VIII: the -netstat_s fixture under
+// testdata/example2 is parsed and snapshot-compared, locking the
+// curated counter set, per-TS sample emission, and the diagnostic
+// slice against regressions.
+func TestNetstatSGolden(t *testing.T) {
+	root := goldens.RepoRoot(t)
+	fixture := filepath.Join(root, "testdata", "example2", "2026_04_21_16_51_41-netstat_s")
+	goldenPath := filepath.Join(root, "testdata", "golden", "netstat_s.example2.2026_04_21_16_51_41.json")
+
+	f, err := os.Open(fixture)
+	if err != nil {
+		t.Fatalf("open fixture: %v", err)
+	}
+	defer f.Close()
+
+	samples, diags := parseNetstatS(f, netstatSnapshotStart(), fixture)
+	if len(samples) == 0 {
+		t.Fatalf("parseNetstatS returned zero samples (diagnostics: %+v)", diags)
+	}
+
+	got := goldens.MarshalDeterministic(t, struct {
+		Samples     any `json:"samples"`
+		Diagnostics any `json:"diagnostics"`
+	}{
+		Samples:     samples,
+		Diagnostics: diags,
+	})
+	goldens.Compare(t, goldenPath, got)
+}
 
 func TestParseNetstat_EmitsOneSamplePerTSBlock(t *testing.T) {
 	// Two polls in one file. The old parser summed these into a

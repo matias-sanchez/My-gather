@@ -337,7 +337,7 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 	// Invoke per-collector parsers for every SourceFile. Each parser is
 	// self-contained and captures its own diagnostics on the SourceFile;
 	// the overall Discover call still returns err==nil.
-	sidecarContents, sidecarTimestamps, sidecarDiags := loadEnvSidecars(absRoot, snapshots)
+	sidecarContents, sidecarTimestamps, sidecarDiags := loadEnvSidecars(absRoot)
 	collection := &model.Collection{
 		RootPath:             absRoot,
 		Hostname:             hostname,
@@ -369,11 +369,11 @@ var envSidecarSuffixes = []string{
 // newest file that matches "<prefix>-<suffix>" across the entire root
 // directory — NOT just across the Collection's Snapshots. Partial
 // captures sometimes have newer timestamp prefixes that only carry
-// environment sidecars (no KnownSuffixes data), so they're absent from
-// `snapshots`; scanning the directory directly ensures those are
-// considered. Prefix sort order is lexicographic, which matches
-// chronological order for pt-stalk's `YYYY_MM_DD_HH_MM_SS` timestamp
-// scheme.
+// environment sidecars (no KnownSuffixes data), so the Collection's
+// Snapshots slice may omit them; scanning the directory directly
+// ensures those are considered. Prefix sort order is lexicographic,
+// which matches chronological order for pt-stalk's
+// `YYYY_MM_DD_HH_MM_SS` timestamp scheme.
 //
 // Missing/unreadable files map to absent keys in the returned maps;
 // the render layer treats them as "data unavailable". The second
@@ -381,8 +381,11 @@ var envSidecarSuffixes = []string{
 // chosen file — consumers that anchor point-in-time derivations (e.g.
 // OS uptime from /proc/stat btime) should prefer it over the last
 // snapshot's timestamp, since sidecar files can come from newer
-// sidecar-only prefixes.
-func loadEnvSidecars(rootPath string, snapshots []*model.Snapshot) (map[string]string, map[string]time.Time, []model.Diagnostic) {
+// sidecar-only prefixes. The third return value is the diagnostic
+// list (SeverityWarning) emitted when the loader falls back past a
+// newer empty/unreadable file to an older readable one, so the
+// degraded path is never silent.
+func loadEnvSidecars(rootPath string) (map[string]string, map[string]time.Time, []model.Diagnostic) {
 	if rootPath == "" {
 		return nil, nil, nil
 	}
@@ -440,7 +443,6 @@ func loadEnvSidecars(rootPath string, snapshots []*model.Snapshot) (map[string]s
 			break
 		}
 	}
-	_ = snapshots // retained for call-site symmetry; no longer required
 	return out, timestamps, diagnostics
 }
 

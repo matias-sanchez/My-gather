@@ -1,0 +1,28 @@
+{
+  "samples": [
+    {
+      "Timestamp": "2026-04-21T16:51:41Z",
+      "Values": {
+        "tcp_active_opens": 50,
+        "tcp_backlog_drop": 0,
+        "tcp_bad_segs": 0,
+        "tcp_failed_conns": 5,
+        "tcp_listen_overflows": 0,
+        "tcp_passive_opens": 30,
+        "tcp_resets_recv": 2,
+        "tcp_resets_sent": 12,
+        "tcp_retransmits": 10,
+        "tcp_segs_in": 5000,
+        "tcp_segs_out": 4500,
+        "tcp_syn_retrans": 2,
+        "tcp_syncookies_sent": 0,
+        "udp_pkts_in": 120,
+        "udp_pkts_out": 118,
+        "udp_rcvbuf_errors": 0,
+        "udp_recv_errors": 0,
+        "udp_sndbuf_errors": 0
+      }
+    }
+  ],
+  "diagnostics": null
+}

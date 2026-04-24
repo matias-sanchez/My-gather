@@ -256,7 +256,11 @@ func normalizeSSState(tok string) (string, bool, bool) {
 // -processlist (see model doc).
 func canonicalStateOrder(states []string) []string {
 	out := append([]string(nil), states...)
-	sort.Slice(out, func(i, j int) bool {
+	// SliceStable so the determinism guarantee is explicit. Today the
+	// input is a key-set (no duplicates) so Slice vs SliceStable is a
+	// no-op in practice, but any future path that admits duplicates
+	// would need the stable order to keep renders byte-identical.
+	sort.SliceStable(out, func(i, j int) bool {
 		if out[i] == "Other" {
 			return false
 		}
