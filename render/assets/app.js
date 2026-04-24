@@ -3494,7 +3494,20 @@
         setErr("Voice recording is not supported by this browser."); return;
       }
       recordBtn.disabled = true;
+      // getUserMedia resolves after the browser permission prompt,
+      // which can take seconds to minutes (user reads it; or the OS
+      // device dialog is slow). If the dialog is dismissed in
+      // between, the .then callback must NOT create a recorder /
+      // start capture for a dialog the user already closed. Capture
+      // the session identity here and bail if the dialog is no
+      // longer open, stopping the stream tracks so the mic
+      // indicator doesn't keep flashing.
       navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+        if (!dialog.open) {
+          try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
+          recordBtn.disabled = false;
+          return;
+        }
         recStream = stream;
         try { recorder = new MediaRecorder(stream); }
         catch (e) {
@@ -3728,13 +3741,24 @@
       // how the async chain below schedules.
       var idempotencyKey = generateIdempotencyKey();
 
+      // Snapshot the attachment blob references up front so the
+      // async base64 encoding reads a frozen view even if the user
+      // clears or replaces the attachment mid-submit. Without
+      // these locals, imgBlob/voiceBlob could go null (throwing
+      // on `.type`) or swap to a different blob between the
+      // `blobToBase64(imgBlob)` kick-off and the `imgBlob.type`
+      // read inside the .then callback — so the POST would carry
+      // base64 bytes from one blob but a MIME type from another.
+      var imgBlobAtSubmit = imgBlob;
+      var voiceBlobAtSubmit = voiceBlob;
+
       // Build attachment promises first; any base64 encoding error
       // routes through the same fallback arm as a Worker failure.
-      var imgP = imgBlob ? blobToBase64(imgBlob).then(function (b64) {
-        return { mime: imgBlob.type || "image/png", base64: b64 };
+      var imgP = imgBlobAtSubmit ? blobToBase64(imgBlobAtSubmit).then(function (b64) {
+        return { mime: imgBlobAtSubmit.type || "image/png", base64: b64 };
       }) : Promise.resolve(null);
-      var voiceP = voiceBlob ? blobToBase64(voiceBlob).then(function (b64) {
-        return { mime: voiceBlob.type || "audio/webm", base64: b64 };
+      var voiceP = voiceBlobAtSubmit ? blobToBase64(voiceBlobAtSubmit).then(function (b64) {
+        return { mime: voiceBlobAtSubmit.type || "audio/webm", base64: b64 };
       }) : Promise.resolve(null);
 
       Promise.all([imgP, voiceP]).then(function (parts) {
