@@ -3877,6 +3877,24 @@
           submitBtn.disabled = false;
           return;
         }
+        if (res.status === 409) {
+          // duplicate_inflight: the Worker is still processing a
+          // prior request with the SAME idempotencyKey and hasn't
+          // decided yet whether it succeeded. Opening the legacy
+          // GitHub URL now would let the user post a second manual
+          // issue even if the first request lands successfully on
+          // the Worker side — the very duplicate the key is meant
+          // to prevent. Show a "still processing" message, keep
+          // submitBtn enabled, and keep the sticky idempotencyKey
+          // so a retry a few seconds later either replays the
+          // cached 200 (first request succeeded) or creates a
+          // single issue (inflight marker expired).
+          var msg409 = (data && data.message) ||
+            "A previous submission with the same key is still being processed. Please wait a few seconds and try again.";
+          setErr(msg409);
+          submitBtn.disabled = false;
+          return;
+        }
         // 5xx, 413, unexpected status → fall back.
         doLegacyFallback();
         hint.textContent = "Backend unavailable — opened GitHub with pre-filled form.";
