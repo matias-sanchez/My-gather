@@ -44,15 +44,7 @@
         <dt>Buffers + cached</dt>   <dd>{{or $e.BuffersCached "—"}}</dd>
         <dt>Swap total</dt>         <dd>{{or $e.SwapTotal "—"}}</dd>
         <dt>Swap used</dt>          <dd>{{or $e.SwapUsed "—"}}</dd>
-      </dl>
-    </div>
-    <div class="env-group">
-      <h4>Kernel tuning</h4>
-      <dl class="env-kv">
         <dt>vm.swappiness</dt>               <dd class="mono">{{or $e.Swappiness "—"}}</dd>
-        <dt>vm.dirty_ratio</dt>              <dd class="mono">{{or $e.DirtyRatio "—"}}</dd>
-        <dt>vm.dirty_background_ratio</dt>   <dd class="mono">{{or $e.DirtyBackgroundRatio "—"}}</dd>
-        <dt>fs.file-max</dt>                 <dd class="mono">{{or $e.FileMax "—"}}</dd>
       </dl>
     </div>
     {{- if $e.Filesystems }}
@@ -116,17 +108,39 @@
         <dt>Default engine</dt>     <dd>{{or $e.DefaultStorageEngine "—"}}</dd>
         <dt>Buffer pool size</dt>   <dd class="env-strong">{{or $e.BufferPoolSize "—"}}</dd>
         <dt>Buffer pool instances</dt><dd class="mono">{{or $e.BufferPoolInstances "—"}}</dd>
+        {{- if $e.BufferPoolUsagePct }}
+        <dt>Buffer pool usage</dt>
+        <dd class="env-meter">
+          <span class="env-bar" aria-hidden="true"><span class="env-bar-fill sev-{{$e.BufferPoolUsageSev}}" style="width: {{$e.BufferPoolUsagePct}};"></span></span>
+          <span class="env-meter-pct">{{$e.BufferPoolUsagePct}}</span>
+        </dd>
+        {{- end }}
+        {{- if $e.BufferPoolDirtyPct }}
+        <dt>Dirty pages</dt>
+        <dd class="env-meter">
+          <span class="env-bar" aria-hidden="true"><span class="env-bar-fill sev-{{$e.BufferPoolDirtySev}}" style="width: {{$e.BufferPoolDirtyPct}};"></span></span>
+          <span class="env-meter-pct">{{$e.BufferPoolDirtyPct}}</span>
+        </dd>
+        {{- end }}
         <dt>Max connections</dt>    <dd class="mono">{{or $e.MaxConnections "—"}}</dd>
         <dt>Transaction isolation</dt><dd class="mono">{{or $e.TransactionIsolation "—"}}</dd>
       </dl>
     </div>
+    {{- if $e.TableCacheSize }}
     <div class="env-group">
-      <h4>Encoding</h4>
+      <h4>Table cache</h4>
       <dl class="env-kv">
-        <dt>Charset / collation</dt><dd class="mono">{{or $e.CharsetCollation "—"}}</dd>
-        <dt>SQL mode</dt>           <dd class="mono env-sqlmode">{{or $e.SQLMode "—"}}</dd>
+        <dt>Size</dt>               <dd class="mono">{{$e.TableCacheSize}}</dd>
+        {{- if $e.TableCacheUsagePct }}
+        <dt>Usage</dt>
+        <dd class="env-meter">
+          <span class="env-bar" aria-hidden="true"><span class="env-bar-fill sev-{{$e.TableCacheUsageSev}}" style="width: {{$e.TableCacheUsagePct}};"></span></span>
+          <span class="env-meter-pct">{{$e.TableCacheUsagePct}}</span>
+        </dd>
+        {{- end }}
       </dl>
     </div>
+    {{- end }}
     <div class="env-group">
       <h4>Logging</h4>
       <dl class="env-kv">

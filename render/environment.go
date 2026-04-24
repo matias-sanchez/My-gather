@@ -438,12 +438,10 @@ type envView struct {
 	PidFile              string
 	ServerID             string
 	DefaultStorageEngine string
-	CharsetCollation     string
 	TransactionIsolation string
 	BufferPoolSize       string
 	BufferPoolInstances  string
 	MaxConnections       string
-	SQLMode              string
 	SlowQueryLog         string
 	LongQueryTime        string
 	BinaryLogging        string
@@ -455,6 +453,19 @@ type envView struct {
 	WsrepClusterSize     string
 	WsrepProviderName    string
 	WsrepProviderVersion string
+
+	// Live-usage bars. Each row has a pre-formatted percent string
+	// (e.g. "45%"), used both as human text and as the CSS width of
+	// the bar fill. A severity class ("ok" / "warn" / "crit") drives
+	// the fill colour. All three fields are empty when the underlying
+	// metric is unavailable — the template suppresses the row.
+	BufferPoolUsagePct string
+	BufferPoolUsageSev string
+	BufferPoolDirtyPct string
+	BufferPoolDirtySev string
+	TableCacheSize     string
+	TableCacheUsagePct string
+	TableCacheUsageSev string
 }
 
 type envFsRow struct {
@@ -468,11 +479,12 @@ type envFsRow struct {
 // string-only shape the template renders. Formatting is deterministic:
 // byte counts go through humanBytesEnv, durations through formatDuration,
 // empty strings through the "—" template helper.
-func buildEnvironmentView(sec *model.EnvironmentSection) envView {
+func buildEnvironmentView(r *model.Report) envView {
 	v := envView{}
-	if sec == nil {
+	if r == nil || r.EnvironmentSection == nil {
 		return v
 	}
+	sec := r.EnvironmentSection
 	if h := sec.Host; h != nil {
 		v.HasHost = true
 		v.Hostname = h.Hostname
@@ -534,12 +546,10 @@ func buildEnvironmentView(sec *model.EnvironmentSection) envView {
 		v.PidFile = m.PidFile
 		v.ServerID = m.ServerID
 		v.DefaultStorageEngine = m.DefaultStorageEngine
-		v.CharsetCollation = joinNonEmpty(" / ", m.CharacterSetServer, m.CollationServer)
 		v.TransactionIsolation = m.TransactionIsolation
 		v.BufferPoolSize = m.InnodbBufferPoolSize
 		v.BufferPoolInstances = m.InnodbBufferPoolInsts
 		v.MaxConnections = m.MaxConnections
-		v.SQLMode = m.SQLMode
 		v.SlowQueryLog = m.SlowQueryLog
 		v.LongQueryTime = m.LongQueryTime
 		v.BinaryLogging = joinBinlog(m.LogBin, m.BinlogFormat, m.SyncBinlog)
@@ -553,8 +563,144 @@ func buildEnvironmentView(sec *model.EnvironmentSection) envView {
 			v.WsrepProviderName = m.Wsrep.ProviderName
 			v.WsrepProviderVersion = m.Wsrep.ProviderVersion
 		}
+		// Live-usage metrics derived from the mysqladmin / variables
+		// streams. All three degrade to empty strings when the inputs
+		// are missing (template then suppresses the row).
+		v.BufferPoolUsagePct, v.BufferPoolUsageSev = bufferPoolFillPct(r)
+		v.BufferPoolDirtyPct, v.BufferPoolDirtySev = bufferPoolDirtyPct(r)
+		v.TableCacheSize, v.TableCacheUsagePct, v.TableCacheUsageSev = tableCacheUsage(r)
 	}
 	return v
+}
+
+// --- Live metric helpers ------------------------------------------------
+
+// bufferPoolFillPct returns the buffer-pool fill percentage — the
+// fraction of pages currently holding data — formatted as e.g. "45%",
+// together with a severity class for bar colouring. Empty strings mean
+// "unavailable" (no mysqladmin data, or counters absent).
+func bufferPoolFillPct(r *model.Report) (pct string, sev string) {
+	total, ok1 := gaugeLastReport(r, "Innodb_buffer_pool_pages_total")
+	free, ok2 := gaugeLastReport(r, "Innodb_buffer_pool_pages_free")
+	if !ok1 || !ok2 || total <= 0 {
+		return "", ""
+	}
+	frac := (total - free) / total
+	if frac < 0 {
+		frac = 0
+	}
+	if frac > 1 {
+		frac = 1
+	}
+	// Fill is informational — a high value is usually a healthy sign
+	// (working set is hot). Keep severity neutral ("ok" = accent bar).
+	return fmt.Sprintf("%.0f%%", frac*100), "ok"
+}
+
+// bufferPoolDirtyPct returns the dirty-pages percentage with severity.
+// Warn at ≥50 %, crit at ≥80 % — thresholds chosen to flag buffer pool
+// under flush pressure before the max_dirty_pages_pct ceiling kicks in.
+func bufferPoolDirtyPct(r *model.Report) (pct string, sev string) {
+	total, ok1 := gaugeLastReport(r, "Innodb_buffer_pool_pages_total")
+	dirty, ok2 := gaugeLastReport(r, "Innodb_buffer_pool_pages_dirty")
+	if !ok1 || !ok2 || total <= 0 {
+		return "", ""
+	}
+	frac := dirty / total
+	if frac < 0 {
+		frac = 0
+	}
+	if frac > 1 {
+		frac = 1
+	}
+	return fmt.Sprintf("%.0f%%", frac*100), severityForFrac(frac, 0.50, 0.80)
+}
+
+// tableCacheUsage returns (size, usagePct, severity) for the table
+// cache — Open_tables / table_open_cache. Warn ≥80 %, crit ≥95 %.
+func tableCacheUsage(r *model.Report) (size string, pct string, sev string) {
+	toc, ok1 := variableFloatReport(r, "table_open_cache")
+	if !ok1 || toc <= 0 {
+		return "", "", ""
+	}
+	size = fmt.Sprintf("%.0f", toc)
+	open, ok2 := gaugeLastReport(r, "Open_tables")
+	if !ok2 {
+		return size, "", ""
+	}
+	frac := open / toc
+	if frac < 0 {
+		frac = 0
+	}
+	if frac > 1 {
+		frac = 1
+	}
+	return size, fmt.Sprintf("%.0f%%", frac*100), severityForFrac(frac, 0.80, 0.95)
+}
+
+// severityForFrac maps a 0..1 value to one of "ok" / "warn" / "crit".
+func severityForFrac(frac, warn, crit float64) string {
+	switch {
+	case frac >= crit:
+		return "crit"
+	case frac >= warn:
+		return "warn"
+	default:
+		return "ok"
+	}
+}
+
+// gaugeLastReport is a render-side mirror of findings.gaugeLast — the
+// findings helper is unexported, so we duplicate the minimal logic
+// here rather than pulling in an import cycle. Returns (value, ok).
+func gaugeLastReport(r *model.Report, name string) (float64, bool) {
+	if r == nil || r.DBSection == nil || r.DBSection.Mysqladmin == nil {
+		return 0, false
+	}
+	m := r.DBSection.Mysqladmin
+	if m.IsCounter[name] {
+		return 0, false
+	}
+	arr, ok := m.Deltas[name]
+	if !ok || len(arr) == 0 {
+		return 0, false
+	}
+	for i := len(arr) - 1; i >= 0; i-- {
+		v := arr[i]
+		if !math.IsNaN(v) && !math.IsInf(v, 0) {
+			return v, true
+		}
+	}
+	return 0, false
+}
+
+// variableFloatReport returns the numeric value of the named SHOW
+// GLOBAL VARIABLES entry from the last snapshot that captured it.
+func variableFloatReport(r *model.Report, name string) (float64, bool) {
+	if r == nil || r.VariablesSection == nil {
+		return 0, false
+	}
+	snaps := r.VariablesSection.PerSnapshot
+	for i := len(snaps) - 1; i >= 0; i-- {
+		data := snaps[i].Data
+		if data == nil {
+			continue
+		}
+		for _, e := range data.Entries {
+			if strings.EqualFold(e.Name, name) {
+				s := strings.TrimSpace(e.Value)
+				if s == "" || strings.EqualFold(s, "NULL") {
+					return 0, false
+				}
+				f, err := strconv.ParseFloat(s, 64)
+				if err != nil {
+					return 0, false
+				}
+				return f, true
+			}
+		}
+	}
+	return 0, false
 }
 
 func joinNonEmpty(sep string, parts ...string) string {

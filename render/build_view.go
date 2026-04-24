@@ -34,7 +34,7 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 	}
 
 	if r.EnvironmentSection != nil {
-		v.Environment = buildEnvironmentView(r.EnvironmentSection)
+		v.Environment = buildEnvironmentView(r)
 		v.HasEnvironment = v.Environment.HasHost || v.Environment.HasMySQL
 		// Badge only calls out degraded captures; a complete
 		// environment (host + mysql) leaves the badge empty so the

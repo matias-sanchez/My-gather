@@ -31,7 +31,7 @@ func TestBuildEnvironmentView_FormatsHumanUnits(t *testing.T) {
 			MaxConnections:       "5000",
 		},
 	}
-	v := buildEnvironmentView(sec)
+	v := buildEnvironmentView(&model.Report{EnvironmentSection: sec})
 	if !v.HasHost || !v.HasMySQL {
 		t.Fatalf("HasHost/HasMySQL not set: %+v", v)
 	}

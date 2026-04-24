@@ -2592,8 +2592,11 @@ details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
 .env-pane[hidden] { display: none; }
 .env-pane {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px 22px;
+}
+@media (max-width: 720px) {
+  .env-pane { grid-template-columns: 1fr; }
 }
 .env-group {
   min-width: 0;
@@ -2636,11 +2639,6 @@ dl.env-kv .env-sub {
   letter-spacing: 0.06em;
   margin-left: 4px;
 }
-dl.env-kv .env-sqlmode {
-  font-size: 11px;
-  line-height: 1.45;
-  color: var(--fg-muted);
-}
 
 /* ON / OFF chips */
 .env-chip {
@@ -2672,12 +2670,17 @@ ul.env-fs {
 }
 ul.env-fs li {
   display: grid;
-  grid-template-columns: minmax(120px, auto) 1fr auto auto;
+  grid-template-columns: 180px 1fr 3.5ch 22ch;
   gap: 10px;
   align-items: center;
   font-size: 12px;
 }
-.env-fs-mount  { color: var(--fg); }
+.env-fs-mount  {
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .env-fs-bar    {
   height: 6px;
   background: color-mix(in srgb, var(--fg-dim) 25%, transparent);
@@ -2692,4 +2695,49 @@ ul.env-fs li {
   border-radius: 3px;
 }
 .env-fs-pct    { font: 600 11px/1 var(--mono); color: var(--fg); min-width: 3ch; text-align: right; }
-.env-fs-size   { color: var(--fg-muted); font-size: 11.5px; }
+.env-fs-size   {
+  color: var(--fg-muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Inline meter: bar + percent label, used inline inside <dd> cells
+   (Buffer pool usage, Dirty pages, Table cache usage). Shares the
+   filesystem bar look but sized for a narrow key-value row. */
+dl.env-kv dd.env-meter {
+  display: grid;
+  grid-template-columns: 1fr 4ch;
+  gap: 10px;
+  align-items: center;
+}
+.env-bar {
+  height: 6px;
+  background: color-mix(in srgb, var(--fg-dim) 25%, transparent);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 80px;
+}
+.env-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 70%, transparent), var(--accent));
+  transition: width 180ms ease;
+}
+.env-bar-fill.sev-warn {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--warn) 70%, transparent), var(--warn));
+}
+.env-bar-fill.sev-crit {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--err) 70%, transparent), var(--err));
+}
+.env-meter-pct {
+  font: 600 11px/1 var(--mono);
+  color: var(--fg);
+  text-align: right;
+  min-width: 3ch;
+}
+/* Severity-tinted percent label when the meter is in warn / crit. */
+dd.env-meter:has(.sev-warn) .env-meter-pct { color: var(--warn); }
+dd.env-meter:has(.sev-crit) .env-meter-pct { color: var(--err); }

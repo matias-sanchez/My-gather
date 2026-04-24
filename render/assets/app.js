@@ -64,14 +64,14 @@
   // --- 1. Collapse persistence ------------------------------------
 
   function initCollapsePersistence() {
-    // Scope strictly to main-content details; nav groups have their
-    // own namespace under initNavGroups().
+    // Always land with every main section collapsed — ignore any
+    // previously persisted state. Persistence still tracks toggles
+    // within the session so re-rendering charts etc. behaves, but
+    // the next page load starts fresh.
     var blocks = document.querySelectorAll(MAIN_SECTIONS_SELECTOR);
     for (var i = 0; i < blocks.length; i++) {
       (function (d) {
-        var saved = storageGet(collapseKey(d.id));
-        if (saved === "open") d.open = true;
-        else if (saved === "closed") d.open = false;
+        d.open = false;
         d.addEventListener("toggle", function () {
           storageSet(collapseKey(d.id), d.open ? "open" : "closed");
         });
