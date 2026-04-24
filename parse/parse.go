@@ -358,22 +358,29 @@ var envSidecarSuffixes = []string{
 }
 
 // loadEnvSidecars reads the env-only sidecar files once, picking the
-// newest snapshot that has each file present. Missing/unreadable files
-// map to absent keys; the render layer treats them as "data unavailable".
+// newest file that matches "<prefix>-<suffix>" across the entire root
+// directory — NOT just across the Collection's Snapshots. Partial
+// captures sometimes have newer timestamp prefixes that only carry
+// environment sidecars (no KnownSuffixes data), so they're absent from
+// `snapshots`; scanning the directory directly ensures those are
+// considered. Prefix sort order is lexicographic, which matches
+// chronological order for pt-stalk's `YYYY_MM_DD_HH_MM_SS` timestamp
+// scheme.
+//
+// Missing/unreadable files map to absent keys in the returned map;
+// the render layer treats them as "data unavailable".
 func loadEnvSidecars(rootPath string, snapshots []*model.Snapshot) map[string]string {
-	if rootPath == "" || len(snapshots) == 0 {
+	if rootPath == "" {
 		return nil
-	}
-	// Walk snapshots newest-first (snapshots are sorted ascending by
-	// Timestamp; reverse-index so we hit the latest capture first).
-	prefixes := make([]string, 0, len(snapshots))
-	for i := len(snapshots) - 1; i >= 0; i-- {
-		prefixes = append(prefixes, snapshots[i].Prefix)
 	}
 	out := make(map[string]string, len(envSidecarSuffixes))
 	for _, suf := range envSidecarSuffixes {
-		for _, pfx := range prefixes {
-			path := filepath.Join(rootPath, pfx+"-"+suf)
+		matches, err := filepath.Glob(filepath.Join(rootPath, "*-"+suf))
+		if err != nil || len(matches) == 0 {
+			continue
+		}
+		sort.Sort(sort.Reverse(sort.StringSlice(matches)))
+		for _, path := range matches {
 			data, err := os.ReadFile(path)
 			if err != nil || len(data) == 0 {
 				continue
@@ -382,6 +389,7 @@ func loadEnvSidecars(rootPath string, snapshots []*model.Snapshot) map[string]st
 			break
 		}
 	}
+	_ = snapshots // retained for call-site symmetry; no longer required
 	return out
 }
 

@@ -136,12 +136,14 @@ func buildEnvironmentSection(c *model.Collection) *model.EnvironmentSection {
 
 	// ----- MySQL panel --------------------------------------------
 	sec.MySQL = buildMySQLEnv(c)
-	// Timezone belongs to the host panel but reads a MySQL variable;
-	// only count it as host-populated when we actually have it.
-	if sec.MySQL != nil {
+	// Timezone belongs to the host panel but is sourced from a MySQL
+	// variable. Attach it only when the host panel already has some
+	// signal of its own — otherwise a capture with only -variables
+	// would spuriously mark the host panel present and mask the
+	// "mysql only" badge outcome.
+	if populated && sec.MySQL != nil {
 		if tz := lookupVar(c, "system_time_zone"); tz != "" {
 			host.Timezone = tz
-			populated = true
 		}
 	}
 
@@ -206,15 +208,16 @@ func buildMySQLEnv(c *model.Collection) *model.MySQLEnv {
 			mys.InnodbBufferPoolSize = raw
 		}
 	}
-	// Uptime + StartTime. Uptime comes from the last mysqladmin sample;
-	// fall back to the "Uptime" variable in -variables if present.
-	uptime := latestUptimeSeconds(c)
+	// Uptime + StartTime. Uptime comes from the last mysqladmin sample
+	// that had a numeric value; we also carry that sample's timestamp
+	// through so StartTimeUTC anchors to the right clock — not the
+	// last Collection snapshot (which may be a newer snapshot without
+	// -mysqladmin, shifting start time forward by the gap).
+	uptime, uptimeTS := latestUptimeSeconds(c)
 	mys.UptimeSeconds = uptime
-	if uptime > 0 {
-		if last := lastSnapshotTimestamp(c); !last.IsZero() {
-			start := last.Add(-time.Duration(uptime) * time.Second).UTC()
-			mys.StartTimeUTC = start.Format("2006-01-02T15:04:05Z")
-		}
+	if uptime > 0 && !uptimeTS.IsZero() {
+		start := uptimeTS.Add(-time.Duration(uptime) * time.Second).UTC()
+		mys.StartTimeUTC = start.Format("2006-01-02T15:04:05Z")
 	}
 	// Galera / PXC sub-panel.
 	if strings.EqualFold(get("wsrep_on"), "ON") {
@@ -257,13 +260,18 @@ func lookupVar(c *model.Collection, name string) string {
 }
 
 // latestUptimeSeconds returns the last Uptime value observed by
-// mysqladmin across any snapshot. Falls back to the "Uptime" field in
-// -variables when no mysqladmin counter exists. Returns 0 when unknown.
-func latestUptimeSeconds(c *model.Collection) int64 {
+// mysqladmin across any snapshot AND the timestamp of the snapshot the
+// value came from. Falls back to the "Uptime" field in -variables when
+// no mysqladmin counter exists (timestamp = last snapshot in that
+// case). Returns (0, zeroTime) when unknown.
+func latestUptimeSeconds(c *model.Collection) (int64, time.Time) {
 	// Walk snapshots newest-first; take the last non-NaN Uptime slot
-	// from the mysqladmin delta series.
+	// from the mysqladmin delta series. The caller uses the snapshot's
+	// own timestamp as the clock anchor for StartTimeUTC so a newer
+	// snapshot without -mysqladmin doesn't shift start time forward.
 	for i := len(c.Snapshots) - 1; i >= 0; i-- {
-		sf, ok := c.Snapshots[i].SourceFiles[model.SuffixMysqladmin]
+		sn := c.Snapshots[i]
+		sf, ok := sn.SourceFiles[model.SuffixMysqladmin]
 		if !ok || sf == nil || sf.Parsed == nil {
 			continue
 		}
@@ -271,30 +279,27 @@ func latestUptimeSeconds(c *model.Collection) int64 {
 		if !ok {
 			continue
 		}
-		// mysqladmin stores Uptime as a gauge in most schemas. Walk the
-		// slice backwards to find the last numeric sample.
 		if slots, ok := ma.Deltas["Uptime"]; ok {
 			for j := len(slots) - 1; j >= 0; j-- {
 				if !math.IsNaN(slots[j]) {
-					return int64(slots[j])
+					return int64(slots[j]), sn.Timestamp
 				}
 			}
 		}
 	}
 	// Fallback: variable dump sometimes carries Uptime via -variables.
+	// Anchor to the last snapshot's timestamp — variables are a
+	// point-in-time dump so we don't have a per-sample timestamp.
 	if raw := lookupVar(c, "Uptime"); raw != "" {
 		if v, err := strconv.ParseInt(raw, 10, 64); err == nil {
-			return v
+			var ts time.Time
+			if len(c.Snapshots) > 0 {
+				ts = c.Snapshots[len(c.Snapshots)-1].Timestamp
+			}
+			return v, ts
 		}
 	}
-	return 0
-}
-
-func lastSnapshotTimestamp(c *model.Collection) time.Time {
-	if len(c.Snapshots) == 0 {
-		return time.Time{}
-	}
-	return c.Snapshots[len(c.Snapshots)-1].Timestamp
+	return 0, time.Time{}
 }
 
 // inferDistribution resolves the presentation label for the MySQL
