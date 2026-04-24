@@ -3294,6 +3294,44 @@
       return Math.random().toString(36).slice(2, 10);
     }
     function extFromMime(m) { return (m && m.indexOf("mp4") !== -1) ? "mp4" : "webm"; }
+    // generateIdempotencyKey emits an RFC4122 v4 UUID per call. The
+    // native crypto.randomUUID path handles modern browsers; the
+    // fallback fills 16 bytes from crypto.getRandomValues and
+    // formats them with the v4 variant bits so the key is still
+    // unique per submission. A constant fallback (previous code)
+    // collided across every submission in browsers that ship fetch
+    // but lack randomUUID (older WebViews), letting the worker's
+    // 5-minute idempotency cache return another user's cached
+    // success or a stale duplicate_inflight — i.e., lost
+    // submissions and cross-user response mixups.
+    function generateIdempotencyKey() {
+      try {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          return window.crypto.randomUUID();
+        }
+        if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+          var b = new Uint8Array(16);
+          window.crypto.getRandomValues(b);
+          b[6] = (b[6] & 0x0f) | 0x40; // version 4
+          b[8] = (b[8] & 0x3f) | 0x80; // variant 1 (RFC 4122)
+          var h = "";
+          for (var i = 0; i < 16; i++) h += (b[i] + 0x100).toString(16).slice(1);
+          return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" +
+                 h.slice(16, 20) + "-" + h.slice(20, 32);
+        }
+      } catch (_) { /* fall through */ }
+      // Math.random is not cryptographically strong but still emits
+      // a unique-per-call value — strictly better than a constant
+      // fallback for idempotency-key purposes. Reachable only on
+      // environments where crypto.getRandomValues is also absent.
+      function rhex(n) {
+        var s = "";
+        for (var i = 0; i < n; i++) s += Math.floor(Math.random() * 16).toString(16);
+        return s;
+      }
+      return rhex(8) + "-" + rhex(4) + "-4" + rhex(3) + "-" +
+             ((Math.floor(Math.random() * 4) + 8).toString(16)) + rhex(3) + "-" + rhex(12);
+    }
     function maybePrefixBody() {
       var cat = catSelect.value;
       return cat ? "> Category: " + cat + "\n\n" + bodyInput.value : bodyInput.value;
@@ -3611,9 +3649,7 @@
         var payload = {
           title: titleInput.value,
           body: maybePrefixBody(),
-          idempotencyKey: (window.crypto && typeof window.crypto.randomUUID === "function")
-            ? window.crypto.randomUUID()
-            : "00000000-0000-4000-8000-000000000000",
+          idempotencyKey: generateIdempotencyKey(),
           reportVersion: reportVersion
         };
         if (catSelect.value) payload.category = catSelect.value;
