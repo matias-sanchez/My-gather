@@ -1,5 +1,22 @@
 // Fixed-window per-IP rate limit backed by Cloudflare KV.
-// Key format: rl:<ip-hash>:<UTC-hour>   Value: counter (1..5)   TTL: 3600s.
+// Each request writes its own unique key under the per-IP/per-hour
+// prefix so the count is the number of keys returned by KV.list().
+// The prior read-modify-write counter pattern was racy under bursts —
+// concurrent requests could read the same value and overwrite each
+// other with the same next count, silently allowing more than LIMIT
+// submissions per window. The unique-key scheme avoids overwrites
+// entirely: even perfectly-concurrent requests each write distinct
+// keys, so once N concurrent submissions complete their PUT the
+// (N+1)th request's list() sees N entries. KV list is eventually
+// consistent, so a short burst still has a small leak window, but
+// the stale-overwrite failure mode is gone. Full linearizability
+// would require Durable Objects — not worth the architectural move
+// for a 5/hour limit.
+//
+// Key format: rl:<ip-hash>:<UTC-hour>:<random-suffix>
+// Value:      "1" (the count is the number of matching keys).
+// TTL:        3600s — KV expires rows on its own at hour rollover.
+//
 // Decision comes from specs/003-feedback-backend-worker/research.md §R3.
 
 import type { Env } from "./env";
@@ -39,8 +56,19 @@ function secondsToNextHour(now: Date): number {
   return Math.max(1, Math.ceil((next.getTime() - now.getTime()) / 1000));
 }
 
+function randomSuffix(): string {
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  let hex = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    hex += bytes[i]!.toString(16).padStart(2, "0");
+  }
+  return hex;
+}
+
 export interface RateLimitDeps {
   now?: () => Date;
+  suffix?: () => string;
 }
 
 export async function checkRateLimit(
@@ -52,25 +80,27 @@ export async function checkRateLimit(
   // Salt is already a secret (App ID is private enough for a salt — see prompt).
   const salt = env.GITHUB_APP_ID ?? "no-salt";
   const ipHash = await hashIp(ip, salt);
-  const key = `rl:${ipHash}:${currentHourKey(now)}`;
+  const prefix = `rl:${ipHash}:${currentHourKey(now)}:`;
 
-  const existingRaw = await env.FEEDBACK_RATELIMIT.get(key);
-  const existing = existingRaw ? parseInt(existingRaw, 10) : 0;
-  const safeExisting = Number.isFinite(existing) && existing >= 0 ? existing : 0;
+  // Count existing keys under the bucket prefix. KV.list caps per-page
+  // results at 1000; LIMIT is 5 so one page is always enough.
+  const listed = await env.FEEDBACK_RATELIMIT.list({ prefix, limit: LIMIT + 1 });
+  const existing = listed.keys.length;
 
-  if (safeExisting >= LIMIT) {
+  if (existing >= LIMIT) {
     return {
       allowed: false,
-      count: safeExisting,
+      count: existing,
       retryAfterSeconds: secondsToNextHour(now),
     };
   }
 
-  const nextCount = safeExisting + 1;
-  // TTL is always window-sized; Cloudflare expires the key on its own.
-  await env.FEEDBACK_RATELIMIT.put(key, String(nextCount), {
+  // Write our own unique key — no overwrite of other concurrent
+  // requests' keys, so the count is always monotonic per bucket.
+  const suffix = deps.suffix ? deps.suffix() : randomSuffix();
+  await env.FEEDBACK_RATELIMIT.put(prefix + suffix, "1", {
     expirationTtl: WINDOW_SECONDS,
   });
 
-  return { allowed: true, count: nextCount };
+  return { allowed: true, count: existing + 1 };
 }

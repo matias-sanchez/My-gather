@@ -9,7 +9,7 @@ import {
   GitHubError,
   resolveLabelIds,
 } from "./github-app";
-import { cacheResponse, getCachedResponse } from "./idempotency";
+import { cacheResponse, releaseReservation, reserveResponse } from "./idempotency";
 import { logRequest } from "./log";
 import { checkRateLimit, hashIp } from "./ratelimit";
 import { uploadAttachment } from "./r2-upload";
@@ -130,21 +130,46 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
     );
   }
 
-  // --- Idempotency cache hit --------------------------------------------------
-  const cached = await getCachedResponse(env, payload.idempotencyKey);
-  if (cached) {
+  // --- Idempotency (reserve before side effects) ------------------------------
+  // reserveResponse writes an "inflight" placeholder on the happy
+  // path so a concurrent duplicate submit sees a slot already taken
+  // instead of creating a second GitHub issue. See idempotency.ts
+  // for the KV-consistency trade-off.
+  const reservation = await reserveResponse(env, payload.idempotencyKey);
+  if (reservation.kind === "done") {
     logRequest({
       status: 200,
       error: null,
       duration_ms: Date.now() - startedAt,
       ip_hash: ipHash,
-      issue_number: cached.issueNumber,
+      issue_number: reservation.response.issueNumber,
       report_version: payload.reportVersion,
       rate_limit_count: rl.count,
       has_image: !!payload.image,
       has_voice: !!payload.voice,
     });
-    return jsonResponse({ ok: true, issueUrl: cached.issueUrl, issueNumber: cached.issueNumber });
+    return jsonResponse({
+      ok: true,
+      issueUrl: reservation.response.issueUrl,
+      issueNumber: reservation.response.issueNumber,
+    });
+  }
+  if (reservation.kind === "inflight") {
+    logRequest({
+      status: 409,
+      error: "duplicate_inflight",
+      duration_ms: Date.now() - startedAt,
+      ip_hash: ipHash,
+      report_version: payload.reportVersion,
+      rate_limit_count: rl.count,
+      has_image: !!payload.image,
+      has_voice: !!payload.voice,
+    });
+    return errorResponse(
+      409,
+      "duplicate_inflight",
+      "A previous submission with the same idempotency key is still being processed. Retry in a few seconds.",
+    );
   }
 
   // --- Uploads + GitHub issue creation ----------------------------------------
@@ -201,6 +226,12 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
 
     return jsonResponse({ ok: true, issueUrl: issue.url, issueNumber: issue.number });
   } catch (err) {
+    // Processing failed before we could cache a final response. Drop
+    // the inflight reservation so the client's retry (with the same
+    // idempotencyKey) can proceed instead of being bounced by the
+    // duplicate_inflight guard. Swallow release errors — we still
+    // want to return the actual upstream failure to the client.
+    await releaseReservation(env, payload.idempotencyKey).catch(() => undefined);
     if (err instanceof GitHubError) {
       logRequest({
         status: 503,
@@ -250,14 +281,17 @@ export default {
         return await handleFeedback(req, env, started);
       } catch (err) {
         // Final catch-all so a surprise throw never crashes the isolate.
-        const message = err instanceof Error ? err.message : "unknown";
+        // The client-facing message MUST stay generic — leaking raw
+        // exception text exposes runtime internals and violates the
+        // documented 500 contract in contracts/api.md.
+        void err;
         logRequest({
           status: 500,
           error: "worker_error",
           duration_ms: Date.now() - started,
           ip_hash: "unknown",
         });
-        return errorResponse(500, "worker_error", `Internal error: ${message.slice(0, 120)}`);
+        return errorResponse(500, "worker_error", "Internal error. Please try again later.");
       }
     }
 
