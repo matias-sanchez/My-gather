@@ -198,9 +198,29 @@ export async function resolveLabelIds(
 
   // Graceful: labels that don't exist in the repo are skipped silently,
   // the issue still posts with whatever labels did resolve.
+  //
+  // Case-insensitive match: GitHub labels are stored verbatim in
+  // whatever case the maintainer created them (`area/ui`, `area/UI`,
+  // `Area/UI` are all valid and distinct at the API level but the
+  // UI treats them loosely). Clients that send a canonical
+  // lowercase form shouldn't miss a label just because the repo
+  // shipped with a mixed-case version, and vice-versa. Build a
+  // lowercase index on the side so the lookup tolerates case drift
+  // without requiring every caller to know the repo's exact
+  // casing.
+  const byLower: Record<string, string> = {};
+  for (const k of Object.keys(map)) {
+    // First occurrence wins; GitHub doesn't actually let you
+    // create two labels whose lowercased forms collide, so there
+    // should only ever be one.
+    const lower = k.toLowerCase();
+    if (byLower[lower] === undefined) {
+      byLower[lower] = map[k] as string;
+    }
+  }
   const ids: string[] = [];
   for (const name of names) {
-    const id = map[name];
+    const id = map[name] ?? byLower[name.toLowerCase()];
     if (id) ids.push(id);
   }
   return ids;

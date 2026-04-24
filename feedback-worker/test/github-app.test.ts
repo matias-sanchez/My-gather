@@ -183,6 +183,39 @@ describe("resolveLabelIds", () => {
     expect(ids).toEqual([]);
     expect(calls.length).toBe(0);
   });
+
+  it("resolves labels case-insensitively when repo casing differs from caller's", async () => {
+    // Regression guard for the case-mismatch codex flagged: client
+    // code lowercases "UI" → "area/ui", but the repo ships
+    // "area/UI". A strict-equality lookup missed the label and
+    // created issues without their intended triage tag. The
+    // resolver now matches case-insensitively against the
+    // GitHub-returned names, so either direction works.
+    const env = mkEnv(pem);
+    installFetchMock(() =>
+      jsonResp({
+        data: {
+          node: {
+            labels: {
+              nodes: [
+                { name: "area/UI", id: "L_ui" },    // repo stores mixed case
+                { name: "area/parser", id: "L_pa" }, // repo stores lowercase
+              ],
+              pageInfo: { hasNextPage: false, endCursor: null },
+            },
+          },
+        },
+      }),
+    );
+
+    // Caller passes lowercased form; repo has "area/UI".
+    const lc = await resolveLabelIds(env, "tok", ["area/ui"]);
+    expect(lc).toEqual(["L_ui"]);
+
+    // Caller passes mixed case; repo has "area/parser" (lowercase).
+    const uc = await resolveLabelIds(env, "tok", ["area/PARSER"]);
+    expect(uc).toEqual(["L_pa"]);
+  });
 });
 
 describe("createIssue", () => {
