@@ -852,10 +852,80 @@
   // onRebuild: callback fired when the user toggles legend visibility
   //            so the caller can destroy + reconstruct with the new
   //            hidden set.
+  // bucketizeStackSeries collapses dense samples into uniform wall-clock
+  // buckets so each time slot contributes a single stacked bar rather
+  // than several thin ones competing for pixels. The bucket size scales
+  // with the capture span — short windows keep 30s granularity, long
+  // windows coarsen up to ~5 minutes — and we aim to end with around
+  // 20–60 visible bars across any capture length.
+  //
+  // Returns { timestamps, series[] } with the same shape as `data` but
+  // re-indexed on bucket edges. Within a bucket each series' value is
+  // the MEAN of its non-NaN samples (%CPU averages naturally). Empty
+  // buckets are dropped so the x-axis has no gaps.
+  function bucketizeStackSeries(data) {
+    var ts  = data.timestamps || [];
+    var ser = data.series || [];
+    if (ts.length === 0) return { timestamps: [], series: ser.map(function (s) { return { label: s.label, values: [] }; }) };
+
+    var span = ts[ts.length - 1] - ts[0];
+    // Choose a bucket size (seconds) targeting ~30 bars. Snap to a
+    // human-friendly step so ticks land on round wall-clock values.
+    var STEPS = [30, 60, 120, 300, 600, 1800, 3600];
+    var target = Math.max(1, Math.floor(span / 30));
+    var step = STEPS[STEPS.length - 1];
+    for (var i = 0; i < STEPS.length; i++) { if (STEPS[i] >= target) { step = STEPS[i]; break; } }
+
+    // If samples are already sparser than the step, bucketing would be
+    // a no-op that only introduces averaging error — keep the raw data.
+    if (ts.length >= 2) {
+      var avgGap = span / (ts.length - 1);
+      if (avgGap >= step * 0.9) return data;
+    }
+
+    var buckets = {}; // key = floor(ts/step)*step → { sums[], counts[] }
+    var keys = [];
+    for (var j = 0; j < ts.length; j++) {
+      var key = Math.floor(ts[j] / step) * step;
+      var b = buckets[key];
+      if (!b) {
+        b = { sums: new Array(ser.length), counts: new Array(ser.length) };
+        for (var k = 0; k < ser.length; k++) { b.sums[k] = 0; b.counts[k] = 0; }
+        buckets[key] = b;
+        keys.push(key);
+      }
+      for (var k2 = 0; k2 < ser.length; k2++) {
+        var v = +ser[k2].values[j];
+        if (!isNaN(v)) { b.sums[k2] += v; b.counts[k2] += 1; }
+      }
+    }
+    keys.sort(function (a, b) { return a - b; });
+
+    var outTs = keys;
+    var outSeries = ser.map(function (s, k) {
+      var vals = new Array(keys.length);
+      for (var r = 0; r < keys.length; r++) {
+        var bk = buckets[keys[r]];
+        vals[r] = bk.counts[k] > 0 ? bk.sums[k] / bk.counts[k] : NaN;
+      }
+      return { label: s.label, values: vals };
+    });
+    return { timestamps: outTs, series: outSeries };
+  }
+
   function buildStackedChart(el, data, unit, hiddenLabels, onRebuild) {
-    var series = data.series;
-    var n = data.timestamps.length;
-    var stackedPath = uPlot.paths.bars({ size: [1.0, 64], align: 0, radius: 0.25 });
+    // Coalesce dense samples into uniform wall-clock buckets so we get
+    // ONE stacked bar per time slot instead of several thin ones fighting
+    // for space. Bucket size is chosen from the capture span so short
+    // captures stay granular and long ones don't drown in ticks.
+    var bucketed = bucketizeStackSeries(data);
+    var series   = bucketed.series;
+    var n        = bucketed.timestamps.length;
+
+    // Bar sizing: size[0] = 0.85 of the gap (small breathing room between
+    // bars so neighbours don't kiss); size[1] caps the bar at 160px so
+    // long captures with few buckets still look proportional.
+    var stackedPath = uPlot.paths.bars({ size: [0.85, 160], align: 0, radius: 0.3 });
 
     // Raw per-series values, zero'd when hidden.
     var rawValues = series.map(function (s) {
@@ -897,7 +967,7 @@
     // each smaller stack covers it — yielding the visual layering a
     // reader expects and putting the legend in top→bottom stack order.
     var plotSeries = [{ label: "time" }];
-    var plotData = [data.timestamps.slice()];
+    var plotData = [bucketed.timestamps.slice()];
     var plotRawByIdx = [null];
     for (var k = series.length - 1; k >= 0; k--) {
       var stroke = SERIES_COLORS[k % SERIES_COLORS.length];
@@ -915,7 +985,7 @@
     }
 
     var w = measureChartWidth(el);
-    var opts = basePlotOpts(w, 320, plotSeries, unit, data.snapshotBoundaries, data.timestamps);
+    var opts = basePlotOpts(w, 320, plotSeries, unit, data.snapshotBoundaries, bucketed.timestamps);
     var plot = new uPlot(opts, plotData, el);
     plot.__rawData = plotRawByIdx; // consumed by updateTooltipOnCursor
     registerChart(plot, el, opts);
