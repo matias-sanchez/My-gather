@@ -213,12 +213,13 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
   height: 60px;
   object-fit: contain;
   pointer-events: none;
-  /* logo.png ships at 512×370 (cropped to the non-transparent
-     bounding box of the Gemini master, with its baked-in grey
-     checker pattern replaced by true alpha=0 pixels). At that
-     resolution every browser zoom up to ~800 % stays in the
-     downscaling regime. Use image-rendering: high-quality so
-     Chrome/Safari pick their best downscaler. */
+  /* logo.png ships at 512×512 — the non-transparent bounding box
+     of the Gemini master is centred inside a square canvas with
+     symmetric transparent padding, so object-fit: contain inside
+     the 60×60 slot fills the full square and the artwork lands
+     geometrically centred. The alpha channel is real (the grey
+     checker Gemini baked in was zeroed out). image-rendering:
+     high-quality nudges Chrome/Safari to their best downscaler. */
   image-rendering: auto;
   image-rendering: high-quality;
   transition: transform 260ms cubic-bezier(.34,1.56,.64,1),
