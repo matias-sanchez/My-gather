@@ -45,7 +45,7 @@ R2 bucket is publicly readable. Privacy note: these assets *are* the user's feed
 **Rationale**:
 - Sliding-window requires storing N timestamps per IP; fixed-window stores one counter.
 - At our rate-limit threshold (5/hour), the worst edge case of fixed-window is "a user gets 10 submits across a minute that spans :59 → :00". Not a problem for actual attack scenarios.
-- Cloudflare KV TTLs are per-key; one `SET ratelimit:<ip>:<hour> ttl=3600` per increment.
+- Cloudflare KV TTLs are per-key; one `SET rl:<ip>:<hour> ttl=3600` per increment (key prefix matches data-model.md).
 
 **Alternatives considered**:
 - Sliding-window: marginal benefit, complex implementation.
@@ -125,7 +125,7 @@ For 400 (validation error), show the field-specific error inline; the user fixes
 
 ## R9: Worker cold-start impact
 
-**Decision**: acceptable. Cloudflare Workers have essentially zero cold-start (<5ms isolate boot). `jose` JWT signing adds ~20ms. GitHub GraphQL call ~200ms p95. Total p95 end-to-end ~300ms on a warm path.
+**Decision**: acceptable. Cloudflare Workers have essentially zero cold-start (<5ms isolate boot). `jose` JWT signing adds ~20ms. GitHub REST call (`POST /repos/.../issues`) ~200ms p95. Total p95 end-to-end ~300ms on a warm path.
 
 **Alternatives considered**: pre-warming (Durable Object that pings itself periodically) — unnecessary at this latency.
 

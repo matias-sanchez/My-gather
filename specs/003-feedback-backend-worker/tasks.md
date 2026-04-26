@@ -39,7 +39,7 @@ description: "Task list for Feedback Backend Worker implementation"
 
 ## Phase 3: Worker logic (agent-parallel opportunity)
 
-**Purpose**: implement the Worker handler with validation, rate-limit, idempotency, GitHub App auth, and the GraphQL call. Exhaustive unit tests.
+**Purpose**: implement the Worker handler with validation, rate-limit, idempotency, GitHub App auth, and the REST call to `POST /repos/.../issues`. Exhaustive unit tests.
 
 - [ ] T010 [P] [US1] Implement `feedback-worker/src/validate.ts`: payload schema validation per `contracts/api.md`. Return typed errors.
 - [ ] T011 [P] [US3] Implement `feedback-worker/src/ratelimit.ts`: fixed-window KV counter. Returns `{allowed, retryAfterSeconds}`.
@@ -96,7 +96,7 @@ description: "Task list for Feedback Backend Worker implementation"
 
 ## Dependencies
 
-- Phase 1 (human setup) → Phase 2 needs the IDs to fill the constitutional amendment's citation.
+- Phase 1 (human setup) → Phase 2 needs the IDs and the R2 URL. The constitution amendment is already on main at v1.3.0; T006 is a verification guard, not an edit.
 - Phase 2 → Phase 3 (Worker can't be written without the scaffold).
 - Phase 3 can start in parallel once T007 has produced the scaffold. Agents can fork: one per module (validate, ratelimit, idempotency, github-app, r2, index).
 - Phase 4 does NOT depend on Phase 3 being done — the client change can proceed in parallel using a stub Worker URL. Agents can fork Go-side and Worker-side in parallel.
@@ -112,7 +112,7 @@ description: "Task list for Feedback Backend Worker implementation"
 
 ### MVP: T001–T020 + T021–T026 text-only
 
-Ship text-only first: skip R2 and attachment uploading in the Worker (T014), skip image/voice base64 in the client payload. Once the "Submit → success" flow is proven, a second iteration adds attachments (T014 + client work). Halves the surface of the first PR and gets the constitutional amendment in sooner.
+Ship text-only first: skip R2 and attachment uploading in the Worker (T014), skip image/voice base64 in the client payload. Once the "Submit → success" flow is proven, a second iteration adds attachments (T014 + client work). Halves the surface of the first PR and lets the maintainer review the wiring without the attachment plumbing in the same diff.
 
 ### Full feature in one PR (if preferred)
 

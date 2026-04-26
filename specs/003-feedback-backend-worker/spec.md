@@ -14,7 +14,7 @@ Resolved before starting this spec via interactive conversation:
 - **GitHub credential**: a GitHub App installed in `matias-sanchez/My-gather` with `Issues: write` permission. Preferred over a PAT because: (a) Apps can be revoked per-installation, (b) tokens are short-lived (1h) and generated per-request, (c) audit trail on GitHub shows the App author on each issue.
 - **Attachments**: image + voice inline in the issue body via GitHub's markdown (images as base64 data URIs are rejected by GitHub; we upload to a Worker-managed R2 bucket and link). See `research.md` R2 for the rejected alternatives.
 - **Fallback when Worker is down**: the report silently falls back to the current `window.open` pre-fill URL flow from feature 002. No user-visible error states about "backend unavailable" — just a degraded path that still delivers value.
-- **Constitution impact**: introduces runtime network from the report. Requires an amendment to Principle IX (Zero Network at Runtime) documenting a named exception. Amendment MUST land in the same change; it is not a deferred follow-up.
+- **Constitution impact**: introduces runtime network from the report. The Principle IX named exception that authorises this was ratified in constitution v1.3.0 (2026-04-24, already on main) — the implementation PR only needs to verify the constitution is at v1.3.0, not amend it.
 
 ## Clarifications (2026-04-26)
 
@@ -93,6 +93,7 @@ The Worker validates every incoming payload: title non-empty (≤ 200 chars), bo
 - **GitHub App installation removed**: `POST /feedback` returns 503 with a clear error. Dialog falls back to the feature-002 pre-fill URL path.
 - **GitHub API rate-limit hit by the App**: 5000 req/hr per installation. We are many orders of magnitude under that. If exceeded, fallback.
 - **Multiple simultaneous Submits**: each gets its own Worker invocation. No ordering guarantees on GitHub. Idempotency is not guaranteed (a network retry could create a duplicate issue). See data-model for the idempotency-key approach.
+- **Browser timeout vs Worker timeout asymmetry**: the browser fetch aborts at 5s (FR-008) while the Worker's GitHub call has its own 10s timeout (FR-014). If GitHub responds in 6–10s, the browser has already fallen back to `window.open` while the Worker still successfully creates the issue — the user sees both "fallback" and a posted issue, and may submit again from the prefill page. The idempotency key does NOT mitigate this case because the `window.open` fallback path does not carry a key. Acceptable risk: rare (depends on GitHub p99 latency) and recoverable (the user can close the duplicate). If it becomes a real problem, raise the browser timeout to ≥10s so it brackets the Worker timeout instead of being shorter.
 - **Report opened from `file://`**: CORS treats file:// origin as `null`. Worker must accept `Origin: null` (or lack of Origin header) for the same-binary scenario.
 - **Old reports (pre-Worker)**: old reports keep calling `window.open` — they don't know the Worker exists. No regression.
 
@@ -101,7 +102,7 @@ The Worker validates every incoming payload: title non-empty (≤ 200 chars), bo
 ### Functional Requirements
 
 - **FR-001**: The report MUST POST a structured JSON payload to a Worker endpoint on Submit. The endpoint URL MUST be embedded in the generated HTML at build time (not fetched at runtime).
-- **FR-002**: The payload MUST include `{title, body, category?, image?, voice?, idempotencyKey}`. `image` and `voice` are base64-encoded blobs with MIME type hints.
+- **FR-002**: The payload MUST include `{title, body, category?, image?, voice?, idempotencyKey, reportVersion}`. `image` and `voice` are base64-encoded blobs with MIME type hints. `reportVersion` is an opaque string (≤ 64 chars), a build-time constant from the my-gather binary that produced the report; it is used only for observability + the issue body footer, never for authentication or authorisation.
 - **FR-003**: The Worker MUST authenticate as a GitHub App (JWT → installation access token) and call GitHub's `POST /repos/{owner}/{repo}/issues` REST endpoint with the user's payload, applying the `feedback` label and (if `category` is set) the matching `area:*` label.
 - **FR-004**: The Worker MUST NOT persist the payload beyond the lifetime of the request (no logs of user text beyond standard rate-limit counters; no storage in KV except rate-limit metadata).
 - **FR-005**: Attachments (image, voice) MUST be uploaded to storage durable enough to survive the issue's lifetime. Decision (research R2): Cloudflare R2 bucket with public read URL — GitHub's user-content upload endpoint is undocumented and fragile.
@@ -120,8 +121,8 @@ The Worker validates every incoming payload: title non-empty (≤ 200 chars), bo
 ### Key Entities
 
 - **Feedback payload**: in-transit JSON `{title, body, category, image, voice, idempotencyKey, reportVersion}`. Never persisted.
-- **Rate-limit record**: KV entry `ratelimit:<ip>:<hour-window>` → count. TTL 1 hour. Never contains user content.
-- **Idempotency record**: KV entry `idemp:<key>` → `{issueUrl}`. TTL 5 minutes. Contains only the resulting URL, not the original payload.
+- **Rate-limit record**: KV entry `rl:<ip>:<hour>` → count. TTL 1 hour. Never contains user content. (Key shape matches FR-009 and data-model.md.)
+- **Idempotency record**: KV entry `idem:<idempotency-key>` → `{issueUrl, issueNumber}`. TTL 5 minutes. Contains only the resulting URL + number, not the original payload.
 - **GitHub App credentials**: App ID, Installation ID, and Private Key stored as Cloudflare Worker Secrets. Never in code, never in logs.
 
 ## Success Criteria *(mandatory)*

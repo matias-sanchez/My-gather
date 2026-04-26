@@ -32,11 +32,11 @@
 ## Constitution Readiness
 
 - [x] Constitution Check table complete (plan.md)
-- [x] Principle IX exception text drafted (plan.md, reproduced here for clarity) and ready to merge with the feature
+- [x] Principle IX exception ratified in constitution v1.3.0 (2026-04-24, already on main); the implementation PR only verifies the version, no further constitution edit
 - [x] No Complexity-Tracking entries are left unjustified
 
 ## Notes
 
-- Constitutional amendment is not a follow-up; it lands in the same PR as the Worker. If the amendment doesn't merge, the Worker doesn't merge.
+- The Principle IX named exception is already on main at constitution v1.3.0; the implementation PR carries a verification task (T006), not an edit.
 - All human-intervention tasks (GitHub App creation, Cloudflare login) are collected into Phase 1 so they can be handed off in a single 15-minute session.
 - Attachment hosting decision (R2 vs GitHub's undocumented endpoint) is resolved in favour of R2 per research R2. Can be revisited in a follow-up if R2 usage approaches free-tier limits.

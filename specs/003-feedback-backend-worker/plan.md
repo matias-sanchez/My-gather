@@ -29,7 +29,7 @@ This is a dual-repo change. Most work lives in a new `feedback-worker/` director
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Re-read the constitution at `.specify/memory/constitution.md` (currently v1.2.0). Relevant principles:
+Re-read the constitution at `.specify/memory/constitution.md` (currently v1.3.0). Relevant principles:
 
 | Principle | Verdict | Rationale / Mitigation |
 |---|---|---|
@@ -37,7 +37,7 @@ Re-read the constitution at `.specify/memory/constitution.md` (currently v1.2.0)
 | II. Read-Only Inputs | PASS | Worker never sees pt-stalk input trees. Report itself still reads nothing at view-time. |
 | III. Graceful Degradation | PASS | Every Worker failure mode falls back to the feature-002 `window.open` path. No feature-level panic. |
 | IV. Deterministic Output | PASS | Worker URL is a build-time constant embedded via `-ldflags` or a Go `const`. Rendered markup is byte-identical across runs. |
-| V. Self-Contained HTML Reports | PARTIAL — see amendment | The report still embeds all assets (CSS/JS/fonts) inline. No new CDN. But the Submit action performs a runtime `fetch` to a Worker URL, which is a runtime network call. Addressed by the same amendment that covers Principle IX. |
+| V. Self-Contained HTML Reports | PASS (transitively, via Principle IX named exception) | The report still embeds all assets (CSS/JS/fonts) inline. No new CDN, no view-time resource fetch except the Submit POST itself, which is the same call permitted by IX's named exception. V's "no remote resource at view-time" is a strict subset of IX's network rule, so the IX exception covers V transitively; no separate V-level exception is needed. |
 | VI. Library-First Architecture | PASS | The Worker URL is a Go-side constant in `render/feedback.go` (existing file). No new flag on `cmd/my-gather`. |
 | VII. Typed Errors | PASS | No new Go error paths. Worker errors are JSON-typed, not Go-typed. |
 | VIII. Reference Fixtures & Golden Tests | PASS | No new parser. Render golden updates by the single Worker-URL line in the dialog's data attribute. |
@@ -114,7 +114,7 @@ feedback-worker/                 # NEW — Cloudflare Worker deploy artifact
 ├── src/
 │   ├── index.ts                 # Main Worker entry
 │   ├── github-app.ts            # JWT signing + installation-token exchange
-│   ├── ratelimit.ts             # KV-backed sliding window
+│   ├── ratelimit.ts             # KV-backed fixed UTC-hour window
 │   ├── idempotency.ts           # KV-backed idempotency cache
 │   └── validate.ts              # Payload validation
 └── test/
@@ -122,10 +122,9 @@ feedback-worker/                 # NEW — Cloudflare Worker deploy artifact
     ├── ratelimit.test.ts
     └── e2e.test.ts              # vitest with workers pool
 
-.specify/memory/
-└── constitution.md              # MODIFIED — add named exception to Principle IX, bump 1.2.0 → 1.3.0
-
 CLAUDE.md                        # MODIFIED — active feature → 003
+
+.specify/memory/constitution.md   # NOT TOUCHED by this PR — already at v1.3.0 with the Principle IX named exception
 ```
 
 **Structure Decision**: Worker lives at repo root in `feedback-worker/` (sibling of `cmd/`, `render/`, etc.). Not as a Go subpackage because it's not Go. Not as a git submodule because the coupling to the Go side (shared constant: Worker URL) is tight enough to keep in-tree for atomic commits.
@@ -138,8 +137,11 @@ CLAUDE.md                        # MODIFIED — active feature → 003
 - `render/assets/app.js` (~40 LOC changed in `doSubmit`): try POST first, fall back to `window.open` on any non-ok response or network error; render success state on ok.
 - `render/report_feedback_test.go` (+~30 LOC): add test for Worker-URL presence + fallback behaviour assertions.
 - `feedback-worker/` (new, ~400 LOC TypeScript + tests).
-- `.specify/memory/constitution.md`: amendment + version bump to 1.3.0.
 - `CLAUDE.md`: active-feature pointer.
+
+(`.specify/memory/constitution.md` is NOT touched by this feature's
+implementation PR — the Principle IX named exception was ratified
+in a separate commit at v1.3.0 and is already on main.)
 
 ## Post-Design Re-check
 
