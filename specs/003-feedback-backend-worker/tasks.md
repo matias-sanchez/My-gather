@@ -59,8 +59,8 @@ description: "Task list for Feedback Backend Worker implementation"
 
 **Purpose**: rewire `doSubmit` to call the Worker, handle all response paths, keep the feature-002 fallback.
 
-- [ ] T021 [US1] Add `WorkerURL string` field to `FeedbackView` in `render/feedback.go`; populate from a new `feedbackWorkerURL` package-level constant (placeholder value until Phase 5 deploy). Add godoc per Principle VI.
-- [ ] T022 [US1] Add `data-feedback-worker-url="{{ .Feedback.WorkerURL }}"` to the `<dialog>` element in `render/templates/report.html.tmpl`.
+- [ ] T021 [US1] Extend `FeedbackView` in `render/feedback.go` with two `string` fields: `WorkerURL` (populated from a new `feedbackWorkerURL` package-level constant — placeholder until Phase 5 deploy) and `ReportVersion` (populated from the same build-time version string the binary already prints in `--version`, so the dialog and the binary stay in lockstep). Add godoc on both per Principle VI. The `ReportVersion` field is what the dialog ships in the Submit payload (FR-002, contracts/ui.md `data-feedback-report-version`); no `window` globals required.
+- [ ] T022 [US1] Add `data-feedback-worker-url="{{ .Feedback.WorkerURL }}"` and `data-feedback-report-version="{{ .Feedback.ReportVersion }}"` to the `<dialog>` element in `render/templates/report.html.tmpl`.
 - [ ] T023 [US1] In `render/assets/app.js` → `doSubmit`:
   - Build JSON payload via a new `buildPayload()` helper (base64-encode blobs via `FileReader.readAsDataURL`).
   - Mint `idempotencyKey` from `crypto.randomUUID()` once per Submit-click.

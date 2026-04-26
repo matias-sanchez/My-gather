@@ -18,6 +18,7 @@ functionally identical when the Worker call fails.
 ```html
 <dialog id="feedback-dialog"
         data-feedback-worker-url="{{ .Feedback.WorkerURL }}"
+        data-feedback-report-version="{{ .Feedback.ReportVersion }}"
         aria-labelledby="feedback-title"
         aria-describedby="feedback-desc">
 
@@ -111,9 +112,9 @@ one is visible at any time. The state machine below governs which.
 | `form` | Initial open; cancel from elsewhere | Focus moves to `input[name="title"]`. The fallback inline-note is hidden unless we just degraded from a Worker failure. |
 | `submitting` | Submit click with valid form | Disable Submit button; show spinner; start 5s `AbortController` timer; mint `idempotencyKey` once and keep it for any retry. |
 | `success` | Worker returned 200 | Hydrate `#feedback-success-link[href]` with `issueUrl` and `textContent` with the issue number (`#NN`). Auto-focus the link. NEVER auto-close. |
-| `error` (validation) | Worker returned 400 with a known `error` code | Surface inline messages adjacent to the offending field (title / body / image / voice). Re-enable Submit. Do NOT fall back. |
+| `form` (with inline validation errors) | Worker returned 400/422 with a known validation `error` code, OR client-side validation failed pre-Submit | Surface inline messages adjacent to the offending field (title / body / image / voice). Re-enable Submit. Do NOT fall back. The `#feedback-error` region defined in the DOM is **reserved** in this Phase 1 contract — it has no JS-driven entry path and MUST remain `hidden` on every 400/422 response. |
 | `throttle` | Worker returned 429 | Read `retryAfterSeconds`, render countdown updating each second. Disable Submit until 0; then return to `form`. |
-| Fallback | Worker returned 5xx/504/network/timeout | Call the feature-002 `window.open(prefillURL, "_blank")` exactly once with the same payload. Return to `form` with `#feedback-fallback-note` set to "Backend unavailable — opened GitHub with pre-filled form." |
+| Fallback | Worker returned 5xx/504/network/timeout | Call the feature-002 `window.open(prefillURL, "_blank", "noopener,noreferrer")` exactly once with the same payload. The third argument is mandatory — without `noopener` the GitHub tab gets `window.opener` access to the report (a known security regression). Return to `form` with `#feedback-fallback-note` set to "Backend unavailable — opened GitHub with pre-filled form." |
 
 ## JS contract — `app.js` `doSubmit`
 
@@ -129,8 +130,11 @@ The handler must:
    - if voice present, same,
    - mints `idempotencyKey = crypto.randomUUID()` ONCE per
      Submit-click (memoized on the dialog state),
-   - sets `reportVersion` from a build-time constant exposed on
-     `window.__myGatherVersion__` (already populated by feature 002).
+   - reads `reportVersion` from the dialog's
+     `data-feedback-report-version` attribute (rendered by the Go
+     template, alongside `data-feedback-worker-url`). No `window`
+     globals — the dialog is the canonical source of build-time
+     constants.
 3. Transition to `submitting`.
 4. `await fetch(workerURL, {method:"POST", body: JSON.stringify(payload),
    headers:{"Content-Type":"application/json"}, signal: ctrl.signal})`
@@ -179,10 +183,10 @@ The rendered HTML for the dialog MUST be byte-identical across two
 renders of the same Go input. This implies:
 
 - `data-feedback-worker-url` MUST be the build-time constant.
+- `data-feedback-report-version` MUST also be a build-time constant
+  (same value the binary already exposes via `--version`).
 - `idempotencyKey` is generated client-side at click time, NOT
   embedded in the HTML.
-- `reportVersion` is read from `window.__myGatherVersion__`, which is
-  already a build-time constant.
 - No timestamps, no random IDs, no ordering by Map iteration.
 
 ## Test contract
