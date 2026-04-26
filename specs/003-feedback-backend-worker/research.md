@@ -65,7 +65,7 @@ R2 bucket is publicly readable. Privacy note: these assets *are* the user's feed
 **Decision**: ship five labels in the repo: `feedback` (always applied) and four `area:<x>` (applied iff `category` is set).
 
 **Rationale**:
-- Issues do not have categories. The original input asked for "categoría Ideas" in Discussions. Labels are the closest Issue equivalent and survive triage moves better than categories.
+- Issues do not have categories. The original input asked for an "Ideas category" in Discussions (verbatim Spanish wording preserved on `spec.md:6`). Labels are the closest Issue equivalent and survive triage moves better than categories.
 - A fixed `feedback` label lets the maintainer filter the inbox: `is:issue label:feedback` is the bot-submitted bucket, and human-filed issues stay separate.
 - Secondary `area:<x>` labels mirror the `category` enum in `render/feedback.go` (`UI` / `Parser` / `Advisor` / `Other`), keeping the user's intent visible without polluting the issue body.
 - Using REST means we pass labels by *name* in the request body. No setup-time GraphQL ID lookup, no `GITHUB_LABEL_IDS` secret. The labels just need to exist — see quickstart Step 1.2 for the one-time `gh label create` commands.
