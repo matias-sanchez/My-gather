@@ -12,85 +12,97 @@ description: "Task list for Feedback Backend Worker implementation"
 
 ---
 
-## Phase 1: One-time setup (HUMAN — cannot be automated)
+## ✅ DONE — Phase 1: One-time setup (HUMAN — cannot be automated)
 
-**These five items require the user's hands on external services. Total time: ~15 minutes.**
+**All five tasks were completed before 2026-04-24; the App, labels, and Cloudflare resources are live. Re-do only when forking.**
 
-- [ ] T001 Create the `My-gather Feedback` GitHub App per quickstart 1.1. Record App ID + Installation ID + download the `.pem` private key.
-- [ ] T002 Install the App on the `matias-sanchez/My-gather` repo; confirm "Issues: Read and write" permission in the install summary.
-- [ ] T003 Create the five labels (`feedback`, `area:ui`, `area:parser`, `area:advisor`, `area:other`) in the repo per quickstart 1.2. Verify with `gh label list`.
-- [ ] T004 Sign up for Cloudflare (if no account); run `wrangler login` locally.
-- [ ] T005 Create the two KV namespaces and the R2 bucket per quickstart 1.3; record their IDs and the R2 public URL prefix.
+- [x] T001 Create the `My-gather Feedback` GitHub App per quickstart 1.1. Record App ID + Installation ID + download the `.pem` private key.
+- [x] T002 Install the App on the `matias-sanchez/My-gather` repo; confirm "Issues: Read and write" permission in the install summary.
+- [x] T003 Create the six labels (`user-feedback`, `needs-triage`, `area/ui`, `area/parser`, `area/advisor`, `area/other`) in the repo per quickstart 1.2. Verify with `gh label list`.
+- [x] T004 Sign up for Cloudflare (if no account); run `wrangler login` locally.
+- [x] T005 Create the two KV namespaces and the R2 bucket per quickstart 1.3; record their IDs and the R2 public URL prefix.
 
-**Checkpoint**: 5 values in hand (App ID, Installation ID, 2 × KV IDs, R2 URL) + the `.pem` file locally + 5 labels created on the repo. Agent work below does not start until these exist.
+**Checkpoint**: 6 values in hand (App ID, Installation ID, Repo node ID, 2 × KV IDs, R2 URL) + the `.pem` file locally + 6 labels created on the repo. All in place since 2026-04-24.
 
 ---
 
-## Phase 2: Constitution check + repo scaffolding
+## ✅ DONE (commit 636a332) — Phase 2: Constitution check + repo scaffolding
 
 **Purpose**: verify the constitutional precondition and land the empty Worker skeleton before any logic is written.
 
-- [ ] T006 Verify `.specify/memory/constitution.md` is at version **1.3.0** with Principle IX's "Named exceptions" subsection citing feature 003. The amendment was ratified 2026-04-24 and is already on main; this task is a guard, not an edit. Fail loudly if the constitution version has regressed.
-- [ ] T007 [P] Add `feedback-worker/` directory with `package.json`, `tsconfig.json`, `wrangler.toml.template`, an empty `src/index.ts` returning 501 Not Implemented, `vitest.config.ts`, and `.gitignore` excluding `node_modules/` and `.wrangler/`.
-- [ ] T008 [P] Update root `.gitignore` to include `feedback-worker/node_modules/` and `feedback-worker/.wrangler/`.
-- [ ] T009 Commit "feedback(003): worker scaffold + constitution check" as one commit. The constitution amendment itself already shipped in a prior commit on main at v1.3.0.
+- [x] T006 Verify `.specify/memory/constitution.md` is at version **1.3.0** with Principle IX's "Named exceptions" subsection citing feature 003. The amendment was ratified 2026-04-24 and is already on main; this task became a redundant guard once v1.3.0 landed on main, but is preserved here as the historical gate.
+- [x] T007 [P] Add `feedback-worker/` directory with `package.json`, `tsconfig.json`, `wrangler.toml` (concrete, not `.template`), `src/index.ts`, `vitest.config.ts`, and `.gitignore` excluding `node_modules/` and `.wrangler/`.
+- [x] T008 [P] Update root `.gitignore` to include `feedback-worker/node_modules/` and `feedback-worker/.wrangler/`.
+- [x] T009 Commit (shipped as 636a332). The constitution amendment itself already shipped in a prior commit on main at v1.3.0.
 
 ---
 
-## Phase 3: Worker logic (agent-parallel opportunity)
+## ✅ DONE (commit 636a332) — Phase 3: Worker logic
 
-**Purpose**: implement the Worker handler with validation, rate-limit, idempotency, GitHub App auth, and the REST call to `POST /repos/.../issues`. Exhaustive unit tests.
+**Purpose**: implement the Worker handler with validation, rate-limit, idempotency, GitHub App auth, and the GraphQL `createIssue` mutation. Exhaustive unit tests. The shipped Worker source inventory is 9 modules (`index.ts`, `env.ts`, `github-app.ts`, `idempotency.ts`, `log.ts`, `r2-upload.ts`, `ratelimit.ts`, `validate.ts`, `body.ts`) and 4 test files (`body.test.ts`, `github-app.test.ts`, `ratelimit.test.ts`, `validate.test.ts`).
 
-- [ ] T010 [P] [US1] Implement `feedback-worker/src/validate.ts`: payload schema validation per `contracts/api.md`. Return typed errors.
-- [ ] T011 [P] [US3] Implement `feedback-worker/src/ratelimit.ts`: fixed-window KV counter. Returns `{allowed, retryAfterSeconds}`.
-- [ ] T012 [P] [US1] Implement `feedback-worker/src/idempotency.ts`: check + record cached responses for a key.
-- [ ] T013 [P] [US1] Implement `feedback-worker/src/github-app.ts`: `jose`-based RS256 JWT signing (local crypto, no fetch), installation-token exchange (`POST /app/installations/{id}/access_tokens`), and a typed `createIssue` REST caller (`POST /repos/:owner/:repo/issues` with `labels` array). Both GitHub fetches (token exchange + createIssue) MUST use `AbortController` with a per-call timeout of 10 000 ms (FR-014); on timeout, surface a typed error so the index handler returns HTTP 504. Returns `{issueUrl, issueNumber, issueId}` on success.
-- [ ] T014 [P] [US2] Implement `feedback-worker/src/r2-upload.ts`: decode base64 blob, compute SHA-256, PUT to R2 at `attachments/<sha256>.<ext>`, return public URL. Skip if blob already exists (by key).
-- [ ] T015 [US1] Implement `feedback-worker/src/index.ts` main handler composing all the above: parse JSON, validate, check rate-limit, check idempotency, upload attachments, build label list (`feedback` + `area:<lower(category)>` if set), call GitHub `createIssue`, cache idempotency, return response.
-- [ ] T016 [US1] CORS + `OPTIONS /feedback` + `GET /health` endpoints per contract.
-- [ ] T017 [P] [US1] `feedback-worker/test/validate.test.ts`: exhaustive payload-validator tests (good + malformed + edge sizes).
-- [ ] T018 [P] [US3] `feedback-worker/test/ratelimit.test.ts`: simulated KV, 5 + 1 requests, verify 429 on 6th with `Retry-After`.
-- [ ] T019 [P] [US1] `feedback-worker/test/github-app.test.ts`: mock fetch, verify JWT is well-formed, token-exchange flow, REST request body (path, headers, `labels` array including `feedback` plus the `area:*` mapping for each category enum value).
-- [ ] T020 [US1] `feedback-worker/test/e2e.test.ts`: full happy-path with all mocks, asserts the response body + log shape.
-
----
-
-## Phase 4: Browser-side client (sequential, single file)
-
-**Purpose**: rewire `doSubmit` to call the Worker, handle all response paths, keep the feature-002 fallback.
-
-- [ ] T021 [US1] Extend `FeedbackView` in `render/feedback.go` with two `string` fields: `WorkerURL` (populated from a new `feedbackWorkerURL` package-level constant — placeholder until Phase 5 deploy) and `ReportVersion` (populated from the same build-time version string the binary already prints in `--version`, so the dialog and the binary stay in lockstep). Add godoc on both per Principle VI. The `ReportVersion` field is what the dialog ships in the Submit payload (FR-002, contracts/ui.md `data-feedback-report-version`); no `window` globals required.
-- [ ] T022 [US1] Add `data-feedback-worker-url="{{ .Feedback.WorkerURL }}"` and `data-feedback-report-version="{{ .Feedback.ReportVersion }}"` to the `<dialog>` element in `render/templates/report.html.tmpl`.
-- [ ] T023 [US1] In `render/assets/app.js` → `doSubmit`:
-  - Build JSON payload via a new `buildPayload()` helper (base64-encode blobs via `FileReader.readAsDataURL`).
-  - Mint `idempotencyKey` from `crypto.randomUUID()` once per Submit-click.
-  - `fetch(workerURL, {method:"POST", body: JSON.stringify(...), signal: AbortController.signal})` with 5s timeout.
-  - On 200: render success state (success message + link to `issueUrl`, label text `#<issueNumber>`). Do NOT auto-close.
-  - On 429: show throttle message with countdown from `retryAfterSeconds`. Do not fall back.
-  - On 400: show field-specific error; do not fall back.
-  - On 5xx / network error / timeout: fall back to feature-002 `window.open` flow, with a small inline note "Backend unavailable — opened GitHub".
-- [ ] T024 [US1] Add the four extra state regions in the dialog's template (`#feedback-submitting`, `#feedback-success`, `#feedback-error`, `#feedback-throttle`, all `hidden` by default), per `contracts/ui.md`. Extend CSS for `.feedback-inline-note`, `.feedback-error-message`, `.feedback-countdown`, and the per-state accent borders.
-- [ ] T025 [P] [US1] Update `render/feedback_test.go`: assert `WorkerURL` field is the documented constant.
-- [ ] T026 [P] [US1] Update `render/report_feedback_test.go`: assert the dialog has BOTH `data-feedback-worker-url` AND `data-feedback-report-version` rendered with their documented constants (per `contracts/ui.md` test contract items 1 and 2); assert all five state regions from `contracts/ui.md` (`form`, `submitting`, `success`, `error`, `throttle`) exist with the correct `data-state` attribute; assert `form` is the only region rendered without `hidden` and the other four are `hidden` by default; assert BOTH the throttle-region heading AND the error-region heading carry `tabindex="-1"` (the Accessibility contract requires both — error is reserved in Phase 1 but its heading must be focus-ready).
+- [x] T010 [P] [US1] Implement `feedback-worker/src/validate.ts`: payload schema validation per `contracts/api.md`. Returns typed errors including `report_version_invalid`. Voice cap is 15 728 640 bytes (15 MB).
+- [x] T011 [P] [US3] Implement `feedback-worker/src/ratelimit.ts`: fixed UTC-hour window keyed `rl:<ipHash>:<UTC-hour>:<random>` (unique key per request, counted via `KV.list({prefix}).keys.length`). App ID is the salt. Returns `{allowed, retryAfterSeconds}`.
+- [x] T012 [P] [US1] Implement `feedback-worker/src/idempotency.ts`: two-state reservation pattern under `idem:<uuid>` — `{status:"inflight"}` with 30 s TTL, upgraded to `{status:"done", issueUrl, issueNumber}` with 300 s TTL after success. No release helper (KV has no compare-and-delete).
+- [x] T013 [P] [US1] Implement `feedback-worker/src/github-app.ts`: `jose`-based RS256 JWT signing (PKCS#8 `BEGIN PRIVATE KEY`), installation-token exchange (`POST /app/installations/{id}/access_tokens`), GraphQL `createIssue` mutation, and `repository.labels` paginated lookup (KV-cached 24 h). Returns `{issueUrl, issueNumber, issueId}` on success. The FR-014 `AbortController` 10 000 ms timeout per GitHub fetch (with `GitHubTimeoutError` → HTTP 504 `github_timeout` in `index.ts`) was wired up post-deploy in commit `b168a71` on this branch — see also Phase 7 / T041.
+- [x] T014 [P] [US2] Implement `feedback-worker/src/r2-upload.ts`: decode base64 blob, compute SHA-256, PUT to R2 at `attachments/<sha256>.<ext>`, return public URL. Skip if blob already exists (by key).
+- [x] T015 [US1] Implement `feedback-worker/src/index.ts` main handler composing all the above: parse JSON, validate, check rate-limit, check idempotency, upload attachments, build label list (`user-feedback` + `needs-triage` always, plus `area/<lower(category)>` if set), call GitHub `createIssue`, cache idempotency, return response. Body composition lives in `feedback-worker/src/body.ts` (category blockquote, `### Attached screenshot`, `### Attached voice note`, bare audio URL, footer).
+- [x] T016 [US1] CORS (`POST, OPTIONS, GET`) + `OPTIONS /feedback` + `GET /health` endpoints per contract.
+- [x] T017 [P] [US1] `feedback-worker/test/validate.test.ts`: exhaustive payload-validator tests (good + malformed + edge sizes).
+- [x] T018 [P] [US3] `feedback-worker/test/ratelimit.test.ts`: simulated KV, 5 + 1 requests, verify 429 on 6th with `Retry-After`.
+- [x] T019 [P] [US1] `feedback-worker/test/github-app.test.ts`: mock fetch, verify JWT is well-formed, token-exchange flow, GraphQL request body (`createIssue` mutation + `repository.labels` lookup, `labelIds` array including `user-feedback` + `needs-triage` plus the `area/*` mapping for each category enum value).
+- [x] T020 [US1] `feedback-worker/test/body.test.ts` covers issue-body composition (category blockquote, screenshot section, voice section, footer). Note: no `e2e.test.ts` shipped in 636a332 — happy-path coverage lives across the four module tests above; smoke test issues #25 / #26 provide live e2e validation.
 
 ---
 
-## Phase 5: Deploy + end-to-end
+## ✅ DONE (commit 636a332, partial) — Phase 4: Browser-side client
 
-- [ ] T027 Fill `feedback-worker/wrangler.toml` from the template using the IDs from Phase 1. Commit the concrete `wrangler.toml`.
-- [ ] T028 `wrangler secret put` for each of the 4 secrets listed in data-model.md (`GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`, `R2_PUBLIC_URL_PREFIX`). The three non-secret config values (`GITHUB_REPO`, `FEEDBACK_LABEL`, `AREA_LABEL_PREFIX`) live in `wrangler.toml [vars]` and are committed in T027.
-- [ ] T029 `cd feedback-worker && npm install && npm test && npm run deploy`. Record the Worker URL. Then `wrangler tail --format=json` while issuing 3 sample submits to capture `cpuTime` per request from the Tail logs. If the median cpuTime exceeds 9 ms (margin under the 10 ms free-tier cap, see research R9 + spec.md SC-004), STOP — paid-tier acceptance per SC-004 requires the AND-gate: (a) measured CPU is over budget AND (b) the KV-cached installation-token mitigation has been implemented and re-measured and STILL exceeds budget. Therefore: first implement the KV-cached installation-token mitigation in `github-app.ts`, redeploy, re-run `wrangler tail` measurement; if the second measurement still exceeds 9 ms median, only then move to the paid tier ($5/month) and document the measurement evidence in the deploy commit message. Do not skip straight to the paid tier without trying the mitigation — that violates SC-004's gate.
-- [ ] T030 Update `render/feedback.go`'s `feedbackWorkerURL` constant to the real deployed URL. Rebuild. Regenerate goldens.
-- [ ] T031 Walk all 5 Quickstart scenarios manually in a browser. Check each off. The dialog state machine documented in `contracts/ui.md` (form / submitting / success / error / throttle / fallback transitions, focus moves, AbortController timeout, ARIA roles) is exercised here — it has no headless-browser unit coverage in this repo, so this manual walkthrough is the regression net.
+**Purpose**: rewire `doSubmit` to call the Worker, handle all response paths, keep the feature-002 fallback. The deployed shape diverges from the original task list in two places — the planned `ReportVersion` Go field was not added; instead `app.js` reads `reportVersion` from the document's `<meta name="generator">` tag.
+
+- [x] T021 [US1] Extend `FeedbackView` in `render/feedback.go`. **Deviation**: the deployed `FeedbackView` carries `WorkerURL`, `GitHubURL`, and `Categories`. `ReportVersion` was NOT added as a Go field — `app.js` reads `reportVersion` from `<meta name="generator">` instead, which keeps the dialog and the binary in lockstep without a new field.
+- [x] T022 [US1] Add `data-feedback-worker-url` to the dialog. **Deviations**: the deployed template renders `data-feedback-worker-url` and the fallback URL `data-feedback-url`. `data-feedback-report-version` was NOT added (per the T021 deviation above — the version is read from the `<meta name="generator">` tag, not a dialog data-attr).
+- [x] T023 [US1] In `render/assets/app.js` → `doSubmit`:
+  - Builds JSON payload via the `buildPayload()` helper (base64-encode blobs via `FileReader.readAsDataURL`).
+  - Mints `idempotencyKey` from `crypto.randomUUID()` once per Submit-click.
+  - `fetch(workerURL, …)` with `AbortController` 15 s timeout.
+  - On 200: renders success state (success message + link to `issueUrl`, label text `#<issueNumber>`). Does NOT auto-close.
+  - On 429: shows throttle message with countdown from `retryAfterSeconds`. Does not fall back.
+  - On 400: shows field-specific error; does not fall back.
+  - On 5xx / network error / timeout: falls back to feature-002 `window.open` flow, with a small inline note "Backend unavailable — opened GitHub".
+- [x] T024 [US1] Dialog regions in the deployed template: two regions (`<form id="feedback-form">` and `<div id="feedback-success">`) plus inline transient blocks `#feedback-error` and `#feedback-fallback`. The original task asked for `#feedback-submitting` and `#feedback-throttle` as separate regions; the deployed shape collapses transient states into inline blocks instead — see `contracts/ui.md` for the reconciled list.
+- [x] T025 [P] [US1] `render/feedback_test.go`: asserts `WorkerURL` field is the documented constant.
+- [x] T026 [P] [US1] `render/report_feedback_test.go`: asserts `data-feedback-worker-url` and `data-feedback-url` are rendered with their documented constants; asserts the deployed regions (`feedback-form`, `feedback-success`, `feedback-error`, `feedback-fallback`) per the reconciled `contracts/ui.md`. The `data-feedback-report-version` assertion from the original task is dropped per T021/T022 deviation.
 
 ---
 
-## Phase 6: Polish + ship
+## ✅ DONE (Worker URL https://my-gather-feedback.mati-orfeo.workers.dev/feedback) — Phase 5: Deploy + end-to-end
 
-- [ ] T032 Full-suite sweep: `go vet`, `go test ./...`, `cd feedback-worker && npm test`. Then run a secret-leak check on the built binary per SC-005: `make build && grep -aE 'ghp_|github_pat_|ghs_|-----BEGIN [A-Z ]*PRIVATE KEY-----' bin/my-gather` MUST return zero matches. Fail the task if any of those patterns appear in the binary.
-- [ ] T033 Run `@agent-pre-review-constitution-guard`. Expect READY TO PUSH (the Principle IX amendment makes the network call compliant).
-- [ ] T034 Commit sequence: one commit per agent-phase checkpoint (Phase 2, 3, 4, 5, 6). Phase 1 is human-only and produces no commits. Push.
-- [ ] T035 Open PR with `/pr-review-trigger-my-gather`. Address findings with `/pr-review-fix-my-gather`.
+- [x] T027 `feedback-worker/wrangler.toml` ships as a concrete file (no `.template`) with the deployed KV / R2 IDs, the `nodejs_compat` flag, and `[observability] enabled = true`. No `[vars]` block — label names live in `feedback-worker/src/index.ts`.
+- [x] T028 `wrangler secret put` ran for the 5 secrets actually needed by the deployed Worker: `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_REPO_ID` (GraphQL `createIssue` needs the repository node ID), `R2_PUBLIC_URL_PREFIX`. The original task's `GITHUB_REPO` / `FEEDBACK_LABEL` / `AREA_LABEL_PREFIX` `[vars]` were obsolete by deploy time.
+- [x] T029 `cd feedback-worker && npm install && npm test && npm run deploy` — shipped as commit 636a332. Worker URL recorded. **Caveat**: the formal `wrangler tail --format=json` cpuTime sampling for the SC-004 gate has not been captured into a commit message; smoke test issues #25 and #26 indicate normal free-tier operation (no CPU-exhaustion errors) over several days. If a future change pushes cpuTime above 9 ms median, the research R9 mitigation ladder (KV-cached installation token, then paid tier) still applies.
+- [x] T030 `render/feedback.go`'s `feedbackWorkerURL` constant set to `https://my-gather-feedback.mati-orfeo.workers.dev/feedback`. Goldens regenerated.
+- [x] T031 The 5 Quickstart scenarios were walked manually in a browser before merging PR #29. The dialog state machine in `contracts/ui.md` (form / success / error / fallback transitions, focus moves, AbortController timeout, ARIA roles) was exercised in that walkthrough.
+
+---
+
+## ✅ DONE — Phase 6: Polish + ship (PR #29 merged)
+
+- [x] T032 Full-suite sweep: `go vet`, `go test ./...`, `cd feedback-worker && npm test`. Secret-leak check on the built binary per SC-005 ran clean.
+- [x] T033 `@agent-pre-review-constitution-guard` returned READY TO PUSH (the Principle IX named exception at v1.3.0 makes the network call compliant).
+- [x] T034 Commits pushed across the agent-phase checkpoints. Worker shipped in commit 636a332 (2026-04-24).
+- [x] T035 PR #29 opened with `/pr-review-trigger-my-gather`. Bots reviewed over 5 rounds; 27 findings closed via `/pr-review-fix-my-gather`. PR merged.
+
+---
+
+## Phase 7: Reconciliation gaps closed in PR #30 (this branch `003a-spec-reality-reconcile`)
+
+- [x] T036 Reconcile `spec.md` against deployed reality (commit `fb0aba8`).
+- [x] T037 Reconcile `data-model.md` against deployed reality (commit `fb0aba8`).
+- [x] T038 Reconcile `contracts/api.md` against deployed reality (commit `fb0aba8`).
+- [x] T039 Reconcile `contracts/ui.md` against deployed reality (commit `fb0aba8`).
+- [x] T040 Reconcile `research.md`, `plan.md`, `quickstart.md`, `tasks.md`, `checklists/requirements.md` against deployed reality (this commit).
+- [x] T041 (commit `b168a71`) Add `AbortController` 10 000 ms timeout to all GitHub fetches in `feedback-worker/src/github-app.ts` via a `fetchWithTimeout` helper. On timeout throw `GitHubTimeoutError` (sibling — not subclass — of `GitHubError`); `feedback-worker/src/index.ts` catches it and returns HTTP 504 with `error: "github_timeout"` per FR-014 + contracts/api.md §504. Tests: `feedback-worker/test/github-app.test.ts` +2 cases (signal-passed-through + AbortError → GitHubTimeoutError conversion). `npm test` 43/43 PASS.
+- [ ] T042 PR #30 review cycle via `/pr-review-trigger-my-gather` and `/pr-review-fix-my-gather` until clean; merge.
 
 ---
 

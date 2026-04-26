@@ -13,6 +13,8 @@ End-to-end walkthrough to deploy the Worker, wire the report, and verify.
 
 ### Step 1.1 — Create the GitHub App
 
+**Status**: this App was created on 2026-04-24 and is installed on `matias-sanchez/My-gather`. Re-do this step only when forking the project or rotating credentials.
+
 1. Go to `https://github.com/settings/apps/new`.
 2. Fill:
    - **App name**: `My-gather Feedback` (unique across GitHub — add a suffix if taken)
@@ -25,21 +27,24 @@ End-to-end walkthrough to deploy the Worker, wire the report, and verify.
 5. Click **Install App** in the left sidebar. Install on `matias-sanchez` → "Only select repositories" → pick `My-gather`.
 6. After install, the URL is `https://github.com/settings/installations/<ID>`. Note the `<ID>` — this is the `GITHUB_INSTALLATION_ID`.
 
-### Step 1.2 — Create the five labels in the repo
+### Step 1.2 — Create the six labels in the repo
 
-The Worker applies labels by *name* in `POST /repos/.../issues`. The names must already exist on the repo or GitHub returns 422. One-time, with a PAT that has `repo` scope (or run from the GitHub UI):
+The Worker resolves labels by *name* via the GraphQL `repository.labels` lookup (cached 24 h in KV) and passes the resolved label IDs to `createIssue`. The names must already exist on the repo or the lookup yields no ID. One-time, with a PAT that has `repo` scope (or run from the GitHub UI):
 
 ```bash
-gh label create feedback        --color "0E8A16" --description "Submitted via Report Feedback dialog"
-gh label create area:ui         --color "1D76DB" --description "Category: UI"
-gh label create area:parser     --color "1D76DB" --description "Category: Parser"
-gh label create area:advisor    --color "1D76DB" --description "Category: Advisor"
-gh label create area:other      --color "1D76DB" --description "Category: Other"
+gh label create user-feedback   --color "0E8A16" --description "Submitted via Report Feedback dialog"
+gh label create needs-triage    --color "FBCA04" --description "Awaiting maintainer review"
+gh label create area/ui         --color "1D76DB" --description "Category: UI"
+gh label create area/parser     --color "1D76DB" --description "Category: Parser"
+gh label create area/advisor    --color "1D76DB" --description "Category: Advisor"
+gh label create area/other      --color "1D76DB" --description "Category: Other"
 ```
 
-Verify with `gh label list | grep -E '^(feedback|area:)'` — five rows expected.
+Verify with `gh label list | grep -E '^(user-feedback|needs-triage|area/)'` — six rows expected.
 
 ### Step 1.3 — Cloudflare setup
+
+**Status**: deployed since 2026-04-24. The two KV namespaces and the R2 bucket below already exist and are wired into `feedback-worker/wrangler.toml`. Re-do these steps only when forking.
 
 1. Sign up at `https://dash.cloudflare.com/sign-up` (if needed).
 2. `wrangler login` — opens browser OAuth flow.
@@ -54,40 +59,41 @@ From inside `feedback-worker/`:
 ```bash
 wrangler secret put GITHUB_APP_ID               # paste App ID
 wrangler secret put GITHUB_INSTALLATION_ID      # paste install ID
+wrangler secret put GITHUB_REPO_ID              # paste repository node ID (GraphQL createIssue requires it)
 wrangler secret put R2_PUBLIC_URL_PREFIX        # paste R2 public URL
 wrangler secret put GITHUB_APP_PRIVATE_KEY < ~/Downloads/my-gather-feedback.*.pem
 ```
 
-Four secrets total. The previous design also stored `GITHUB_REPO_ID` and `GITHUB_CATEGORY_ID` (GraphQL node IDs); the REST flow does not need either — the repo is identified by `:owner/:repo` in the URL (config var, see next step) and the labels are matched by name.
+Five secrets total. The deployed Worker uses GraphQL `createIssue`, which takes a repository **node ID** (`R_kgDO…`) — not an `:owner/:repo` slug — so `GITHUB_REPO_ID` is required. Look it up once with `gh api graphql -f query='{ repository(owner:"matias-sanchez", name:"My-gather") { id } }'`. The private key must be PKCS#8 (`BEGIN PRIVATE KEY`) — `jose` imports that natively. Label names live in `feedback-worker/src/index.ts`, not in `[vars]`.
 
 ### Step 1.5 — `wrangler.toml`
 
-Update `feedback-worker/wrangler.toml` with the KV + R2 bindings and the public config vars:
+The deployed `feedback-worker/wrangler.toml` is a concrete file checked into the repo (no `.template`). It carries the KV + R2 bindings, the `nodejs_compat` flag, and observability — and **no `[vars]` block**: label names live in `feedback-worker/src/index.ts` and are not configurable per-deploy. The shipped contents:
 
 ```toml
 name = "my-gather-feedback"
 main = "src/index.ts"
 compatibility_date = "2026-04-24"
-
-[vars]
-GITHUB_REPO       = "matias-sanchez/My-gather"
-FEEDBACK_LABEL    = "feedback"
-AREA_LABEL_PREFIX = "area:"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
 
 [[kv_namespaces]]
 binding = "FEEDBACK_RATELIMIT"
-id = "<from step 1.3>"
+id = "a0424545a9164b70bd0b8852ffd4de32"
 
 [[kv_namespaces]]
 binding = "FEEDBACK_IDEMP"
-id = "<from step 1.3>"
+id = "e9d7dfd96131442d8d908c2b44691aa2"
 
 [[r2_buckets]]
 binding = "FEEDBACK_ATTACHMENTS"
 bucket_name = "feedback-attachments"
+
+[observability]
+enabled = true
 ```
 
-The `[vars]` block is checked into the repo. None of these values are secrets (the repo is public; the labels are visible in the UI). Keeping them out of source means a fork can repoint the Worker to its own repo with one line and no rebuild.
+A fork that repoints to its own repo edits `index.ts` (label names) and `feedback.go` (Worker URL constant), then re-runs Steps 1.3 + 1.4 to provision its own KV / R2 / secrets — there is no `[vars]` shortcut.
 
 ### Step 1.6 — First deploy
 
@@ -114,7 +120,7 @@ Record the Worker URL (e.g., `https://my-gather-feedback.<account>.workers.dev`)
 2. Open `/tmp/report-feedback.html` in Chrome.
 3. Click "Report feedback". Fill title + body. Submit.
 4. Within 3 seconds, dialog shows success with a link.
-5. Click the link → GitHub shows the new issue with the exact title and body, tagged `feedback` (and `area:<x>` if a category was selected).
+5. Click the link → GitHub shows the new issue with the exact title and body, tagged `user-feedback` and `needs-triage` (plus `area/<lower(category)>` when a category was selected).
 6. Close (or delete, if you have the rights) the test issue when done.
 
 ### Scenario 2 — With image + voice
@@ -143,10 +149,12 @@ Requests 1–5: `{"ok": true, ...}`. Request 6: `{"ok": false, "error": "rate_li
 POST with `title: ""` → 400 `title_required`.
 POST with a 20 MB image (base64 of garbage) → 400 `image_too_large`.
 POST with `image.mime: "image/bmp"` → 400 `image_bad_mime`.
-POST with a 30 MB voice blob (base64 of garbage) → 400 `voice_too_large`.
+POST with a 30 MB voice blob (base64 of garbage) → 400 `voice_too_large` (the deployed cap is 15 728 640 bytes / 15 MB).
 POST with `voice.mime: "audio/midi"` → 400 `voice_bad_mime`.
 POST with `category: "Networking"` (not in the enum) → 400 `category_invalid`.
 POST with `idempotencyKey: "not-a-uuid"` → 400 `idempotency_key_invalid`.
+POST with `reportVersion: ""` (or missing) → 400 `report_version_invalid`.
+POST with a 35 MB image → 413 `payload_too_large` (streaming size gate trips before validation).
 POST with malformed JSON → 400 `malformed_payload`.
 
 ## Tear-down (if abandoning the feature)
