@@ -80,6 +80,18 @@ Headers:
 }
 ```
 
+#### 504 Gateway Timeout — GitHub call exceeded the Worker's deadline
+
+```json
+{
+  "ok": false,
+  "error": "github_timeout",
+  "message": "GitHub took too long to respond. Please retry or use the fallback link."
+}
+```
+
+The Worker MUST emit 504 when its `AbortController`-bounded GitHub fetch exceeds 10 000 ms (per FR-014 + tasks.md T013). The dialog falls back to `window.open` on 504 the same way it does on 5xx (per FR-008 + `contracts/ui.md` state machine).
+
 #### 500 Internal Server Error — Worker bug
 
 ```json

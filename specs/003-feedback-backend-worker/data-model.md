@@ -39,13 +39,17 @@ interface WorkerErrorResponse {
 }
 ```
 
-Error codes the Worker may emit:
+Error codes the Worker may emit (full list — must stay in sync with `contracts/api.md`):
 - `title_required` / `title_too_long`
 - `body_too_long`
 - `image_too_large` / `image_bad_mime`
 - `voice_too_large` / `voice_bad_mime`
+- `category_invalid`
+- `idempotency_key_invalid`
+- `malformed_payload`
 - `rate_limit` (HTTP 429, `retryAfterSeconds` present)
 - `github_api_error` (HTTP 503)
+- `github_timeout` (HTTP 504 — GitHub call exceeded 10s, see FR-014)
 - `worker_error` (HTTP 500 — bug on our side)
 
 The dialog picks its UI state (success, validation error, throttle, fallback) from `{ok, error}`.

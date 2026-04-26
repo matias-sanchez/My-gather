@@ -142,6 +142,11 @@ Requests 1–5: `{"ok": true, ...}`. Request 6: `{"ok": false, "error": "rate_li
 
 POST with `title: ""` → 400 `title_required`.
 POST with a 20 MB image (base64 of garbage) → 400 `image_too_large`.
+POST with `image.mime: "image/bmp"` → 400 `image_bad_mime`.
+POST with a 30 MB voice blob (base64 of garbage) → 400 `voice_too_large`.
+POST with `voice.mime: "audio/midi"` → 400 `voice_bad_mime`.
+POST with `category: "Networking"` (not in the enum) → 400 `category_invalid`.
+POST with `idempotencyKey: "not-a-uuid"` → 400 `idempotency_key_invalid`.
 POST with malformed JSON → 400 `malformed_payload`.
 
 ## Tear-down (if abandoning the feature)

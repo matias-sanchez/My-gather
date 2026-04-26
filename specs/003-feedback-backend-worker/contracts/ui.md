@@ -190,7 +190,7 @@ renders of the same Go input. This implies:
 The Go-side render test (`render/report_feedback_test.go`) asserts:
 
 1. The dialog has `data-feedback-worker-url` with the documented constant.
-2. The four state regions (`form`, `submitting`, `success`, `error`,
+2. The five state regions (`form`, `submitting`, `success`, `error`,
    `throttle`) all exist with the expected `data-state` attribute.
 3. Initial render: only `#feedback-form` is visible (no `hidden`
    attribute); the other four have `hidden`.

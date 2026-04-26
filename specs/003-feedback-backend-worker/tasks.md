@@ -71,7 +71,7 @@ description: "Task list for Feedback Backend Worker implementation"
   - On 5xx / network error / timeout: fall back to feature-002 `window.open` flow, with a small inline note "Backend unavailable — opened GitHub".
 - [ ] T024 [US1] Add the four extra state regions in the dialog's template (`#feedback-submitting`, `#feedback-success`, `#feedback-error`, `#feedback-throttle`, all `hidden` by default), per `contracts/ui.md`. Extend CSS for `.feedback-inline-note`, `.feedback-error-message`, `.feedback-countdown`, and the per-state accent borders.
 - [ ] T025 [P] [US1] Update `render/feedback_test.go`: assert `WorkerURL` field is the documented constant.
-- [ ] T026 [P] [US1] Update `render/report_feedback_test.go`: assert the dialog has `data-feedback-worker-url` attribute rendered with the expected value; assert all four state regions from `contracts/ui.md` exist with the correct `data-state` attribute and `hidden` attribute on the non-form regions.
+- [ ] T026 [P] [US1] Update `render/report_feedback_test.go`: assert the dialog has `data-feedback-worker-url` attribute rendered with the expected value; assert all five state regions from `contracts/ui.md` (`form`, `submitting`, `success`, `error`, `throttle`) exist with the correct `data-state` attribute, that `form` is the only region rendered without `hidden`, and that the other four are `hidden` by default.
 
 ---
 

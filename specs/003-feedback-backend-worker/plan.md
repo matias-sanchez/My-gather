@@ -36,7 +36,7 @@ Re-read the constitution at `.specify/memory/constitution.md` (currently v1.3.0)
 | I. Single Static Binary | PASS | Go binary unchanged; Worker is a separate deploy artifact, not a Go build output. |
 | II. Read-Only Inputs | PASS | Worker never sees pt-stalk input trees. Report itself still reads nothing at view-time. |
 | III. Graceful Degradation | PASS | Every Worker failure mode falls back to the feature-002 `window.open` path. No feature-level panic. |
-| IV. Deterministic Output | PASS | Worker URL is a build-time constant embedded via `-ldflags` or a Go `const`. Rendered markup is byte-identical across runs. |
+| IV. Deterministic Output | PASS | Worker URL is a Go `const` in `render/feedback.go` (research R7 picked `const` over `-ldflags` to keep dev and release builds byte-identical). Rendered markup is byte-identical across runs. |
 | V. Self-Contained HTML Reports | PASS (transitively, via Principle IX named exception) | The report still embeds all assets (CSS/JS/fonts) inline. No new CDN, no view-time resource fetch except the Submit POST itself, which is the same call permitted by IX's named exception. V's "no remote resource at view-time" is a strict subset of IX's network rule, so the IX exception covers V transitively; no separate V-level exception is needed. |
 | VI. Library-First Architecture | PASS | The Worker URL is a Go-side constant in `render/feedback.go` (existing file). No new flag on `cmd/my-gather`. |
 | VII. Typed Errors | PASS | No new Go error paths. Worker errors are JSON-typed, not Go-typed. |
@@ -120,6 +120,7 @@ feedback-worker/                 # NEW — Cloudflare Worker deploy artifact
 └── test/
     ├── validate.test.ts
     ├── ratelimit.test.ts
+    ├── github-app.test.ts
     └── e2e.test.ts              # vitest with workers pool
 
 CLAUDE.md                        # MODIFIED — active feature → 003

@@ -18,7 +18,7 @@ Resolved before starting this spec via interactive conversation:
 
 ## Clarifications (2026-04-26)
 
-- **Issues, not Discussions**: pivoted the original input ("GitHub Discussions, categoría Ideas") to GitHub **Issues** with a fixed `feedback` label plus a secondary `area:<category>` label. Rationale: (a) Issues have a stable REST endpoint that needs no setup-time GraphQL ID lookup (no `repositoryId`, no `categoryId`), simpler operationally; (b) labels survive triage workflows (assignees, projects, milestones) better than Discussion categories; (c) the App's blast radius shrinks to one permission scope (`Issues: write`) rather than `Discussions: write`. The `category` field on the payload (`UI | Parser | Advisor | Other`) maps to `area:ui` / `area:parser` / `area:advisor` / `area:other` labels. The repo MUST have these five labels (`feedback` + four `area:*`) created once before deploy — see quickstart Step 1.2.
+- **Issues, not Discussions**: pivoted the original input ("GitHub Discussions, Ideas category" — the verbatim Spanish wording is preserved on `spec.md:6`) to GitHub **Issues** with a fixed `feedback` label plus a secondary `area:<category>` label. Rationale: (a) Issues have a stable REST endpoint that needs no setup-time GraphQL ID lookup (no `repositoryId`, no `categoryId`), simpler operationally; (b) labels survive triage workflows (assignees, projects, milestones) better than Discussion categories; (c) the App's blast radius shrinks to one permission scope (`Issues: write`) rather than `Discussions: write`. The `category` field on the payload (`UI | Parser | Advisor | Other`) maps to `area:ui` / `area:parser` / `area:advisor` / `area:other` labels. The repo MUST have these five labels (`feedback` + four `area:*`) created once before deploy — see quickstart Step 1.2.
 - **Branch name**: feature work lives on `003-feedback-backend-worker`, conforming to Spec Kit's `NNN-slug` convention. The original draft cited the prior working branch and is corrected here.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -49,7 +49,7 @@ A support engineer pastes a screenshot (image on clipboard) and records a 10-sec
 
 **Acceptance Scenarios**:
 
-1. **Given** an image is attached, **When** Submit succeeds, **Then** the issue body on GitHub displays the image inline (as a `![](url)` markdown, hosted on GitHub's CDN or the Worker's R2).
+1. **Given** an image is attached, **When** Submit succeeds, **Then** the issue body on GitHub displays the image inline (as a `![](url)` markdown, hosted on the Worker's R2 bucket per FR-005).
 2. **Given** a voice note is attached, **When** Submit succeeds, **Then** the issue body contains an embedded audio player or a link that renders as one, playable in-page on GitHub.
 3. **Given** both attachments are present, **When** Submit succeeds, **Then** the issue body contains, in order: the user's body text, the image, the audio. The `category` field maps to a label on the issue (`area:ui` / `area:parser` / `area:advisor` / `area:other`), not to body text.
 
@@ -106,13 +106,13 @@ The Worker validates every incoming payload: title non-empty (≤ 200 chars), bo
 - **FR-003**: The Worker MUST authenticate as a GitHub App (JWT → installation access token) and call GitHub's `POST /repos/{owner}/{repo}/issues` REST endpoint with the user's payload, applying the `feedback` label and (if `category` is set) the matching `area:*` label.
 - **FR-004**: The Worker MUST NOT persist the payload beyond the lifetime of the request (no logs of user text beyond standard rate-limit counters; no storage in KV except rate-limit metadata).
 - **FR-005**: Attachments (image, voice) MUST be uploaded to storage durable enough to survive the issue's lifetime. Decision (research R2): Cloudflare R2 bucket with public read URL — GitHub's user-content upload endpoint is undocumented and fragile.
-- **FR-006**: On success, the Worker MUST return `{ok: true, issueUrl: "https://github.com/..."}`. On failure, `{ok: false, error: "<code>", message: "<human-readable>"}`.
+- **FR-006**: On success, the Worker MUST return `{ok: true, issueUrl: "https://github.com/...", issueNumber: <number>}`. On failure, `{ok: false, error: "<code>", message: "<human-readable>"}`. Both `issueUrl` and `issueNumber` are required on success — the dialog uses `issueNumber` to render `#NN` in the success-state link and to populate the idempotency cache.
 - **FR-007**: The dialog MUST display a success state inline on `ok: true` response, containing the issue URL as a visible clickable link. It MUST NOT auto-close the dialog — the user dismisses it.
 - **FR-008**: On any non-OK response from the Worker (500, 503, network error, timeout > 5s), the dialog MUST fall back to the feature-002 `window.open` flow with the same pre-fill URL, and surface a small neutral note about the fallback.
 - **FR-009**: The Worker MUST rate-limit by IP at 5 requests per fixed UTC-hour window. A sixth request returns HTTP 429 with `Retry-After` header. Implementation via Cloudflare KV with TTL keyed `rl:<ip>:<hour>` (see research R3 for the fixed-vs-sliding decision).
 - **FR-010**: The Worker MUST validate payload limits: title ≤ 200 chars, body ≤ 10 KB UTF-8, image ≤ 5 MB, voice ≤ 10 MB. Violations return HTTP 400.
 - **FR-011**: CORS: the Worker MUST respond with `Access-Control-Allow-Origin: *` (or allowlist), `Access-Control-Allow-Methods: POST, OPTIONS`, and handle `OPTIONS` preflight. Reports opened from `file://` have origin `null` — the Worker MUST accept this.
-- **FR-012**: The Worker MUST include an idempotency check: requests with the same `idempotencyKey` within 5 minutes that produced a successful issue return the cached `{ok: true, issueUrl}` response instead of creating a duplicate.
+- **FR-012**: The Worker MUST include an idempotency check: requests with the same `idempotencyKey` within 5 minutes that produced a successful issue return the cached `{ok: true, issueUrl, issueNumber}` response instead of creating a duplicate.
 - **FR-013**: The report's dialog JS MUST generate `idempotencyKey` as `crypto.randomUUID()` at Submit-click time and reuse it on retry.
 - **FR-014**: The Worker MUST set a reasonable request timeout on its GitHub API calls (≤ 10s). If GitHub is slow, the Worker returns 504 and the dialog falls back to `window.open`.
 - **FR-015**: The generated report's HTML MUST NOT contain any secret credential. The Worker URL is public (anyone can POST to it — protected by rate-limit + validation).
@@ -143,5 +143,5 @@ The Worker validates every incoming payload: title non-empty (≤ 200 chars), bo
 - The repo has the labels `feedback`, `area:ui`, `area:parser`, `area:advisor`, `area:other` created. (One-time setup, see quickstart Step 1.2.)
 - GitHub's `POST /repos/{owner}/{repo}/issues` REST endpoint remains stable (documented v3 API, GA for years).
 - GitHub's rate-limit budget of 5000 requests/hour per installation is far above expected traffic. If exceeded, fallback is acceptable.
-- Cloudflare Workers free tier (100k req/day, 10ms CPU) is sufficient for the projected traffic (< 100 req/day).
+- Cloudflare Workers free tier provides 100k req/day and 10ms isolate CPU per request. Wall-clock latency (the ~200ms GitHub call) does NOT count against the CPU budget — the isolate is suspended during I/O. The dominant on-CPU cost is `jose` JWT signing (research R9 estimates ~20ms; needs measurement before deploy). If measured CPU per request reliably exceeds 10ms, the paid tier ($5/month, 30s CPU/req) is the escape hatch — at &lt;100 req/day projected traffic the cost is negligible. Ship-blocker only if measurement shows we need paid tier and the user does not authorise the $5/month spend.
 - Corporate networks hosting the report viewers allow outbound HTTPS to `*.workers.dev`. If blocked, fallback flow still works via `window.open` to github.com (usually allowed).
