@@ -149,7 +149,7 @@ Note: this is still a 200 OK with the same success shape and `ok: true`. The `ca
 }
 ```
 
-Returned for any HTTP method/path combination other than `POST /feedback`, `OPTIONS /feedback`, or `GET /health`. Same JSON shape as other errors so clients have a uniform parser.
+Returned for any non-`OPTIONS` request whose method/path is neither `POST /feedback` nor `GET /health`. The Worker handles `OPTIONS` at the top of its dispatch (before pathname matching), so any `OPTIONS` request — `/feedback`, `/health`, or any other path — receives a 204 preflight response, never a 404. This keeps CORS preflight behaviour uniform across the routes the browser cares about and matches `feedback-worker/src/index.ts`. Same JSON shape as other errors so clients have a uniform parser.
 
 ## `OPTIONS /feedback`
 

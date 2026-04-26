@@ -45,7 +45,7 @@ A support engineer pastes a screenshot (image on clipboard) and records a 10-sec
 
 **Why this priority**: text-only Submit already delivers real value (P1). Attachments are the "much better" that justifies building this backend.
 
-**Independent Test**: Open the dialog, paste an image via Cmd/Ctrl+V, record a voice note, hit Submit. Open the resulting issue. Verify the image renders inline and the voice line shows a labelled clickable link (e.g. `🔊 Voice note (audio/webm)`) that opens the audio in a new tab.
+**Independent Test**: Open the dialog, paste an image via Cmd/Ctrl+V, record a voice note, hit Submit. Open the resulting issue. Verify the image renders inline (under an `### Attached screenshot` heading) and the voice section shows the bare R2 URL on its own line (under an `### Attached voice note` heading) — GitHub auto-renders such audio URLs as inline players, see `feedback-worker/src/body.ts` and `data-model.md` body composition.
 
 **Acceptance Scenarios**:
 
@@ -72,7 +72,7 @@ The Worker enforces a rate limit: maximum 5 Submit requests per IP address per h
 
 ### User Story 4 — Oversized or malformed payloads are rejected at the Worker (Priority: P3)
 
-The Worker validates every incoming payload: title non-empty (≤ 200 chars), body ≤ 10 KB of text, image ≤ 5 MB, voice ≤ 10 MB. Over-limit or malformed requests return HTTP 400 with a structured error. (Spam/abuse content per se is not filtered at the Worker — the rate limit + the GitHub App's auditable identity carry the abuse story; a profanity filter would be a separate, opt-in feature with its own spec.)
+The Worker validates every incoming payload: title non-empty (≤ 200 chars), body ≤ 10 KB of text, image ≤ 5 MB, voice ≤ 15 MB (decoded — the 15 MB cap fits ~10 min of Opus at the browser's default bitrate with margin; matches `feedback-worker/src/validate.ts` `VOICE_MAX_BYTES = 15_728_640`). Over-limit or malformed requests return HTTP 400 with a structured error. (Spam/abuse content per se is not filtered at the Worker — the rate limit + the GitHub App's auditable identity carry the abuse story; a profanity filter would be a separate, opt-in feature with its own spec.)
 
 **Why this priority**: enhances robustness but isn't core to the user story.
 
@@ -87,7 +87,7 @@ The Worker validates every incoming payload: title non-empty (≤ 200 chars), bo
 
 ### Edge Cases
 
-- **First-request total latency**: typical end-to-end is ~300ms p95 (Worker isolate boot <5ms, JWT signing ~20ms, GitHub REST call ~200ms — per research R9). Dialog shows a spinner for up to 5s before the AbortController fires.
+- **First-request total latency**: typical end-to-end is ~300ms p95 (Worker isolate boot <5ms, JWT signing ~20ms, GitHub GraphQL call ~200ms — per research R9). Dialog shows a spinner for up to 15s before the browser-side AbortController fires (FR-008); the Worker's own GitHub fetches are individually bounded by a 10s AbortController per FR-014.
 - **User closes dialog mid-submit**: request continues in the background (the Worker doesn't know the client is gone). If it succeeds, the issue is still posted. Document this — it's a minor duplicate risk if the user re-submits identical content.
 - **Rate-limit cache eviction**: Cloudflare KV is eventually consistent (~1 min to propagate globally). Under extreme burst, a user could briefly exceed the limit. Accept.
 - **GitHub App installation removed**: `POST /feedback` returns 503 with a clear error. Dialog falls back to the feature-002 pre-fill URL path.

@@ -15,7 +15,7 @@ interface FeedbackPayload {
   };
   voice?:         {
     mime: string;           // "audio/webm", "audio/mp4"
-    base64: string;         // <= 14 MB base64-encoded (10 MB raw × 1.37 overhead)
+    base64: string;         // <= 21 MB base64-encoded (15 MB raw × 1.37 overhead)
   };
   idempotencyKey: string;   // crypto.randomUUID()
   reportVersion:  string;   // "0.3.x-g<commit>" (my-gather version) — for debugging, not for auth

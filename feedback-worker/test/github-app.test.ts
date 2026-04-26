@@ -154,6 +154,28 @@ describe("getInstallationToken", () => {
     await expect(getInstallationToken(env)).rejects.toBeInstanceOf(GitHubTimeoutError);
     await expect(getInstallationToken(env)).rejects.toThrow(/exceeded.*ms/);
   });
+
+  it("converts a body-stall AbortError (post-headers) into a GitHubTimeoutError", async () => {
+    const env = mkEnv(pem);
+    // fetch() resolves with response headers, but the body read
+    // (arrayBuffer / text / json) rejects with AbortError because
+    // the 10s AbortController fired during the body-streaming phase.
+    // Without the buffered-body fix, fetchWithTimeout would have
+    // already cleared the timer and the caller's .json() would have
+    // surfaced a raw AbortError instead of a typed GitHubTimeoutError.
+    // Codex + Copilot caught this on PR #30 round 1.
+    installFetchMock(
+      () =>
+        ({
+          status: 200,
+          statusText: "OK",
+          headers: new Headers({ "Content-Type": "application/json" }),
+          arrayBuffer: () =>
+            Promise.reject(new DOMException("The operation was aborted.", "AbortError")),
+        }) as unknown as Response,
+    );
+    await expect(getInstallationToken(env)).rejects.toBeInstanceOf(GitHubTimeoutError);
+  });
 });
 
 describe("resolveLabelIds", () => {

@@ -60,6 +60,20 @@ export class GitHubTimeoutError extends Error {
 // rejects with an AbortError DOMException; we re-throw that as a
 // GitHubTimeoutError so callers can branch on a typed error.
 //
+// IMPORTANT — the timeout MUST cover the body-read phase too.
+// `fetch()` resolves as soon as response headers arrive; the body is
+// streamed lazily. If we returned the raw Response and let callers
+// call `.text()` / `.json()` after `clearTimeout(timer)` ran, a
+// GitHub side that delivered headers in 50 ms but then dribbled the
+// body for tens of seconds would slip past the 10 s budget without
+// raising GitHubTimeoutError. Codex / Copilot review on PR #30 caught
+// this. The fix: drain the body to an ArrayBuffer INSIDE the timeout
+// window (so an abort during body delivery is still raised as
+// AbortError → GitHubTimeoutError), then return a fresh Response
+// carrying the buffered body so the caller's `.text()`/`.json()` is
+// pure CPU and cannot stall on the network. The doubled buffer cost
+// is negligible — GitHub responses we consume are kilobytes of JSON.
+//
 // Callers MUST NOT pass their own `signal` in `init` — the helper
 // owns the signal slot. None of the call sites in this file do.
 async function fetchWithTimeout(
@@ -70,7 +84,13 @@ async function fetchWithTimeout(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await fetch(url, { ...init, signal: controller.signal });
+    const res = await fetch(url, { ...init, signal: controller.signal });
+    const buf = await res.arrayBuffer();
+    return new Response(buf, {
+      status: res.status,
+      statusText: res.statusText,
+      headers: res.headers,
+    });
   } catch (err) {
     if ((err as { name?: string } | undefined)?.name === "AbortError") {
       throw new GitHubTimeoutError(timeoutMs);
