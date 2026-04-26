@@ -132,7 +132,7 @@ The Worker validates every incoming payload: title non-empty (≤ 200 chars), bo
 - **SC-001**: 95% of successful Submits complete within 3 seconds end-to-end (click to success-state-visible) on a broadband connection.
 - **SC-002**: With Worker down, 100% of Submits fall back to `window.open` cleanly (no error UI confusing the user; no data loss).
 - **SC-003**: Rate-limit rejection rate under normal usage (5 submits per user per hour budget) is < 1%. Under a simulated attack (100 submits/min from same IP), 100% of requests above the limit return HTTP 429 within 50ms.
-- **SC-004**: Monthly Cloudflare cost: $0. Monthly GitHub cost: $0. If either exceeds $0, alarm surfaces in the dashboard.
+- **SC-004**: Monthly Cloudflare cost target is **$0** on the free tier. The Workers paid tier ($5/month) is acceptable iff (a) the deploy-time CPU measurement (research R9, tasks T029) shows >9 ms isolate CPU per request and (b) the KV-cached installation-token mitigation is also unable to bring it under budget; in that case the success criterion shifts to "≤ $5/month, documented in the deploy commit message". Monthly GitHub cost: $0. Any Cloudflare cost >$5 OR any GitHub cost >$0 raises an alarm in the dashboard.
 - **SC-005**: Zero secrets in the shipped binary or generated HTML. Verified by grep of the release artifact for known patterns (`ghp_`, `github_pat_`, `ghs_`, PEM markers).
 - **SC-006**: First-click adoption: within the first month after ship, at least 50% of Submits succeed via the Worker path (not the fallback). Measures whether the feature is working in practice.
 

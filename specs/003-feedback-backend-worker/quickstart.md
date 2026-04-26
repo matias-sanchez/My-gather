@@ -119,7 +119,7 @@ Record the Worker URL (e.g., `https://my-gather-feedback.<account>.workers.dev`)
 
 ### Scenario 2 — With image + voice
 
-Same as 1 but paste a screenshot and record 5 seconds of audio before Submit. Verify the issue on GitHub shows the image inline and the audio player.
+Same as 1 but paste a screenshot and record 5 seconds of audio before Submit. Verify the issue on GitHub shows the image inline and a labelled clickable link to the audio file (e.g. `🔊 Voice note (audio/webm)`) — in-page playback is NOT expected, GitHub strips `<audio>` tags from issue bodies (see spec.md US2 acceptance scenario 2 + research R2 chosen flow).
 
 ### Scenario 3 — Worker down (fallback)
 

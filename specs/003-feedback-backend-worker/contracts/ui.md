@@ -60,14 +60,14 @@ functionally identical when the Worker call fails.
   </section>
 
   <section id="feedback-error" data-state="error" hidden>
-    <h2>Could not submit</h2>
+    <h2 tabindex="-1">Could not submit</h2>
     <p class="feedback-error-message"></p>
     <button type="button" data-action="retry">Try again</button>
     <button type="button" data-action="dismiss">Close</button>
   </section>
 
   <section id="feedback-throttle" data-state="throttle" hidden>
-    <h2>Rate limit reached</h2>
+    <h2 tabindex="-1">Rate limit reached</h2>
     <p>Try again in <span class="feedback-countdown"></span>.</p>
     <button type="button" data-action="dismiss">Close</button>
   </section>
@@ -157,10 +157,11 @@ The handler must:
 - Dialog uses `<dialog>` element with `aria-labelledby` / `aria-describedby`.
 - State changes MUST move focus deterministically:
   `form → submitting`: focus stays put (input field).
-  `submitting → success`: focus moves to `#feedback-success-link`.
-  `submitting → error`: focus moves to the first invalid field (or to
-  the error heading if no field is at fault).
-  `submitting → throttle`: focus moves to the throttle heading.
+  `submitting → success`: focus moves to `#feedback-success-link` (an `<a>` element, focusable by default).
+  `submitting → form (with inline validation errors)`: focus moves to the first invalid field.
+  `submitting → throttle`: focus moves to the throttle heading. The heading MUST carry `tabindex="-1"` so JS can call `.focus()` on it (`<h2>` is not focusable by default).
+  Fallback path: focus stays put after `window.open` returns; the inline `#feedback-fallback-note` becomes visible in the existing `form` region.
+- Any heading the JS calls `.focus()` on MUST have `tabindex="-1"` in the markup; this includes the throttle heading and the heading inside `#feedback-error` (the latter is reserved in Phase 1 — see state-responsibilities table — but its heading must be focus-ready in case the contract grows in a later phase).
 - The progress indicator MUST be `<progress>` (semantic), not a CSS
   spinner-only div.
 - All buttons MUST be reachable by Tab in source order.
@@ -194,11 +195,12 @@ renders of the same Go input. This implies:
 The Go-side render test (`render/report_feedback_test.go`) asserts:
 
 1. The dialog has `data-feedback-worker-url` with the documented constant.
-2. The five state regions (`form`, `submitting`, `success`, `error`,
+2. The dialog has `data-feedback-report-version` with the build-time version string (the same constant the binary's `--version` exposes); the assertion compares against the documented constant, not against `""` or `undefined`. A regression that drops this attribute breaks `reportVersion` in every Submit payload (FR-002).
+3. The five state regions (`form`, `submitting`, `success`, `error`,
    `throttle`) all exist with the expected `data-state` attribute.
-3. Initial render: only `#feedback-form` is visible (no `hidden`
+4. Initial render: only `#feedback-form` is visible (no `hidden`
    attribute); the other four have `hidden`.
-4. The success region contains an `<a id="feedback-success-link">`
+5. The success region contains an `<a id="feedback-success-link">`
    with empty `href` (hydrated at runtime).
 
 The browser-side state-machine behavior is exercised manually via
