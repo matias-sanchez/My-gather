@@ -17,12 +17,12 @@ description: "Task list for Feedback Backend Worker implementation"
 **These five items require the user's hands on external services. Total time: ~15 minutes.**
 
 - [ ] T001 Create the `My-gather Feedback` GitHub App per quickstart 1.1. Record App ID + Installation ID + download the `.pem` private key.
-- [ ] T002 Install the App on the `matias-sanchez/My-gather` repo; confirm "Discussions: Read and write" permission in the install summary.
-- [ ] T003 Fetch `GITHUB_REPO_ID` and `GITHUB_CATEGORY_ID` via the GraphQL query in quickstart 1.2; record both.
+- [ ] T002 Install the App on the `matias-sanchez/My-gather` repo; confirm "Issues: Read and write" permission in the install summary.
+- [ ] T003 Create the five labels (`feedback`, `area:ui`, `area:parser`, `area:advisor`, `area:other`) in the repo per quickstart 1.2. Verify with `gh label list`.
 - [ ] T004 Sign up for Cloudflare (if no account); run `wrangler login` locally.
 - [ ] T005 Create the two KV namespaces and the R2 bucket per quickstart 1.3; record their IDs and the R2 public URL prefix.
 
-**Checkpoint**: 7 values in hand (App ID, Installation ID, Repo ID, Category ID, 2 × KV IDs, R2 URL) + the `.pem` file locally. Agent work below does not start until these exist.
+**Checkpoint**: 5 values in hand (App ID, Installation ID, 2 × KV IDs, R2 URL) + the `.pem` file locally + 5 labels created on the repo. Agent work below does not start until these exist.
 
 ---
 
@@ -44,13 +44,13 @@ description: "Task list for Feedback Backend Worker implementation"
 - [ ] T010 [P] [US1] Implement `feedback-worker/src/validate.ts`: payload schema validation per `contracts/api.md`. Return typed errors.
 - [ ] T011 [P] [US3] Implement `feedback-worker/src/ratelimit.ts`: fixed-window KV counter. Returns `{allowed, retryAfterSeconds}`.
 - [ ] T012 [P] [US1] Implement `feedback-worker/src/idempotency.ts`: check + record cached responses for a key.
-- [ ] T013 [P] [US1] Implement `feedback-worker/src/github-app.ts`: `jose`-based RS256 JWT signing, installation-token exchange, and a typed `createDiscussion` GraphQL caller.
+- [ ] T013 [P] [US1] Implement `feedback-worker/src/github-app.ts`: `jose`-based RS256 JWT signing, installation-token exchange, and a typed `createIssue` REST caller (`POST /repos/:owner/:repo/issues` with `labels` array). Returns `{issueUrl, issueNumber, issueId}`.
 - [ ] T014 [P] [US2] Implement `feedback-worker/src/r2-upload.ts`: decode base64 blob, compute SHA-256, PUT to R2 at `attachments/<sha256>.<ext>`, return public URL. Skip if blob already exists (by key).
-- [ ] T015 [US1] Implement `feedback-worker/src/index.ts` main handler composing all the above: parse JSON, validate, check rate-limit, check idempotency, upload attachments, call GitHub, cache idempotency, return response.
+- [ ] T015 [US1] Implement `feedback-worker/src/index.ts` main handler composing all the above: parse JSON, validate, check rate-limit, check idempotency, upload attachments, build label list (`feedback` + `area:<lower(category)>` if set), call GitHub `createIssue`, cache idempotency, return response.
 - [ ] T016 [US1] CORS + `OPTIONS /feedback` + `GET /health` endpoints per contract.
 - [ ] T017 [P] [US1] `feedback-worker/test/validate.test.ts`: exhaustive payload-validator tests (good + malformed + edge sizes).
 - [ ] T018 [P] [US3] `feedback-worker/test/ratelimit.test.ts`: simulated KV, 5 + 1 requests, verify 429 on 6th with `Retry-After`.
-- [ ] T019 [P] [US1] `feedback-worker/test/github-app.test.ts`: mock fetch, verify JWT is well-formed, token-exchange flow, GraphQL payload.
+- [ ] T019 [P] [US1] `feedback-worker/test/github-app.test.ts`: mock fetch, verify JWT is well-formed, token-exchange flow, REST request body (path, headers, `labels` array including `feedback` plus the `area:*` mapping for each category enum value).
 - [ ] T020 [US1] `feedback-worker/test/e2e.test.ts`: full happy-path with all mocks, asserts the response body + log shape.
 
 ---
@@ -65,20 +65,20 @@ description: "Task list for Feedback Backend Worker implementation"
   - Build JSON payload via a new `buildPayload()` helper (base64-encode blobs via `FileReader.readAsDataURL`).
   - Mint `idempotencyKey` from `crypto.randomUUID()` once per Submit-click.
   - `fetch(workerURL, {method:"POST", body: JSON.stringify(...), signal: AbortController.signal})` with 5s timeout.
-  - On 200: render success state (success message + link to `discussionUrl`). Do NOT auto-close.
+  - On 200: render success state (success message + link to `issueUrl`, label text `#<issueNumber>`). Do NOT auto-close.
   - On 429: show throttle message with countdown from `retryAfterSeconds`. Do not fall back.
   - On 400: show field-specific error; do not fall back.
   - On 5xx / network error / timeout: fall back to feature-002 `window.open` flow, with a small inline note "Backend unavailable — opened GitHub".
-- [ ] T024 [US1] Add a new success-state markup region in the dialog's template (hidden by default, `id="feedback-success"`), per contracts/ui.md. Extend CSS for `.feedback-success` + green accent.
+- [ ] T024 [US1] Add the four extra state regions in the dialog's template (`#feedback-submitting`, `#feedback-success`, `#feedback-error`, `#feedback-throttle`, all `hidden` by default), per `contracts/ui.md`. Extend CSS for `.feedback-inline-note`, `.feedback-error-message`, `.feedback-countdown`, and the per-state accent borders.
 - [ ] T025 [P] [US1] Update `render/feedback_test.go`: assert `WorkerURL` field is the documented constant.
-- [ ] T026 [P] [US1] Update `render/report_feedback_test.go`: assert the dialog has `data-feedback-worker-url` attribute rendered with the expected value; assert the success region exists.
+- [ ] T026 [P] [US1] Update `render/report_feedback_test.go`: assert the dialog has `data-feedback-worker-url` attribute rendered with the expected value; assert all four state regions from `contracts/ui.md` exist with the correct `data-state` attribute and `hidden` attribute on the non-form regions.
 
 ---
 
 ## Phase 5: Deploy + end-to-end
 
 - [ ] T027 Fill `feedback-worker/wrangler.toml` from the template using the IDs from Phase 1. Commit the concrete `wrangler.toml`.
-- [ ] T028 `wrangler secret put` for each of the 6 secrets listed in data-model.md.
+- [ ] T028 `wrangler secret put` for each of the 4 secrets listed in data-model.md (`GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`, `R2_PUBLIC_URL_PREFIX`). The three non-secret config values (`GITHUB_REPO`, `FEEDBACK_LABEL`, `AREA_LABEL_PREFIX`) live in `wrangler.toml [vars]` and are committed in T027.
 - [ ] T029 `cd feedback-worker && npm install && npm test && npm run deploy`. Record the Worker URL.
 - [ ] T030 Update `render/feedback.go`'s `feedbackWorkerURL` constant to the real deployed URL. Rebuild. Regenerate goldens.
 - [ ] T031 Walk all 5 Quickstart scenarios manually in a browser. Check each off.

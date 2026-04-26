@@ -131,9 +131,20 @@ All responses MUST include `Cache-Control: no-store`. We never want intermediate
 
 The Worker MUST reject requests with body byte length > `30_000_000` (≈ 20 MB base64 voice + 7 MB base64 image + overhead) with `413 Payload Too Large`. The size check is streamed — the reader aborts once the running byte count crosses the cap so an oversized upload can't be fully buffered into the isolate before we notice. Content-Length (when present) is a cheap fast-reject pre-flight; the authoritative check is the streaming byte count.
 
+## Issue creation contract
+
+On a 200 response the Worker has just created an issue at `matias-sanchez/My-gather` with:
+
+- `title` set to the user's title (after trim).
+- `body` assembled per `data-model.md` (user body, then image markdown if present, then audio markdown if present, then footer).
+- `labels` set to `["feedback"]` always, plus `"area:<lower(category)>"` when `category` is present in the payload (e.g. `category: "UI"` → label `area:ui`).
+- No assignee, no milestone, no project. Triage is left to the maintainer.
+
+The Worker MUST NOT comment on the issue, react, lock it, or modify it after creation. One issue, one POST, done.
+
 ## Idempotency contract
 
-If the same `idempotencyKey` is submitted twice within 5 minutes and the first call produced a 200 response, the second call MUST return the same 200 response (same `issueUrl`) without creating a new issue.
+If the same `idempotencyKey` is submitted twice within 5 minutes and the first call produced a 200 response, the second call MUST return the same 200 response (same `issueUrl`, same `issueNumber`) without creating a new issue.
 
 If the first call produced a 4xx/5xx, the second call is treated as a fresh request.
 

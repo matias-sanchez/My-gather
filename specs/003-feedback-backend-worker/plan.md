@@ -1,10 +1,10 @@
 # Implementation Plan: Feedback Backend Worker
 
-**Branch**: `iterations_2304b` (continues current) | **Date**: 2026-04-24 | **Spec**: [spec.md](./spec.md)
+**Branch**: `003-feedback-backend-worker` | **Date**: 2026-04-24 (revised 2026-04-26) | **Spec**: [spec.md](./spec.md)
 
 ## Summary
 
-Add a minimal Cloudflare Worker that receives the report's feedback payload via HTTPS POST and creates the GitHub Discussion on the user's behalf, authenticated as a GitHub App. The report's Submit button calls `fetch(workerURL, …)` instead of opening GitHub in a new tab. On success the dialog shows an inline success state with a link. On failure the dialog falls back to feature-002's `window.open` flow, so we never regress below the current experience.
+Add a minimal Cloudflare Worker that receives the report's feedback payload via HTTPS POST and creates a GitHub Issue on the user's behalf, authenticated as a GitHub App with `Issues: write` scope. The Issue is tagged with the `feedback` label and (when the user picked a category) one of `area:ui` / `area:parser` / `area:advisor` / `area:other`. The report's Submit button calls `fetch(workerURL, …)` instead of opening GitHub in a new tab. On success the dialog shows an inline success state with a link. On failure the dialog falls back to feature-002's `window.open` flow, so we never regress below the current experience.
 
 This is a dual-repo change. Most work lives in a new `feedback-worker/` directory that is deployed to Cloudflare (its artifact is a live URL, not a binary). A small JS change lands in `render/assets/app.js`. A constitution amendment adds a named exception to Principle IX (Zero Network at Runtime) for this specific endpoint.
 
@@ -13,7 +13,7 @@ This is a dual-repo change. Most work lives in a new `feedback-worker/` director
 **Language/Version**: Go 1.22 (unchanged). TypeScript 5.x + Wrangler 3.x for the Worker. Browser JS ES2017+ (unchanged).
 **Primary Dependencies**:
 - Go stdlib only (unchanged).
-- Worker: `@cloudflare/workers-types`, `octokit` or a hand-rolled GitHub GraphQL client (decision R1). One runtime JWT library (`jose` — ~8 KB) for signing App JWTs.
+- Worker: `@cloudflare/workers-types` and a hand-rolled GitHub REST client (decision R1 — ~30 LOC for `POST /repos/.../issues` + token exchange). One runtime JWT library (`jose` — ~8 KB) for signing App JWTs.
 - Browser: native `fetch` API only. No polyfill.
 **Storage**: Cloudflare KV namespace `FEEDBACK_RATELIMIT` (rate-limit counters) and `FEEDBACK_IDEMP` (idempotency cache). No persistent storage of user content.
 **Testing**:

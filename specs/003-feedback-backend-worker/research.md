@@ -2,7 +2,7 @@
 
 ## R1: GitHub App auth — `octokit` library vs hand-rolled?
 
-**Decision**: hand-rolled client using `jose` for JWT signing + `fetch` for the two GitHub calls we make (installation token exchange + GraphQL mutation). ~80 LOC.
+**Decision**: hand-rolled client using `jose` for JWT signing + `fetch` for the two GitHub calls we make (installation token exchange + `POST /repos/{owner}/{repo}/issues`). ~80 LOC.
 
 **Rationale**:
 - We make exactly 2 GitHub calls per Submit. Pulling in all of `@octokit/app` (~400 KB) to save 80 LOC is an enormous bundle tax on a Worker with a 1 MB size limit and a 10ms CPU budget.
@@ -12,6 +12,7 @@
 **Alternatives considered**:
 - `@octokit/app`: rejected. 50× the size for zero ergonomic gain.
 - Bring GitHub's JWT signing into the Worker via a full JWT library (`jsonwebtoken`, etc.): rejected. None of them are Workers-compatible out of the box (they need Node.js crypto); `jose` is Web-Crypto-native.
+- GitHub GraphQL `createIssue` mutation: rejected. Requires fetching `repositoryId` once at deploy time and passing it as a node ID. REST takes `:owner/:repo` directly in the URL — one fewer setup step, one fewer secret. REST returns `html_url` and `number` directly, which is exactly what the Worker passes to the dialog.
 
 ## R2: Attachment hosting — GitHub's user-content endpoint vs Cloudflare R2?
 
@@ -32,10 +33,10 @@
 
 1. Worker receives payload with base64 image + voice.
 2. Worker decodes; puts each blob into R2 under a content-hashed key `attachments/<sha256>.<ext>`. Idempotent by content — same image posted twice hits the same R2 key.
-3. Worker builds the discussion body markdown with `![image](https://feedback-assets.cf/attachments/<hash>.png)` and `<audio src="https://feedback-assets.cf/attachments/<hash>.webm" controls></audio>`.
-4. Worker creates the discussion via GraphQL.
+3. Worker builds the issue body markdown with `![image](https://feedback-assets.cf/attachments/<hash>.png)` and `<audio src="https://feedback-assets.cf/attachments/<hash>.webm" controls></audio>`.
+4. Worker creates the issue via `POST /repos/{owner}/{repo}/issues` with `labels: ["feedback", "area:<category>"]` (the second label only if `category` is set).
 
-R2 bucket is publicly readable. Privacy note: these assets *are* the user's feedback content already being posted publicly in a GitHub Discussion; R2's public read is equivalent.
+R2 bucket is publicly readable. Privacy note: these assets *are* the user's feedback content already being posted publicly in a GitHub Issue; R2's public read is equivalent.
 
 ## R3: Rate-limiting — fixed window vs sliding window?
 
@@ -57,7 +58,22 @@ R2 bucket is publicly readable. Privacy note: these assets *are* the user's feed
 
 **Rationale**:
 - Long enough to cover network retries and browser double-click.
-- Short enough that if the user legitimately wants to submit a second discussion with identical title + body (not generating a new idempotency key), they can within 5 minutes. (In practice JS generates a new UUID per Submit-click, so this isn't an issue.)
+- Short enough that if the user legitimately wants to submit a second issue with identical title + body (not generating a new idempotency key), they can within 5 minutes. (In practice JS generates a new UUID per Submit-click, so this isn't a concern.)
+
+## R4b: Category → labels mapping
+
+**Decision**: ship five labels in the repo: `feedback` (always applied) and four `area:<x>` (applied iff `category` is set).
+
+**Rationale**:
+- Issues do not have categories. The original input asked for "categoría Ideas" in Discussions. Labels are the closest Issue equivalent and survive triage moves better than categories.
+- A fixed `feedback` label lets the maintainer filter the inbox: `is:issue label:feedback` is the bot-submitted bucket, and human-filed issues stay separate.
+- Secondary `area:<x>` labels mirror the `category` enum in `render/feedback.go` (`UI` / `Parser` / `Advisor` / `Other`), keeping the user's intent visible without polluting the issue body.
+- Using REST means we pass labels by *name* in the request body. No setup-time GraphQL ID lookup, no `GITHUB_LABEL_IDS` secret. The labels just need to exist — see quickstart Step 1.2 for the one-time `gh label create` commands.
+
+**Alternatives considered**:
+- No labels (plain Issue): rejected. The maintainer's inbox already has manually-filed issues; no way to triage Worker-submitted ones separately.
+- Issue Form template (`.github/ISSUE_TEMPLATE/*.yml`): rejected. The Worker bypasses the form anyway (it POSTs JSON directly), and the form's structure would lock the Worker payload shape to the form's question schema.
+- Labels by ID via GraphQL `addLabelsToLabelable`: rejected. Adds one more network round-trip per Submit and one more setup-time lookup. REST does it in the same call as `createIssue`.
 
 ## R5: CORS — allowlist or `*`?
 
@@ -115,7 +131,7 @@ For 400 (validation error), show the field-specific error inline; the user fixes
 
 ## R10: Observability — how do we know Submits are working?
 
-**Decision**: Worker logs structured JSON (no user content — just `{timestamp, status, discussion_url_hash, ip_hash, duration_ms}`) to Cloudflare's Tail. Alarm if error rate > 10% over 1 hour.
+**Decision**: Worker logs structured JSON (no user content — just `{timestamp, status, issue_id, issue_number, ip_hash, duration_ms}`) to Cloudflare's Tail. Alarm if error rate > 10% over 1 hour.
 
 **Rationale**:
 - Free tier includes logs.

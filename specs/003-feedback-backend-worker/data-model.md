@@ -27,7 +27,8 @@ interface FeedbackPayload {
 ```typescript
 interface WorkerOkResponse {
   ok: true;
-  discussionUrl: string;     // "https://github.com/matias-sanchez/My-gather/discussions/NN"
+  issueUrl: string;          // "https://github.com/matias-sanchez/My-gather/issues/NN"
+  issueNumber: number;       // duplicates the trailing /NN for clients that want a numeric handle
 }
 
 interface WorkerErrorResponse {
@@ -62,10 +63,10 @@ Example: `rl:203.0.113.42:2026-04-24T08` → `3`
 ### Cloudflare KV — `FEEDBACK_IDEMP`
 
 Key format: `idem:<idempotency-key>`
-Value: `{discussionUrl: string}` JSON
+Value: `{issueUrl: string, issueNumber: number}` JSON
 TTL: 300 seconds
 
-Example: `idem:0196a1b2-3c4d-...` → `{"discussionUrl": "https://github.com/..."}`
+Example: `idem:0196a1b2-3c4d-...` → `{"issueUrl": "https://github.com/matias-sanchez/My-gather/issues/67", "issueNumber": 67}`
 
 ### Cloudflare R2 — `FEEDBACK_ATTACHMENTS`
 
@@ -76,45 +77,47 @@ No TTL — attachments live as long as the R2 bucket does.
 
 ## GitHub-side (persistent, user-visible)
 
-### Discussion body markdown composition
+### Issue body markdown composition
 
 Assembled by the Worker, in this exact order:
 
 ```markdown
-> Category: <category, if present>
-
 <user body text, as-is>
 
 <if image attached:>
 ![Attached image](<R2 public URL>)
 
 <if voice attached:>
-
-https://<worker-host>/attachments/<hash>.<ext>
+<audio src="<R2 public URL>" controls></audio>
 
 <footer, single line>
 ---
 _Submitted via my-gather Report Feedback (v<reportVersion>)._
 ```
 
-The footer is a small attribution line that helps the maintainer distinguish Worker-submitted discussions from manually-posted ones.
+The `category` field is conveyed by an `area:<category>` label on the issue, NOT by a body header. Reasons: labels are filterable in the GitHub UI; a body header line would clutter the rendered issue and be redundant with the label chip.
 
-### GitHub GraphQL mutation
+The footer is a small attribution line that helps the maintainer distinguish Worker-submitted issues from manually-filed ones (same effect as `is:issue label:feedback`, but visible inside the issue too).
 
-```graphql
-mutation CreateFeedback($repoId: ID!, $categoryId: ID!, $title: String!, $body: String!) {
-  createDiscussion(input: {
-    repositoryId: $repoId,
-    categoryId:   $categoryId,
-    title:        $title,
-    body:         $body
-  }) {
-    discussion { id number url }
-  }
+### GitHub REST call
+
+```http
+POST /repos/matias-sanchez/My-gather/issues
+Authorization: Bearer <installation-access-token>
+Accept: application/vnd.github+json
+X-GitHub-Api-Version: 2022-11-28
+Content-Type: application/json
+
+{
+  "title":  "<title>",
+  "body":   "<assembled markdown>",
+  "labels": ["feedback", "area:ui"]   // second label only if category is set
 }
 ```
 
-The Worker knows `repoId` and `categoryId` as Worker Secrets (fetched once at deploy time via a one-off setup script).
+Successful response (201 Created) includes `html_url` (→ `issueUrl`), `number` (→ `issueNumber`), `node_id` (→ `issue_id` in observability log). The Worker uses these three fields and ignores the rest.
+
+The Worker hard-codes `matias-sanchez/My-gather` in the URL via a `wrangler.toml` `[vars]` entry — see Worker Secrets table below. It is not a secret (the repo is public) but it lives in config, not source, so a future fork can repoint without a code edit.
 
 ## Worker Secrets (never in code)
 
@@ -123,21 +126,29 @@ The Worker knows `repoId` and `categoryId` as Worker Secrets (fetched once at de
 | `GITHUB_APP_ID` | Numeric, from App settings page | JWT `iss` claim |
 | `GITHUB_INSTALLATION_ID` | Numeric, from installation URL | Token exchange |
 | `GITHUB_APP_PRIVATE_KEY` | PEM, downloaded once on App creation | JWT signing |
-| `GITHUB_REPO_ID` | GraphQL node ID, static | `createDiscussion` mutation |
-| `GITHUB_CATEGORY_ID` | GraphQL node ID for "Ideas" category, static | `createDiscussion` mutation |
-| `R2_PUBLIC_URL_PREFIX` | Public R2 bucket URL | Linking assets in discussion body |
+| `R2_PUBLIC_URL_PREFIX` | Public R2 bucket URL | Linking assets in issue body |
 
 All set via `wrangler secret put`. Stored encrypted at rest by Cloudflare.
 
+### Worker non-secret config (`[vars]` in `wrangler.toml`)
+
+| Var | Value | Usage |
+|---|---|---|
+| `GITHUB_REPO` | `matias-sanchez/My-gather` | `:owner/:repo` path segment in `POST /repos/.../issues` |
+| `FEEDBACK_LABEL` | `feedback` | Always-applied label |
+| `AREA_LABEL_PREFIX` | `area:` | Prefix for `category` → label mapping |
+
+These are not secrets (the repo is public; the labels are visible in the GitHub UI), but keeping them in config rather than source lets a fork repoint to a different repo without a Worker code edit.
+
 ## Determinism & idempotency
 
-- **Client-generated idempotency key**: a `crypto.randomUUID()` is minted once per Submit-click and reused on any automatic retry (network error → retry). This is not a "client-deduplication" signal — it's the server's contract: given the same key within 5 minutes, return the same discussion URL.
+- **Client-generated idempotency key**: a `crypto.randomUUID()` is minted once per Submit-click and reused on any automatic retry (network error → retry). This is not a "client-deduplication" signal — it's the server's contract: given the same key within 5 minutes, return the same `{issueUrl, issueNumber}`.
 - **Attachment content-hashing**: two submissions with the same image produce the same R2 key. This is a side-effect property; clients don't need to know.
 
 ## Privacy posture
 
 - Worker logs never contain user body text.
 - KV values never contain user body text (only counters and URLs).
-- R2 contains attachments but those attachments are already public (posted in a public discussion).
+- R2 contains attachments but those attachments are already public (posted in a public issue).
 - No analytics beacon, no IP geolocation, no device fingerprinting.
 - The `ip_hash` in logs is `SHA-256(ip + worker-deploy-salt)` so it's useful for rate-limit correlation but not reversible.
