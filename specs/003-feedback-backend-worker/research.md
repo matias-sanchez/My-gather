@@ -127,7 +127,13 @@ For 400 (validation error), show the field-specific error inline; the user fixes
 
 **Decision**: acceptable for wall-clock (≤3s budget per SC-001). Cloudflare Workers have essentially zero cold-start (<5ms isolate boot). `jose` JWT signing adds ~20ms — this is **on-CPU work that counts against the free tier's 10ms-per-request CPU budget**. GitHub REST call (`POST /repos/.../issues`) ~200ms p95 — wall-clock only; the isolate is suspended during I/O and consumes no CPU budget. Total wall-clock p95 ~300ms on a warm path.
 
-**CPU caveat**: the 20ms JWT estimate may exceed the 10ms free-tier CPU cap. Measurement at deploy is required (T029 of tasks.md should record the actual CPU usage from `wrangler tail`). Mitigations if measured >10ms: (a) move to the paid tier ($5/month, 30s CPU/req — see spec.md Assumptions); (b) cache the installation token in KV across requests (1h TTL), saving the JWT-signing cost on all but the first request per hour. Option (b) is cheap to add post-launch if needed.
+**CPU caveat**: the 20ms JWT estimate may exceed the 10ms free-tier CPU cap. Measurement at deploy is required (T029 of tasks.md records the actual CPU usage from `wrangler tail`). The cost-gate ladder, per SC-004 + T029, is normative and ordered — mitigations are NOT a free choice:
+
+1. If measured median CPU ≤ 9 ms: ship on the free tier. Done.
+2. If measured median CPU > 9 ms: implement the KV-cached installation-token mitigation in `github-app.ts` (cache the token in KV across requests with a 1h TTL, saving the JWT-signing cost on all but the first request per hour). Re-deploy and re-measure.
+3. If the second measurement still shows median CPU > 9 ms: only THEN move to the paid tier ($5/month, 30s CPU/req — see spec.md SC-004 + Assumptions). Document the measurement evidence in the deploy commit.
+
+Skipping straight to the paid tier without trying step 2 violates SC-004's AND-gate. Skipping step 1's measurement and assuming step 2 is needed also violates SC-004 (the team must have evidence). The post-launch-mitigation framing the earlier draft of this section used was too permissive; this ladder replaces it.
 
 **Alternatives considered**: pre-warming (Durable Object that pings itself periodically) — unnecessary at this latency.
 
