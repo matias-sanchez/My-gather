@@ -41,38 +41,34 @@ Re-read the constitution at `.specify/memory/constitution.md` (currently v1.2.0)
 | VI. Library-First Architecture | PASS | The Worker URL is a Go-side constant in `render/feedback.go` (existing file). No new flag on `cmd/my-gather`. |
 | VII. Typed Errors | PASS | No new Go error paths. Worker errors are JSON-typed, not Go-typed. |
 | VIII. Reference Fixtures & Golden Tests | PASS | No new parser. Render golden updates by the single Worker-URL line in the dialog's data attribute. |
-| IX. Zero Network at Runtime | **REQUIRES AMENDMENT** | The Submit button performs an outbound fetch. A named, scoped exception is needed. Amendment drafted below; lands in the same PR. |
+| IX. Zero Network at Runtime | PASS (via named exception) | The Submit button performs an outbound fetch. A named exception is documented under Principle IX and was ratified in constitution **v1.3.0** (2026-04-24, already on main). The amendment text is reproduced below for reference; no further constitution change is required to merge this feature. |
 | X. Minimal Dependencies | PASS | Go side: zero new deps. Worker side: a JWT lib for GitHub App auth — justified as a crypto boundary. |
 | XI. Reports Optimized for Humans Under Pressure | PASS | The feature sits exactly where feature 002 put it (small button in header margin). Dialog behaviour is enhanced, not expanded. |
 | XII. Pinned Go Version | PASS | No Go version change. |
 | XIII. Canonical Code Path (NON-NEGOTIABLE) | PASS | Single submit handler. The fallback to `window.open` is on the failure path only (Principle III); it's not a dual-code-path for the happy case. |
 | XIV. English-Only Durable Artifacts | PASS | All code, comments, commit messages, docs in English. |
 
-### Constitution Amendment (drafted, requires review before merge)
+### Constitution Amendment (ratified — already on main at v1.3.0)
+
+The named exception cited in the table above lives at
+`.specify/memory/constitution.md` (Principle IX). It was ratified
+2026-04-24 specifically for this feature and was bumped from v1.2.0
+to v1.3.0 (MINOR — additive, named exception, no existing principle
+redefined). No further constitution edit is required to merge the
+Worker; only the implementation of this plan's tasks remains.
+
+The relevant text on main reads:
 
 ```
-### IX. Zero Network at Runtime
-
-My-gather MUST NOT perform any network I/O during normal operation
-[…unchanged opening…].
-
 **Named exceptions**: The following runtime network calls are allowed
 when the user has an explicit intent expressed by a UI action:
 
 - **Feedback submission (ratified 2026-04-24 for feature
   003-feedback-backend-worker)**: On the user clicking the "Submit"
   button of the Report Feedback dialog, the report MAY perform a
-  single outbound `POST` to a project-controlled HTTPS endpoint. The
-  endpoint URL MUST be a build-time constant. The payload MUST be
-  scoped to the user's explicit feedback (title, body, attachments);
-  it MUST NOT include telemetry, report metadata beyond the feedback
-  itself, or any data the user did not type into the dialog. On any
-  failure of the endpoint, the report MUST fall back to a non-network
-  path that delivers equivalent value (feature 002's window.open
-  pre-fill URL flow satisfies this).
+  single outbound `POST` to a project-controlled HTTPS endpoint.
+  [...full text in constitution.md, Principle IX...]
 ```
-
-This text will land in the same change as the Worker, bumping constitution to **v1.3.0** (MINOR — additive, named exception, no existing principle redefined).
 
 ### Complexity Tracking
 

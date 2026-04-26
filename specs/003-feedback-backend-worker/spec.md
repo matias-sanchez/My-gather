@@ -65,14 +65,14 @@ The Worker enforces a rate limit: maximum 5 Submit requests per IP address per h
 
 **Acceptance Scenarios**:
 
-1. **Given** the same IP has submitted 5 times in the last hour, **When** a sixth Submit arrives, **Then** the Worker returns HTTP 429 with `Retry-After` header and the dialog shows the throttle message.
-2. **Given** an hour has passed since the oldest request in the rate-limit window, **When** a new Submit arrives, **Then** it is accepted (sliding or fixed-window — see research R3).
+1. **Given** the same IP has submitted 5 times in the current UTC-hour window, **When** a sixth Submit arrives in that same window, **Then** the Worker returns HTTP 429 with `Retry-After` header and the dialog shows the throttle message.
+2. **Given** the UTC-hour boundary has rolled over since the previous window's submissions, **When** a new Submit arrives in the new window, **Then** it is accepted (fixed-window per research R3).
 
 ---
 
-### User Story 4 — Spam/abuse content is rejected at the Worker (Priority: P3)
+### User Story 4 — Oversized or malformed payloads are rejected at the Worker (Priority: P3)
 
-The Worker validates every incoming payload: title non-empty (≤ 200 chars), body ≤ 10 KB of text, image ≤ 5 MB, voice ≤ 10 MB. Over-limit or malformed requests return HTTP 400 with a structured error. A basic profanity/blocklist filter rejects obvious spam payloads.
+The Worker validates every incoming payload: title non-empty (≤ 200 chars), body ≤ 10 KB of text, image ≤ 5 MB, voice ≤ 10 MB. Over-limit or malformed requests return HTTP 400 with a structured error. (Spam/abuse content per se is not filtered at the Worker — the rate limit + the GitHub App's auditable identity carry the abuse story; a profanity filter would be a separate, opt-in feature with its own spec.)
 
 **Why this priority**: enhances robustness but isn't core to the user story.
 
@@ -87,7 +87,7 @@ The Worker validates every incoming payload: title non-empty (≤ 200 chars), bo
 
 ### Edge Cases
 
-- **Cold-start latency**: first request after Worker idle may take 100–300ms. Dialog shows a spinner for up to 5s before declaring timeout.
+- **First-request total latency**: typical end-to-end is ~300ms p95 (Worker isolate boot <5ms, JWT signing ~20ms, GitHub REST call ~200ms — per research R9). Dialog shows a spinner for up to 5s before the AbortController fires.
 - **User closes dialog mid-submit**: request continues in the background (the Worker doesn't know the client is gone). If it succeeds, the issue is still posted. Document this — it's a minor duplicate risk if the user re-submits identical content.
 - **Rate-limit cache eviction**: Cloudflare KV is eventually consistent (~1 min to propagate globally). Under extreme burst, a user could briefly exceed the limit. Accept.
 - **GitHub App installation removed**: `POST /feedback` returns 503 with a clear error. Dialog falls back to the feature-002 pre-fill URL path.
@@ -108,14 +108,14 @@ The Worker validates every incoming payload: title non-empty (≤ 200 chars), bo
 - **FR-006**: On success, the Worker MUST return `{ok: true, issueUrl: "https://github.com/..."}`. On failure, `{ok: false, error: "<code>", message: "<human-readable>"}`.
 - **FR-007**: The dialog MUST display a success state inline on `ok: true` response, containing the issue URL as a visible clickable link. It MUST NOT auto-close the dialog — the user dismisses it.
 - **FR-008**: On any non-OK response from the Worker (500, 503, network error, timeout > 5s), the dialog MUST fall back to the feature-002 `window.open` flow with the same pre-fill URL, and surface a small neutral note about the fallback.
-- **FR-009**: The Worker MUST rate-limit by IP at 5 requests per rolling hour. A sixth request returns HTTP 429 with `Retry-After` header. Implementation via Cloudflare KV with TTL.
+- **FR-009**: The Worker MUST rate-limit by IP at 5 requests per fixed UTC-hour window. A sixth request returns HTTP 429 with `Retry-After` header. Implementation via Cloudflare KV with TTL keyed `rl:<ip>:<hour>` (see research R3 for the fixed-vs-sliding decision).
 - **FR-010**: The Worker MUST validate payload limits: title ≤ 200 chars, body ≤ 10 KB UTF-8, image ≤ 5 MB, voice ≤ 10 MB. Violations return HTTP 400.
 - **FR-011**: CORS: the Worker MUST respond with `Access-Control-Allow-Origin: *` (or allowlist), `Access-Control-Allow-Methods: POST, OPTIONS`, and handle `OPTIONS` preflight. Reports opened from `file://` have origin `null` — the Worker MUST accept this.
 - **FR-012**: The Worker MUST include an idempotency check: requests with the same `idempotencyKey` within 5 minutes that produced a successful issue return the cached `{ok: true, issueUrl}` response instead of creating a duplicate.
 - **FR-013**: The report's dialog JS MUST generate `idempotencyKey` as `crypto.randomUUID()` at Submit-click time and reuse it on retry.
 - **FR-014**: The Worker MUST set a reasonable request timeout on its GitHub API calls (≤ 10s). If GitHub is slow, the Worker returns 504 and the dialog falls back to `window.open`.
 - **FR-015**: The generated report's HTML MUST NOT contain any secret credential. The Worker URL is public (anyone can POST to it — protected by rate-limit + validation).
-- **FR-016**: The constitutional amendment (Principle IX exception) MUST be part of the change set that lands this feature. Merging the Worker without the amendment is prohibited.
+- **FR-016**: The constitutional amendment (Principle IX named exception) is a precondition for this feature. As of constitution v1.3.0 (ratified 2026-04-24, already on main) the exception is in force; the implementation PR MUST verify the constitution is at v1.3.0 and MUST NOT attempt to land a Worker without that exception present.
 
 ### Key Entities
 

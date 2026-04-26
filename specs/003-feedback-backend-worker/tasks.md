@@ -26,14 +26,14 @@ description: "Task list for Feedback Backend Worker implementation"
 
 ---
 
-## Phase 2: Constitution amendment + repo scaffolding
+## Phase 2: Constitution check + repo scaffolding
 
-**Purpose**: land the constitutional change and empty Worker skeleton before any logic is written, so the amendment is reviewable in isolation.
+**Purpose**: verify the constitutional precondition and land the empty Worker skeleton before any logic is written.
 
-- [ ] T006 Update `.specify/memory/constitution.md` per plan.md's amendment text: add "Named exceptions" section to Principle IX, bump version to 1.3.0, add the standard Sync Impact Report comment at the top. Re-run `grep` to confirm no other principle was changed.
+- [ ] T006 Verify `.specify/memory/constitution.md` is at version **1.3.0** with Principle IX's "Named exceptions" subsection citing feature 003. The amendment was ratified 2026-04-24 and is already on main; this task is a guard, not an edit. Fail loudly if the constitution version has regressed.
 - [ ] T007 [P] Add `feedback-worker/` directory with `package.json`, `tsconfig.json`, `wrangler.toml.template`, an empty `src/index.ts` returning 501 Not Implemented, `vitest.config.ts`, and `.gitignore` excluding `node_modules/` and `.wrangler/`.
 - [ ] T008 [P] Update root `.gitignore` to include `feedback-worker/node_modules/` and `feedback-worker/.wrangler/`.
-- [ ] T009 Commit "feedback: constitution amendment + worker scaffold" as one commit. This is the first artifact that lands the PR's claim.
+- [ ] T009 Commit "feedback(003): worker scaffold + constitution check" as one commit. The constitution amendment itself already shipped in a prior commit on main at v1.3.0.
 
 ---
 
@@ -44,7 +44,7 @@ description: "Task list for Feedback Backend Worker implementation"
 - [ ] T010 [P] [US1] Implement `feedback-worker/src/validate.ts`: payload schema validation per `contracts/api.md`. Return typed errors.
 - [ ] T011 [P] [US3] Implement `feedback-worker/src/ratelimit.ts`: fixed-window KV counter. Returns `{allowed, retryAfterSeconds}`.
 - [ ] T012 [P] [US1] Implement `feedback-worker/src/idempotency.ts`: check + record cached responses for a key.
-- [ ] T013 [P] [US1] Implement `feedback-worker/src/github-app.ts`: `jose`-based RS256 JWT signing, installation-token exchange, and a typed `createIssue` REST caller (`POST /repos/:owner/:repo/issues` with `labels` array). Returns `{issueUrl, issueNumber, issueId}`.
+- [ ] T013 [P] [US1] Implement `feedback-worker/src/github-app.ts`: `jose`-based RS256 JWT signing, installation-token exchange, and a typed `createIssue` REST caller (`POST /repos/:owner/:repo/issues` with `labels` array). All three GitHub fetches MUST use `AbortController` with a per-call timeout of 10 000 ms (FR-014); on timeout, surface a typed error so the index handler returns HTTP 504. Returns `{issueUrl, issueNumber, issueId}` on success.
 - [ ] T014 [P] [US2] Implement `feedback-worker/src/r2-upload.ts`: decode base64 blob, compute SHA-256, PUT to R2 at `attachments/<sha256>.<ext>`, return public URL. Skip if blob already exists (by key).
 - [ ] T015 [US1] Implement `feedback-worker/src/index.ts` main handler composing all the above: parse JSON, validate, check rate-limit, check idempotency, upload attachments, build label list (`feedback` + `area:<lower(category)>` if set), call GitHub `createIssue`, cache idempotency, return response.
 - [ ] T016 [US1] CORS + `OPTIONS /feedback` + `GET /health` endpoints per contract.
@@ -81,15 +81,15 @@ description: "Task list for Feedback Backend Worker implementation"
 - [ ] T028 `wrangler secret put` for each of the 4 secrets listed in data-model.md (`GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`, `R2_PUBLIC_URL_PREFIX`). The three non-secret config values (`GITHUB_REPO`, `FEEDBACK_LABEL`, `AREA_LABEL_PREFIX`) live in `wrangler.toml [vars]` and are committed in T027.
 - [ ] T029 `cd feedback-worker && npm install && npm test && npm run deploy`. Record the Worker URL.
 - [ ] T030 Update `render/feedback.go`'s `feedbackWorkerURL` constant to the real deployed URL. Rebuild. Regenerate goldens.
-- [ ] T031 Walk all 5 Quickstart scenarios manually in a browser. Check each off.
+- [ ] T031 Walk all 5 Quickstart scenarios manually in a browser. Check each off. The dialog state machine documented in `contracts/ui.md` (form / submitting / success / error / throttle / fallback transitions, focus moves, AbortController timeout, ARIA roles) is exercised here — it has no headless-browser unit coverage in this repo, so this manual walkthrough is the regression net.
 
 ---
 
 ## Phase 6: Polish + ship
 
-- [ ] T032 Full-suite sweep: `go vet`, `go test ./...`, `cd feedback-worker && npm test`.
+- [ ] T032 Full-suite sweep: `go vet`, `go test ./...`, `cd feedback-worker && npm test`. Then run a secret-leak check on the built binary per SC-005: `make build && grep -aE 'ghp_|github_pat_|ghs_|-----BEGIN [A-Z ]*PRIVATE KEY-----' bin/my-gather` MUST return zero matches. Fail the task if any of those patterns appear in the binary.
 - [ ] T033 Run `@agent-pre-review-constitution-guard`. Expect READY TO PUSH (the Principle IX amendment makes the network call compliant).
-- [ ] T034 Commit sequence: one commit per phase checkpoint. Push.
+- [ ] T034 Commit sequence: one commit per agent-phase checkpoint (Phase 2, 3, 4, 5, 6). Phase 1 is human-only and produces no commits. Push.
 - [ ] T035 Open PR with `/pr-review-trigger-my-gather`. Address findings with `/pr-review-fix-my-gather`.
 
 ---
