@@ -41,16 +41,16 @@ A support engineer opens the rendered report, clicks "Report feedback", types ti
 
 ### User Story 2 — Image and voice attachments land in the issue body (Priority: P2)
 
-A support engineer pastes a screenshot (image on clipboard) and records a 10-second voice note. Submit. The resulting issue on GitHub contains both: the image rendered inline, the voice note embedded as an `<audio>` the issue reader can play without downloading.
+A support engineer pastes a screenshot (image on clipboard) and records a 10-second voice note. Submit. The resulting issue on GitHub contains both: the image rendered inline, the voice note as a clearly-labelled clickable link to the audio file.
 
 **Why this priority**: text-only Submit already delivers real value (P1). Attachments are the "much better" that justifies building this backend.
 
-**Independent Test**: Open the dialog, paste an image via Cmd/Ctrl+V, record a voice note, hit Submit. Open the resulting issue. Verify the image renders inline and the audio player is visible and playable.
+**Independent Test**: Open the dialog, paste an image via Cmd/Ctrl+V, record a voice note, hit Submit. Open the resulting issue. Verify the image renders inline and the voice line shows a labelled clickable link (e.g. `🔊 Voice note (audio/webm)`) that opens the audio in a new tab.
 
 **Acceptance Scenarios**:
 
 1. **Given** an image is attached, **When** Submit succeeds, **Then** the issue body on GitHub displays the image inline (as a `![](url)` markdown, hosted on the Worker's R2 bucket per FR-005).
-2. **Given** a voice note is attached, **When** Submit succeeds, **Then** the issue body contains an embedded audio player or a link that renders as one, playable in-page on GitHub.
+2. **Given** a voice note is attached, **When** Submit succeeds, **Then** the issue body contains a labelled clickable link to the audio file (e.g. `🔊 Voice note (audio/webm)` pointing at the R2 URL). In-page playback is NOT a goal — GitHub's Markdown renderer sanitizes `<audio>` tags from issue bodies, so an embedded player is not achievable. Clicking the link opens the audio file in a new tab where the browser's native player handles playback.
 3. **Given** both attachments are present, **When** Submit succeeds, **Then** the issue body contains, in order: the user's body text, the image, the audio. The `category` field maps to a label on the issue (`area:ui` / `area:parser` / `area:advisor` / `area:other`), not to body text.
 
 ---
@@ -111,7 +111,7 @@ The Worker validates every incoming payload: title non-empty (≤ 200 chars), bo
 - **FR-008**: On any non-OK response from the Worker (500, 503, network error, timeout > 5s), the dialog MUST fall back to the feature-002 `window.open` flow with the same pre-fill URL, and surface a small neutral note about the fallback.
 - **FR-009**: The Worker MUST rate-limit by IP at 5 requests per fixed UTC-hour window. A sixth request returns HTTP 429 with `Retry-After` header. Implementation via Cloudflare KV with TTL keyed `rl:<ip>:<hour>` (see research R3 for the fixed-vs-sliding decision).
 - **FR-010**: The Worker MUST validate payload limits: title ≤ 200 chars, body ≤ 10 KB UTF-8, image ≤ 5 MB, voice ≤ 10 MB. Violations return HTTP 400.
-- **FR-011**: CORS: the Worker MUST respond with `Access-Control-Allow-Origin: *` (or allowlist), `Access-Control-Allow-Methods: POST, OPTIONS`, and handle `OPTIONS` preflight. Reports opened from `file://` have origin `null` — the Worker MUST accept this.
+- **FR-011**: CORS: the Worker MUST respond with `Access-Control-Allow-Origin: *` (or allowlist), `Access-Control-Allow-Methods: POST, OPTIONS, GET` (POST for `/feedback`, GET for `/health` cross-origin polling, OPTIONS for preflight), and handle `OPTIONS` preflight. Reports opened from `file://` have origin `null` — the Worker MUST accept this.
 - **FR-012**: The Worker MUST include an idempotency check: requests with the same `idempotencyKey` within 5 minutes that produced a successful issue return the cached `{ok: true, issueUrl, issueNumber}` response instead of creating a duplicate.
 - **FR-013**: The report's dialog JS MUST generate `idempotencyKey` as `crypto.randomUUID()` at Submit-click time and reuse it on retry.
 - **FR-014**: The Worker MUST set a reasonable request timeout on its GitHub API calls (≤ 10s). If GitHub is slow, the Worker returns 504 and the dialog falls back to `window.open`.

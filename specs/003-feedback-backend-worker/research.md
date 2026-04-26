@@ -33,7 +33,7 @@
 
 1. Worker receives payload with base64 image + voice.
 2. Worker decodes; puts each blob into R2 under a content-hashed key `attachments/<sha256>.<ext>`. Idempotent by content — same image posted twice hits the same R2 key.
-3. Worker builds the issue body markdown with `![image](https://feedback-assets.cf/attachments/<hash>.png)` and `<audio src="https://feedback-assets.cf/attachments/<hash>.webm" controls></audio>`.
+3. Worker builds the issue body markdown with `![image](https://feedback-assets.cf/attachments/<hash>.png)` for images and `🔊 Voice note ([audio/webm](https://feedback-assets.cf/attachments/<hash>.webm))` for audio. (`<audio>` tags are stripped by GitHub's issue-body HTML sanitizer; a plain Markdown link is the most that survives. The reader clicks through and the browser plays the file natively.)
 4. Worker creates the issue via `POST /repos/{owner}/{repo}/issues` with `labels: ["feedback", "area:<category>"]` (the second label only if `category` is set).
 
 R2 bucket is publicly readable. Privacy note: these assets *are* the user's feedback content already being posted publicly in a GitHub Issue; R2's public read is equivalent.

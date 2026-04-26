@@ -92,7 +92,9 @@ Assembled by the Worker, in this exact order:
 ![Attached image](<R2 public URL>)
 
 <if voice attached:>
-<audio src="<R2 public URL>" controls></audio>
+🔊 Voice note ([audio/webm](<R2 public URL>))
+
+(Plain Markdown link — GitHub's issue-body sanitizer strips `<audio>` tags, so an embedded player is not achievable. The link opens in a new tab where the browser's native media player handles playback.)
 
 <footer, single line>
 ---
