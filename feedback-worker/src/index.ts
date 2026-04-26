@@ -7,6 +7,7 @@ import {
   createIssue,
   getInstallationToken,
   GitHubError,
+  GitHubTimeoutError,
   resolveLabelIds,
 } from "./github-app";
 import { cacheResponse, reserveResponse } from "./idempotency";
@@ -322,6 +323,28 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
     // Pre-create failure — no GitHub side effect and no release
     // (see rate-limit block comment above). The 30 s inflight TTL
     // lets same-key retries start fresh after the window.
+    //
+    // Branch order matters: GitHubTimeoutError is NOT a subclass of
+    // GitHubError, but listing the timeout check first is defensive —
+    // a future refactor that conflates the two error classes still
+    // keeps the 504 path distinct from 503.
+    if (err instanceof GitHubTimeoutError) {
+      logRequest({
+        status: 504,
+        error: "github_timeout",
+        duration_ms: Date.now() - startedAt,
+        ip_hash: ipHash,
+        report_version: payload.reportVersion,
+        rate_limit_count: rl.count,
+        has_image: !!payload.image,
+        has_voice: !!payload.voice,
+      });
+      return errorResponse(
+        504,
+        "github_timeout",
+        "GitHub took too long to respond. Please retry or use the fallback link.",
+      );
+    }
     if (err instanceof GitHubError) {
       logRequest({
         status: 503,

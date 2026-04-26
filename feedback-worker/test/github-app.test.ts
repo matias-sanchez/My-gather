@@ -5,6 +5,7 @@ import type { Env } from "../src/env";
 import {
   createIssue,
   getInstallationToken,
+  GitHubTimeoutError,
   resolveLabelIds,
 } from "../src/github-app";
 
@@ -128,6 +129,30 @@ describe("getInstallationToken", () => {
     const env = mkEnv(pem);
     installFetchMock(() => new Response("boom", { status: 500 }));
     await expect(getInstallationToken(env)).rejects.toThrow(/Installation token exchange failed/);
+  });
+
+  it("passes an AbortController signal to fetch (FR-014 timeout wired up)", async () => {
+    const env = mkEnv(pem);
+    const { calls } = installFetchMock(() => jsonResp({ token: "ghs_x" }));
+    await getInstallationToken(env);
+    // The 10s AbortController owned by fetchWithTimeout MUST be passed
+    // through to fetch; without it the timeout has no effect on the
+    // actual network call.
+    expect(calls[0]!.init.signal).toBeDefined();
+  });
+
+  it("converts an AbortError DOMException into a GitHubTimeoutError (504 path)", async () => {
+    const env = mkEnv(pem);
+    installFetchMock(() => {
+      // Simulate the runtime aborting the fetch when the 10s timer
+      // fires. The underlying fetch rejects with a DOMException
+      // whose .name === "AbortError" — fetchWithTimeout MUST translate
+      // that into the typed GitHubTimeoutError so index.ts can branch
+      // to a 504 response (per FR-014 + contracts/api.md §504).
+      throw new DOMException("The operation was aborted.", "AbortError");
+    });
+    await expect(getInstallationToken(env)).rejects.toBeInstanceOf(GitHubTimeoutError);
+    await expect(getInstallationToken(env)).rejects.toThrow(/exceeded.*ms/);
   });
 });
 

@@ -9,6 +9,15 @@ const GITHUB_API = "https://api.github.com";
 const USER_AGENT = "my-gather-feedback-worker";
 const LABEL_CACHE_TTL_SECONDS = 86_400;
 
+// Per FR-014 + contracts/api.md §"504 Gateway Timeout": every GitHub
+// fetch (token exchange, label resolution, createIssue mutation) is
+// bounded by an AbortController so a stalled GitHub side never hangs
+// the Worker isolate past Cloudflare's platform timeout. 10 s sits
+// inside the browser's 15 s wall-clock budget (FR-008) so a single
+// slow GitHub call surfaces as a clean Worker-side 504 within the
+// browser's window, not a browser AbortError.
+const GITHUB_FETCH_TIMEOUT_MS = 10_000;
+
 export interface CreateIssueInput {
   repositoryId: string;
   title: string;
@@ -28,6 +37,47 @@ export class GitHubError extends Error {
     super(message);
     this.name = "GitHubError";
     this.status = status;
+  }
+}
+
+// GitHubTimeoutError is intentionally NOT a subclass of GitHubError
+// so the index.ts handler can branch cleanly on
+// `instanceof GitHubTimeoutError` for a 504 response BEFORE the
+// existing `instanceof GitHubError` check that returns 503.
+export class GitHubTimeoutError extends Error {
+  readonly status: number;
+  readonly timeoutMs: number;
+  constructor(timeoutMs: number = GITHUB_FETCH_TIMEOUT_MS) {
+    super(`GitHub fetch exceeded ${timeoutMs} ms.`);
+    this.name = "GitHubTimeoutError";
+    this.status = 504;
+    this.timeoutMs = timeoutMs;
+  }
+}
+
+// fetchWithTimeout wraps the global fetch with an AbortController
+// scheduled to fire at `timeoutMs`. On abort, the underlying fetch
+// rejects with an AbortError DOMException; we re-throw that as a
+// GitHubTimeoutError so callers can branch on a typed error.
+//
+// Callers MUST NOT pass their own `signal` in `init` — the helper
+// owns the signal slot. None of the call sites in this file do.
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit = {},
+  timeoutMs: number = GITHUB_FETCH_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (err) {
+    if ((err as { name?: string } | undefined)?.name === "AbortError") {
+      throw new GitHubTimeoutError(timeoutMs);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -60,7 +110,7 @@ async function signAppJwt(env: Env): Promise<string> {
 export async function getInstallationToken(env: Env): Promise<string> {
   const jwt = await signAppJwt(env);
   const url = `${GITHUB_API}/app/installations/${env.GITHUB_INSTALLATION_ID}/access_tokens`;
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${jwt}`,
@@ -91,7 +141,7 @@ interface GraphQLResponse<T> {
 }
 
 async function graphql<T>(token: string, query: string, variables: Record<string, unknown>): Promise<T> {
-  const res = await fetch(`${GITHUB_API}/graphql`, {
+  const res = await fetchWithTimeout(`${GITHUB_API}/graphql`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
