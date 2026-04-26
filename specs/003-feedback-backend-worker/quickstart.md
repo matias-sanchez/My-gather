@@ -18,32 +18,26 @@ End-to-end walkthrough to deploy the Worker, wire the report, and verify.
    - **App name**: `My-gather Feedback` (unique across GitHub — add a suffix if taken)
    - **Homepage URL**: `https://github.com/matias-sanchez/My-gather`
    - **Webhook**: **uncheck "Active"** — we don't need webhooks
-   - **Repository permissions → Discussions**: `Read and write`
+   - **Repository permissions → Issues**: `Read and write`
    - **Where can this GitHub App be installed**: **Only on this account**
 3. Click **Create GitHub App**. Note the `App ID` (numeric, e.g. `234567`) shown on the settings page.
 4. Scroll down, click **Generate a private key**. A `.pem` file downloads. Keep it — we'll upload it to Cloudflare in Step 1.4.
 5. Click **Install App** in the left sidebar. Install on `matias-sanchez` → "Only select repositories" → pick `My-gather`.
 6. After install, the URL is `https://github.com/settings/installations/<ID>`. Note the `<ID>` — this is the `GITHUB_INSTALLATION_ID`.
 
-### Step 1.2 — Fetch repo + category GraphQL IDs
+### Step 1.2 — Create the five labels in the repo
+
+The Worker applies labels by *name* in `POST /repos/.../issues`. The names must already exist on the repo or GitHub returns 422. One-time, with a PAT that has `repo` scope (or run from the GitHub UI):
 
 ```bash
-# Run with a PAT that has `read:discussion` scope (this is separate from the App).
-# One-time only; not needed at runtime.
-gh api graphql -f query='
-  query($owner: String!, $name: String!) {
-    repository(owner: $owner, name: $name) {
-      id
-      discussionCategories(first: 20) {
-        nodes { id name slug }
-      }
-    }
-  }' -f owner=matias-sanchez -f name=My-gather
+gh label create feedback        --color "0E8A16" --description "Submitted via Report Feedback dialog"
+gh label create area:ui         --color "1D76DB" --description "Category: UI"
+gh label create area:parser     --color "1D76DB" --description "Category: Parser"
+gh label create area:advisor    --color "1D76DB" --description "Category: Advisor"
+gh label create area:other      --color "1D76DB" --description "Category: Other"
 ```
 
-Record:
-- `repository.id` → `GITHUB_REPO_ID`
-- `discussionCategories.nodes[n].id` where `slug == "ideas"` → `GITHUB_CATEGORY_ID`
+Verify with `gh label list | grep -E '^(feedback|area:)'` — five rows expected.
 
 ### Step 1.3 — Cloudflare setup
 
@@ -60,20 +54,25 @@ From inside `feedback-worker/`:
 ```bash
 wrangler secret put GITHUB_APP_ID               # paste App ID
 wrangler secret put GITHUB_INSTALLATION_ID      # paste install ID
-wrangler secret put GITHUB_REPO_ID              # paste repository node ID
-wrangler secret put GITHUB_CATEGORY_ID          # paste ideas category node ID
 wrangler secret put R2_PUBLIC_URL_PREFIX        # paste R2 public URL
 wrangler secret put GITHUB_APP_PRIVATE_KEY < ~/Downloads/my-gather-feedback.*.pem
 ```
 
+Four secrets total. The previous design also stored `GITHUB_REPO_ID` and `GITHUB_CATEGORY_ID` (GraphQL node IDs); the REST flow does not need either — the repo is identified by `:owner/:repo` in the URL (config var, see next step) and the labels are matched by name.
+
 ### Step 1.5 — `wrangler.toml`
 
-Update `feedback-worker/wrangler.toml` with the KV + R2 bindings:
+Update `feedback-worker/wrangler.toml` with the KV + R2 bindings and the public config vars:
 
 ```toml
 name = "my-gather-feedback"
 main = "src/index.ts"
 compatibility_date = "2026-04-24"
+
+[vars]
+GITHUB_REPO       = "matias-sanchez/My-gather"
+FEEDBACK_LABEL    = "feedback"
+AREA_LABEL_PREFIX = "area:"
 
 [[kv_namespaces]]
 binding = "FEEDBACK_RATELIMIT"
@@ -87,6 +86,8 @@ id = "<from step 1.3>"
 binding = "FEEDBACK_ATTACHMENTS"
 bucket_name = "feedback-attachments"
 ```
+
+The `[vars]` block is checked into the repo. None of these values are secrets (the repo is public; the labels are visible in the UI). Keeping them out of source means a fork can repoint the Worker to its own repo with one line and no rebuild.
 
 ### Step 1.6 — First deploy
 
@@ -113,12 +114,12 @@ Record the Worker URL (e.g., `https://my-gather-feedback.<account>.workers.dev`)
 2. Open `/tmp/report-feedback.html` in Chrome.
 3. Click "Report feedback". Fill title + body. Submit.
 4. Within 3 seconds, dialog shows success with a link.
-5. Click the link → GitHub shows the new discussion with the exact title and body.
-6. Delete the test discussion from GitHub when done.
+5. Click the link → GitHub shows the new issue with the exact title and body, tagged `feedback` (and `area:<x>` if a category was selected).
+6. Close (or delete, if you have the rights) the test issue when done.
 
 ### Scenario 2 — With image + voice
 
-Same as 1 but paste a screenshot and record 5 seconds of audio before Submit. Verify the discussion on GitHub shows the image inline and the audio player.
+Same as 1 but paste a screenshot and record 5 seconds of audio before Submit. Verify the issue on GitHub shows the image inline and the audio player.
 
 ### Scenario 3 — Worker down (fallback)
 
@@ -141,6 +142,11 @@ Requests 1–5: `{"ok": true, ...}`. Request 6: `{"ok": false, "error": "rate_li
 
 POST with `title: ""` → 400 `title_required`.
 POST with a 20 MB image (base64 of garbage) → 400 `image_too_large`.
+POST with `image.mime: "image/bmp"` → 400 `image_bad_mime`.
+POST with a 30 MB voice blob (base64 of garbage) → 400 `voice_too_large`.
+POST with `voice.mime: "audio/midi"` → 400 `voice_bad_mime`.
+POST with `category: "Networking"` (not in the enum) → 400 `category_invalid`.
+POST with `idempotencyKey: "not-a-uuid"` → 400 `idempotency_key_invalid`.
 POST with malformed JSON → 400 `malformed_payload`.
 
 ## Tear-down (if abandoning the feature)
