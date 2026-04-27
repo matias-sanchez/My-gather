@@ -294,10 +294,10 @@ WRITE_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/d
   /^\+.*os\.RemoveAll([^[:alnum:]_]|$)/     { print file ": os.RemoveAll" }
   /^\+.*os\.WriteFile([^[:alnum:]_]|$)/     { print file ": os.WriteFile" }
   /^\+.*ioutil\.WriteFile([^[:alnum:]_]|$)/ { print file ": ioutil.WriteFile" }
-  /^\+[[:space:]]+([A-Za-z][A-Za-z0-9_]*|\.)[[:space:]]+"os"/                  { print file ": aliased import of \"os\" (alias may hide WriteFile/Create/Mkdir/Rename/Remove)" }
-  /^\+[[:space:]]+([A-Za-z][A-Za-z0-9_]*|\.)[[:space:]]+"io\/ioutil"/          { print file ": aliased import of \"io/ioutil\" (alias may hide WriteFile)" }
-  /^\+import[[:space:]]+([A-Za-z][A-Za-z0-9_]*|\.)[[:space:]]+"os"/            { print file ": aliased import of \"os\" (single-line; alias may hide WriteFile/Create/Mkdir/Rename/Remove)" }
-  /^\+import[[:space:]]+([A-Za-z][A-Za-z0-9_]*|\.)[[:space:]]+"io\/ioutil"/    { print file ": aliased import of \"io/ioutil\" (single-line; alias may hide WriteFile)" }
+  /^\+[[:space:]]+([A-Za-z][A-Za-z0-9_]*|_[A-Za-z0-9_]+|\.)[[:space:]]+"os"/                  { print file ": aliased import of \"os\" (alias may hide WriteFile/Create/Mkdir/Rename/Remove)" }
+  /^\+[[:space:]]+([A-Za-z][A-Za-z0-9_]*|_[A-Za-z0-9_]+|\.)[[:space:]]+"io\/ioutil"/          { print file ": aliased import of \"io/ioutil\" (alias may hide WriteFile)" }
+  /^\+import[[:space:]]+([A-Za-z][A-Za-z0-9_]*|_[A-Za-z0-9_]+|\.)[[:space:]]+"os"/            { print file ": aliased import of \"os\" (single-line; alias may hide WriteFile/Create/Mkdir/Rename/Remove)" }
+  /^\+import[[:space:]]+([A-Za-z][A-Za-z0-9_]*|_[A-Za-z0-9_]+|\.)[[:space:]]+"io\/ioutil"/    { print file ": aliased import of \"io/ioutil\" (single-line; alias may hide WriteFile)" }
 ')"
 if [ -n "$WRITE_HITS" ]; then
   while IFS= read -r line; do
