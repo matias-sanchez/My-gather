@@ -98,10 +98,9 @@ func ruleConfigMaxConnectionsHigh(r *model.Report) Finding {
 //	log_bin = OFF                                    → INFO (binlog disabled — different scenario)
 //
 // "Replication is configured" is detected via `server_id != 0` AND
-// (`gtid_mode != OFF` OR a non-empty `binlog_format`); both are
-// captured in pt-stalk's variables snapshot. False negatives are
-// safer than false positives: the WARN tier still flags a mis-set
-// sync_binlog independently.
+// `gtid_mode != OFF`; see isReplicationConfigured for rationale.
+// False negatives are safer than false positives: the WARN tier
+// still flags a mis-set sync_binlog independently.
 func ruleConfigSyncBinlogNotOne(r *model.Report) Finding {
 	logBinRaw, hasLogBin := variableRaw(r, "log_bin")
 	if hasLogBin {
