@@ -15,3 +15,4 @@ dist/
 .claude/pre-review.log
 .claude/agent-memory/
 .claude/scheduled_tasks.lock
+.claude/worktrees/
