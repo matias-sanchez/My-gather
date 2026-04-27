@@ -56,17 +56,18 @@ type RuleDefinition struct {
 	// registry metadata. It is the canonical title used by static
 	// rule listings (the rules catalogue), and it is also the value
 	// the registered Run function SHOULD return as Finding.Title.
-	// The quality harness enforces the match for native registrations
-	// (TestRuleQuality_RegistryMatchesEmittedFinding); legacy-adapter
-	// entries can diverge until they are migrated.
+	// Drift between this field and the rendered Finding.Title is
+	// not yet enforced by the quality harness; a future cross-check
+	// (driven by Registry()) will pin native registrations.
 	Title string
 
 	// FormulaText is the symbolic formula or threshold the rule
-	// applies. Must be non-empty (enforced by the quality test). It
-	// is the canonical text used by the rules catalogue and is the
-	// value the registered Run function SHOULD return as
-	// Finding.FormulaText; the quality harness enforces the match
-	// for native registrations.
+	// applies. Must be non-empty (enforced by TestRuleQuality_-
+	// MetadataIsComplete). It is the canonical text used by the
+	// rules catalogue and is the value the registered Run function
+	// SHOULD return as Finding.FormulaText; like Title, the
+	// per-Finding match is left to a future cross-check rather
+	// than enforced today.
 	FormulaText string
 
 	// MinRecommendations is the minimum number of remediation steps

@@ -232,9 +232,10 @@ func ruleConfigSyncBinlogNotOne(r *model.Report) Finding {
 // If gtid_mode is absent or OFF, the rule conservatively returns
 // false even when binlog_format is set; the worst-case is missing a
 // CRIT escalation on a classic file-position replica, which the WARN
-// branch still surfaces. The previous looser implementation
-// (binlog_format != "" was sufficient) misclassified standalone 8.0
-// servers as replicas — flagged by Codex on PR #32 round 1.
+// branch still surfaces. A looser earlier draft treated any non-empty
+// binlog_format as evidence of replication, which misclassified every
+// standalone 8.0 instance (binlog_format=ROW is the default) as a
+// replica.
 func isReplicationConfigured(r *model.Report) bool {
 	serverID, ok := variableFloat(r, "server_id")
 	if !ok || serverID == 0 {
