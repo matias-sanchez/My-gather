@@ -42,4 +42,4 @@ description: "Task list for Agent Context Alignment implementation"
 - [x] T011 [US3] Run
   `go test ./tests/coverage -run AgentAlignment -count=1`.
 - [x] T012 Run `go test ./... -count=1`.
-- [ ] T013 Push branch and open PR.
+- [x] T013 Push branch and open PR.
