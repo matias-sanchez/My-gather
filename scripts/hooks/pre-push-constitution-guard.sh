@@ -235,10 +235,19 @@ fi
 # parse/, model/, render/, findings/, and cmd/ for a `net/http`
 # import or net.Dial-style construct. _test.go files are excluded
 # because tests may legitimately exercise an httptest server.
+#
+# Alias resilience: the import-detection pattern matches the literal
+# string "net/http" anywhere on an added line, which catches every
+# import form — block (`\t"net/http"`), single-line
+# (`import "net/http"`), aliased (`import h "net/http"` or
+# `\th "net/http"` inside a block), and dot/blank imports. Without
+# this, an alias like `import h "net/http"` plus `h.Get(...)` would
+# bypass the gate entirely (the call-site patterns below only know
+# about the canonical `http.` prefix). The literal-string match is
+# the only forgery-proof anchor without a full Go parser.
 NET_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'model/*.go' 'render/*.go' 'findings/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/dev/null | awk '
   /^\+\+\+ b\// { file = substr($0, 7); next }
-  /^\+[[:space:]]*"net\/http"/                      { print file ": import \"net/http\" added (block form)" }
-  /^\+[[:space:]]*import[[:space:]]+"net\/http"/    { print file ": import \"net/http\" added (single-line form)" }
+  /^\+.*"net\/http"/                                 { print file ": import \"net/http\" added (any form: block, single-line, aliased, dot, blank)" }
   /^\+.*net\.Dial[A-Za-z]*\(/                        { print file ": net.Dial* call added" }
   /^\+.*net\.Listen[A-Za-z]*\(/                      { print file ": net.Listen* call added" }
   /^\+.*net\.Lookup[A-Za-z]*\(/                      { print file ": net.Lookup* call added" }
@@ -261,6 +270,20 @@ fi
 # Legitimate writes belong under render/ (the user's -out path) or
 # os.TempDir(); flag everything else for review. _test.go is
 # excluded because tests can write fixtures to t.TempDir().
+#
+# Alias resilience: the call-site patterns require literal `os.` /
+# `ioutil.` prefixes, which means an aliased import (`import fs "os"`
+# or `import . "os"`) plus `fs.WriteFile(...)` / bare `WriteFile(...)`
+# would bypass the gate. We can't recover the alias name without a
+# parser, so we instead flag any aliased import of "os" or
+# "io/ioutil" in the watched paths as a smell that warrants reviewer
+# attention — the canonical import is bare and uses the `os` /
+# `ioutil` identifiers verbatim, so an alias is itself the signal.
+# `_` (blank-import side effects) is intentionally not flagged: it
+# discards exported names and cannot reach WriteFile. `.` (dot
+# import) is flagged because it imports names directly into the
+# package namespace, which would let a bare `WriteFile()` call slip
+# past the literal-prefix patterns below.
 WRITE_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/dev/null | awk '
   /^\+\+\+ b\// { file = substr($0, 7); next }
   /^\+.*os\.Create([^[:alnum:]_]|$)/        { print file ": os.Create" }
@@ -271,6 +294,10 @@ WRITE_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/d
   /^\+.*os\.RemoveAll([^[:alnum:]_]|$)/     { print file ": os.RemoveAll" }
   /^\+.*os\.WriteFile([^[:alnum:]_]|$)/     { print file ": os.WriteFile" }
   /^\+.*ioutil\.WriteFile([^[:alnum:]_]|$)/ { print file ": ioutil.WriteFile" }
+  /^\+[[:space:]]+([A-Za-z][A-Za-z0-9_]*|\.)[[:space:]]+"os"/                  { print file ": aliased import of \"os\" (alias may hide WriteFile/Create/Mkdir/Rename/Remove)" }
+  /^\+[[:space:]]+([A-Za-z][A-Za-z0-9_]*|\.)[[:space:]]+"io\/ioutil"/          { print file ": aliased import of \"io/ioutil\" (alias may hide WriteFile)" }
+  /^\+import[[:space:]]+([A-Za-z][A-Za-z0-9_]*|\.)[[:space:]]+"os"/            { print file ": aliased import of \"os\" (single-line; alias may hide WriteFile/Create/Mkdir/Rename/Remove)" }
+  /^\+import[[:space:]]+([A-Za-z][A-Za-z0-9_]*|\.)[[:space:]]+"io\/ioutil"/    { print file ": aliased import of \"io/ioutil\" (single-line; alias may hide WriteFile)" }
 ')"
 if [ -n "$WRITE_HITS" ]; then
   while IFS= read -r line; do
