@@ -132,6 +132,55 @@ if [ -n "$WATCHED_GO_CHANGED" ] && command -v go >/dev/null 2>&1; then
   fi
 fi
 
+# Rule 5 (Principle XIV, gate 8): no non-English Latin-script letters
+# in checked-in artifacts outside testdata/ and _references/. The
+# pattern targets the UTF-8 byte sequences for the Latin-1 Supplement
+# letter block (00C0-00FF, with U+00D7 multiplication sign and
+# U+00F7 division sign carved out) plus Latin Extended-A (0100-017F).
+# Math symbols, em-dashes, arrows, and emoji do NOT match because
+# their UTF-8 byte sequences fall outside the C3/C4/C5 leading bytes.
+# We force the real GNU grep at /usr/bin/grep when present so an
+# interactive shell that aliases grep to ugrep cannot mask the check.
+#
+# Two existing legitimate uses are exempt by file:line:
+#   - specs/003-feedback-backend-worker/spec.md:6 - verbatim
+#     user-input quote (Spanish), preserved by the spec exemption
+#     ratified at constitution v1.2.0.
+#   - feedback-worker/test/validate.test.ts:69-70 - a UTF-8
+#     byte-counting test fixture that uses a 2-byte rune by
+#     construction.
+#
+# -I tells grep to skip binary files (PNG, etc.).
+ENGLISH_PATTERN='\xC3[\x80-\x96\x98-\xB6\xB8-\xBF]|\xC4[\x80-\xBF]|\xC5[\x80-\xBF]'
+if [ -x /usr/bin/grep ]; then
+  GREP_BIN=/usr/bin/grep
+else
+  GREP_BIN=grep
+fi
+ENGLISH_HITS=()
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    testdata/*|_references/*) continue ;;
+  esac
+  if [ ! -f "$f" ]; then
+    continue
+  fi
+  while IFS= read -r match; do
+    [ -z "$match" ] && continue
+    line_num="${match%%:*}"
+    case "$f:$line_num" in
+      specs/003-feedback-backend-worker/spec.md:6) continue ;;
+      feedback-worker/test/validate.test.ts:69) continue ;;
+      feedback-worker/test/validate.test.ts:70) continue ;;
+    esac
+    ENGLISH_HITS+=("$f:$line_num")
+  done < <("$GREP_BIN" -InP "$ENGLISH_PATTERN" "$f" 2>/dev/null || true)
+done < <(printf '%s\n' "$CHANGED")
+for hit in "${ENGLISH_HITS[@]}"; do
+  VIOLATIONS+=("XIV: non-English Latin-script letter at $hit (Principle XIV requires English-only artifacts; testdata/ and _references/ are exempt; math/typography/emoji pass)")
+done
+
 TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
