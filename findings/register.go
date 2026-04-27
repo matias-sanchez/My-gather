@@ -52,12 +52,21 @@ type RuleDefinition struct {
 	// strings handled by subsystemOrder for deterministic rendering.
 	Subsystem string
 
-	// Title is the short human-readable rule name; mirrors
-	// Finding.Title produced by Run.
+	// Title is the short human-readable rule name recorded in the
+	// registry metadata. It is the canonical title used by static
+	// rule listings (the rules catalogue), and it is also the value
+	// the registered Run function SHOULD return as Finding.Title.
+	// The quality harness enforces the match for native registrations
+	// (TestRuleQuality_RegistryMatchesEmittedFinding); legacy-adapter
+	// entries can diverge until they are migrated.
 	Title string
 
 	// FormulaText is the symbolic formula or threshold the rule
-	// applies. Must be non-empty (enforced by the quality test).
+	// applies. Must be non-empty (enforced by the quality test). It
+	// is the canonical text used by the rules catalogue and is the
+	// value the registered Run function SHOULD return as
+	// Finding.FormulaText; the quality harness enforces the match
+	// for native registrations.
 	FormulaText string
 
 	// MinRecommendations is the minimum number of remediation steps
@@ -79,8 +88,12 @@ type RuleDefinition struct {
 // registry is the deterministically-ordered registry of RuleDefinition
 // entries. Populated at package init by register() helpers in this
 // file and the per-subsystem files that register native rules. The
-// registry is sorted by ID immediately after init so iteration order
-// is stable across runs (Constitution Principle IV).
+// registry is sorted by ID lazily on the first Analyze() call via a
+// sync.Once in findings.go (registrySortOnce). Sorting at init time
+// would race per-file init order — the sort would run before all
+// registrations completed — so we defer to first-use; iteration
+// order is still stable across runs (Constitution Principle IV)
+// because every Analyze call sees the registry post-sort.
 //
 // Migration plan: as of this PR 5 of the 26 shipped rules are native
 // RuleDefinition entries; the remaining 21 are wrapped with
@@ -95,19 +108,33 @@ func register(d RuleDefinition) {
 	registry = append(registry, d)
 }
 
-// legacyAdapter wraps a free-floating rule function in a synthetic
-// RuleDefinition. The metadata (ID, Subsystem, Title, FormulaText,
-// MinRecommendations) is reconstructed by invoking the function on a
-// nil *model.Report and re-introspecting its first non-skip output —
-// since rule functions return SeveritySkip for nil reports, we instead
-// declare the metadata explicitly at the call site. The adapter is a
-// transitional bridge: every call site is removed in a subsequent PR
-// when the underlying rule is converted to a native RuleDefinition.
+// Registry returns a sorted-by-ID copy of the rule registry. Intended
+// for external observers (test harnesses, documentation generators)
+// that need to inspect rule metadata without mutating dispatch state.
+// Calling Registry primes the same lazy sort Analyze uses, so the
+// returned slice is in canonical order even on first call.
+func Registry() []RuleDefinition {
+	registrySortOnce.Do(sortRegistry)
+	out := make([]RuleDefinition, len(registry))
+	copy(out, registry)
+	return out
+}
+
+// legacyAdapter wraps a free-floating rule function in a
+// RuleDefinition using metadata supplied explicitly at the call
+// site. It does not invoke or introspect the wrapped function;
+// callers must provide the ID, Subsystem, Title, FormulaText,
+// Severity, and MinRecommendations for the resulting definition.
+// The adapter is a transitional bridge: each call site is removed
+// once the underlying rule is converted to a native RuleDefinition
+// in the per-subsystem file.
 //
-// The adapter is intentionally minimal: it does not provide
-// FormulaText (callers must supply it) — both because the quality
-// harness rejects empty FormulaText and because the symbolic formula
-// is already encoded inside each rule function's returned Finding.
+// The adapter is intentionally minimal: callers must supply
+// FormulaText, both because the quality harness rejects empty
+// FormulaText and because the symbolic formula is already encoded
+// in the Finding returned by each legacy rule function — declaring
+// it at the call site keeps the registry's rules catalogue aligned
+// with the per-Finding output even for not-yet-migrated rules.
 func legacyAdapter(id, subsystem, title, formulaText string, severity SeverityHint, minRecs int, fn func(*model.Report) Finding) RuleDefinition {
 	return RuleDefinition{
 		ID:                 id,

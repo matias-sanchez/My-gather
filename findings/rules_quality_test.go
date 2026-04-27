@@ -104,23 +104,21 @@ func TestRuleQuality_CritRulesHaveEnoughRecommendations(t *testing.T) {
 	}
 }
 
-// TestRuleQuality_FindingHonorsMinRecommendations asserts that when a
-// rule fires non-skip on a fixture, the rendered Finding actually
-// carries at least the declared MinRecommendations. Run() against a
-// nil report returns SeveritySkip for every rule, so this scan is a
-// best-effort sanity check on the declared metadata; per-rule fixture
-// tests in findings_test.go are still the authoritative coverage.
-func TestRuleQuality_FindingHonorsMinRecommendations(t *testing.T) {
+// TestRuleQuality_RunIsNonNilForNatives is a transitional sanity
+// check for native RuleDefinition entries: it confirms that each
+// declared native rule has a non-nil Run pointer (also covered by
+// MetadataIsComplete; this test scaffolds a future migration of the
+// per-Finding cross-check that lives in
+// findings_quality_runtime_test.go in the findings_test external
+// package, where it can use the same fixture-loading pattern as the
+// golden test).
+//
+// Migration plan: as native rules are added or moved to native
+// registration, append their ID to nativeRuleIDs there; the
+// runtime cross-check then exercises them on the example2 fixture
+// via Registry().
+func TestRuleQuality_RunIsNonNilForNatives(t *testing.T) {
 	for _, def := range registry {
-		if def.MinRecommendations <= 0 {
-			continue
-		}
-		// Per-rule fixture tests already exercise the Run path with
-		// realistic inputs; here we just validate that the declared
-		// floor is non-negative and the function pointer is non-nil
-		// (the latter is also checked by MetadataIsComplete; this
-		// test scaffolds the per-Finding check that PR-N+1 will
-		// extend with synthetic inputs that force a fire).
 		if def.Run == nil {
 			t.Errorf("rule %q has nil Run", def.ID)
 		}

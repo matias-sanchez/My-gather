@@ -25,8 +25,8 @@ import (
 // connections.saturation rule.
 //
 // This is the only currently-shipping rule that walks the whole
-// time-series with gaugeMax — a deliberate baseline that PR-33
-// introduces for future time-series rules to follow.
+// time-series with gaugeMax — a deliberate baseline (introduced
+// alongside the rule itself) for future time-series rules to follow.
 func ruleThreadMaxQueueDepth(r *model.Report) Finding {
 	peak, ok := gaugeMax(r, "Threads_running")
 	if !ok || peak <= 0 {
@@ -53,12 +53,22 @@ func ruleThreadMaxQueueDepth(r *model.Report) Finding {
 	switch {
 	case peak >= critAt:
 		sev = SeverityCrit
-		summary = fmt.Sprintf("Threads_running peaked at %s — concurrency saturated (>=%s of max_connections=%s).",
-			formatNum(peak), formatNum(critAt), formatNum(maxConns))
+		if hasMax && maxConns > 0 {
+			summary = fmt.Sprintf("Threads_running peaked at %s — concurrency saturated (>=%s of max_connections=%s).",
+				formatNum(peak), formatNum(critAt), formatNum(maxConns))
+		} else {
+			summary = fmt.Sprintf("Threads_running peaked at %s — concurrency saturated at or beyond the fixed CRIT threshold (%s; %s).",
+				formatNum(peak), formatNum(critAt), floorReason)
+		}
 	case peak >= warnAt:
 		sev = SeverityWarn
-		summary = fmt.Sprintf("Threads_running peaked at %s — at or beyond half of max_connections (%s); queries are starting to queue.",
-			formatNum(peak), formatNum(warnAt))
+		if hasMax && maxConns > 0 {
+			summary = fmt.Sprintf("Threads_running peaked at %s — at or beyond half of max_connections (%s); queries are starting to queue.",
+				formatNum(peak), formatNum(warnAt))
+		} else {
+			summary = fmt.Sprintf("Threads_running peaked at %s — at or beyond the fixed WARN threshold (%s; %s); queries are starting to queue.",
+				formatNum(peak), formatNum(warnAt), floorReason)
+		}
 	}
 	metrics := []MetricRef{
 		{Name: "Threads_running (peak)", Value: peak, Unit: "count", Note: "max across capture window"},
@@ -93,9 +103,9 @@ func ruleThreadMaxQueueDepth(r *model.Report) Finding {
 }
 
 // init registers ruleThreadMaxQueueDepth as a native RuleDefinition.
-// This is the time-series rule shipped in PR-33; it inspects the full
-// Threads_running gauge series across the capture (gaugeMax) rather
-// than just the last sample.
+// This is the first time-series rule shipped through the registry; it
+// inspects the full Threads_running gauge series across the capture
+// (gaugeMax) rather than just the last sample.
 func init() {
 	register(RuleDefinition{
 		ID:                 "thread.max_queue_depth",

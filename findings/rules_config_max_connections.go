@@ -210,26 +210,42 @@ func ruleConfigSyncBinlogNotOne(r *model.Report) Finding {
 }
 
 // isReplicationConfigured reports whether the captured variables
-// suggest the server is part of a replication topology. The detector
-// is intentionally conservative — both server_id != 0 AND a binlog/
-// GTID indicator must be present — so the CRIT escalation in
-// ruleConfigSyncBinlogNotOne does not fire on standalone servers.
+// suggest the server is actively participating in a replication
+// topology, not merely capable of it. The detector is intentionally
+// conservative because the only consumer (ruleConfigSyncBinlogNotOne)
+// uses it to escalate sync_binlog=0 from WARN to CRIT — a false
+// positive there overstates risk on standalone servers.
+//
+// Signals (all must hold):
+//
+//  1. server_id != 0 — the legacy non-replica default is 0; any
+//     non-zero value means the operator has assigned an identity.
+//     Necessary but not sufficient: MySQL 8.0+ ships server_id=1 by
+//     default since 8.0.3, so this alone catches every fresh install.
+//
+//  2. gtid_mode is set and not "OFF" — strongest signal. MySQL only
+//     reports gtid_mode when binlog is on AND the operator opted into
+//     GTID, which is the modern source-of-truth for replication.
+//     binlog_format alone (which defaults to ROW since 8.0.22) is NOT
+//     enough — every standalone 8.0 instance has binlog_format=ROW.
+//
+// If gtid_mode is absent or OFF, the rule conservatively returns
+// false even when binlog_format is set; the worst-case is missing a
+// CRIT escalation on a classic file-position replica, which the WARN
+// branch still surfaces. The previous looser implementation
+// (binlog_format != "" was sufficient) misclassified standalone 8.0
+// servers as replicas — flagged by Codex on PR #32 round 1.
 func isReplicationConfigured(r *model.Report) bool {
 	serverID, ok := variableFloat(r, "server_id")
 	if !ok || serverID == 0 {
 		return false
 	}
-	if g, ok := variableRaw(r, "gtid_mode"); ok {
-		if v := strings.ToUpper(strings.TrimSpace(g)); v != "" && v != "OFF" {
-			return true
-		}
+	g, ok := variableRaw(r, "gtid_mode")
+	if !ok {
+		return false
 	}
-	if f, ok := variableRaw(r, "binlog_format"); ok {
-		if strings.TrimSpace(f) != "" {
-			return true
-		}
-	}
-	return false
+	v := strings.ToUpper(strings.TrimSpace(g))
+	return v != "" && v != "OFF"
 }
 
 // init registers the two new configuration rules added in this PR.
