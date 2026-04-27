@@ -122,7 +122,9 @@ func ruleConfigSyncBinlogNotOne(r *model.Report) Finding {
 					{Name: "log_bin", Value: 0, Unit: "bool", Note: "raw: " + logBinRaw},
 				},
 				Recommendations: []string{
-					"If this is a primary or a server that may ever be promoted, enable log_bin and pick a sensible binlog retention.",
+					"If this is a primary or a server that may ever be promoted, enable log_bin and pick a sensible binlog retention (binlog_expire_logs_seconds, typically 3-7 days).",
+					"Confirm an external mechanism exists for point-in-time recovery: physical backups + binlog replay is the canonical MySQL PITR path, so without log_bin you must have a substitute (e.g. xtrabackup with frequent incrementals, or a logical replica that does have binlog enabled).",
+					"Document log_bin = OFF in the runbook so future operators know that promoting this instance to primary without first enabling binlog would orphan replicas and prevent PITR for transactions issued before the change.",
 				},
 				Source: "Rosetta Stone — Configuration §Binlog (durability)",
 			}
