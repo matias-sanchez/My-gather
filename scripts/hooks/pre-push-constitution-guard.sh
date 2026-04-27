@@ -181,6 +181,84 @@ for hit in "${ENGLISH_HITS[@]}"; do
   VIOLATIONS+=("XIV: non-English Latin-script letter at $hit (Principle XIV requires English-only artifacts; testdata/ and _references/ are exempt; math/typography/emoji pass)")
 done
 
+# Rule 6 (Principle XII / Principle I): suspicious build tags on
+# non-test .go files. `// +build ...` (legacy syntax) is a smell.
+# `//go:build cgo` is a hard block under Principle I (no CGO).
+# Any other `//go:build <foo>` warrants reviewer attention because
+# Principle XII forbids build tags that diverge runtime behaviour
+# between platforms except where genuinely unavoidable
+# (path/filepath is the only documented allowlist entry).
+TAG_HITS="$(git diff "$RANGE" -- '*.go' ':!*_test.go' 2>/dev/null | awk '
+  /^\+\+\+ b\// { file = substr($0, 7); next }
+  /^\+\/\/ \+build / { print "P2|XII|" file ": legacy build tag (// +build), use //go:build instead" }
+  /^\+\/\/go:build / {
+    tag = $0
+    sub(/^\+\/\/go:build /, "", tag)
+    if (tag ~ /(^|[ |&!()])cgo($|[ |&!()])/) {
+      print "P1|I|" file ": //go:build cgo violates Principle I (no CGO in shipped binary)"
+    } else {
+      print "P2|XII|" file ": //go:build " tag " - Principle XII reviewer attention required (no allowlist match)"
+    }
+  }
+')"
+if [ -n "$TAG_HITS" ]; then
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    sev="${line%%|*}"
+    rest="${line#*|}"
+    principle="${rest%%|*}"
+    msg="${rest#*|}"
+    VIOLATIONS+=("$sev - $principle: $msg")
+  done <<< "$TAG_HITS"
+fi
+
+# Rule 7 (Principle IX): no outbound network in the Go release path.
+# The feedback-worker (TypeScript) is the only sanctioned outbound
+# path; the Go binary stays offline. We grep added lines under
+# parse/, model/, render/, findings/, and cmd/ for a `net/http`
+# import or net.Dial-style construct. _test.go files are excluded
+# because tests may legitimately exercise an httptest server.
+NET_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'model/*.go' 'render/*.go' 'findings/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/dev/null | awk '
+  /^\+\+\+ b\// { file = substr($0, 7); next }
+  /^\+[[:space:]]*"net\/http"/         { print file ": import \"net/http\" added" }
+  /^\+[[:space:]]*"net"[[:space:]]*$/  { print file ": import \"net\" added" }
+  /^\+.*net\.Dial/                      { print file ": net.Dial call added" }
+  /^\+.*http\.Get\(/                    { print file ": http.Get call added" }
+  /^\+.*http\.Post\(/                   { print file ": http.Post call added" }
+  /^\+.*http\.NewRequest/               { print file ": http.NewRequest call added" }
+  /^\+.*http\.Client\{/                 { print file ": http.Client constructor added" }
+')"
+if [ -n "$NET_HITS" ]; then
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    VIOLATIONS+=("P1 - IX: $line (Principle IX forbids network in the Go release path; the feedback-worker is the only outbound path)")
+  done <<< "$NET_HITS"
+fi
+
+# Rule 8 (Principle II): no writes inside the input-reading path.
+# parse/ and cmd/ MUST NOT call os.Create / os.Mkdir(All) / os.Rename
+# / os.Remove / os.RemoveAll / os.WriteFile / ioutil.WriteFile.
+# Legitimate writes belong under render/ (the user's -out path) or
+# os.TempDir(); flag everything else for review. _test.go is
+# excluded because tests can write fixtures to t.TempDir().
+WRITE_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/dev/null | awk '
+  /^\+\+\+ b\// { file = substr($0, 7); next }
+  /^\+.*os\.Create\b/        { print file ": os.Create" }
+  /^\+.*os\.Mkdir\b/          { print file ": os.Mkdir" }
+  /^\+.*os\.MkdirAll\b/       { print file ": os.MkdirAll" }
+  /^\+.*os\.Rename\b/         { print file ": os.Rename" }
+  /^\+.*os\.Remove\b/         { print file ": os.Remove" }
+  /^\+.*os\.RemoveAll\b/      { print file ": os.RemoveAll" }
+  /^\+.*os\.WriteFile\b/      { print file ": os.WriteFile" }
+  /^\+.*ioutil\.WriteFile\b/  { print file ": ioutil.WriteFile" }
+')"
+if [ -n "$WRITE_HITS" ]; then
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    VIOLATIONS+=("P2 - II: $line (Principle II forbids writes in the input-reading path; legitimate writes belong in render/ under \$TMPDIR or the user's -out path - annotate the line if intentional)")
+  done <<< "$WRITE_HITS"
+fi
+
 TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
