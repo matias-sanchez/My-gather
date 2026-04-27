@@ -59,7 +59,7 @@ func init() {
 		Subsystem:          "Query Shape",
 		Title:              "Joins without usable indexes",
 		FormulaText:        "Select_full_join/s > 0",
-		MinRecommendations: 1,
+		MinRecommendations: 2,
 		Severity:           SeverityHintVariable,
 		Run:                ruleFullScanSelectFullJoin,
 	})
@@ -75,9 +75,9 @@ func init() {
 	register(RuleDefinition{
 		ID:                 "queryshape.is_processlist",
 		Subsystem:          "Query Shape",
-		Title:              "information_schema.processlist abuse",
-		FormulaText:        "Deprecated_use_i_s_processlist_count/s > 0",
-		MinRecommendations: 1,
+		Title:              "information_schema.PROCESSLIST usage",
+		FormulaText:        "Deprecated_use_i_s_processlist_count/s",
+		MinRecommendations: 2,
 		Severity:           SeverityHintVariable,
 		Run:                ruleProcesslistAbuse,
 	})
