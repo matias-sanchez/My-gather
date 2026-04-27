@@ -12,8 +12,8 @@ func TestThreadMaxQueueDepth(t *testing.T) {
 		wantSev  Severity
 	}{
 		{"skip_when_zero", 0, "500", SeveritySkip},
-		{"ok_low_peak", 50, "500", SeverityOK},   // peak < 250 (max/2)
-		{"warn_half", 260, "500", SeverityWarn},  // peak >= 250 (max/2) but < 450 (max*0.9)
+		{"ok_low_peak", 50, "500", SeverityOK},      // peak < 250 (max/2)
+		{"warn_half", 260, "500", SeverityWarn},     // peak >= 250 (max/2) but < 450 (max*0.9)
 		{"crit_near_max", 460, "500", SeverityCrit}, // peak >= 450
 		// Fallback path (max_connections absent): warn at 50, crit at 200.
 		{"fallback_warn", 75, "", SeverityWarn},

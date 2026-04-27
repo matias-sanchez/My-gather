@@ -253,4 +253,3 @@ func init() {
 		Run:                ruleConfigSyncBinlogNotOne,
 	})
 }
-

@@ -107,4 +107,3 @@ func init() {
 		Run:                ruleThreadMaxQueueDepth,
 	})
 }
-
