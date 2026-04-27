@@ -66,7 +66,7 @@ idle ──(click Record, getUserMedia ok)──▶ recording
 idle ◀──(click Record, getUserMedia fail)── idle (error visible)
 
 recording ──(click Stop)──▶ idle (voiceBlob set)
-recording ──(120s cap)────▶ idle (voiceBlob set)
+recording ──(600s cap)────▶ idle (voiceBlob set)
 recording ──(dialog close)─▶ idle (stream stopped, no blob kept)
 ```
 

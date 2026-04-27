@@ -434,3 +434,16 @@ A mechanical pass compared every task ID against the real repository state for t
 - Consider whether the "two supported pt-stalk versions" clause in FR-024 is worth the fixture duplication (T019 ×2 + 14 golden pairs) for the MVP. If the team would accept tracking only the current stable for v1, amend FR-024 and trim the T019 scope.
 
 Status at this checkpoint: **MVP binary is functional and demoable; test suite needs completion before `/speckit-implement` declares Phase 7 polished.**
+
+---
+
+## Post-MVP enhancements (retroactively documented, 2026-04-27)
+
+These additions landed without a spec amendment between Phase 6 polish and the start of feature 002. They are documented here so the spec set + tasks tracking matches the shipped binary on `main`. Each is `[x]` because the corresponding code, tests, fixtures, and goldens are already on main.
+
+- [x] **TPM-1** Add the `Environment` top-level section (commit `0790e17`, PR #13). New `EnvironmentSection` type in `model/environment.go` (with `model/sections.go` holding the `Report` struct that references it), new `render/environment.go` + `render/templates/environment.html.tmpl`, fixture wiring in `testdata/example2/`. Renders first per FR-005's revised order. Surfaces host, kernel, CPU, memory, MySQL version, data-dir, key runtime variables — the highest-signal slice when an engineer opens a fresh capture (Principle XI).
+- [x] **TPM-2** Add the `meminfo` collector (commit `6e2c150`, mid-feature). New `parse/meminfo.go` + `model.SuffixMeminfo`. Powers a dedicated memory chart in the OS Usage section. Fixture + golden under `testdata/example2/` and `testdata/golden/`. The companion vmstat resource-saturation view stays — the two are complementary (absolute values vs rates).
+- [x] **TPM-3** Add the `netstat` collector (commit `0790e17`, PR #13). New `parse/netstat.go` + `model.SuffixNetstat`. Per-sample socket dump (`ss` / `netstat -an`); fixture + golden committed.
+- [x] **TPM-4** Add the `netstat_s` collector (commit `0790e17`, PR #13). New `parse/netstat_s.go` + `model.SuffixNetstatS`. Aggregate kernel counters (`netstat -s`); fixture + golden committed. Round-trip determinism verified by the existing CI determinism test against `testdata/example2/`.
+
+These four tasks satisfy spec FR-005 (revised to five sections), the Assumptions block (revised to ten suffixes), and `data-model.md` (revised `Suffix` enum + `Report` section pointers). No new principle violations; all four follow Principles IV (deterministic render), VIII (fixture + golden), and X (zero new third-party dependencies — stdlib-only parsers).

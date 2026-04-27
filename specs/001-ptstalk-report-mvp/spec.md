@@ -232,11 +232,18 @@ matching their respective golden files.
 - **FR-004**: The generated HTML file MUST be renderable in a modern
   browser with no network access of any kind: no CDN fetches, no remote
   fonts, no analytics beacons, no image URLs that resolve off-document.
-- **FR-005**: The report MUST contain exactly four top-level sections,
-  in this order: "OS Usage", "Variables", "Database Usage", "Advisor".
-  The first three sections surface captured pt-stalk data; the fourth
-  surfaces rule-based interpretive findings computed by the `findings/`
-  package (see FR-042).
+- **FR-005**: The report MUST contain five top-level sections,
+  in this order: "Environment", "OS Usage", "Variables", "Database
+  Usage", "Advisor". The first four sections surface captured
+  pt-stalk data; the fifth surfaces rule-based interpretive
+  findings computed by the `findings/` package (see FR-042).
+  The "Environment" section landed post-MVP in commit `0790e17`
+  ("feat: post-MVP enhancements bundle", PR #13) — the original
+  MVP shipped with four sections; the section now appears first
+  because trigger context (host, kernel, MySQL version, key
+  runtime variables, time-stamped) is the highest-signal slice
+  for a support engineer opening a fresh capture under pressure
+  (Principle XI).
 - **FR-006**: For a given input directory, two consecutive runs of the
   tool MUST produce byte-identical output files, except for a single
   "Report generated at" timestamp that the report explicitly labels as
@@ -681,13 +688,20 @@ matching their respective golden files.
   samples. Supported pt-stalk formats are limited to the current
   Percona Toolkit stable release and the immediately preceding minor
   release in the same major line (see FR-024); other forks are best-effort only.
-- The MVP supports eight source-file suffixes: `-iostat`, `-top`,
+- The MVP supports ten source-file suffixes: `-iostat`, `-top`,
   `-variables`, `-vmstat`, `-innodbstatus1`, `-mysqladmin`,
-  `-processlist`, and `-meminfo`. The original draft scoped seven
-  collectors; `-meminfo` was added mid-feature (commit 6e2c150) to
-  give the OS-Usage section a dedicated memory chart. Other pt-stalk
-  collectors (e.g., `-disk-space`, `-slave-status`) remain out of
-  scope for this feature and will be added in subsequent features.
+  `-processlist`, `-meminfo`, `-netstat`, and `-netstat_s`. The
+  original draft scoped seven collectors; `-meminfo` was added
+  mid-feature (commit `6e2c150`) to give the OS-Usage section a
+  dedicated memory chart. The two `-netstat*` collectors landed
+  post-MVP in commit `0790e17` ("feat: post-MVP enhancements
+  bundle", PR #13) — `-netstat` is a per-sample socket dump
+  (`ss` / `netstat -an`) and `-netstat_s` is the aggregate
+  kernel counter view (`netstat -s`); see `model/model.go`
+  `KnownSuffixes` for the canonical render order. Other pt-stalk
+  collectors (e.g., `-disk-space`, `-slave-status`) remain out
+  of scope for this feature and will be added in subsequent
+  features.
 - The MEMORY element of "OS Usage — CPU/DISK/MEMORY" is served by the
   dedicated `-meminfo` chart plus the `-vmstat` resource-saturation
   view (which also covers free/cached memory and swap activity). The

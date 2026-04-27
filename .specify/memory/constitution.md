@@ -1,6 +1,48 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.3.0 → 1.3.1
+Bump rationale: PATCH-level wording clarification on the Development
+  Workflow & Quality Gates section. Each of the 8 merge gates is now
+  labelled [MECHANICAL] (enforced by CI or the pre-push hook) or
+  [REVIEW] (enforced by human review against the constitution). No
+  forbidden / required behaviour changes; nothing already-compliant
+  becomes non-compliant. The labels make it honest which gates the
+  repo enforces with code today vs. which rely on reviewer judgement,
+  surfacing where a future tooling investment (e.g., extending
+  scripts/hooks/pre-push-constitution-guard.sh) would close the gap.
+  Audit on main @ 1cc3459 (chore/spec-audit-reconciliation, 2026-04-27)
+  drove the clarification.
+
+Added principles: none.
+
+Modified principles: none.
+
+Modified sections:
+  - Development Workflow & Quality Gates → each of the 8 gates gains
+    a [MECHANICAL] / [REVIEW] tag in its leading line. Intro paragraph
+    above the list adds one sentence explaining the tag convention.
+    Gate text is unchanged.
+
+Downstream cleanups folded into this amendment: none.
+
+Templates requiring updates:
+  - .specify/templates/plan-template.md      ✅ compatible
+  - .specify/templates/spec-template.md      ✅ compatible
+  - .specify/templates/tasks-template.md     ✅ compatible
+  - .specify/templates/checklist-template.md ✅ compatible
+  - .claude/skills/speckit-*/                ✅ compatible
+  - .claude/agents/pre-review-constitution-guard.md ✅ compatible
+    (the agent's principle-walk does not depend on gate-tag prose)
+
+Deferred items / follow-up TODOs: none. Future amendment may extend
+  pre-push hook + CI lint coverage to convert REVIEW gates into
+  MECHANICAL gates (godoc on exports, canonical-path duplicate scan,
+  English-only ASCII grep) — that would be its own MINOR amendment
+  with the new mechanical checks landing alongside the wording.
+
+Prior Sync Impact Report (1.3.0) follows for history:
+-----------------------------------------------------
 Version change: 1.2.0 → 1.3.0
 Bump rationale: MINOR-level named exception added to Principle IX
   (Zero Network at Runtime). The exception permits a single outbound
@@ -359,28 +401,63 @@ the git commit, and the build date, sourced via `-ldflags` at link time.
 
 ## Development Workflow & Quality Gates
 
-The following gates MUST pass before any change is merged:
+The following gates MUST pass before any change is merged. Each gate is
+tagged **[MECHANICAL]** (enforced by CI in `.github/workflows/` or by
+`scripts/hooks/pre-push-constitution-guard.sh`, blocking the change
+without human action) or **[REVIEW]** (enforced by human review against
+this constitution; the repo currently has no mechanical check that
+catches a violation). A gate may carry a partial / mixed tag
+(e.g. **[MECHANICAL — partial]** combined with an inline **[REVIEW]**
+on the un-mechanised sub-rules) when only one half of its scope is
+caught by tooling — gate 6 is the current instance. The tag tells
+you whether you can rely on tooling to catch a regression, or whether
+reviewer attention is the only line of defence:
 
-1. `go vet ./...` and `go test ./...` succeed on all supported platforms
-   exercised in CI.
-2. Every new or modified parser ships with its fixture and golden file
-   (Principle VIII).
-3. Determinism check: a test re-runs report generation twice on the same
-   fixture set and asserts byte-identical output (Principle IV).
-4. No new direct dependency is added without a justification entry in the
-   corresponding `plan.md` (Principle X).
-5. Exported identifiers added or changed have godoc comments describing
-   their contract (Principle VI).
-6. No build introduces a CGO requirement, a network call at runtime, or a
-   write under the input tree (Principles I, IX, II).
-7. No change leaves a duplicated or fallback implementation of an existing
-   behaviour in place (Principle XIII). Replaced functions, types, and
-   code paths MUST be deleted in the same change; internal re-exports and
-   compatibility shims after a rename are prohibited.
-8. No change introduces non-English content into any checked-in artifact
-   outside `testdata/` and `_references/` (Principle XIV). Source code,
-   comments, commit messages, branch names, specs, docs, `.claude/` agent
-   and skill definitions, and shell scripts MUST be English-only.
+1. **[MECHANICAL]** `go vet ./...` and `go test ./...` succeed on all
+   supported platforms exercised in CI.
+2. **[MECHANICAL]** Every new or modified parser ships with its fixture
+   and golden file (Principle VIII). New collector parsers are caught by
+   `scripts/hooks/pre-push-constitution-guard.sh` (the `COLLECTOR_PARSERS`
+   list); behavioural changes to existing parsers are mechanically caught
+   by CI when their golden tests fail unless the golden is updated, with
+   review covering the remaining governance expectation (intentional
+   vs. accidental output drift, fixture-coverage of new code paths).
+3. **[MECHANICAL]** Determinism check: a test re-runs report generation
+   twice on the same fixture set and asserts byte-identical output
+   (Principle IV). The CI determinism job allows up to two diff lines —
+   the `Report generated at` timestamp is the only legal drift.
+4. **[MECHANICAL]** No new direct dependency is added without a
+   justification entry in the corresponding `plan.md` (Principle X). The
+   pre-push hook scans new `go.mod require` entries for a matching
+   citation.
+5. **[REVIEW]** Exported identifiers added or changed have godoc
+   comments describing their contract (Principle VI). Reviewers verify
+   on the diff; no mechanical check today.
+6. **[MECHANICAL — partial]** No build introduces a CGO requirement
+   (Principle I, mechanically enforced by the pre-push hook scanning for
+   `import "C"`); **[REVIEW]** for the network-call-at-runtime and
+   write-under-the-input-tree halves of the gate (Principles IX, II) —
+   reviewers verify that no new `net/http` client or `os.Create` /
+   `os.Mkdir` / `os.Rename` lands in `cmd/`, `parse/`, `model/`, `render/`,
+   `findings/`.
+7. **[REVIEW]** No change leaves a duplicated or fallback implementation
+   of an existing behaviour in place (Principle XIII). Replaced
+   functions, types, and code paths MUST be deleted in the same change;
+   internal re-exports and compatibility shims after a rename are
+   prohibited. Reviewers verify on the diff; no mechanical check today.
+8. **[REVIEW]** No change introduces non-English content into any
+   checked-in artifact outside `testdata/` and `_references/`
+   (Principle XIV). Source code, comments, commit messages, branch
+   names, specs, docs, `.claude/` agent and skill definitions, and shell
+   scripts MUST be English-only. Reviewers verify on the diff; no
+   mechanical check today.
+
+The MECHANICAL / REVIEW split documents what the repo enforces with code
+today, not the strictness of each gate — every gate is equally
+non-negotiable for a merge. Future amendments may convert REVIEW gates
+into MECHANICAL ones by extending the pre-push hook or CI; the
+constitution does not require that, but the absence of mechanical teeth
+on a REVIEW gate is a useful signal for reviewers reading a diff.
 
 Reviewers MUST reject changes that violate any Core Principle unless the
 change is accompanied by a constitution amendment adopted under the
@@ -413,4 +490,4 @@ invocation via the Constitution Check gate. Runtime development guidance
 and feature-local `plan.md` / `quickstart.md` files and MUST defer to this
 constitution when conflicts arise.
 
-**Version**: 1.3.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-24
+**Version**: 1.3.1 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-27
