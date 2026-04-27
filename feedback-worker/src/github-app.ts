@@ -81,6 +81,21 @@ async function fetchWithTimeout(
   init: RequestInit = {},
   timeoutMs: number = GITHUB_FETCH_TIMEOUT_MS,
 ): Promise<Response> {
+  // Make the "callers MUST NOT pass their own signal" rule above
+  // mechanical: a future call site that supplies one would have its
+  // cancellation silently swallowed by the spread below, which is
+  // exactly the footgun Copilot flagged on PR #30 round 2. Refuse
+  // up-front so the mistake surfaces at runtime instead of as a
+  // silent stall. If a caller ever genuinely needs to compose a
+  // user-cancellation signal with this 10 s budget, that's a
+  // dedicated change to fetchWithTimeout (probably via
+  // AbortSignal.any or an explicit caller-cancel parameter), not a
+  // surprise in the existing helper's contract.
+  if (init.signal !== undefined && init.signal !== null) {
+    throw new TypeError(
+      "fetchWithTimeout owns the AbortSignal slot; callers MUST NOT pass init.signal.",
+    );
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {

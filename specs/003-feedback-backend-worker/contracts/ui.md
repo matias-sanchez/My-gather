@@ -145,7 +145,7 @@ dialog.
 | Worker returned 400/422 | `#feedback-form` (with inline error) | Surface `#feedback-error` with the Worker's `message`. Re-enable `#feedback-submit`. Do NOT fall back. |
 | Worker returned 429 | `#feedback-form` (with inline throttle) | Surface `#feedback-error` with "Rate limit reached. Try again in N minutes." (derived from `retryAfterSeconds` or the `Retry-After` header). Re-enable Submit immediately so the user can retry; the Worker enforces the limit server-side. |
 | Worker returned 409 `duplicate_inflight` | `#feedback-form` (with inline error) | Surface `#feedback-error` with the Worker's `message` ("A previous submission with the same idempotency key is still being processed. Retry in a few seconds."). Re-enable Submit. |
-| Worker returned 5xx (500/503/504), network error, browser timeout | Fallback | Call `window.open(prefillURL, "_blank", "noopener,noreferrer")` exactly once, where `prefillURL` is built from the `data-feedback-url` attribute + `?title=…&body=…&labels=user-feedback,needs-triage`. If the popup is blocked, unhide `#feedback-fallback` so the user can click `Open GitHub manually`. The third `window.open` argument is mandatory — without `noopener` the GitHub tab gets `window.opener` access to the report (a known security regression). |
+| Worker returned 5xx (500/503/504), network error, browser timeout | Fallback | Call `window.open(prefillURL, "_blank", "noopener,noreferrer")` exactly once. `prefillURL` is built from the `data-feedback-url` attribute (which already carries the canonical `?labels=user-feedback,needs-triage` query string — see Determinism contract below) by appending `&title=…&body=…` via `new URL(...).searchParams.set()` so duplicate keys are not introduced. If the popup is blocked, unhide `#feedback-fallback` so the user can click `Open GitHub manually`. The third `window.open` argument is mandatory — without `noopener` the GitHub tab gets `window.opener` access to the report (a known security regression). |
 
 ## JS contract — `app.js` `doSubmit`
 
@@ -199,7 +199,7 @@ The handler must:
 - Focus on error: stays on `#feedback-submit` (re-enabled), the user reads `#feedback-error` and either fixes the offending field or hits Submit again.
 - All buttons MUST be reachable by Tab in source order.
 
-The dialog does NOT use a separate `<section>` per state, so heading-focus management (`tabindex="-1"` on `<h2>`) is not required — the only `<h2>` that ever gains focus is `#feedback-success-link` which is an `<a>` and natively focusable.
+The dialog does NOT use a separate `<section>` per state, so heading-focus management (`tabindex="-1"` on `<h2>`) is not required — no `<h2>` is ever programmatically focused. Focus moves to `#feedback-field-title` on dialog open, to `#feedback-success-link` (an `<a>`, focusable by default) on success, and stays on `#feedback-submit` on error.
 
 ## CSS hooks
 
