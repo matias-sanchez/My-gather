@@ -39,6 +39,22 @@ func ruleFullScanSelectScan(r *model.Report) Finding {
 	}
 }
 
+// init registers ruleFullScanSelectScan as a native RuleDefinition.
+// MinRecommendations is 1 because this rule's INFO/WARN/CRIT outputs
+// share the same two-step remediation list — the symptom is the same;
+// the severity scales with rate.
+func init() {
+	register(RuleDefinition{
+		ID:                 "queryshape.select_scan",
+		Subsystem:          "Query Shape",
+		Title:              "Full table scans on the first join input",
+		FormulaText:        "Select_scan/s > 0  (crit > 10/s)",
+		MinRecommendations: 1,
+		Severity:           SeverityHintVariable,
+		Run:                ruleFullScanSelectScan,
+	})
+}
+
 // ruleFullScanSelectFullJoin flags joins that performed table scans
 // because they do not use indexes.
 // See Rosetta Stone — Part B Select_full_join.
