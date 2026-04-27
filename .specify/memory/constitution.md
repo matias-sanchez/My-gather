@@ -1,6 +1,84 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.3.1 → 1.4.0
+Bump rationale: MINOR-level mechanisation of two previously REVIEW-
+  only gates. Gates 5 (Principle VI godoc-on-exports) and 8
+  (Principle XIV English-only) now flip from [REVIEW] to
+  [MECHANICAL]. Their forbidden / required behaviours are
+  unchanged - the principles still demand exactly what they
+  demanded yesterday - but a regression that previously slipped
+  through to PR review will now fail CI or the pre-push hook
+  before reaching origin. Nothing already-compliant becomes
+  non-compliant; this is a strict tightening of mechanical teeth
+  on existing principles, hence MINOR (per the Governance
+  versioning policy: "MINOR: A new principle or section is added,
+  or existing guidance is materially expanded").
+
+  Concrete checks landed in this PR (chore/pr32-mechanise-review-
+  gates):
+    - Gate 5: tests/coverage/godoc_coverage_test.go AST-walks
+      parse/, model/, render/, findings/ and asserts every
+      exported identifier has a non-empty doc comment. CI invokes
+      it via `go test ./tests/coverage/... -run TestGodocCoverage`
+      in the existing matrix `test` job. The pre-push hook runs
+      the same target locally when the push touches Go files
+      under those packages.
+    - Gate 8: scripts/hooks/pre-push-constitution-guard.sh greps
+      every changed file outside testdata/ and _references/ for
+      UTF-8 byte sequences that encode Latin-1 Supplement letters
+      (00C0-00FF, with U+00D7 multiplication and U+00F7 division
+      carved out) and Latin Extended-A (0100-017F). Math symbols,
+      em-dashes, arrows, and emoji pass; Spanish / French / German
+      / etc. accented letters do not. Two pre-existing legitimate
+      uses are exempt by file:line.
+    - Pre-push hook scope expansion (companion teeth on existing
+      MECHANICAL halves of gate 6): suspicious build tags
+      (Principles I, XII), `net/http` import or net.Dial in the
+      Go release path (Principle IX), and writes inside the
+      input-reading path (Principle II) now block the push.
+
+Added principles: none.
+
+Modified principles: none.
+
+Modified sections:
+  - Development Workflow & Quality Gates -> gates 5 and 8 flip from
+    [REVIEW] to [MECHANICAL] and gain a one-line description of
+    the new check. Gate 6 also flips from [MECHANICAL - partial]
+    to [MECHANICAL] now that the pre-push hook covers all three
+    of its sub-rules (CGO, network in release path, writes in
+    input-reading path) - the new sub-rules land in the same PR
+    that flips gate 5 and gate 8. The intro paragraph keeps its
+    mixed-tag convention sentence as a forward-compatible note;
+    no current gate uses the partial form. The closing paragraph's
+    "future direction" sentence is rewritten to mention only gate
+    7 (canonical code path) as the outstanding REVIEW gate that
+    future amendments may convert.
+
+Downstream cleanups folded into this amendment: none. The
+  mechanisation lands alongside the wording.
+
+Templates requiring updates:
+  - .specify/templates/plan-template.md             compatible
+  - .specify/templates/spec-template.md             compatible
+  - .specify/templates/tasks-template.md            compatible
+  - .specify/templates/checklist-template.md        compatible
+  - .claude/skills/speckit-*/                       compatible
+  - .claude/skills/pr-review-*-my-gather/           compatible
+    (skills reference the constitution by file path, not by gate
+    tag wording or version)
+  - .claude/agents/pre-review-constitution-guard.md compatible
+    (the agent's principle-walk does not depend on gate-tag prose
+    or the MECHANICAL / REVIEW split)
+
+Deferred items / follow-up TODOs: gate 7 (Principle XIII canonical
+  code path) remains REVIEW. A duplicate-implementation scan
+  needs more design work (a static-analysis pass or AST diff
+  rather than a regex) and is deferred to a future amendment.
+
+Prior Sync Impact Report (1.3.1) follows for history:
+-----------------------------------------------------
 Version change: 1.3.0 → 1.3.1
 Bump rationale: PATCH-level wording clarification on the Development
   Workflow & Quality Gates section. Each of the 8 merge gates is now
@@ -409,9 +487,10 @@ this constitution; the repo currently has no mechanical check that
 catches a violation). A gate may carry a partial / mixed tag
 (e.g. **[MECHANICAL — partial]** combined with an inline **[REVIEW]**
 on the un-mechanised sub-rules) when only one half of its scope is
-caught by tooling — gate 6 is the current instance. The tag tells
-you whether you can rely on tooling to catch a regression, or whether
-reviewer attention is the only line of defence:
+caught by tooling. The convention is preserved for use by future
+gates that land in a mixed state. The tag tells you whether you can
+rely on tooling to catch a regression, or whether reviewer attention
+is the only line of defence:
 
 1. **[MECHANICAL]** `go vet ./...` and `go test ./...` succeed on all
    supported platforms exercised in CI.
@@ -430,34 +509,53 @@ reviewer attention is the only line of defence:
    justification entry in the corresponding `plan.md` (Principle X). The
    pre-push hook scans new `go.mod require` entries for a matching
    citation.
-5. **[REVIEW]** Exported identifiers added or changed have godoc
-   comments describing their contract (Principle VI). Reviewers verify
-   on the diff; no mechanical check today.
-6. **[MECHANICAL — partial]** No build introduces a CGO requirement
-   (Principle I, mechanically enforced by the pre-push hook scanning for
-   `import "C"`); **[REVIEW]** for the network-call-at-runtime and
-   write-under-the-input-tree halves of the gate (Principles IX, II) —
-   reviewers verify that no new `net/http` client or `os.Create` /
-   `os.Mkdir` / `os.Rename` lands in `cmd/`, `parse/`, `model/`, `render/`,
-   `findings/`.
+5. **[MECHANICAL]** Exported identifiers added or changed have godoc
+   comments describing their contract (Principle VI). Enforced by
+   `tests/coverage/godoc_coverage_test.go`, an AST-walking test that
+   asserts every exported identifier under `parse/`, `model/`,
+   `render/`, and `findings/` carries a non-empty doc comment. CI
+   invokes it via `go test ./tests/coverage/... -run TestGodocCoverage`
+   in the matrix `test` job, and `scripts/hooks/pre-push-constitution-
+   guard.sh` runs the same target locally when the push touches Go
+   files under those packages.
+6. **[MECHANICAL]** No build introduces a CGO requirement (Principle I,
+   pre-push hook scans for `import "C"` and for `//go:build cgo`),
+   no new `net/http`, `net.Dial`, or `http.Get` / `http.Post` /
+   `http.NewRequest` / `http.Client{}` lands in `cmd/`, `parse/`,
+   `model/`, `render/`, or `findings/` (Principle IX, pre-push hook
+   greps the diff), and no `os.Create` / `os.Mkdir` / `os.MkdirAll` /
+   `os.Rename` / `os.Remove` / `os.RemoveAll` / `os.WriteFile` /
+   `ioutil.WriteFile` lands in `parse/` or `cmd/` (Principle II,
+   pre-push hook greps the diff). All three halves now block the
+   push without human action.
 7. **[REVIEW]** No change leaves a duplicated or fallback implementation
    of an existing behaviour in place (Principle XIII). Replaced
    functions, types, and code paths MUST be deleted in the same change;
    internal re-exports and compatibility shims after a rename are
    prohibited. Reviewers verify on the diff; no mechanical check today.
-8. **[REVIEW]** No change introduces non-English content into any
+8. **[MECHANICAL]** No change introduces non-English content into any
    checked-in artifact outside `testdata/` and `_references/`
-   (Principle XIV). Source code, comments, commit messages, branch
-   names, specs, docs, `.claude/` agent and skill definitions, and shell
-   scripts MUST be English-only. Reviewers verify on the diff; no
-   mechanical check today.
+   (Principle XIV). Enforced by a byte-level grep in
+   `scripts/hooks/pre-push-constitution-guard.sh` that catches
+   UTF-8 sequences encoding Latin-1 Supplement letters
+   (00C0–00FF, with U+00D7 multiplication and U+00F7 division
+   carved out) and Latin Extended-A (0100–017F). Math symbols,
+   em-dashes, arrows, and emoji pass; Spanish / French / German /
+   etc. accented letters do not. Two pre-existing legitimate uses
+   (the verbatim user-input quote at
+   `specs/003-feedback-backend-worker/spec.md:6` and the UTF-8
+   byte-counting test fixture at
+   `feedback-worker/test/validate.test.ts:69-70`) are exempt by
+   file:line.
 
 The MECHANICAL / REVIEW split documents what the repo enforces with code
 today, not the strictness of each gate — every gate is equally
-non-negotiable for a merge. Future amendments may convert REVIEW gates
-into MECHANICAL ones by extending the pre-push hook or CI; the
-constitution does not require that, but the absence of mechanical teeth
-on a REVIEW gate is a useful signal for reviewers reading a diff.
+non-negotiable for a merge. As of v1.4 only gate 7 (Principle XIII
+canonical code path) remains [REVIEW]; a future amendment may convert
+it once a duplicate-implementation scan is designed. The constitution
+does not require that conversion, but the absence of mechanical teeth
+on the one remaining REVIEW gate is a useful signal for reviewers
+reading a diff that touches existing behaviour.
 
 Reviewers MUST reject changes that violate any Core Principle unless the
 change is accompanied by a constitution amendment adopted under the
@@ -490,4 +588,4 @@ invocation via the Constitution Check gate. Runtime development guidance
 and feature-local `plan.md` / `quickstart.md` files and MUST defer to this
 constitution when conflicts arise.
 
-**Version**: 1.3.1 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-27
+**Version**: 1.4.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-27

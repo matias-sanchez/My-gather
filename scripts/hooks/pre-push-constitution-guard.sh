@@ -110,6 +110,225 @@ if [ -n "$CGO_HITS" ]; then
   VIOLATIONS+=("I: CGO reintroduced (import \"C\") — Principle I forbids CGO in shipped code")
 fi
 
+# Rule 4 (Principle VI, gate 5): every exported identifier under
+# parse/, model/, render/, findings/ has a godoc comment. Delegated
+# to the AST-walking test under tests/coverage/. Runs only when Go
+# files in the watched packages are touched in this push, so the
+# common case (docs-only or spec-only push) stays cheap.
+WATCHED_GO_CHANGED="$(printf '%s\n' "$CHANGED" | grep -E '^(parse|model|render|findings)/.*\.go$' || true)"
+if [ -n "$WATCHED_GO_CHANGED" ] && command -v go >/dev/null 2>&1; then
+  GODOC_OUT="$(CGO_ENABLED=0 go test ./tests/coverage/... -run TestGodocCoverage -count=1 2>&1)"
+  GODOC_RC=$?
+  if [ "$GODOC_RC" -ne 0 ]; then
+    HAD_HIT=0
+    while IFS= read -r line; do
+      [ -z "$line" ] && continue
+      VIOLATIONS+=("VI: $line")
+      HAD_HIT=1
+    done < <(printf '%s\n' "$GODOC_OUT" | grep -E ':[0-9]+: (.+: )?(function|method|type|identifier)\b' || true)
+    if [ "$HAD_HIT" -eq 0 ]; then
+      VIOLATIONS+=("VI: godoc coverage test failed — re-run \`go test ./tests/coverage/... -run TestGodocCoverage -v\` for the missing-godoc list")
+    fi
+  fi
+fi
+
+# Rule 5 (Principle XIV, gate 8): no non-English Latin-script letters
+# in checked-in artifacts outside testdata/ and _references/. The
+# pattern targets the UTF-8 byte sequences for the Latin-1 Supplement
+# letter block (00C0-00FF, with U+00D7 multiplication sign and
+# U+00F7 division sign carved out) plus Latin Extended-A (0100-017F).
+# Math symbols, em-dashes, arrows, and emoji do NOT match because
+# their UTF-8 byte sequences fall outside the C3/C4/C5 leading bytes.
+# We force the real GNU grep at /usr/bin/grep when present so an
+# interactive shell that aliases grep to ugrep cannot mask the check.
+#
+# Two existing legitimate uses are exempt by file:line:
+#   - specs/003-feedback-backend-worker/spec.md:6 - verbatim
+#     user-input quote (Spanish), preserved by the spec exemption
+#     ratified at constitution v1.2.0.
+#   - feedback-worker/test/validate.test.ts:69-70 - a UTF-8
+#     byte-counting test fixture that uses a 2-byte rune by
+#     construction.
+#
+# -I tells grep to skip binary files (PNG, etc.).
+ENGLISH_PATTERN='\xC3[\x80-\x96\x98-\xB6\xB8-\xBF]|\xC4[\x80-\xBF]|\xC5[\x80-\xBF]'
+# Choose a PCRE-capable grep. /usr/bin/grep is GNU on Linux but BSD on
+# macOS, and BSD grep silently exits non-zero on -P (which `|| true`
+# below would mask, no-oping the entire gate). Probe `--version` for
+# the GNU banner first, then fall back to a feature-test on `grep -P`
+# against any grep on PATH (which catches Homebrew's ggrep installed
+# as `grep` via a shim, plus Linux distros where /usr/bin/grep is
+# missing). If no PCRE-capable grep is reachable, fail closed so the
+# operator knows the gate is unenforceable on this host instead of
+# silently passing.
+if [ -x /usr/bin/grep ] && /usr/bin/grep --version 2>/dev/null | head -1 | grep -q GNU; then
+  GREP_BIN=/usr/bin/grep
+elif printf '\n' | grep -P '' >/dev/null 2>&1; then
+  GREP_BIN=grep
+else
+  # No PCRE-capable grep found. Push a sentinel violation so the hook
+  # fails closed through the standard JSON-deny path rather than
+  # exiting 1 with no JSON on stdout (which the Claude Code hook
+  # runtime would treat as a hook error and allow the push, inverting
+  # the fail-closed intent).
+  VIOLATIONS+=("XIV: PCRE-capable grep not found on this host — gate 8 (Principle XIV English-only) cannot be enforced. Install GNU grep (brew install grep on macOS) and shim into PATH, then re-push.")
+  GREP_BIN=grep  # unused below because VIOLATIONS already set; placeholder to keep subsequent code syntactically valid
+fi
+ENGLISH_HITS=()
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    testdata/*|_references/*) continue ;;
+  esac
+  if [ ! -f "$f" ]; then
+    continue
+  fi
+  while IFS= read -r match; do
+    [ -z "$match" ] && continue
+    line_num="${match%%:*}"
+    case "$f:$line_num" in
+      specs/003-feedback-backend-worker/spec.md:6) continue ;;
+      feedback-worker/test/validate.test.ts:69) continue ;;
+      feedback-worker/test/validate.test.ts:70) continue ;;
+    esac
+    ENGLISH_HITS+=("$f:$line_num")
+  done < <("$GREP_BIN" -InP "$ENGLISH_PATTERN" "$f" 2>/dev/null || true)
+done < <(printf '%s\n' "$CHANGED")
+for hit in "${ENGLISH_HITS[@]}"; do
+  VIOLATIONS+=("XIV: non-English Latin-script letter at $hit (Principle XIV requires English-only artifacts; testdata/ and _references/ are exempt; math/typography/emoji pass)")
+done
+
+# Rule 6 (Principle XII / Principle I): suspicious build tags on
+# non-test .go files. `// +build ...` (legacy syntax) is a smell.
+# `//go:build cgo` is a hard block under Principle I (no CGO).
+# Any other `//go:build <foo>` warrants reviewer attention because
+# Principle XII forbids build tags that diverge runtime behaviour
+# between platforms except where genuinely unavoidable
+# (path/filepath is the only documented allowlist entry).
+TAG_HITS="$(git diff "$RANGE" -- '*.go' ':!*_test.go' 2>/dev/null | awk '
+  /^\+\+\+ b\// { file = substr($0, 7); next }
+  /^\+\/\/ \+build / { print "P2|XII|" file ": legacy build tag (// +build), use //go:build instead" }
+  /^\+\/\/go:build / {
+    tag = $0
+    sub(/^\+\/\/go:build /, "", tag)
+    if (tag ~ /(^|[ |&()])cgo($|[ |&!()])/) {
+      print "P1|I|" file ": //go:build cgo violates Principle I (no CGO in shipped binary)"
+    } else {
+      print "P2|XII|" file ": //go:build " tag " - Principle XII reviewer attention required (no allowlist match)"
+    }
+  }
+')"
+if [ -n "$TAG_HITS" ]; then
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    sev="${line%%|*}"
+    rest="${line#*|}"
+    principle="${rest%%|*}"
+    msg="${rest#*|}"
+    VIOLATIONS+=("$sev - $principle: $msg")
+  done <<< "$TAG_HITS"
+fi
+
+# Rule 7 (Principle IX): no outbound network in the Go release path.
+# The feedback-worker (TypeScript) is the only sanctioned outbound
+# path; the Go binary stays offline. We grep added lines under
+# parse/, model/, render/, findings/, and cmd/ for a `net/http`
+# import or net.Dial-style construct. _test.go files are excluded
+# because tests may legitimately exercise an httptest server.
+#
+# Alias resilience: import-detection patterns match the literal
+# strings "net/http" and "net" anywhere on an added line, which
+# catches every import form — block (`\t"net/http"`), single-line
+# (`import "net/http"`), aliased (`import h "net/http"` or
+# `\th "net/http"` inside a block), and dot/blank imports. Without
+# this, an alias like `import h "net/http"` plus `h.Get(...)` or
+# `import n "net"` plus `n.Dial(...)` would bypass the gate entirely
+# (the call-site patterns below only know about the canonical
+# `http.` / `net.` prefixes). The literal-string match is the only
+# forgery-proof anchor without a full Go parser. The bare `"net"`
+# pattern is precise: `"net/http"`, `"net/url"`, `"vendor/net"` etc.
+# do NOT contain `"net"` as a substring (the closing quote is in a
+# different position), so legitimate sub-package imports are not
+# flagged.
+NET_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'model/*.go' 'render/*.go' 'findings/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/dev/null | awk '
+  /^\+\+\+ b\// { file = substr($0, 7); next }
+  /^\+.*"net\/http"/                                 { print file ": import \"net/http\" added (any form: block, single-line, aliased, dot, blank)" }
+  /^\+.*"net"/                                       { print file ": import \"net\" added (any form: block, single-line, aliased, dot, blank — alias may hide net.Dial/Listen/Lookup/ResolveAddr)" }
+  /^\+.*`net\/http`/                                 { print file ": import `net/http` added (raw-string form — non-idiomatic; flag as Principle IX bypass attempt)" }
+  /^\+.*`net`/                                       { print file ": import `net` added (raw-string form — non-idiomatic; flag as Principle IX bypass attempt)" }
+  /^\+.*net\.Dial[A-Za-z]*\(/                        { print file ": net.Dial* call added" }
+  /^\+.*net\.Listen[A-Za-z]*\(/                      { print file ": net.Listen* call added" }
+  /^\+.*net\.Lookup[A-Za-z]*\(/                      { print file ": net.Lookup* call added" }
+  /^\+.*net\.Resolve[A-Za-z]*Addr\(/                 { print file ": net.Resolve*Addr call added" }
+  /^\+.*http\.Get\(/                                  { print file ": http.Get call added" }
+  /^\+.*http\.Post\(/                                 { print file ": http.Post call added" }
+  /^\+.*http\.NewRequest/                             { print file ": http.NewRequest call added" }
+  /^\+.*http\.Client\{/                               { print file ": http.Client constructor added" }
+')"
+if [ -n "$NET_HITS" ]; then
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    VIOLATIONS+=("P1 - IX: $line (Principle IX forbids network in the Go release path; the feedback-worker is the only outbound path)")
+  done <<< "$NET_HITS"
+fi
+
+# Rule 8 (Principle II): no writes inside the input-reading path.
+# parse/ and cmd/ MUST NOT call os.Create / os.Mkdir(All) / os.Rename
+# / os.Remove / os.RemoveAll / os.WriteFile / ioutil.WriteFile.
+# Legitimate writes belong under render/ (the user's -out path) or
+# os.TempDir(); flag everything else for review. _test.go is
+# excluded because tests can write fixtures to t.TempDir().
+#
+# Alias resilience: the call-site patterns require literal `os.` /
+# `ioutil.` prefixes, which means an aliased import (`import fs "os"`
+# or `import . "os"`) plus `fs.WriteFile(...)` / bare `WriteFile(...)`
+# would bypass the gate. We can't recover the alias name without a
+# parser, so we instead flag any aliased import of "os" or
+# "io/ioutil" in the watched paths as a smell that warrants reviewer
+# attention — the canonical import is bare and uses the `os` /
+# `ioutil` identifiers verbatim, so an alias is itself the signal.
+# `_` (blank-import side effects) is intentionally not flagged: it
+# discards exported names and cannot reach WriteFile. `.` (dot
+# import) is flagged because it imports names directly into the
+# package namespace, which would let a bare `WriteFile()` call slip
+# past the literal-prefix patterns below.
+#
+# Unicode safety: the alias char class uses negation
+# `([^_[:space:]][^[:space:]]*|_[^[:space:]]+)` rather than an
+# enumerated `[A-Za-z_]+` list. Go identifiers can start with any
+# Unicode letter (e.g. `import Ω "os"`), so an ASCII-only allowlist
+# leaves a real bypass. Negation is inherently Unicode-safe: the
+# multi-byte UTF-8 sequences for letters in any script (Greek,
+# Cyrillic, CJK, …) consist of bytes outside the `_`/whitespace
+# set, so `[^_[:space:]]` matches them as a side effect. The first
+# alternative excludes leading-`_` to keep the blank-import
+# carve-out; the second alternative re-admits leading-`_` only
+# when followed by at least one more non-whitespace char, so
+# `_x`/`__init` fire while bare `_` does not.
+WRITE_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/dev/null | awk '
+  /^\+\+\+ b\// { file = substr($0, 7); next }
+  /^\+.*os\.Create([^[:alnum:]_]|$)/        { print file ": os.Create" }
+  /^\+.*os\.Mkdir([^[:alnum:]_]|$)/         { print file ": os.Mkdir" }
+  /^\+.*os\.MkdirAll([^[:alnum:]_]|$)/      { print file ": os.MkdirAll" }
+  /^\+.*os\.Rename([^[:alnum:]_]|$)/        { print file ": os.Rename" }
+  /^\+.*os\.Remove([^[:alnum:]_]|$)/        { print file ": os.Remove" }
+  /^\+.*os\.RemoveAll([^[:alnum:]_]|$)/     { print file ": os.RemoveAll" }
+  /^\+.*os\.WriteFile([^[:alnum:]_]|$)/     { print file ": os.WriteFile" }
+  /^\+.*ioutil\.WriteFile([^[:alnum:]_]|$)/ { print file ": ioutil.WriteFile" }
+  /^\+[[:space:]]+([^_[:space:]][^[:space:]]*|_[^[:space:]]+)[[:space:]]+"os"/                  { print file ": aliased import of \"os\" (alias may hide WriteFile/Create/Mkdir/Rename/Remove)" }
+  /^\+[[:space:]]+([^_[:space:]][^[:space:]]*|_[^[:space:]]+)[[:space:]]+"io\/ioutil"/          { print file ": aliased import of \"io/ioutil\" (alias may hide WriteFile)" }
+  /^\+import[[:space:]]+([^_[:space:]][^[:space:]]*|_[^[:space:]]+)[[:space:]]+"os"/            { print file ": aliased import of \"os\" (single-line; alias may hide WriteFile/Create/Mkdir/Rename/Remove)" }
+  /^\+import[[:space:]]+([^_[:space:]][^[:space:]]*|_[^[:space:]]+)[[:space:]]+"io\/ioutil"/    { print file ": aliased import of \"io/ioutil\" (single-line; alias may hide WriteFile)" }
+  /^\+.*`os`/                                                                                    { print file ": import `os` added (raw-string form — non-idiomatic; flag as Principle II bypass attempt)" }
+  /^\+.*`io\/ioutil`/                                                                            { print file ": import `io/ioutil` added (raw-string form — non-idiomatic; flag as Principle II bypass attempt)" }
+')"
+if [ -n "$WRITE_HITS" ]; then
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    VIOLATIONS+=("P2 - II: $line (Principle II forbids writes in the input-reading path; legitimate writes belong in render/ under \$TMPDIR or the user's -out path - annotate the line if intentional)")
+  done <<< "$WRITE_HITS"
+fi
+
 TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
