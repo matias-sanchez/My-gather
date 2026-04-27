@@ -254,6 +254,8 @@ NET_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'model/*.go' 'render/*.go' 'findin
   /^\+\+\+ b\// { file = substr($0, 7); next }
   /^\+.*"net\/http"/                                 { print file ": import \"net/http\" added (any form: block, single-line, aliased, dot, blank)" }
   /^\+.*"net"/                                       { print file ": import \"net\" added (any form: block, single-line, aliased, dot, blank — alias may hide net.Dial/Listen/Lookup/ResolveAddr)" }
+  /^\+.*`net\/http`/                                 { print file ": import `net/http` added (raw-string form — non-idiomatic; flag as Principle IX bypass attempt)" }
+  /^\+.*`net`/                                       { print file ": import `net` added (raw-string form — non-idiomatic; flag as Principle IX bypass attempt)" }
   /^\+.*net\.Dial[A-Za-z]*\(/                        { print file ": net.Dial* call added" }
   /^\+.*net\.Listen[A-Za-z]*\(/                      { print file ": net.Listen* call added" }
   /^\+.*net\.Lookup[A-Za-z]*\(/                      { print file ": net.Lookup* call added" }
@@ -317,6 +319,8 @@ WRITE_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/d
   /^\+[[:space:]]+([^_[:space:]][^[:space:]]*|_[^[:space:]]+)[[:space:]]+"io\/ioutil"/          { print file ": aliased import of \"io/ioutil\" (alias may hide WriteFile)" }
   /^\+import[[:space:]]+([^_[:space:]][^[:space:]]*|_[^[:space:]]+)[[:space:]]+"os"/            { print file ": aliased import of \"os\" (single-line; alias may hide WriteFile/Create/Mkdir/Rename/Remove)" }
   /^\+import[[:space:]]+([^_[:space:]][^[:space:]]*|_[^[:space:]]+)[[:space:]]+"io\/ioutil"/    { print file ": aliased import of \"io/ioutil\" (single-line; alias may hide WriteFile)" }
+  /^\+.*`os`/                                                                                    { print file ": import `os` added (raw-string form — non-idiomatic; flag as Principle II bypass attempt)" }
+  /^\+.*`io\/ioutil`/                                                                            { print file ": import `io/ioutil` added (raw-string form — non-idiomatic; flag as Principle II bypass attempt)" }
 ')"
 if [ -n "$WRITE_HITS" ]; then
   while IFS= read -r line; do
