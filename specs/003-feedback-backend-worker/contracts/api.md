@@ -21,9 +21,9 @@
   - `base64` decodes to ≤ 5 242 880 bytes
 - `voice`, if present:
   - `mime` matches `/^audio\/(webm|mp4|ogg|mpeg)(;.*)?$/`
-  - `base64` decodes to ≤ 10 485 760 bytes
-- `idempotencyKey`: 36-char UUID v4 (`/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i`)
-- `reportVersion`: opaque, ≤ 64 chars
+  - `base64` decodes to ≤ 15 728 640 bytes (15 MB — covers a 10-minute Opus recording at the browser's default bitrate with margin)
+- `idempotencyKey`: 36-char UUID v4 (`/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i`) — strict v4 shape; the prior loose pattern `/^[0-9a-f-]{36}$/i` accepted 36 dashes or 36 hex digits with no dashes and let malformed values into KV keys.
+- `reportVersion`: 1-64 char string. Required (NOT optional). Read by the dialog from `<meta name="generator">` in the report HTML head, sliced to 64 chars.
 
 ### Response
 
@@ -54,7 +54,32 @@ Error codes:
 - `voice_too_large` · `voice_bad_mime`
 - `category_invalid`
 - `idempotency_key_invalid`
-- `malformed_payload`
+- `report_version_invalid`
+- `malformed_payload` (catch-all for shape errors: not-a-JSON-object, wrong type on a required field, base64 not decodable, body type ≠ string when present, etc.)
+
+#### 409 Conflict — duplicate inflight
+
+```json
+{
+  "ok": false,
+  "error": "duplicate_inflight",
+  "message": "A previous submission with the same idempotency key is still being processed. Retry in a few seconds."
+}
+```
+
+Emitted when an `idempotencyKey` already has an inflight reservation in KV (a concurrent same-key Submit, or a same-key retry within the 30-second inflight TTL after the first call crashed mid-handler). After 30s of inflight TTL the key is auto-released and a fresh attempt proceeds.
+
+#### 413 Payload Too Large
+
+```json
+{
+  "ok": false,
+  "error": "payload_too_large",
+  "message": "Request body exceeds 30 MB."
+}
+```
+
+Emitted in two places: (a) Content-Length pre-flight rejects when the header is present and >30 000 000; (b) the streaming reader aborts once the running byte count crosses the cap, so a header-less oversized upload can't be fully buffered into the isolate. Always JSON-shaped — no bare HTTP error.
 
 #### 429 Too Many Requests
 
@@ -102,6 +127,30 @@ The Worker MUST emit 504 when its `AbortController`-bounded GitHub fetch exceeds
 }
 ```
 
+#### 200 OK with `error: "cache_write_failed"` (degraded success)
+
+```json
+{
+  "ok": true,
+  "issueUrl": "https://github.com/matias-sanchez/My-gather/issues/123",
+  "issueNumber": 123
+}
+```
+
+Note: this is still a 200 OK with the same success shape and `ok: true`. The `cache_write_failed` diagnostic is observed only in Tail logs, NOT in the response body. The issue exists on GitHub; the only thing that failed is the post-create idempotency-cache upgrade. Client retries within the 30s inflight window will see 409 `duplicate_inflight` instead of the cached 200, but the user has already received the real issue URL on the first call and never sees this failure mode in the dialog.
+
+#### 404 Not Found — wrong path or method
+
+```json
+{
+  "ok": false,
+  "error": "not_found",
+  "message": "Not found."
+}
+```
+
+Returned for any non-`OPTIONS` request whose method/path is neither `POST /feedback` nor `GET /health`. The Worker handles `OPTIONS` at the top of its dispatch (before pathname matching), so any `OPTIONS` request — `/feedback`, `/health`, or any other path — receives a 204 preflight response, never a 404. This keeps CORS preflight behaviour uniform across the routes the browser cares about and matches `feedback-worker/src/index.ts`. Same JSON shape as other errors so clients have a uniform parser.
+
 ## `OPTIONS /feedback`
 
 ### Request
@@ -145,14 +194,14 @@ The Worker MUST reject requests with body byte length > `30_000_000` (≈ 20 MB 
 
 ## Issue creation contract
 
-On a 200 response the Worker has just created an issue at `matias-sanchez/My-gather` with:
+On a 200 response the Worker has just created an issue at `matias-sanchez/My-gather` via the GraphQL `createIssue` mutation (NOT the REST endpoint — see data-model.md §"GitHub GraphQL mutation" for the rationale and the exact mutation shape) with:
 
 - `title` set to the user's title (after trim).
-- `body` assembled per `data-model.md` (user body, then image markdown if present, then audio markdown if present, then footer).
-- `labels` set to `["feedback"]` always, plus `"area:<lower(category)>"` when `category` is present in the payload (e.g. `category: "UI"` → label `area:ui`).
-- No assignee, no milestone, no project. Triage is left to the maintainer.
+- `body` assembled per `data-model.md` §"Issue body markdown composition": optional `> Category:` blockquote, user body, `### Attached screenshot` section if image present, `### Attached voice note` section with bare R2 URL if voice present, footer attribution.
+- `labelIds` resolved from the names: `user-feedback` and `needs-triage` always, plus `area/<lower(category)>` (e.g. `category: "UI"` → label `area/ui`) when `category` is present. Missing labels are silently skipped (graceful degradation per Principle III) — a repo without `area/parser` still gets the issue, just without the area routing.
+- No assignee, no milestone, no project. Triage is left to the maintainer (the `needs-triage` label is the signal for the maintainer's queue).
 
-The Worker MUST NOT comment on the issue, react, lock it, or modify it after creation. One issue, one POST, done.
+The Worker MUST NOT comment on the issue, react, lock it, or modify it after creation. One issue, one mutation, done.
 
 ## Idempotency contract
 

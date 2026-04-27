@@ -32,7 +32,7 @@
 ## Constitution Readiness
 
 - [x] Constitution Check table complete (plan.md)
-- [x] Principle IX exception ratified in constitution v1.3.0 (2026-04-24, already on main); the implementation PR only verifies the version, no further constitution edit
+- [x] Principle IX exception ratified in v1.3.0 on main since 2026-04-24; this PR does not edit the constitution
 - [x] No Complexity-Tracking entries are left unjustified
 
 ## Notes
@@ -40,3 +40,4 @@
 - The Principle IX named exception is already on main at constitution v1.3.0; the implementation PR carries a verification task (T006), not an edit.
 - All human-intervention tasks (GitHub App creation, Cloudflare login) are collected into Phase 1 so they can be handed off in a single 15-minute session.
 - Attachment hosting decision (R2 vs GitHub's undocumented endpoint) is resolved in favour of R2 per research R2. Can be revisited in a follow-up if R2 usage approaches free-tier limits.
+- **Reconciliation**: this PR (#30) brings the spec set in sync with the deployed Worker. The Worker has been live since 2026-04-24 (commit 636a332).
