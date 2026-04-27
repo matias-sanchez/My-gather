@@ -163,11 +163,16 @@ ENGLISH_PATTERN='\xC3[\x80-\x96\x98-\xB6\xB8-\xBF]|\xC4[\x80-\xBF]|\xC5[\x80-\xB
 # silently passing.
 if [ -x /usr/bin/grep ] && /usr/bin/grep --version 2>/dev/null | head -1 | grep -q GNU; then
   GREP_BIN=/usr/bin/grep
-elif printf '' | grep -P '' >/dev/null 2>&1; then
+elif printf '\n' | grep -P '' >/dev/null 2>&1; then
   GREP_BIN=grep
 else
-  printf 'pre-push-constitution-guard: PCRE-capable grep not found (need GNU grep with -P or `ggrep`); install via `brew install grep` and shim into PATH, or run on a host with GNU grep. Aborting so gate 8 is not silently bypassed.\n' >&2
-  exit 1
+  # No PCRE-capable grep found. Push a sentinel violation so the hook
+  # fails closed through the standard JSON-deny path rather than
+  # exiting 1 with no JSON on stdout (which the Claude Code hook
+  # runtime would treat as a hook error and allow the push, inverting
+  # the fail-closed intent).
+  VIOLATIONS+=("XIV: PCRE-capable grep not found on this host — gate 8 (Principle XIV English-only) cannot be enforced. Install GNU grep (brew install grep on macOS) and shim into PATH, then re-push.")
+  GREP_BIN=grep  # unused below because VIOLATIONS already set; placeholder to keep subsequent code syntactically valid
 fi
 ENGLISH_HITS=()
 while IFS= read -r f; do
@@ -206,7 +211,7 @@ TAG_HITS="$(git diff "$RANGE" -- '*.go' ':!*_test.go' 2>/dev/null | awk '
   /^\+\/\/go:build / {
     tag = $0
     sub(/^\+\/\/go:build /, "", tag)
-    if (tag ~ /(^|[ |&!()])cgo($|[ |&!()])/) {
+    if (tag ~ /(^|[ |&()])cgo($|[ |&!()])/) {
       print "P1|I|" file ": //go:build cgo violates Principle I (no CGO in shipped binary)"
     } else {
       print "P2|XII|" file ": //go:build " tag " - Principle XII reviewer attention required (no allowlist match)"
