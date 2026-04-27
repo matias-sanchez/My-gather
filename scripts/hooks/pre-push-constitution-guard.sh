@@ -110,6 +110,28 @@ if [ -n "$CGO_HITS" ]; then
   VIOLATIONS+=("I: CGO reintroduced (import \"C\") — Principle I forbids CGO in shipped code")
 fi
 
+# Rule 4 (Principle VI, gate 5): every exported identifier under
+# parse/, model/, render/, findings/ has a godoc comment. Delegated
+# to the AST-walking test under tests/coverage/. Runs only when Go
+# files in the watched packages are touched in this push, so the
+# common case (docs-only or spec-only push) stays cheap.
+WATCHED_GO_CHANGED="$(printf '%s\n' "$CHANGED" | grep -E '^(parse|model|render|findings)/.*\.go$' || true)"
+if [ -n "$WATCHED_GO_CHANGED" ] && command -v go >/dev/null 2>&1; then
+  GODOC_OUT="$(CGO_ENABLED=0 go test ./tests/coverage/... -run TestGodocCoverage -count=1 2>&1)"
+  GODOC_RC=$?
+  if [ "$GODOC_RC" -ne 0 ]; then
+    HAD_HIT=0
+    while IFS= read -r line; do
+      [ -z "$line" ] && continue
+      VIOLATIONS+=("VI: $line")
+      HAD_HIT=1
+    done < <(printf '%s\n' "$GODOC_OUT" | grep -E ':[0-9]+: (function|method|type|identifier)' || true)
+    if [ "$HAD_HIT" -eq 0 ]; then
+      VIOLATIONS+=("VI: godoc coverage test failed — re-run \`go test ./tests/coverage/... -run TestGodocCoverage -v\` for the missing-godoc list")
+    fi
+  fi
+fi
+
 TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 

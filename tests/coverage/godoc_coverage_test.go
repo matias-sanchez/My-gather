@@ -1,6 +1,12 @@
 // Package coverage_test (godoc) enforces Constitution Principle VI:
 // every exported identifier in the shipped packages (parse, model,
-// render) has a non-empty doc comment.
+// render, findings) has a non-empty doc comment.
+//
+// CI invokes this test directly via
+// `go test ./tests/coverage/... -run TestGodocCoverage` and the
+// pre-push constitution guard runs the same target locally so a
+// missing godoc fails before the push reaches origin (Gate 5,
+// MECHANICAL as of constitution v1.4).
 package coverage_test
 
 import (
@@ -16,7 +22,15 @@ import (
 	"github.com/matias-sanchez/My-gather/tests/goldens"
 )
 
-var godocCheckedPackages = []string{"parse", "model", "render"}
+var godocCheckedPackages = []string{"parse", "model", "render", "findings"}
+
+// TestGodocCoverage is the canonical entry point invoked by CI and
+// the pre-push hook. It delegates to the table-driven sub-tests in
+// TestEveryExportedIdentifierIsDocumented so the existing assertion
+// logic stays in one place.
+func TestGodocCoverage(t *testing.T) {
+	TestEveryExportedIdentifierIsDocumented(t)
+}
 
 func TestEveryExportedIdentifierIsDocumented(t *testing.T) {
 	root := goldens.RepoRoot(t)
