@@ -32,9 +32,24 @@ My-gather has no HTTP or CLI interface for this feature, but it does expose a **
   <form id="feedback-form" method="dialog">
     <h2 id="feedback-title">Report feedback</h2>
     <p id="feedback-help">
-      This opens a new GitHub Discussion in the Ideas category.
-      Submitted content is public.
+      Posts a new issue to GitHub. You can paste an image and record a voice note to attach them.
     </p>
+
+    <!--
+    Help-text history note (added post-feature-003 reconciliation):
+    - Feature 002 originally rendered: "This opens a new GitHub Discussion in the Ideas category."
+    - Feature 003 (commit 636a332, PR #23) pivoted the submit target from
+      Discussions to Issues (label `user-feedback` + `needs-triage` + optional
+      `area/<lower(category)>`) and introduced the Cloudflare Worker happy
+      path. The dialog now POSTs to the Worker on Submit; the legacy
+      window.open(prefillURL, "_blank", "noopener,noreferrer") flow this
+      contract describes is the fallback path when the Worker is
+      unreachable. See specs/003-feedback-backend-worker/ for the Worker
+      contract; the rest of THIS contract (DOM, attachment behaviour,
+      keyboard handling, focus management, dismissal semantics) is still
+      authoritative.
+    -->
+
 
     <label for="feedback-field-title">Title</label>
     <input id="feedback-field-title" name="title" type="text" required>

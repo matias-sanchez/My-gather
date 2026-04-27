@@ -2,14 +2,25 @@
 
 **Feature Branch**: `002-report-feedback-button`
 **Created**: 2026-04-24
-**Status**: Draft
+**Status**: Shipped (v1) · Submit happy path superseded by feature 003 (Worker) — see "Submit-path supersedes" note below
 **Input**: User description: "Report Feedback Button — a small 'Report feedback' control anchored in the top-right of the pt-stalk diagnostic report header. Clicking it opens a self-contained floating dialog inside the report (no CDN, no external assets) with a short form: title, body, optional category tag. On submit, the browser opens GitHub's 'new discussion' pre-fill URL for the 'Ideas' category of matias-sanchez/My-gather in a new tab, with the title and body pre-populated; the user finishes posting on GitHub. Goal: zero-friction path for report readers (support engineers) to drop ideas into the project's Ideas discussion category without leaving the report. Non-goals: no token handling, no API proxy, no comment threads inside the report."
+
+## Submit-path supersedes (added 2026-04-27 reconciliation)
+
+Feature 003 (`specs/003-feedback-backend-worker/`, commit `636a332`, PR #23) replaced this feature's `window.open(prefillURL, "_blank", "noopener,noreferrer")` happy path with a Cloudflare Worker that POSTs the payload to GitHub's `createIssue` GraphQL on the user's behalf. The Worker creates a real GitHub **Issue** (not a Discussion as this 002 spec originally specified) with labels `user-feedback` + `needs-triage` + optionally `area/<lower(category)>`. Constitution v1.3.0 ratified the named exception under Principle IX for this Submit POST.
+
+What this means for readers of the 002 spec set:
+- **Authoritative on**: the dialog's DOM, attachment behaviour (image paste, voice record), keyboard handling, focus management, dismissal semantics, accessibility contract, render-test contract (`render/feedback.go`, `render/templates/report.html.tmpl`, `render/assets/app.js` non-Submit code paths). Read 002 for these.
+- **Superseded by 003**: the Submit destination, the GitHub category vs. label mapping, the Submit-time URL construction, the success / error / throttle / fallback states. Read `specs/003-feedback-backend-worker/contracts/api.md` and `contracts/ui.md` for these.
+- **Fallback behaviour**: this spec's `window.open` flow is preserved as the failure-path fallback when the Worker is unreachable (network error, 5xx, timeout). The dialog falls back to the same pre-filled new-issue page (now with `?labels=user-feedback,needs-triage` instead of the old new-discussion URL).
+
+The original 002 user-story text below uses "GitHub Discussion" / "Ideas category" / "new tab opens GitHub" language verbatim from the 2026-04-24 design. Treat that wording as historical; the live behaviour is feature 003's Worker happy path with this feature's `window.open` as the fallback.
 
 ## Clarifications (2026-04-24)
 
 - **Scope**: image paste (US4) and voice record (US5) ship in the **same feature** as the text flow (US1), not split across a v1/v2. One design review, one PR.
 - **Keyboard submit**: pressing **Cmd/Ctrl+Enter** inside the dialog submits, matching GitHub's own editor shortcut. The Submit button remains available; both paths MUST be blocked under the same conditions (empty title, URL length budget exceeded).
-- **Category marker placement**: the chosen category is prepended to the body as a single leading quoted line `> Category: <name>` followed by a blank line, then the user's body text. This renders as a quoted aside on GitHub — visible for triage, unobtrusive on short bodies.
+- **Category marker placement**: the chosen category is prepended to the body as a single leading quoted line `> Category: <name>` followed by a blank line, then the user's body text. This renders as a quoted aside on GitHub — visible for triage, unobtrusive on short bodies. _(Superseded by feature 003: the category now lives on the issue as the `area/<lower(category)>` label, not in the body.)_
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -65,7 +76,7 @@ A support engineer sees something visual in the report (a weird chart gap, a mis
 
 ### User Story 5 — Record a short voice note and attach it (Priority: P3)
 
-A support engineer wants to describe something that is easier spoken than typed (a workflow walk-through, a reproduction sequence). They click a "Record voice note" control in the dialog, speak for up to a cap (suggested 2 minutes), and stop. A small audio preview with play/pause appears in the Attachments area. On Submit, the feedback flow triggers a one-click download of the recording file so the user can drag it into the GitHub body field on the new tab.
+A support engineer wants to describe something that is easier spoken than typed (a workflow walk-through, a reproduction sequence). They click a "Record voice note" control in the dialog, speak for up to a cap (10 minutes by default; the timer renders `M:SS / 10:00`), and stop. A small audio preview with play/pause appears in the Attachments area. On Submit, the feedback flow triggers a one-click download of the recording file so the user can drag it into the GitHub body field on the new tab. The 10-minute cap was raised from the original 2-minute target during implementation to support full reproduction walk-throughs; at Opus default bitrate that lands at ~8 MB raw, well inside the 15 MB `voice_too_large` cap the feedback Worker enforces server-side (see `specs/003-feedback-backend-worker/contracts/api.md` §400 `voice_too_large`).
 
 **Why this priority**: Same as US4 — raises signal, but not essential. P3.
 
@@ -131,7 +142,7 @@ When a user categorises their feedback (e.g., "UI", "parser", "advisor"), that c
 - **FR-014**: The dialog MUST display a visible reminder that submitted content becomes a public GitHub Discussion, positioned where the user sees it before clicking Submit.
 - **FR-015**: If `window.open` returns null (popup blocked) when Submit is clicked, the dialog MUST display a visible fallback link with the same pre-filled URL so the user can click through manually without retyping.
 - **FR-016**: The dialog MUST accept an image pasted from the OS clipboard (Cmd/Ctrl+V) when focus is inside the dialog. Pasted image data MUST be rendered as a thumbnail preview in a dedicated Attachments area with a visible Remove control. The dialog MUST accept at most one image attachment per draft (replacing any previous one on a new paste) to keep the hand-off flow simple.
-- **FR-017**: The dialog MUST accept an in-browser voice recording via the browser MediaRecorder API with explicit microphone-permission prompting. Recording MUST be capped at a maximum duration (target 2 minutes) with a visible elapsed-time counter. On stop, the recording MUST be exposed as an in-dialog playback control with a Remove action. The dialog MUST accept at most one voice recording per draft.
+- **FR-017**: The dialog MUST accept an in-browser voice recording via the browser MediaRecorder API with explicit microphone-permission prompting. Recording MUST be capped at a maximum duration (**10 minutes**, raised from the original 2-minute target during implementation; rationale: ~8 MB raw at Opus default bitrate, comfortably under the 15 MB `voice_too_large` cap the feature-003 Worker enforces server-side) with a visible elapsed-time counter rendered as `M:SS / 10:00`. On stop, the recording MUST be exposed as an in-dialog playback control with a Remove action. The dialog MUST accept at most one voice recording per draft.
 - **FR-018**: Because GitHub's pre-fill URL does not accept file attachments, on Submit the feedback flow MUST hand media off through the browser's own boundaries, not through the URL: (a) for an attached image, the flow MUST best-effort copy the image onto the OS clipboard as `image/png` via the asynchronous Clipboard API, so the user can paste into GitHub's body; (b) for an attached voice note, the flow MUST trigger a one-click download of the recording file (e.g., `feedback-voice-<stable-hash>.webm`) so the user can drag-drop into GitHub's body.
 - **FR-019**: The dialog MUST visibly show a single-line instruction next to the Submit button explaining what will happen to any attached media on submit ("Image will be on your clipboard — paste into GitHub's body", "Voice note will be downloaded — drag it into GitHub's body"). When no media is attached, no such instruction is shown.
 - **FR-020**: All media capture and playback MUST work offline: the Clipboard API, MediaRecorder, and audio playback are browser primitives that do not require network. The binary MUST NOT embed any codec library or audio asset as a CDN link to satisfy these requirements (Principle V); only browser-native APIs and `//go:embed`-bundled UI assets are allowed.
