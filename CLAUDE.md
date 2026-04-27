@@ -1,19 +1,17 @@
 <!-- SPECKIT START -->
-Active feature: **003-feedback-backend-worker**
+No active feature. The latest shipped feature is **003-feedback-backend-worker**.
+The next `/speckit.specify` invocation will overwrite this block with the new
+feature's plan / spec / tasks pointers.
 
-For technologies, project structure, constitution gates, data model,
-API contract, and shell commands, read the current plan:
+For technologies, project structure, constitution gates, and shell commands
+between features, read the constitution and (optionally) the latest shipped
+feature's plan as a reference:
 
-- Plan: `specs/003-feedback-backend-worker/plan.md`
-- Spec: `specs/003-feedback-backend-worker/spec.md`
-- Research (Phase 0): `specs/003-feedback-backend-worker/research.md`
-- Data model (Phase 1): `specs/003-feedback-backend-worker/data-model.md`
-- Contract (Phase 1): `specs/003-feedback-backend-worker/contracts/api.md`
-- Quickstart (Phase 1): `specs/003-feedback-backend-worker/quickstart.md`
-- Tasks (Phase 2): `specs/003-feedback-backend-worker/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
+- Latest shipped plan (003): `specs/003-feedback-backend-worker/plan.md`
 
 Prior features (shipped):
+- **003-feedback-backend-worker** — `specs/003-feedback-backend-worker/plan.md`
 - **002-report-feedback-button** — `specs/002-report-feedback-button/plan.md`
 - **001-ptstalk-report-mvp** — `specs/001-ptstalk-report-mvp/plan.md`
 <!-- SPECKIT END -->
