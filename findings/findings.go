@@ -11,6 +11,7 @@ package findings
 
 import (
 	"sort"
+	"sync"
 
 	"github.com/matias-sanchez/My-gather/model"
 )
@@ -93,24 +94,22 @@ type Finding struct {
 	Source string
 }
 
-// init seals the registry by sorting it by ID immediately after every
-// per-file init() has appended its RuleDefinition entries. Go
-// guarantees per-file init() functions run before any other call into
-// the package, and the file-init ordering within a package is
-// dependency-respecting (and ultimately stable for a given source
-// tree); sorting here removes that dependency entirely so the
-// registry's iteration order is purely alphabetical by RuleDefinition.ID.
-func init() {
-	sortRegistry()
-}
+// registrySortOnce ensures the registry is sorted exactly once,
+// after every per-file init() has populated it. Go runs in-package
+// init()s in source-file alphabetical order, so any sort placed in a
+// findings.go-level init() would execute before files like
+// register.go and rules_*.go contribute their entries. Doing the
+// sort lazily on first Analyze() call sidesteps that ordering trap.
+var registrySortOnce sync.Once
 
 // Analyze runs every registered rule against the given Report and
 // returns the non-Skip findings in a deterministic order: by
 // Subsystem, then by descending Severity (Crit first), then by ID
 // alphabetically. Internally it iterates the package-level registry,
-// which is sorted by RuleDefinition.ID at init time so the dispatch
-// order is stable independent of source file or build order.
+// which is sorted by RuleDefinition.ID on first call so the dispatch
+// order is stable independent of source-file or build order.
 func Analyze(r *model.Report) []Finding {
+	registrySortOnce.Do(sortRegistry)
 	if r == nil {
 		return nil
 	}
