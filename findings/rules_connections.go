@@ -145,3 +145,26 @@ func ruleAbortedConnectsRate(r *model.Report) Finding {
 		Source: "Rosetta Stone — Part B Aborted_connects",
 	}
 }
+
+// init registers the native RuleDefinition entries for both
+// Connections rules in this file.
+func init() {
+	register(RuleDefinition{
+		ID:                 "connections.aborted_rate",
+		Subsystem:          "Connections",
+		Title:              "Aborted connections rate",
+		FormulaText:        "Aborted_connects/s",
+		MinRecommendations: 1,
+		Severity:           SeverityHintVariable,
+		Run:                ruleAbortedConnectsRate,
+	})
+	register(RuleDefinition{
+		ID:                 "connections.saturation",
+		Subsystem:          "Connections",
+		Title:              "Connection slot saturation",
+		FormulaText:        "Threads_connected / max_connections",
+		MinRecommendations: 3,
+		Severity:           SeverityHintVariable,
+		Run:                ruleConnectionsSaturation,
+	})
+}

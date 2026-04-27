@@ -154,3 +154,45 @@ func ruleRedoLogWaits(r *model.Report) Finding {
 		Source: "Rosetta Stone — Redo Log Buffer §Saturation (capacity)",
 	}
 }
+
+// init registers the native RuleDefinition entries for every Redo
+// Log rule in this file. Metadata lives next to each Run function
+// so the rules catalogue and the rendered Finding stay aligned.
+func init() {
+	register(RuleDefinition{
+		ID:                 "redo.checkpoint_age",
+		Subsystem:          "Redo Log",
+		Title:              "Redo checkpoint age",
+		FormulaText:        "max(Innodb_checkpoint_age) / Innodb_checkpoint_max_age",
+		MinRecommendations: 3,
+		Severity:           SeverityHintVariable,
+		Run:                ruleRedoCheckpointAge,
+	})
+	register(RuleDefinition{
+		ID:                 "redo.pending_writes",
+		Subsystem:          "Redo Log",
+		Title:              "Redo log pending writes",
+		FormulaText:        "max(Innodb_os_log_pending_writes) > 0",
+		MinRecommendations: 3,
+		Severity:           SeverityHintCritical,
+		Run:                ruleRedoPendingWrites,
+	})
+	register(RuleDefinition{
+		ID:                 "redo.pending_fsyncs",
+		Subsystem:          "Redo Log",
+		Title:              "Redo log pending fsyncs",
+		FormulaText:        "max(Innodb_os_log_pending_fsyncs) > 0",
+		MinRecommendations: 3,
+		Severity:           SeverityHintCritical,
+		Run:                ruleRedoPendingFsyncs,
+	})
+	register(RuleDefinition{
+		ID:                 "redo.log_waits",
+		Subsystem:          "Redo Log",
+		Title:              "Redo log buffer waits",
+		FormulaText:        "Innodb_log_waits/s > 0",
+		MinRecommendations: 3,
+		Severity:           SeverityHintVariable,
+		Run:                ruleRedoLogWaits,
+	})
+}

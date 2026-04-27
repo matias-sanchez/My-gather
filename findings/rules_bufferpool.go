@@ -335,9 +335,10 @@ func ruleBPDirtyPct(r *model.Report) Finding {
 	}
 }
 
-// init registers the native RuleDefinition for ruleBPHitRatio. The
-// other Buffer Pool rules in this file remain wrapped via
-// legacyAdapter in register.go until their per-rule conversions land.
+// init registers the native RuleDefinition entries for every
+// Buffer Pool rule in this file. Each rule's metadata lives next
+// to its Run function so the registry's rules catalogue and the
+// rendered Finding cannot drift independently.
 func init() {
 	register(RuleDefinition{
 		ID:                 "bp.hit_ratio",
@@ -347,5 +348,50 @@ func init() {
 		MinRecommendations: 3,
 		Severity:           SeverityHintVariable,
 		Run:                ruleBPHitRatio,
+	})
+	register(RuleDefinition{
+		ID:                 "bp.undersized",
+		Subsystem:          "Buffer Pool",
+		Title:              "Buffer pool size vs workload",
+		FormulaText:        "innodb_buffer_pool_size  vs  {>=1 GiB warn floor, >=256 MiB crit floor}  (gated on Threads_connected >= 50 and Uptime >= 1h)",
+		MinRecommendations: 3,
+		Severity:           SeverityHintVariable,
+		Run:                ruleBPUndersized,
+	})
+	register(RuleDefinition{
+		ID:                 "bp.free_pages_low",
+		Subsystem:          "Buffer Pool",
+		Title:              "Buffer pool free-page headroom",
+		FormulaText:        "Innodb_buffer_pool_pages_free  vs  innodb_lru_scan_depth * innodb_buffer_pool_instances",
+		MinRecommendations: 3,
+		Severity:           SeverityHintVariable,
+		Run:                ruleBPFreePagesLow,
+	})
+	register(RuleDefinition{
+		ID:                 "bp.lru_flushing",
+		Subsystem:          "Buffer Pool",
+		Title:              "LRU-list page flushing rate",
+		FormulaText:        "Innodb_buffer_pool_pages_LRU_flushed/s",
+		MinRecommendations: 2,
+		Severity:           SeverityHintVariable,
+		Run:                ruleBPLRUFlushing,
+	})
+	register(RuleDefinition{
+		ID:                 "bp.wait_free",
+		Subsystem:          "Buffer Pool",
+		Title:              "Buffer pool wait_free events",
+		FormulaText:        "Innodb_buffer_pool_wait_free/s > 0",
+		MinRecommendations: 3,
+		Severity:           SeverityHintCritical,
+		Run:                ruleBPWaitFree,
+	})
+	register(RuleDefinition{
+		ID:                 "bp.dirty_pct",
+		Subsystem:          "Buffer Pool",
+		Title:              "Buffer pool dirty-page percentage",
+		FormulaText:        "Innodb_buffer_pool_pages_dirty / Innodb_buffer_pool_pages_total  vs  innodb_max_dirty_pages_pct",
+		MinRecommendations: 3,
+		Severity:           SeverityHintVariable,
+		Run:                ruleBPDirtyPct,
 	})
 }

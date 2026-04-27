@@ -76,3 +76,16 @@ func ruleThreadCacheHitRatio(r *model.Report) Finding {
 		Source: "Rosetta Stone — Thread Cache §Saturation (capacity)",
 	}
 }
+
+// init registers the native RuleDefinition for the Thread Cache rule.
+func init() {
+	register(RuleDefinition{
+		ID:                 "threadcache.hit_ratio",
+		Subsystem:          "Thread Cache",
+		Title:              "Thread cache hit ratio",
+		FormulaText:        "1 - Threads_created / Connections",
+		MinRecommendations: 1,
+		Severity:           SeverityHintVariable,
+		Run:                ruleThreadCacheHitRatio,
+	})
+}
