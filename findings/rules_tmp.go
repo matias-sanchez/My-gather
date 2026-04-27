@@ -60,3 +60,16 @@ func ruleTmpDiskRatio(r *model.Report) Finding {
 		Source: "Rosetta Stone — Part B Created_tmp_{disk_,}tables",
 	}
 }
+
+// init registers the native RuleDefinition for the Temp Tables rule.
+func init() {
+	register(RuleDefinition{
+		ID:                 "tmp.disk_ratio",
+		Subsystem:          "Temp Tables",
+		Title:              "Internal temp tables spilling to disk",
+		FormulaText:        "disk_ratio = Created_tmp_disk_tables / Created_tmp_tables",
+		MinRecommendations: 3,
+		Severity:           SeverityHintVariable,
+		Run:                ruleTmpDiskRatio,
+	})
+}

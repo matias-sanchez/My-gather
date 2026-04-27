@@ -162,3 +162,35 @@ func ruleTableCacheMissRatio(r *model.Report) Finding {
 		Source: "Rosetta Stone — Part B Table_open_cache_{hits,misses}",
 	}
 }
+
+// init registers the native RuleDefinition entries for every Table
+// Open Cache rule in this file.
+func init() {
+	register(RuleDefinition{
+		ID:                 "tablecache.usage",
+		Subsystem:          "Table Open Cache",
+		Title:              "Table cache saturation",
+		FormulaText:        "usage = Open_tables / table_open_cache",
+		MinRecommendations: 3,
+		Severity:           SeverityHintVariable,
+		Run:                ruleTableCacheUsage,
+	})
+	register(RuleDefinition{
+		ID:                 "tablecache.overflows",
+		Subsystem:          "Table Open Cache",
+		Title:              "Table open cache overflows",
+		FormulaText:        "Table_open_cache_overflows/s > 0",
+		MinRecommendations: 2,
+		Severity:           SeverityHintVariable,
+		Run:                ruleTableCacheOverflows,
+	})
+	register(RuleDefinition{
+		ID:                 "tablecache.miss_ratio",
+		Subsystem:          "Table Open Cache",
+		Title:              "Table cache miss ratio",
+		FormulaText:        "miss_ratio = Table_open_cache_misses / (Table_open_cache_hits + Table_open_cache_misses)",
+		MinRecommendations: 2,
+		Severity:           SeverityHintVariable,
+		Run:                ruleTableCacheMissRatio,
+	})
+}

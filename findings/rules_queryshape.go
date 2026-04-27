@@ -39,10 +39,11 @@ func ruleFullScanSelectScan(r *model.Report) Finding {
 	}
 }
 
-// init registers ruleFullScanSelectScan as a native RuleDefinition.
-// MinRecommendations is 1 because this rule's INFO/WARN/CRIT outputs
-// share the same two-step remediation list — the symptom is the same;
-// the severity scales with rate.
+// init registers the native RuleDefinition entries for every Query
+// Shape rule in this file. MinRecommendations is 1 across the board
+// because these rules' INFO/WARN/CRIT outputs share their two-step
+// remediation lists — the symptom is the same; the severity scales
+// with rate.
 func init() {
 	register(RuleDefinition{
 		ID:                 "queryshape.select_scan",
@@ -52,6 +53,33 @@ func init() {
 		MinRecommendations: 1,
 		Severity:           SeverityHintVariable,
 		Run:                ruleFullScanSelectScan,
+	})
+	register(RuleDefinition{
+		ID:                 "queryshape.select_full_join",
+		Subsystem:          "Query Shape",
+		Title:              "Joins without usable indexes",
+		FormulaText:        "Select_full_join/s > 0",
+		MinRecommendations: 2,
+		Severity:           SeverityHintVariable,
+		Run:                ruleFullScanSelectFullJoin,
+	})
+	register(RuleDefinition{
+		ID:                 "queryshape.handler_read_rnd_next",
+		Subsystem:          "Query Shape",
+		Title:              "Sequential row reads (table scans)",
+		FormulaText:        "Handler_read_rnd_next/s  and  Handler_read_rnd_next / Com_select",
+		MinRecommendations: 2,
+		Severity:           SeverityHintVariable,
+		Run:                ruleFullScanHandlerRndNext,
+	})
+	register(RuleDefinition{
+		ID:                 "queryshape.is_processlist",
+		Subsystem:          "Query Shape",
+		Title:              "information_schema.PROCESSLIST usage",
+		FormulaText:        "Deprecated_use_i_s_processlist_count/s",
+		MinRecommendations: 2,
+		Severity:           SeverityHintVariable,
+		Run:                ruleProcesslistAbuse,
 	})
 }
 
