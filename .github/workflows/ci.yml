@@ -47,14 +47,14 @@ jobs:
           cache: true
       - name: go vet
         run: go vet ./...
-      - name: go test
+      - name: go test (incl. tests/coverage/godoc — Principle VI, gate 5)
         env:
           CGO_ENABLED: "0"
+        # `go test ./...` already exercises tests/coverage/... so the
+        # godoc-coverage AST walk runs here exactly once; the step
+        # name flags the dual purpose so a future failure surfaces
+        # both the unit-test and gate-5 contexts in one CI log line.
         run: go test ./...
-      - name: godoc coverage (Principle VI, gate 5)
-        env:
-          CGO_ENABLED: "0"
-        run: go test ./tests/coverage/... -run TestGodocCoverage -count=1
 
   lint:
     runs-on: ubuntu-latest

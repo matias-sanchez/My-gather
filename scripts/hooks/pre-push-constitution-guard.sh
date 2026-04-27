@@ -125,7 +125,7 @@ if [ -n "$WATCHED_GO_CHANGED" ] && command -v go >/dev/null 2>&1; then
       [ -z "$line" ] && continue
       VIOLATIONS+=("VI: $line")
       HAD_HIT=1
-    done < <(printf '%s\n' "$GODOC_OUT" | grep -E ':[0-9]+: (function|method|type|identifier)' || true)
+    done < <(printf '%s\n' "$GODOC_OUT" | grep -E ':[0-9]+: (.+: )?(function|method|type|identifier)\b' || true)
     if [ "$HAD_HIT" -eq 0 ]; then
       VIOLATIONS+=("VI: godoc coverage test failed — re-run \`go test ./tests/coverage/... -run TestGodocCoverage -v\` for the missing-godoc list")
     fi
@@ -152,10 +152,22 @@ fi
 #
 # -I tells grep to skip binary files (PNG, etc.).
 ENGLISH_PATTERN='\xC3[\x80-\x96\x98-\xB6\xB8-\xBF]|\xC4[\x80-\xBF]|\xC5[\x80-\xBF]'
-if [ -x /usr/bin/grep ]; then
+# Choose a PCRE-capable grep. /usr/bin/grep is GNU on Linux but BSD on
+# macOS, and BSD grep silently exits non-zero on -P (which `|| true`
+# below would mask, no-oping the entire gate). Probe `--version` for
+# the GNU banner first, then fall back to a feature-test on `grep -P`
+# against any grep on PATH (which catches Homebrew's ggrep installed
+# as `grep` via a shim, plus Linux distros where /usr/bin/grep is
+# missing). If no PCRE-capable grep is reachable, fail closed so the
+# operator knows the gate is unenforceable on this host instead of
+# silently passing.
+if [ -x /usr/bin/grep ] && /usr/bin/grep --version 2>/dev/null | head -1 | grep -q GNU; then
   GREP_BIN=/usr/bin/grep
-else
+elif printf '' | grep -P '' >/dev/null 2>&1; then
   GREP_BIN=grep
+else
+  printf 'pre-push-constitution-guard: PCRE-capable grep not found (need GNU grep with -P or `ggrep`); install via `brew install grep` and shim into PATH, or run on a host with GNU grep. Aborting so gate 8 is not silently bypassed.\n' >&2
+  exit 1
 fi
 ENGLISH_HITS=()
 while IFS= read -r f; do
@@ -220,13 +232,15 @@ fi
 # because tests may legitimately exercise an httptest server.
 NET_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'model/*.go' 'render/*.go' 'findings/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/dev/null | awk '
   /^\+\+\+ b\// { file = substr($0, 7); next }
-  /^\+[[:space:]]*"net\/http"/         { print file ": import \"net/http\" added" }
-  /^\+[[:space:]]*"net"[[:space:]]*$/  { print file ": import \"net\" added" }
-  /^\+.*net\.Dial/                      { print file ": net.Dial call added" }
-  /^\+.*http\.Get\(/                    { print file ": http.Get call added" }
-  /^\+.*http\.Post\(/                   { print file ": http.Post call added" }
-  /^\+.*http\.NewRequest/               { print file ": http.NewRequest call added" }
-  /^\+.*http\.Client\{/                 { print file ": http.Client constructor added" }
+  /^\+[[:space:]]*"net\/http"/                      { print file ": import \"net/http\" added" }
+  /^\+.*net\.Dial[A-Za-z]*\(/                        { print file ": net.Dial* call added" }
+  /^\+.*net\.Listen[A-Za-z]*\(/                      { print file ": net.Listen* call added" }
+  /^\+.*net\.Lookup[A-Za-z]*\(/                      { print file ": net.Lookup* call added" }
+  /^\+.*net\.Resolve[A-Za-z]*Addr\(/                 { print file ": net.Resolve*Addr call added" }
+  /^\+.*http\.Get\(/                                  { print file ": http.Get call added" }
+  /^\+.*http\.Post\(/                                 { print file ": http.Post call added" }
+  /^\+.*http\.NewRequest/                             { print file ": http.NewRequest call added" }
+  /^\+.*http\.Client\{/                               { print file ": http.Client constructor added" }
 ')"
 if [ -n "$NET_HITS" ]; then
   while IFS= read -r line; do
@@ -243,14 +257,14 @@ fi
 # excluded because tests can write fixtures to t.TempDir().
 WRITE_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/dev/null | awk '
   /^\+\+\+ b\// { file = substr($0, 7); next }
-  /^\+.*os\.Create\b/        { print file ": os.Create" }
-  /^\+.*os\.Mkdir\b/          { print file ": os.Mkdir" }
-  /^\+.*os\.MkdirAll\b/       { print file ": os.MkdirAll" }
-  /^\+.*os\.Rename\b/         { print file ": os.Rename" }
-  /^\+.*os\.Remove\b/         { print file ": os.Remove" }
-  /^\+.*os\.RemoveAll\b/      { print file ": os.RemoveAll" }
-  /^\+.*os\.WriteFile\b/      { print file ": os.WriteFile" }
-  /^\+.*ioutil\.WriteFile\b/  { print file ": ioutil.WriteFile" }
+  /^\+.*os\.Create([^[:alnum:]_]|$)/        { print file ": os.Create" }
+  /^\+.*os\.Mkdir([^[:alnum:]_]|$)/         { print file ": os.Mkdir" }
+  /^\+.*os\.MkdirAll([^[:alnum:]_]|$)/      { print file ": os.MkdirAll" }
+  /^\+.*os\.Rename([^[:alnum:]_]|$)/        { print file ": os.Rename" }
+  /^\+.*os\.Remove([^[:alnum:]_]|$)/        { print file ": os.Remove" }
+  /^\+.*os\.RemoveAll([^[:alnum:]_]|$)/     { print file ": os.RemoveAll" }
+  /^\+.*os\.WriteFile([^[:alnum:]_]|$)/     { print file ": os.WriteFile" }
+  /^\+.*ioutil\.WriteFile([^[:alnum:]_]|$)/ { print file ": ioutil.WriteFile" }
 ')"
 if [ -n "$WRITE_HITS" ]; then
   while IFS= read -r line; do
