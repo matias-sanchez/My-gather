@@ -58,9 +58,12 @@ const (
     SuffixTop          Suffix = "top"
     SuffixVariables    Suffix = "variables"
     SuffixVmstat       Suffix = "vmstat"
+    SuffixMeminfo      Suffix = "meminfo"       // added mid-feature, commit 6e2c150
     SuffixInnodbStatus Suffix = "innodbstatus1"
     SuffixMysqladmin   Suffix = "mysqladmin"
     SuffixProcesslist  Suffix = "processlist"
+    SuffixNetstat      Suffix = "netstat"       // post-MVP, commit 0790e17 — per-sample socket dump
+    SuffixNetstatS     Suffix = "netstat_s"     // post-MVP, commit 0790e17 — aggregate kernel counters
 )
 ```
 
@@ -432,9 +435,10 @@ type Report struct {
                                   // derived from Collection by render.collectionTitle
     GeneratedAt      time.Time    // the ONLY non-deterministic field (Principle IV)
     Collection       *Collection  // original, unmodified
-    OSSection        *OSSection
-    VariablesSection *VariablesSection
-    DBSection        *DBSection
+    EnvironmentSection *EnvironmentSection // post-MVP (commit 0790e17); rendered first per FR-005
+    OSSection          *OSSection
+    VariablesSection   *VariablesSection
+    DBSection          *DBSection
 
     // Navigation is computed from the rendered sections at render
     // time; it is not input to Render but exposed in the model so
