@@ -89,18 +89,18 @@ func init() {
 	register(RuleDefinition{
 		ID:                 "binlog.cache_disk_use",
 		Subsystem:          "Binlog Cache",
-		Title:              "Binlog cache spilled to disk",
+		Title:              "Binlog cache overflowing to disk",
 		FormulaText:        "Binlog_cache_disk_use/s > 0",
-		MinRecommendations: 1,
+		MinRecommendations: 3,
 		Severity:           SeverityHintVariable,
 		Run:                ruleBinlogCacheDiskUse,
 	})
 	register(RuleDefinition{
 		ID:                 "binlog.stmt_cache_disk_use",
 		Subsystem:          "Binlog Cache",
-		Title:              "Statement-binlog cache spilled to disk",
+		Title:              "Binlog statement cache overflowing to disk",
 		FormulaText:        "Binlog_stmt_cache_disk_use/s > 0",
-		MinRecommendations: 1,
+		MinRecommendations: 2,
 		Severity:           SeverityHintVariable,
 		Run:                ruleBinlogStmtCacheDiskUse,
 	})

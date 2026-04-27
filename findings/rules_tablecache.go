@@ -169,18 +169,18 @@ func init() {
 	register(RuleDefinition{
 		ID:                 "tablecache.usage",
 		Subsystem:          "Table Open Cache",
-		Title:              "Open-tables vs table_open_cache",
-		FormulaText:        "Open_tables / table_open_cache",
-		MinRecommendations: 2,
+		Title:              "Table cache saturation",
+		FormulaText:        "usage = Open_tables / table_open_cache",
+		MinRecommendations: 3,
 		Severity:           SeverityHintVariable,
 		Run:                ruleTableCacheUsage,
 	})
 	register(RuleDefinition{
 		ID:                 "tablecache.overflows",
 		Subsystem:          "Table Open Cache",
-		Title:              "Table cache overflows rate",
-		FormulaText:        "Table_open_cache_overflows/s",
-		MinRecommendations: 1,
+		Title:              "Table open cache overflows",
+		FormulaText:        "Table_open_cache_overflows/s > 0",
+		MinRecommendations: 2,
 		Severity:           SeverityHintVariable,
 		Run:                ruleTableCacheOverflows,
 	})
@@ -188,8 +188,8 @@ func init() {
 		ID:                 "tablecache.miss_ratio",
 		Subsystem:          "Table Open Cache",
 		Title:              "Table cache miss ratio",
-		FormulaText:        "misses / (hits + misses)",
-		MinRecommendations: 1,
+		FormulaText:        "miss_ratio = Table_open_cache_misses / (Table_open_cache_hits + Table_open_cache_misses)",
+		MinRecommendations: 2,
 		Severity:           SeverityHintVariable,
 		Run:                ruleTableCacheMissRatio,
 	})

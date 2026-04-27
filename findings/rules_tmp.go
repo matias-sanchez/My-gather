@@ -66,9 +66,9 @@ func init() {
 	register(RuleDefinition{
 		ID:                 "tmp.disk_ratio",
 		Subsystem:          "Temp Tables",
-		Title:              "Temp tables spilling to disk",
-		FormulaText:        "Created_tmp_disk_tables / Created_tmp_tables",
-		MinRecommendations: 1,
+		Title:              "Internal temp tables spilling to disk",
+		FormulaText:        "disk_ratio = Created_tmp_disk_tables / Created_tmp_tables",
+		MinRecommendations: 3,
 		Severity:           SeverityHintVariable,
 		Run:                ruleTmpDiskRatio,
 	})

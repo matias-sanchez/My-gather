@@ -66,9 +66,9 @@ func init() {
 	register(RuleDefinition{
 		ID:                 "queryshape.handler_read_rnd_next",
 		Subsystem:          "Query Shape",
-		Title:              "Sequential row reads (Handler_read_rnd_next)",
-		FormulaText:        "Handler_read_rnd_next/s  AND  Handler_read_rnd_next / Com_select",
-		MinRecommendations: 1,
+		Title:              "Sequential row reads (table scans)",
+		FormulaText:        "Handler_read_rnd_next/s  and  Handler_read_rnd_next / Com_select",
+		MinRecommendations: 2,
 		Severity:           SeverityHintVariable,
 		Run:                ruleFullScanHandlerRndNext,
 	})

@@ -152,17 +152,17 @@ func init() {
 	register(RuleDefinition{
 		ID:                 "connections.aborted_rate",
 		Subsystem:          "Connections",
-		Title:              "Aborted connections rate",
-		FormulaText:        "Aborted_connects/s",
-		MinRecommendations: 1,
+		Title:              "Aborted connection attempts",
+		FormulaText:        "Aborted_connects/s > 0",
+		MinRecommendations: 3,
 		Severity:           SeverityHintVariable,
 		Run:                ruleAbortedConnectsRate,
 	})
 	register(RuleDefinition{
 		ID:                 "connections.saturation",
 		Subsystem:          "Connections",
-		Title:              "Connection slot saturation",
-		FormulaText:        "Threads_connected / max_connections",
+		Title:              "Connection pool saturation",
+		FormulaText:        "Threads_connected / max_connections  and  Threads_running (max)",
 		MinRecommendations: 3,
 		Severity:           SeverityHintVariable,
 		Run:                ruleConnectionsSaturation,

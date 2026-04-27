@@ -83,8 +83,8 @@ func init() {
 		ID:                 "threadcache.hit_ratio",
 		Subsystem:          "Thread Cache",
 		Title:              "Thread cache hit ratio",
-		FormulaText:        "1 - Threads_created / Connections",
-		MinRecommendations: 1,
+		FormulaText:        "hit_ratio = 1 − Threads_created / Connections",
+		MinRecommendations: 2,
 		Severity:           SeverityHintVariable,
 		Run:                ruleThreadCacheHitRatio,
 	})

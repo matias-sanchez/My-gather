@@ -162,8 +162,8 @@ func init() {
 	register(RuleDefinition{
 		ID:                 "redo.checkpoint_age",
 		Subsystem:          "Redo Log",
-		Title:              "Redo checkpoint age",
-		FormulaText:        "max(Innodb_checkpoint_age) / Innodb_checkpoint_max_age",
+		Title:              "Redo log checkpoint age",
+		FormulaText:        "checkpoint_age / checkpoint_max_age",
 		MinRecommendations: 3,
 		Severity:           SeverityHintVariable,
 		Run:                ruleRedoCheckpointAge,
@@ -191,7 +191,7 @@ func init() {
 		Subsystem:          "Redo Log",
 		Title:              "Redo log buffer waits",
 		FormulaText:        "Innodb_log_waits/s > 0",
-		MinRecommendations: 3,
+		MinRecommendations: 2,
 		Severity:           SeverityHintVariable,
 		Run:                ruleRedoLogWaits,
 	})

@@ -388,8 +388,8 @@ func init() {
 	register(RuleDefinition{
 		ID:                 "bp.dirty_pct",
 		Subsystem:          "Buffer Pool",
-		Title:              "Buffer pool dirty-page percentage",
-		FormulaText:        "Innodb_buffer_pool_pages_dirty / Innodb_buffer_pool_pages_total  vs  innodb_max_dirty_pages_pct",
+		Title:              "Dirty-page ratio",
+		FormulaText:        "dirty_pct = Innodb_buffer_pool_pages_dirty / Innodb_buffer_pool_pages_total × 100  vs  innodb_max_dirty_pages_pct",
 		MinRecommendations: 3,
 		Severity:           SeverityHintVariable,
 		Run:                ruleBPDirtyPct,
