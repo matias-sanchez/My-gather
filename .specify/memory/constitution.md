@@ -406,16 +406,22 @@ tagged **[MECHANICAL]** (enforced by CI in `.github/workflows/` or by
 `scripts/hooks/pre-push-constitution-guard.sh`, blocking the change
 without human action) or **[REVIEW]** (enforced by human review against
 this constitution; the repo currently has no mechanical check that
-catches a violation). The tag tells you whether you can rely on tooling
-to catch a regression, or whether reviewer attention is the only line of
-defence:
+catches a violation). A gate may carry a partial / mixed tag
+(e.g. **[MECHANICAL — partial]** combined with an inline **[REVIEW]**
+on the un-mechanised sub-rules) when only one half of its scope is
+caught by tooling — gate 6 is the current instance. The tag tells
+you whether you can rely on tooling to catch a regression, or whether
+reviewer attention is the only line of defence:
 
 1. **[MECHANICAL]** `go vet ./...` and `go test ./...` succeed on all
    supported platforms exercised in CI.
 2. **[MECHANICAL]** Every new or modified parser ships with its fixture
    and golden file (Principle VIII). New collector parsers are caught by
    `scripts/hooks/pre-push-constitution-guard.sh` (the `COLLECTOR_PARSERS`
-   list); modifications to existing parsers are governance-reviewed.
+   list); behavioural changes to existing parsers are mechanically caught
+   by CI when their golden tests fail unless the golden is updated, with
+   review covering the remaining governance expectation (intentional
+   vs. accidental output drift, fixture-coverage of new code paths).
 3. **[MECHANICAL]** Determinism check: a test re-runs report generation
    twice on the same fixture set and asserts byte-identical output
    (Principle IV). The CI determinism job allows up to two diff lines —
