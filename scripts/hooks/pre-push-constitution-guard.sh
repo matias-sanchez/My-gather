@@ -232,7 +232,8 @@ fi
 # because tests may legitimately exercise an httptest server.
 NET_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'model/*.go' 'render/*.go' 'findings/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/dev/null | awk '
   /^\+\+\+ b\// { file = substr($0, 7); next }
-  /^\+[[:space:]]*"net\/http"/                      { print file ": import \"net/http\" added" }
+  /^\+[[:space:]]*"net\/http"/                      { print file ": import \"net/http\" added (block form)" }
+  /^\+[[:space:]]*import[[:space:]]+"net\/http"/    { print file ": import \"net/http\" added (single-line form)" }
   /^\+.*net\.Dial[A-Za-z]*\(/                        { print file ": net.Dial* call added" }
   /^\+.*net\.Listen[A-Za-z]*\(/                      { print file ": net.Listen* call added" }
   /^\+.*net\.Lookup[A-Za-z]*\(/                      { print file ": net.Lookup* call added" }
