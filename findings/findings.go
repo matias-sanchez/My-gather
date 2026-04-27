@@ -11,6 +11,7 @@ package findings
 
 import (
 	"sort"
+	"sync"
 
 	"github.com/matias-sanchez/My-gather/model"
 )
@@ -93,72 +94,28 @@ type Finding struct {
 	Source string
 }
 
-// rule is the unit of composition: a function that takes a Report and
-// returns one Finding (or Severity=Skip to opt out).
-type rule func(r *model.Report) Finding
+// registrySortOnce ensures the registry is sorted exactly once,
+// after every per-file init() has populated it. Go runs in-package
+// init()s in source-file alphabetical order, so any sort placed in a
+// findings.go-level init() would execute before files like
+// register.go and rules_*.go contribute their entries. Doing the
+// sort lazily on first Analyze() call sidesteps that ordering trap.
+var registrySortOnce sync.Once
 
-// allRules is the deterministically-ordered registry of analytical
-// rules. Ordering is by subsystem-group then by rule ID; the exact
-// order in this slice does not matter because Analyze sorts the
-// results. New rules just append here.
-var allRules = []rule{
-	// Buffer Pool
-	ruleBPHitRatio,
-	ruleBPUndersized,
-	ruleBPFreePagesLow,
-	ruleBPLRUFlushing,
-	ruleBPWaitFree,
-	ruleBPDirtyPct,
-	ruleInnoDBFlushing,
-
-	// Redo Log
-	ruleRedoCheckpointAge,
-	ruleRedoPendingWrites,
-	ruleRedoPendingFsyncs,
-	ruleRedoLogWaits,
-
-	// InnoDB Semaphores (contention detection)
-	ruleSemaphoreWaits,
-
-	// Binlog Cache
-	ruleBinlogCacheDiskUse,
-	ruleBinlogStmtCacheDiskUse,
-
-	// Thread Cache
-	ruleThreadCacheHitRatio,
-
-	// Table Open Cache
-	ruleTableCacheUsage,
-	ruleTableCacheOverflows,
-	ruleTableCacheMissRatio,
-
-	// Temp Tables
-	ruleTmpDiskRatio,
-
-	// Query shape
-	ruleFullScanSelectScan,
-	ruleFullScanSelectFullJoin,
-	ruleFullScanHandlerRndNext,
-	ruleProcesslistAbuse,
-
-	// Connections
-	ruleAbortedConnectsRate,
-	ruleConnectionsSaturation,
-
-	// Configuration
-	ruleSlowLogDisabled,
-}
-
-// Analyze runs every rule against the given Report and returns the
-// non-Skip findings in a deterministic order: by Subsystem, then by
-// descending Severity (Crit first), then by ID alphabetically.
+// Analyze runs every registered rule against the given Report and
+// returns the non-Skip findings in a deterministic order: by
+// Subsystem, then by descending Severity (Crit first), then by ID
+// alphabetically. Internally it iterates the package-level registry,
+// which is sorted by RuleDefinition.ID on first call so the dispatch
+// order is stable independent of source-file or build order.
 func Analyze(r *model.Report) []Finding {
+	registrySortOnce.Do(sortRegistry)
 	if r == nil {
 		return nil
 	}
-	out := make([]Finding, 0, len(allRules))
-	for _, fn := range allRules {
-		f := fn(r)
+	out := make([]Finding, 0, len(registry))
+	for _, def := range registry {
+		f := def.Run(r)
 		if f.Severity == SeveritySkip {
 			continue
 		}

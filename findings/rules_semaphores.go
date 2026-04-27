@@ -124,3 +124,16 @@ func ruleSemaphoreWaits(r *model.Report) Finding {
 		Source:          "Rosetta Stone — InnoDB SEMAPHORES section (contention detection)",
 	}
 }
+
+// init registers ruleSemaphoreWaits as a native RuleDefinition.
+func init() {
+	register(RuleDefinition{
+		ID:                 "innodb.semaphores",
+		Subsystem:          "InnoDB Semaphores",
+		Title:              "InnoDB semaphore contention",
+		FormulaText:        "peak waiting threads > 0  (crit ≥ 500)",
+		MinRecommendations: 3,
+		Severity:           SeverityHintVariable,
+		Run:                ruleSemaphoreWaits,
+	})
+}

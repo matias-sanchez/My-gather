@@ -187,3 +187,16 @@ func ruleInnoDBFlushing(r *model.Report) Finding {
 		Source:          "Rosetta Stone — Buffer Pool §Saturation (flushing), Redo Log §Saturation (fsync)",
 	}
 }
+
+// init registers ruleInnoDBFlushing as a native RuleDefinition.
+func init() {
+	register(RuleDefinition{
+		ID:                 "innodb.flushing",
+		Subsystem:          "Buffer Pool",
+		Title:              "InnoDB flushing pressure",
+		FormulaText:        "any of {singlePage, fsyncLog, LRU, flushList, fsyncBP} > 0",
+		MinRecommendations: 3,
+		Severity:           SeverityHintVariable,
+		Run:                ruleInnoDBFlushing,
+	})
+}

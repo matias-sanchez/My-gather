@@ -51,3 +51,16 @@ func ruleSlowLogDisabled(r *model.Report) Finding {
 		Source: "Rosetta Stone — Part B slow_query_log",
 	}
 }
+
+// init registers ruleSlowLogDisabled as a native RuleDefinition.
+func init() {
+	register(RuleDefinition{
+		ID:                 "config.slow_log_disabled",
+		Subsystem:          "Configuration",
+		Title:              "Slow query log is disabled",
+		FormulaText:        "slow_query_log = OFF  AND  Questions/s > 0",
+		MinRecommendations: 3,
+		Severity:           SeverityHintWarning,
+		Run:                ruleSlowLogDisabled,
+	})
+}

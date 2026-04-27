@@ -334,3 +334,18 @@ func ruleBPDirtyPct(r *model.Report) Finding {
 		Source: "Rosetta Stone — Buffer Pool §Saturation (capacity), Part B Innodb_buffer_pool_pages_dirty",
 	}
 }
+
+// init registers the native RuleDefinition for ruleBPHitRatio. The
+// other Buffer Pool rules in this file remain wrapped via
+// legacyAdapter in register.go until their per-rule conversions land.
+func init() {
+	register(RuleDefinition{
+		ID:                 "bp.hit_ratio",
+		Subsystem:          "Buffer Pool",
+		Title:              "Buffer pool hit ratio",
+		FormulaText:        "hit_ratio = 1 − Innodb_buffer_pool_reads / Innodb_buffer_pool_read_requests",
+		MinRecommendations: 3,
+		Severity:           SeverityHintVariable,
+		Run:                ruleBPHitRatio,
+	})
+}
