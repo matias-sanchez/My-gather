@@ -3,6 +3,7 @@ package parse
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -111,4 +112,48 @@ func TestVmstatGolden(t *testing.T) {
 		Diagnostics:        diags,
 	})
 	goldens.Compare(t, goldenPath, got)
+}
+
+func TestVmstatIgnoresMalformedTextWithoutResettingHeader(t *testing.T) {
+	fixture := strings.Join([]string{
+		"procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----",
+		" r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st",
+		" 1  2      0    100     10     20    0    0     5     6    7    8  9 10 81 11  0",
+		"this is not a vmstat header",
+		" 3  4      0    200     30     40    1    2     9    10   11   12 13 14 73 15  0",
+	}, "\n")
+
+	data, diags := parseVmstat(strings.NewReader(fixture), vmstatSnapshotStart(), "synthetic-vmstat")
+	if data == nil {
+		t.Fatalf("parseVmstat returned nil data (diagnostics: %+v)", diags)
+	}
+	if len(diags) != 1 {
+		t.Fatalf("diagnostics length = %d, want 1 (%+v)", len(diags), diags)
+	}
+	if got := len(data.Series[0].Samples); got != 2 {
+		t.Fatalf("runqueue sample count = %d, want 2", got)
+	}
+
+	assertMetric := func(metric string, want []float64) {
+		t.Helper()
+		for _, series := range data.Series {
+			if series.Metric != metric {
+				continue
+			}
+			if len(series.Samples) != len(want) {
+				t.Fatalf("%s sample count = %d, want %d", metric, len(series.Samples), len(want))
+			}
+			for i, sample := range series.Samples {
+				if got := sample.Measurements[metric]; got != want[i] {
+					t.Fatalf("%s sample %d = %v, want %v", metric, i, got, want[i])
+				}
+			}
+			return
+		}
+		t.Fatalf("metric %q not found", metric)
+	}
+
+	assertMetric("runqueue", []float64{1, 3})
+	assertMetric("free_kb", []float64{100, 200})
+	assertMetric("cpu_iowait", []float64{11, 15})
 }

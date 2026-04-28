@@ -82,13 +82,15 @@ func parseVmstat(r io.Reader, snapshotStart time.Time, sourcePath string) (*mode
 			// Banner line repeats every N rows; skip.
 			continue
 		}
-		// Column-label line always contains "r" and "b" as the first
-		// two tokens alongside memory/swap fields. Detect it by
-		// looking for a non-numeric first token.
 		fields := strings.Fields(line)
 		if _, err := strconv.Atoi(fields[0]); err != nil {
+			if !isVmstatHeader(fields) {
+				addDiag(lineNum, "vmstat ignored non-data line that is not a recognized header")
+				continue
+			}
 			// Header. Record column positions.
 			headerCols = fields
+			colIndex = map[string]int{}
 			for i, c := range headerCols {
 				if _, seen := colIndex[c]; !seen {
 					colIndex[c] = i
@@ -152,4 +154,26 @@ func parseVmstat(r io.Reader, snapshotStart time.Time, sourcePath string) (*mode
 		})
 	}
 	return data, diagnostics
+}
+
+func isVmstatHeader(fields []string) bool {
+	if len(fields) < 3 {
+		return false
+	}
+	if fields[0] != "r" || fields[1] != "b" {
+		return false
+	}
+
+	known := map[string]struct{}{
+		"r": {}, "b": {}, "swpd": {}, "free": {}, "buff": {}, "cache": {},
+		"si": {}, "so": {}, "bi": {}, "bo": {}, "in": {}, "cs": {},
+		"us": {}, "sy": {}, "id": {}, "wa": {}, "st": {},
+	}
+	knownCount := 0
+	for _, f := range fields {
+		if _, ok := known[f]; ok {
+			knownCount++
+		}
+	}
+	return knownCount >= 6
 }

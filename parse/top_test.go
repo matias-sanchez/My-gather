@@ -259,3 +259,31 @@ func TestTopTimestampsRollForwardAcrossMidnight(t *testing.T) {
 			data.ProcessSamples[0].Timestamp, data.ProcessSamples[1].Timestamp)
 	}
 }
+
+func TestTopFirstHeaderAfterMidnightUsesNearestDay(t *testing.T) {
+	fixture := strings.Join([]string{
+		"top - 00:00:01 up 1 day,  0:00,  0 users,  load average: 0,0,0",
+		"Tasks:   0 total",
+		"%Cpu(s):  0 us",
+		"MiB Mem :   0 total",
+		"MiB Swap:   0 total",
+		"",
+		"    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND",
+		"    100 root      20   0       0      0      0 S  10.0   0.0   0:00.00 after-midnight",
+		"",
+	}, "\n")
+
+	snapshotStart := time.Date(2026, 4, 21, 23, 59, 59, 0, time.UTC)
+	data, diags := parseTop(strings.NewReader(fixture), snapshotStart, "synthetic-first-header-after-midnight")
+	if data == nil {
+		t.Fatalf("parseTop returned nil data on first-header fixture (diagnostics: %+v)", diags)
+	}
+	if len(data.ProcessSamples) != 1 {
+		t.Fatalf("ProcessSamples length = %d, want 1", len(data.ProcessSamples))
+	}
+
+	want := time.Date(2026, 4, 22, 0, 0, 1, 0, time.UTC)
+	if got := data.ProcessSamples[0].Timestamp; !got.Equal(want) {
+		t.Fatalf("timestamp = %s, want %s", got, want)
+	}
+}

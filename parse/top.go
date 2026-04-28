@@ -65,6 +65,16 @@ func parseTop(r io.Reader, snapshotStart time.Time, sourcePath string) (*model.T
 			headerClock := hh*3600 + mm*60 + ss
 			if lastHeaderClock >= 0 && headerClock < lastHeaderClock {
 				dayOffset++
+			} else if lastHeaderClock < 0 {
+				candidate := time.Date(
+					snapshotDate.Year(), snapshotDate.Month(), snapshotDate.Day(),
+					hh, mm, ss, 0, time.UTC,
+				)
+				if snapshotStart.Sub(candidate) > 12*time.Hour {
+					dayOffset = 1
+				} else if candidate.Sub(snapshotStart) > 12*time.Hour {
+					dayOffset = -1
+				}
 			}
 			lastHeaderClock = headerClock
 			headerDate := snapshotDate.AddDate(0, 0, dayOffset)

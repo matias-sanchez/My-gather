@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # my-gather installer. Detects OS+arch, downloads the matching raw
 # binary from the latest GitHub Release, verifies its SHA-256
-# against the published SHA256SUMS, installs to $PREFIX (default
+# against the published SHA256SUMS, self-checks it, installs to $PREFIX (default
 # $HOME/.local/bin) and prints the installed version.
 #
 # Usage:
@@ -56,34 +56,41 @@ trap 'rm -rf "$tmp"' EXIT
 echo "my-gather: downloading ${asset} (${version})"
 curl -fsSL "$url" -o "${tmp}/${asset}"
 
-# Verify SHA-256 against the published SHA256SUMS.
-if curl -fsSL "$sums_url" -o "${tmp}/SHA256SUMS" 2>/dev/null; then
-  expected=$(grep "  ${asset}\$" "${tmp}/SHA256SUMS" | awk '{print $1}')
-  if [ -n "$expected" ]; then
-    if command -v sha256sum >/dev/null 2>&1; then
-      actual=$(sha256sum "${tmp}/${asset}" | awk '{print $1}')
-    else
-      actual=$(shasum -a 256 "${tmp}/${asset}" | awk '{print $1}')
-    fi
-    if [ "$expected" != "$actual" ]; then
-      echo "my-gather: checksum mismatch for ${asset}" >&2
-      echo "  expected: ${expected}" >&2
-      echo "  actual:   ${actual}" >&2
-      exit 1
-    fi
-    echo "my-gather: checksum verified"
-  else
-    echo "my-gather: ${asset} not listed in SHA256SUMS; skipping verify" >&2
-  fi
-else
-  echo "my-gather: SHA256SUMS not found for ${version}; skipping verify" >&2
+# Verify SHA-256 against the published SHA256SUMS. Installation fails
+# closed if the checksum manifest is missing or does not list this
+# platform asset.
+if ! curl -fsSL "$sums_url" -o "${tmp}/SHA256SUMS"; then
+  echo "my-gather: SHA256SUMS not found for ${version}; refusing unverified install" >&2
+  exit 1
 fi
 
-chmod +x "${tmp}/${asset}"
+expected=$(awk -v asset="$asset" '$2 == asset { print $1; found=1; exit } END { if (!found) exit 1 }' "${tmp}/SHA256SUMS" || true)
+if [ -z "$expected" ]; then
+  echo "my-gather: ${asset} not listed in SHA256SUMS; refusing unverified install" >&2
+  exit 1
+fi
+if command -v sha256sum >/dev/null 2>&1; then
+  actual=$(sha256sum "${tmp}/${asset}" | awk '{print $1}')
+else
+  actual=$(shasum -a 256 "${tmp}/${asset}" | awk '{print $1}')
+fi
+if [ "$expected" != "$actual" ]; then
+  echo "my-gather: checksum mismatch for ${asset}" >&2
+  echo "  expected: ${expected}" >&2
+  echo "  actual:   ${actual}" >&2
+  exit 1
+fi
+echo "my-gather: checksum verified"
+
+chmod 0755 "${tmp}/${asset}"
+if ! "${tmp}/${asset}" --version >/dev/null 2>&1; then
+  echo "my-gather: downloaded ${asset} failed --version self-check" >&2
+  exit 1
+fi
 mv "${tmp}/${asset}" "${prefix}/${BIN}"
 
 echo "my-gather: installed to ${prefix}/${BIN}"
-"${prefix}/${BIN}" --version || true
+"${prefix}/${BIN}" --version
 
 case ":${PATH}:" in
   *":${prefix}:"*) ;;
