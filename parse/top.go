@@ -49,6 +49,8 @@ func parseTop(r io.Reader, snapshotStart time.Time, sourcePath string) (*model.T
 
 	snapshotDate := snapshotStart.In(time.UTC)
 	currentTime := snapshotStart
+	lastHeaderClock := -1
+	dayOffset := 0
 
 	state := stateAwaitHeader
 	lineNum := 0
@@ -60,8 +62,14 @@ func parseTop(r io.Reader, snapshotStart time.Time, sourcePath string) (*model.T
 			hh, _ := strconv.Atoi(m[1])
 			mm, _ := strconv.Atoi(m[2])
 			ss, _ := strconv.Atoi(m[3])
+			headerClock := hh*3600 + mm*60 + ss
+			if lastHeaderClock >= 0 && headerClock < lastHeaderClock {
+				dayOffset++
+			}
+			lastHeaderClock = headerClock
+			headerDate := snapshotDate.AddDate(0, 0, dayOffset)
 			currentTime = time.Date(
-				snapshotDate.Year(), snapshotDate.Month(), snapshotDate.Day(),
+				headerDate.Year(), headerDate.Month(), headerDate.Day(),
 				hh, mm, ss, 0, time.UTC,
 			)
 			state = stateAwaitPIDHeader

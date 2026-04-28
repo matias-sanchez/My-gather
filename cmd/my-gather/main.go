@@ -41,6 +41,8 @@ const (
 	exitInternal       = 70
 )
 
+var errOutputExists = errors.New("output exists")
+
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
@@ -158,7 +160,11 @@ func run(args []string, stdout, stderr io.Writer) int {
 	if verbose {
 		fmt.Fprintf(stderr, "[render] writing %s\n", absOut)
 	}
-	if err := writeAtomic(absOut, collection); err != nil {
+	if err := writeAtomic(absOut, collection, overwrite); err != nil {
+		if errors.Is(err, errOutputExists) {
+			fmt.Fprintf(stderr, "my-gather: output %q already exists; pass --overwrite to replace\n", absOut)
+			return exitOutputExists
+		}
 		fmt.Fprintf(stderr, "my-gather: render: %v\n", err)
 		return exitInternal
 	}
@@ -201,10 +207,12 @@ func mapDiscoverError(err error, inputPath string, stderr io.Writer) int {
 	return exitInternal
 }
 
-// writeAtomic writes the rendered HTML to a sibling temp file and
-// os.Renames it over the target. Prevents the caller seeing a
-// partially-written output if the render pipeline panics mid-stream.
-func writeAtomic(outPath string, c *model.Collection) error {
+// writeAtomic writes the rendered HTML to a sibling temp file, then
+// installs that completed temp file at the target path. In overwrite
+// mode, install uses os.Rename. In non-overwrite mode, install uses a
+// same-directory hard link so the final step cannot replace a file
+// created after the early existence check.
+func writeAtomic(outPath string, c *model.Collection, overwrite bool) error {
 	dir := filepath.Dir(outPath)
 	base := filepath.Base(outPath)
 	tmp, err := os.CreateTemp(dir, "."+base+".tmp-*")
@@ -238,9 +246,26 @@ func writeAtomic(outPath string, c *model.Collection) error {
 		return fmt.Errorf("close temp: %w", err)
 	}
 	tmp = nil
-	if err := os.Rename(tmpPath, outPath); err != nil {
+	return installRenderedFile(tmpPath, outPath, overwrite)
+}
+
+func installRenderedFile(tmpPath, outPath string, overwrite bool) error {
+	if overwrite {
+		if err := os.Rename(tmpPath, outPath); err != nil {
+			_ = os.Remove(tmpPath)
+			return fmt.Errorf("rename: %w", err)
+		}
+		return nil
+	}
+	if err := os.Link(tmpPath, outPath); err != nil {
 		_ = os.Remove(tmpPath)
-		return fmt.Errorf("rename: %w", err)
+		if os.IsExist(err) {
+			return errOutputExists
+		}
+		return fmt.Errorf("link output: %w", err)
+	}
+	if err := os.Remove(tmpPath); err != nil {
+		return fmt.Errorf("remove temp: %w", err)
 	}
 	return nil
 }

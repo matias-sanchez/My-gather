@@ -214,3 +214,48 @@ func TestTopTiebreakerViaParser(t *testing.T) {
 			data.Top3ByAverage[0].PID, data.Top3ByAverage[1].PID)
 	}
 }
+
+func TestTopTimestampsRollForwardAcrossMidnight(t *testing.T) {
+	fixture := strings.Join([]string{
+		"top - 23:59:59 up 1 day,  0:00,  0 users,  load average: 0,0,0",
+		"Tasks:   0 total",
+		"%Cpu(s):  0 us",
+		"MiB Mem :   0 total",
+		"MiB Swap:   0 total",
+		"",
+		"    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND",
+		"    100 root      20   0       0      0      0 S  10.0   0.0   0:00.00 before-midnight",
+		"",
+		"top - 00:00:00 up 1 day,  0:00,  0 users,  load average: 0,0,0",
+		"Tasks:   0 total",
+		"%Cpu(s):  0 us",
+		"MiB Mem :   0 total",
+		"MiB Swap:   0 total",
+		"",
+		"    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND",
+		"    100 root      20   0       0      0      0 S  20.0   0.0   0:00.00 after-midnight",
+		"",
+	}, "\n")
+
+	snapshotStart := time.Date(2026, 4, 21, 23, 59, 59, 0, time.UTC)
+	data, diags := parseTop(strings.NewReader(fixture), snapshotStart, "synthetic-midnight")
+	if data == nil {
+		t.Fatalf("parseTop returned nil data on midnight fixture (diagnostics: %+v)", diags)
+	}
+	if len(data.ProcessSamples) != 2 {
+		t.Fatalf("ProcessSamples length = %d, want 2", len(data.ProcessSamples))
+	}
+
+	wantFirst := time.Date(2026, 4, 21, 23, 59, 59, 0, time.UTC)
+	wantSecond := time.Date(2026, 4, 22, 0, 0, 0, 0, time.UTC)
+	if !data.ProcessSamples[0].Timestamp.Equal(wantFirst) {
+		t.Fatalf("first timestamp = %s, want %s", data.ProcessSamples[0].Timestamp, wantFirst)
+	}
+	if !data.ProcessSamples[1].Timestamp.Equal(wantSecond) {
+		t.Fatalf("second timestamp = %s, want %s", data.ProcessSamples[1].Timestamp, wantSecond)
+	}
+	if !data.ProcessSamples[0].Timestamp.Before(data.ProcessSamples[1].Timestamp) {
+		t.Fatalf("timestamps did not remain chronological across midnight: %s then %s",
+			data.ProcessSamples[0].Timestamp, data.ProcessSamples[1].Timestamp)
+	}
+}
