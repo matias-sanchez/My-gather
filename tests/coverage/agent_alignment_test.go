@@ -58,6 +58,27 @@ func TestAgentAlignmentSpecKitPlanTargets(t *testing.T) {
 	)
 }
 
+func TestAgentAlignmentCodexStartupSkillCoverage(t *testing.T) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatalf("resolve home directory: %v", err)
+	}
+	codexSkills := filepath.Join(home, ".codex", "skills")
+	if _, err := os.Stat(codexSkills); err != nil {
+		if os.IsNotExist(err) {
+			t.Skip("~/.codex/skills is not configured on this machine")
+		}
+		t.Fatalf("stat %s: %v", codexSkills, err)
+	}
+
+	for _, name := range requiredMyGatherSkills() {
+		path := filepath.Join(codexSkills, name, "SKILL.md")
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("Codex startup skill %s is missing: %v", path, err)
+		}
+	}
+}
+
 func activeFeatureSlugFromJSON(t *testing.T, path string) string {
 	t.Helper()
 	payload, err := os.ReadFile(path)
@@ -117,5 +138,13 @@ func assertFileContains(t *testing.T, path string, needle string) {
 	}
 	if !strings.Contains(string(payload), needle) {
 		t.Fatalf("%s does not contain %q", path, needle)
+	}
+}
+
+func requiredMyGatherSkills() []string {
+	return []string{
+		"pr-review-fix-my-gather",
+		"pr-review-loop-my-gather",
+		"pr-review-trigger-my-gather",
 	}
 }

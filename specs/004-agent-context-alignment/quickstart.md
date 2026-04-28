@@ -25,7 +25,9 @@ go test ./tests/coverage -run AgentAlignment -count=1
 ```
 
 Expected result: active-feature pointers, skill mirrors, and agent-specific
-Spec Kit context targets all pass.
+Spec Kit context targets all pass. On a machine with `~/.codex/skills`
+configured, this also verifies that the My-gather PR review skills are in
+Codex's startup skill path.
 
 ## Manual Smoke Check
 
@@ -36,4 +38,7 @@ Spec Kit context targets all pass.
 3. Confirm `.agents/skills/pr-review-trigger-my-gather/SKILL.md`,
    `.agents/skills/pr-review-fix-my-gather/SKILL.md`, and
    `.agents/skills/pr-review-loop-my-gather/SKILL.md` exist.
-4. Confirm `.claude/worktrees/` and `.claude/pre-review.log` are not staged.
+4. Confirm `~/.codex/skills/pr-review-trigger-my-gather/SKILL.md`,
+   `~/.codex/skills/pr-review-fix-my-gather/SKILL.md`, and
+   `~/.codex/skills/pr-review-loop-my-gather/SKILL.md` exist locally.
+5. Confirm `.claude/worktrees/` and `.claude/pre-review.log` are not staged.

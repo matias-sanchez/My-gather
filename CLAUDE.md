@@ -45,6 +45,14 @@ When adding a repo-local Claude skill that should be invocable by Codex,
 add a matching directory under `.agents/skills/` in the same change. The
 alignment test in `tests/coverage/agent_alignment_test.go` enforces this.
 
+Codex startup skills are loaded from `~/.codex/skills` on this machine,
+which is expected to be a symlink into
+`$HOME/git/my_memories/skills/codex`. Repo-local wrappers under
+`.agents/skills/` keep this repository self-describing, but skills that
+must appear automatically in Codex's startup list also need matching
+entries in the canonical Codex skill directory. The alignment test checks
+that machine-local coverage when `~/.codex/skills` exists.
+
 ## Repo-local Claude Code tooling
 
 - `/pr-review-trigger-my-gather` (skill at

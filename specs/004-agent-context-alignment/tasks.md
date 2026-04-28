@@ -43,3 +43,9 @@ description: "Task list for Agent Context Alignment implementation"
   `go test ./tests/coverage -run AgentAlignment -count=1`.
 - [x] T012 Run `go test ./... -count=1`.
 - [x] T013 Push branch and open PR.
+- [x] T014 [US3] Extend `tests/coverage/agent_alignment_test.go` to verify
+  `~/.codex/skills` startup coverage when that directory exists.
+- [x] T015 Mirror My-gather PR review skills into
+  `$HOME/git/my_memories/skills/codex/`.
+- [x] T016 Re-run `go test ./tests/coverage -run AgentAlignment -count=1`.
+- [ ] T017 Push the startup-skill coverage update to PR #35.

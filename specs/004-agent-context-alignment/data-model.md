@@ -10,6 +10,16 @@ Represents a durable context file consumed by an assistant runtime.
   block
 - `skillRoot`: `.agents/skills` or `.claude/skills`
 
+## CodexStartupSkillRoot
+
+Represents the machine-local skill directory Codex reads at session start.
+
+- `path`: `~/.codex/skills`
+- `expectedTarget`: `$HOME/git/my_memories/skills/codex` when symlinked by
+  `setup-agent-skills.sh`
+- `requiredSkills`: the My-gather PR review skills that must load
+  automatically in new Codex sessions
+
 ## ActiveFeaturePointer
 
 Represents the machine-readable current feature selection.
@@ -38,3 +48,5 @@ Represents one skill name that should exist for both assistant runtimes.
   top-level directory in `.agents/skills/`.
 - Codex `speckit-plan` text MUST reference `AGENTS.md`.
 - Claude `speckit-plan` text MUST reference `CLAUDE.md`.
+- If `~/.codex/skills` exists, it MUST contain every required My-gather PR
+  review skill.

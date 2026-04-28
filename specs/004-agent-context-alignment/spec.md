@@ -105,6 +105,9 @@ drift.
 - **FR-007**: Agent-specific Spec Kit plan skills MUST continue to target
   their own context files: Codex updates `AGENTS.md`, Claude updates
   `CLAUDE.md`.
+- **FR-008**: When `~/.codex/skills` exists on the local machine, the
+  alignment check MUST verify that the My-gather PR review skills exist in
+  that Codex startup path.
 
 ### Key Entities
 
@@ -127,6 +130,9 @@ drift.
   feature names produces a clear test failure.
 - **SC-004**: A future Claude-only skill addition produces a clear test
   failure until a Codex-visible counterpart is added.
+- **SC-005**: On this maintainer machine, a missing
+  `~/.codex/skills/pr-review-*-my-gather/SKILL.md` file produces a clear
+  test failure.
 
 ## Assumptions
 
@@ -136,3 +142,5 @@ drift.
   My-gather PR review workflow text.
 - `.agents/skills/` is the correct local discovery path for Codex-visible
   repo skills in this workspace.
+- `~/.codex/skills` is the Codex startup discovery path and is symlinked to
+  `$HOME/git/my_memories/skills/codex` on this maintainer machine.

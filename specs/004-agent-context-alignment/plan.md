@@ -23,7 +23,8 @@ agent artifacts
 coverage package
 **Constraints**: No changes to Claude runtime worktrees or logs; all durable
 artifacts in English; no new Go dependencies
-**Scale/Scope**: Three context pointers, two skill trees, one focused test
+**Scale/Scope**: Three context pointers, two repository skill trees, the
+Codex startup skill tree when available, one focused test
 
 ## Constitution Check
 
@@ -73,6 +74,7 @@ CLAUDE.md
 .agents/skills/pr-review-loop-my-gather/SKILL.md
 tests/coverage/agent_alignment_test.go
 README.md
+~/.codex/skills/pr-review-*-my-gather/SKILL.md  # machine-local coverage
 ```
 
 **Structure Decision**: Keep agent-specific entry points separate while
