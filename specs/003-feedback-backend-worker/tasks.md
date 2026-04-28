@@ -106,6 +106,19 @@ description: "Task list for Feedback Backend Worker implementation"
 
 ---
 
+## Phase 8: R2 attachment cleanup hardening
+
+**Purpose**: keep the automatic Worker → Cloudflare R2 → GitHub Issue flow, while preventing public orphaned attachments when R2 upload succeeds but GitHub issue creation fails before an issue URL exists.
+
+- [x] T043 [US2] Update `specs/003-feedback-backend-worker/{spec.md,data-model.md,research.md,contracts/api.md,tasks.md}` with the pre-create R2 cleanup contract and content-hash ownership rule.
+- [x] T044 [P] [US2] Add `feedback-worker/test/index.test.ts` coverage for "new R2 object uploaded, GitHub pre-create failure, object deleted before returning 503".
+- [x] T045 [P] [US2] Add `feedback-worker/test/index.test.ts` coverage for "pre-existing content-hash object reused, GitHub pre-create failure, object not deleted".
+- [x] T046 [US2] Update `feedback-worker/src/r2-upload.ts` so `uploadAttachment()` returns `created`, and add a deletion helper for request-owned cleanup.
+- [x] T047 [US2] Update `feedback-worker/src/index.ts` to track uploaded attachment metadata and run best-effort cleanup in every pre-create failure branch before returning 503/504/500.
+- [x] T048 [US2] Run `cd feedback-worker && npm run typecheck && npm test`, then run root `go test ./...`, `make lint`, and `git diff --check`.
+
+---
+
 ## Dependencies
 
 - Phase 1 (human setup) → Phase 2 needs the IDs and the R2 URL. The constitution amendment is already on main at v1.3.0; T006 is a verification guard, not an edit.

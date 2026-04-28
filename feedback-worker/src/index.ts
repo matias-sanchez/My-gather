@@ -13,7 +13,7 @@ import {
 import { cacheResponse, reserveResponse } from "./idempotency";
 import { logRequest } from "./log";
 import { checkRateLimit, hashIp } from "./ratelimit";
-import { uploadAttachment } from "./r2-upload";
+import { deleteAttachment, type AttachmentUpload, uploadAttachment } from "./r2-upload";
 import { validatePayload } from "./validate";
 
 export type { Env } from "./env";
@@ -85,6 +85,11 @@ function categoryLabel(category: string | undefined): string | null {
   // readability; normalise here so label resolution is case-consistent.
   if (!category) return null;
   return `area/${category.toLowerCase()}`;
+}
+
+async function cleanupCreatedAttachments(env: Env, uploads: AttachmentUpload[]): Promise<void> {
+  if (uploads.length === 0) return;
+  await Promise.allSettled(uploads.map((upload) => deleteAttachment(env, upload)));
 }
 
 async function handleFeedback(req: Request, env: Env, startedAt: number): Promise<Response> {
@@ -277,8 +282,9 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
   // --- Uploads + GitHub issue creation ----------------------------------------
   // Structure:
   //   1. pre-create phase (uploads + GraphQL call). Failures here MUST
-  //      release the reservation so the client can retry and
-  //      eventually create the issue.
+  //      clean up any R2 objects this request created before returning.
+  //      The idempotency reservation remains until its short TTL expires
+  //      (see the rate-limit block comment above).
   //   2. post-create phase (cacheResponse + log). The issue already
   //      exists on GitHub; a failure here MUST NOT release the
   //      reservation — if it did, the client's retry would create a
@@ -287,6 +293,7 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
   //      swallow the cache error; the inflight marker stays until
   //      its TTL expires.
   let issue: { id: string; number: number; url: string };
+  const uploadedAttachments: AttachmentUpload[] = [];
   try {
     let imageUrl: string | undefined;
     let voiceUrl: string | undefined;
@@ -295,6 +302,7 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
         mime: payload.image.mime,
         bytes: payload.image.bytes,
       });
+      uploadedAttachments.push(up);
       imageUrl = up.publicUrl;
     }
     if (payload.voice) {
@@ -302,6 +310,7 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
         mime: payload.voice.mime,
         bytes: payload.voice.bytes,
       });
+      uploadedAttachments.push(up);
       voiceUrl = up.publicUrl;
     }
 
@@ -320,9 +329,10 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
       labelIds,
     });
   } catch (err) {
-    // Pre-create failure — no GitHub side effect and no release
-    // (see rate-limit block comment above). The 30 s inflight TTL
-    // lets same-key retries start fresh after the window.
+    // Pre-create failure — no GitHub side effect. Clean up only R2
+    // objects this request created; pre-existing content-hash objects
+    // may already be referenced by a successful issue and must remain.
+    await cleanupCreatedAttachments(env, uploadedAttachments);
     //
     // Branch order matters: GitHubTimeoutError is NOT a subclass of
     // GitHubError, but listing the timeout check first is defensive —

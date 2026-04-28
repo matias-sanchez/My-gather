@@ -203,6 +203,21 @@ On a 200 response the Worker has just created an issue at `matias-sanchez/My-gat
 
 The Worker MUST NOT comment on the issue, react, lock it, or modify it after creation. One issue, one mutation, done.
 
+## Attachment cleanup contract
+
+If the Worker uploads image or voice bytes to R2 but fails before
+`createIssue` returns a GitHub issue URL, the request is a pre-create
+failure. Before returning its 503/504/500 response, the Worker MUST
+best-effort delete R2 objects that were newly created by that same
+request. The Worker MUST NOT delete content-hash objects that already
+existed before this request, because an earlier successful issue may
+already reference them.
+
+Cleanup failure does not change the response code or body: the user
+still receives the original GitHub/Worker failure and the dialog follows
+the existing fallback path. The cleanup attempt exists to prevent public
+orphaned attachments; it is not part of the user-facing API shape.
+
 ## Idempotency contract
 
 If the same `idempotencyKey` is submitted twice within 5 minutes and the first call produced a 200 response, the second call MUST return the same 200 response (same `issueUrl`, same `issueNumber`) without creating a new issue.

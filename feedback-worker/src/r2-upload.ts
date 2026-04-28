@@ -12,6 +12,7 @@ export interface AttachmentUpload {
   publicUrl: string;
   sha256: string;
   key: string;
+  created: boolean;
 }
 
 const MIME_TO_EXT: Record<string, string> = {
@@ -58,12 +59,19 @@ export async function uploadAttachment(
   const key = `attachments/${sha256}.${ext}`;
 
   const existing = await env.FEEDBACK_ATTACHMENTS.head(key);
+  let created = false;
   if (!existing) {
     await env.FEEDBACK_ATTACHMENTS.put(key, attachment.bytes, {
       httpMetadata: { contentType: attachment.mime },
     });
+    created = true;
   }
 
   const publicUrl = `${trimSlash(env.R2_PUBLIC_URL_PREFIX)}/${key}`;
-  return { publicUrl, sha256, key };
+  return { publicUrl, sha256, key, created };
+}
+
+export async function deleteAttachment(env: Env, upload: AttachmentUpload): Promise<void> {
+  if (!upload.created) return;
+  await env.FEEDBACK_ATTACHMENTS.delete(upload.key);
 }

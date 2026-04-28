@@ -35,6 +35,7 @@
 2. Worker decodes; puts each blob into R2 under a content-hashed key `attachments/<sha256>.<ext>`. Idempotent by content — same image posted twice hits the same R2 key.
 3. Worker builds the issue body markdown with `![image](https://feedback-assets.cf/attachments/<hash>.png)` for images and `🔊 Voice note ([audio/webm](https://feedback-assets.cf/attachments/<hash>.webm))` for audio. (`<audio>` tags are stripped by GitHub's issue-body HTML sanitizer; a plain Markdown link is the most that survives. The reader clicks through and the browser plays the file natively.)
 4. Worker creates the issue via the GraphQL `createIssue` mutation with `labelIds` resolved from the names `["user-feedback", "needs-triage"]` plus `area/<lower(category)>` (the third label only if `category` is set).
+5. If steps 2-3 succeeded but step 4 fails before an issue exists, Worker deletes only R2 objects it created during this request. It leaves pre-existing content-hash objects in place because another issue may already reference them.
 
 R2 bucket is publicly readable. Privacy note: these assets *are* the user's feedback content already being posted publicly in a GitHub Issue; R2's public read is equivalent.
 

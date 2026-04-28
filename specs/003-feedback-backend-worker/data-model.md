@@ -112,6 +112,21 @@ Value: binary
 Public read: yes (Worker-managed public bucket URL).
 No TTL — attachments live as long as the R2 bucket does.
 
+Upload transaction metadata: `uploadAttachment()` returns the public URL,
+content hash, R2 key, and a `created` boolean. `created === true`
+means this Worker invocation observed no existing object at that key
+and performed the `put`; `created === false` means the content-hash key
+already existed and may already be referenced by a prior issue.
+
+Pre-create cleanup rule: if the Worker has uploaded one or more
+attachments but fails before `createIssue` returns successfully, it
+MUST best-effort delete only keys whose upload metadata has
+`created === true`. It MUST NOT delete keys with `created === false`,
+because those are shared content-hash assets outside the current
+request's ownership. If cleanup itself fails, the Worker still returns
+the original GitHub/Worker error and logs the original request outcome;
+cleanup failures are deliberately not exposed to the report viewer.
+
 ## GitHub-side (persistent, user-visible)
 
 ### Issue body markdown composition
