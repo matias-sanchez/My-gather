@@ -17,6 +17,8 @@ Additional contract for this feature:
 - Do not fail the sample when optional numeric fields are missing or malformed.
 - Compute the richer metrics on row flush so each completed row contributes at
   most once.
+- Treat `State`, `User`, `Host`, `Command`, and `db` as core row fields for row
+  completion. Optional metric fields alone must not create phantom rows.
 - Leave `SnapshotBoundaries` unset; merged boundaries remain render-owned.
 
 ## `model` package

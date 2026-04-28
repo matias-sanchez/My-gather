@@ -128,6 +128,11 @@ Rows_examined: not-a-number
       Time_ms: not-a-number
     Rows_sent: 2
 Rows_examined: 50
+*************************** 4. row ***************************
+         Time: 999
+         Info: select phantom
+    Rows_sent: 9999
+Rows_examined: 9999
 TS 1769702443.006126802 2026-01-29 16:00:43
 *************************** 1. row ***************************
            Id: 14

@@ -52,7 +52,7 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		haveRowsSent     bool
 		haveRowsExamined bool
 		haveInfo         bool
-		anyField         bool
+		hasCoreField     bool
 	}
 	type sampleBuild struct {
 		t                 time.Time
@@ -89,13 +89,14 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		if current == nil {
 			return
 		}
-		if !current.row.anyField {
+		if !current.row.hasCoreField {
 			// Row-separator fired with none of the tracked fields
 			// populated — nothing to attribute. This is expected for
 			// the first `*** 1. row ***` marker in every sample (it
 			// delimits the start of the first row, not the end of a
 			// prior row), so skip quietly and do not emit a
 			// diagnostic.
+			current.row = rowBuild{}
 			return
 		}
 		label := current.row.state
@@ -215,47 +216,42 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		switch key {
 		case "State":
 			current.row.state = val
-			current.row.anyField = true
+			current.row.hasCoreField = true
 		case "User":
 			current.row.user = val
-			current.row.anyField = true
+			current.row.hasCoreField = true
 		case "Host":
 			current.row.host = val
-			current.row.anyField = true
+			current.row.hasCoreField = true
 		case "Command":
 			current.row.command = val
-			current.row.anyField = true
+			current.row.hasCoreField = true
 		case "db":
 			current.row.db = val
-			current.row.anyField = true
+			current.row.hasCoreField = true
 		case "Time":
 			if parsed, ok := parseProcesslistNonNegativeFloat(val); ok {
 				current.row.timeSeconds = parsed
 				current.row.haveTime = true
 			}
-			current.row.anyField = true
 		case "Time_ms":
 			if parsed, ok := parseProcesslistNonNegativeFloat(val); ok {
 				current.row.timeMS = parsed
 				current.row.haveTimeMS = true
 			}
-			current.row.anyField = true
 		case "Rows_sent":
 			if parsed, ok := parseProcesslistNonNegativeFloat(val); ok {
 				current.row.rowsSent = parsed
 				current.row.haveRowsSent = true
 			}
-			current.row.anyField = true
 		case "Rows_examined":
 			if parsed, ok := parseProcesslistNonNegativeFloat(val); ok {
 				current.row.rowsExamined = parsed
 				current.row.haveRowsExamined = true
 			}
-			current.row.anyField = true
 		case "Info":
 			current.row.info = val
 			current.row.haveInfo = true
-			current.row.anyField = true
 		}
 	}
 	if err := scanner.Err(); err != nil {

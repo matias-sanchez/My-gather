@@ -41,7 +41,9 @@ The feature adds these aggregate fields:
 ### Validation and derivation rules
 
 - `TotalThreads` increments for every completed processlist row that contains
-  at least one tracked field.
+  at least one core row field (`State`, `User`, `Host`, `Command`, or `db`).
+  Optional-only fragments (`Time`, `Time_ms`, `Rows_*`, or `Info` without a
+  core row field) do not create rows or contribute metrics.
 - `SleepingThreads` increments only when `Command == "Sleep"`.
 - `ActiveThreads` increments for all other completed rows, including missing or
   empty command values.
