@@ -98,7 +98,7 @@ feedback-worker/                 # Cloudflare Worker deploy artifact (live)
 │   ├── index.ts                 # Main Worker entry
 │   ├── env.ts                   # Env binding types
 │   ├── github-app.ts            # JWT signing + installation-token exchange + GraphQL createIssue + repository.labels lookup
-│   ├── idempotency.ts           # KV-backed two-state idempotency (inflight 30s / done 300s)
+│   ├── idempotency.ts           # KV-backed two-state idempotency (inflight 60s / done 300s)
 │   ├── log.ts                   # Structured-log helper
 │   ├── r2-upload.ts             # Base64 decode + SHA-256 + R2 PUT
 │   ├── ratelimit.ts             # KV per-request unique-key fixed UTC-hour window

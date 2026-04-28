@@ -67,7 +67,7 @@ Error codes:
 }
 ```
 
-Emitted when an `idempotencyKey` already has an inflight reservation in KV (a concurrent same-key Submit, or a same-key retry within the 30-second inflight TTL after the first call crashed mid-handler). After 30s of inflight TTL the key is auto-released and a fresh attempt proceeds.
+Emitted when an `idempotencyKey` already has an inflight reservation in KV (a concurrent same-key Submit, or a same-key retry within the 60-second inflight TTL after the first call crashed mid-handler). After 60s of inflight TTL the key is auto-released and a fresh attempt proceeds. The TTL is 60s because Cloudflare KV rejects `expirationTtl` values below 60.
 
 #### 413 Payload Too Large
 
@@ -137,7 +137,7 @@ The Worker MUST emit 504 when its `AbortController`-bounded GitHub fetch exceeds
 }
 ```
 
-Note: this is still a 200 OK with the same success shape and `ok: true`. The `cache_write_failed` diagnostic is observed only in Tail logs, NOT in the response body. The issue exists on GitHub; the only thing that failed is the post-create idempotency-cache upgrade. Client retries within the 30s inflight window will see 409 `duplicate_inflight` instead of the cached 200, but the user has already received the real issue URL on the first call and never sees this failure mode in the dialog.
+Note: this is still a 200 OK with the same success shape and `ok: true`. The `cache_write_failed` diagnostic is observed only in Tail logs, NOT in the response body. The issue exists on GitHub; the only thing that failed is the post-create idempotency-cache upgrade. Client retries within the 60s inflight window will see 409 `duplicate_inflight` instead of the cached 200, but the user has already received the real issue URL on the first call and never sees this failure mode in the dialog.
 
 #### 404 Not Found — wrong path or method
 

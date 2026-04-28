@@ -53,7 +53,7 @@ Validation (HTTP 400):
 
 Operational:
 - `payload_too_large` (HTTP 413 — total request body > 30 MB; trips the streaming size gate before JSON parse)
-- `duplicate_inflight` (HTTP 409 — same `idempotencyKey` is already being processed by another in-flight request; the inflight TTL is 30s)
+- `duplicate_inflight` (HTTP 409 — same `idempotencyKey` is already being processed by another in-flight request; the inflight TTL is 60s, matching Cloudflare KV's minimum `expirationTtl`)
 - `rate_limit` (HTTP 429, `retryAfterSeconds` present)
 - `github_api_error` (HTTP 503 — GitHub returned a non-2xx HTTP status or a GraphQL `errors` field)
 - `github_timeout` (HTTP 504 — a per-call AbortController fired at 10 000 ms on a GitHub fetch, see FR-014)
@@ -90,15 +90,15 @@ Two-state discriminated union, written under one key:
 
 Key format: `idem:<idempotency-key>` (full UUID v4)
 
-Value when reservation is in flight: `{"status": "inflight"}` — TTL **30 seconds**.
+Value when reservation is in flight: `{"status": "inflight"}` — TTL **60 seconds**.
 Value once the issue exists on GitHub: `{"status": "done", "issueUrl": "<url>", "issueNumber": <n>}` — TTL **300 seconds** (5 minutes).
 
-The reservation pattern (`reserveResponse`) writes the `inflight` marker BEFORE any GitHub side effect; on success the `cacheResponse` write upgrades it to `done` with last-write-wins semantics. A retry of an already-`done` key replays the cached response without hitting GitHub. A retry while the reservation is still `inflight` returns 409 `duplicate_inflight` (deterministic; the inflight TTL self-cleans after 30 s if the original handler crashes mid-flight). There is intentionally NO `releaseReservation` helper — KV has no compare-and-delete primitive, so a release path admits a race that could wipe another caller's `done` record. Letting the 30 s TTL handle cleanup is correct and simpler.
+The reservation pattern (`reserveResponse`) writes the `inflight` marker BEFORE any GitHub side effect; on success the `cacheResponse` write upgrades it to `done` with last-write-wins semantics. A retry of an already-`done` key replays the cached response without hitting GitHub. A retry while the reservation is still `inflight` returns 409 `duplicate_inflight` (deterministic; the inflight TTL self-cleans after 60 s if the original handler crashes mid-flight). There is intentionally NO `releaseReservation` helper — KV has no compare-and-delete primitive, so a release path admits a race that could wipe another caller's `done` record. Letting the 60 s TTL handle cleanup is correct and simpler. Cloudflare KV requires `expirationTtl >= 60`, so 60 s is also the minimum deployable reservation TTL.
 
 Example evolution of one key over a Submit's lifetime:
 
 ```
-t+0    PUT idem:01234… → {"status":"inflight"}              (TTL 30s)
+t+0    PUT idem:01234… → {"status":"inflight"}              (TTL 60s)
 t+250ms PUT idem:01234… → {"status":"done", issueUrl:…, issueNumber: 67} (TTL 300s)
 t+5min  GET idem:01234… → null (TTL expired)
 ```

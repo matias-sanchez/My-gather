@@ -55,7 +55,7 @@ function readClientIp(req: Request): string {
 // cacheResponseWithRetry wraps cacheResponse with a short retry
 // loop so a transient KV write glitch right after a successful
 // GitHub issue creation doesn't drop the idempotency record and
-// let a client retry create a duplicate issue after the 30s
+// let a client retry create a duplicate issue after the 60s
 // inflight TTL expires. 3 attempts with 50/100/150 ms spacing keep
 // total added latency modest on the happy-failure-to-happy path;
 // on a persistent KV outage the function still returns eventually
@@ -249,13 +249,13 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
   // innocent retries of a successful key don't consume quota.
   //
   // No release on failure: the inflight reservation we just wrote
-  // will expire on its own 30 s TTL. A KV-based compare-and-delete
+  // will expire on its own 60 s TTL. A KV-based compare-and-delete
   // is racy (see idempotency.ts "Why there is no releaseReservation"),
-  // and the UX cost of the 30 s window is smaller than the
+  // and the UX cost of the 60 s window is smaller than the
   // correctness cost of letting a failed release wipe another
   // racer's successful cached response. Client retries of the same
   // idempotencyKey within that window see 409 duplicate_inflight
-  // (deterministic, easy to interpret); after 30 s they proceed.
+  // (deterministic, easy to interpret); after 60 s they proceed.
   const rl = await checkRateLimit(env, ip);
   if (!rl.allowed) {
     const retryAfter = rl.retryAfterSeconds ?? 3600;
@@ -392,7 +392,7 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
   //
   // A naive `await cacheResponse(...).catch(…)` that swallowed the
   // error was not enough: on a transient KV write failure the key
-  // would still hold only the 30s inflight marker, and any retry
+  // would still hold only the 60s inflight marker, and any retry
   // after that TTL would be seen as a brand-new submission and
   // create a duplicate — exactly the failure window the 5-minute
   // idempotency replay contract promises to cover. Retry a few
@@ -454,7 +454,12 @@ export default {
         // The client-facing message MUST stay generic — leaking raw
         // exception text exposes runtime internals and violates the
         // documented 500 contract in contracts/api.md.
-        void err;
+        console.error(
+          JSON.stringify({
+            error_name: (err as { name?: unknown } | undefined)?.name ?? "unknown",
+            error_message: (err as { message?: unknown } | undefined)?.message ?? "unknown",
+          }),
+        );
         logRequest({
           status: 500,
           error: "worker_error",

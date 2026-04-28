@@ -55,16 +55,16 @@ R2 bucket is publicly readable. Privacy note: these assets *are* the user's feed
 
 ## R4: Idempotency — how long to cache?
 
-**Decision**: **5 minutes** TTL on the terminal `done` state, with an additional **30 second** `inflight` reservation written before the GitHub mutation. Two states are stored under the same `idem:<uuid>` key:
-- `{status: "inflight"}` (TTL 30 s) — written immediately after rate-limit, BEFORE any side effects, so a concurrent retry sees the reservation and short-circuits.
+**Decision**: **5 minutes** TTL on the terminal `done` state, with an additional **60 second** `inflight` reservation written before the GitHub mutation. Two states are stored under the same `idem:<uuid>` key:
+- `{status: "inflight"}` (TTL 60 s) — written immediately after rate-limit, BEFORE any side effects, so a concurrent retry sees the reservation and short-circuits. Cloudflare KV rejects `expirationTtl` values below 60, so 60 s is the minimum deployable reservation window.
 - `{status: "done", issueUrl, issueNumber}` (TTL 300 s = 5 min) — written after `createIssue` succeeds. Subsequent retries with the same key replay this response.
 
 See `feedback-worker/src/idempotency.ts`.
 
 **Rationale**:
 - 5 minutes is long enough to cover network retries and browser double-click; short enough that a deliberate re-submit with a fresh UUID is never blocked.
-- The 30 s `inflight` reservation closes the race where two near-simultaneous requests with the same idempotency key both pass the "is it cached?" check and end up creating two issues.
-- There is intentionally no `releaseReservation` helper. Cloudflare KV has no compare-and-delete primitive, so any release path admits the race "caller A's `done` is overwritten by caller B's stale `release`". Instead, the `inflight` record simply expires after 30 s if the request crashes mid-flight; the next retry will then proceed.
+- The 60 s `inflight` reservation closes the race where two near-simultaneous requests with the same idempotency key both pass the "is it cached?" check and end up creating two issues.
+- There is intentionally no `releaseReservation` helper. Cloudflare KV has no compare-and-delete primitive, so any release path admits the race "caller A's `done` is overwritten by caller B's stale `release`". Instead, the `inflight` record simply expires after 60 s if the request crashes mid-flight; the next retry will then proceed.
 
 ## R4b: Category → labels mapping
 

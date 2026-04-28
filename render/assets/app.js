@@ -3683,6 +3683,33 @@
       hint.textContent = "Clipboard blocked — download the image and drop it into GitHub's body.";
       show(hint);
     }
+
+    function finishActiveRecordingForSubmit() {
+      if (!recorder || recorder.state !== "recording") return Promise.resolve();
+      var activeRecorder = recorder;
+      return new Promise(function (resolve) {
+        var done = false;
+        function finish() {
+          if (done) return;
+          done = true;
+          resolve();
+        }
+        activeRecorder.addEventListener("stop", function () {
+          // The recorder's own stop listener, registered in
+          // startRecording(), materialises voiceBlob via addAttachment().
+          // Resolve on the next turn so that listener has completed
+          // before doSubmit snapshots voiceBlob for the Worker payload.
+          setTimeout(finish, 0);
+        }, { once: true });
+        stopRecording();
+        // Defensive escape hatch: some browser implementations can
+        // fail to dispatch stop after a permission/runtime edge. Do
+        // not strand Submit forever; proceed without a voice blob in
+        // that abnormal case.
+        setTimeout(finish, 1500);
+      });
+    }
+
     // blobToBase64 reads the given Blob via FileReader.readAsDataURL
     // and returns the raw base64 payload (the "data:<mime>;base64,"
     // prefix stripped). Rejects if the reader errors. Used to pack
@@ -3782,80 +3809,81 @@
       }
 
       submitBtn.disabled = true;
-      var hadImage = !!imgBlob, hadVoice = !!voiceBlob;
-      var reportVersion = "unknown";
-      var genMeta = document.querySelector('meta[name="generator"]');
-      if (genMeta && genMeta.content) reportVersion = genMeta.content.slice(0, 64);
+      finishActiveRecordingForSubmit().then(function () {
+        var reportVersion = "unknown";
+        var genMeta = document.querySelector('meta[name="generator"]');
+        if (genMeta && genMeta.content) reportVersion = genMeta.content.slice(0, 64);
 
-      // Mint the idempotency key lazily, and only if we don't
-      // already have one. A persisted key carried across retries is
-      // the entire point of the Worker's 5-minute replay cache:
-      // when a first POST actually reaches the backend but the
-      // client times out waiting for the response, the retry with
-      // the SAME key replays the original success instead of
-      // creating a duplicate issue. The enclosing scope resets
-      // idempotencyKey to null on definitive success and on
-      // closeDialog — those are the only two events that mean
-      // "the next Submit is a new logical attempt".
-      if (!idempotencyKey) {
-        idempotencyKey = generateIdempotencyKey();
-      }
+        // Mint the idempotency key lazily, and only if we don't
+        // already have one. A persisted key carried across retries is
+        // the entire point of the Worker's 5-minute replay cache:
+        // when a first POST actually reaches the backend but the
+        // client times out waiting for the response, the retry with
+        // the SAME key replays the original success instead of
+        // creating a duplicate issue. The enclosing scope resets
+        // idempotencyKey to null on definitive success and on
+        // closeDialog — those are the only two events that mean
+        // "the next Submit is a new logical attempt".
+        if (!idempotencyKey) {
+          idempotencyKey = generateIdempotencyKey();
+        }
 
-      // Snapshot the attachment blob references up front so the
-      // async base64 encoding reads a frozen view even if the user
-      // clears or replaces the attachment mid-submit. Without
-      // these locals, imgBlob/voiceBlob could go null (throwing
-      // on `.type`) or swap to a different blob between the
-      // `blobToBase64(imgBlob)` kick-off and the `imgBlob.type`
-      // read inside the .then callback — so the POST would carry
-      // base64 bytes from one blob but a MIME type from another.
-      var imgBlobAtSubmit = imgBlob;
-      var voiceBlobAtSubmit = voiceBlob;
+        // Snapshot the attachment blob references up front so the
+        // async base64 encoding reads a frozen view even if the user
+        // clears or replaces the attachment mid-submit. Without
+        // these locals, imgBlob/voiceBlob could go null (throwing
+        // on `.type`) or swap to a different blob between the
+        // `blobToBase64(imgBlob)` kick-off and the `imgBlob.type`
+        // read inside the .then callback — so the POST would carry
+        // base64 bytes from one blob but a MIME type from another.
+        var imgBlobAtSubmit = imgBlob;
+        var voiceBlobAtSubmit = voiceBlob;
 
-      // Build attachment promises first; any base64 encoding error
-      // routes through the same fallback arm as a Worker failure.
-      var imgP = imgBlobAtSubmit ? blobToBase64(imgBlobAtSubmit).then(function (b64) {
-        return { mime: imgBlobAtSubmit.type || "image/png", base64: b64 };
-      }) : Promise.resolve(null);
-      var voiceP = voiceBlobAtSubmit ? blobToBase64(voiceBlobAtSubmit).then(function (b64) {
-        return { mime: voiceBlobAtSubmit.type || "audio/webm", base64: b64 };
-      }) : Promise.resolve(null);
+        // Build attachment promises first; any base64 encoding error
+        // routes through the same fallback arm as a Worker failure.
+        var imgP = imgBlobAtSubmit ? blobToBase64(imgBlobAtSubmit).then(function (b64) {
+          return { mime: imgBlobAtSubmit.type || "image/png", base64: b64 };
+        }) : Promise.resolve(null);
+        var voiceP = voiceBlobAtSubmit ? blobToBase64(voiceBlobAtSubmit).then(function (b64) {
+          return { mime: voiceBlobAtSubmit.type || "audio/webm", base64: b64 };
+        }) : Promise.resolve(null);
 
-      Promise.all([imgP, voiceP]).then(function (parts) {
-        // Send the RAW textarea body here — the worker adds the
-        // "> Category: …" prefix itself when payload.category is
-        // present (see feedback-worker/src/body.ts). maybePrefixBody
-        // is only for the fallback GitHub URL, where the worker
-        // isn't in the loop. Sending the prefixed body here would
-        // double-prepend the category block in worker submissions.
-        var payload = {
-          title: titleInput.value,
-          body: bodyInput.value,
-          idempotencyKey: idempotencyKey,
-          reportVersion: reportVersion
-        };
-        if (catSelect.value) payload.category = catSelect.value;
-        if (parts[0]) payload.image = parts[0];
-        if (parts[1]) payload.voice = parts[1];
+        return Promise.all([imgP, voiceP]).then(function (parts) {
+          // Send the RAW textarea body here — the worker adds the
+          // "> Category: …" prefix itself when payload.category is
+          // present (see feedback-worker/src/body.ts). maybePrefixBody
+          // is only for the fallback GitHub URL, where the worker
+          // isn't in the loop. Sending the prefixed body here would
+          // double-prepend the category block in worker submissions.
+          var payload = {
+            title: titleInput.value,
+            body: bodyInput.value,
+            idempotencyKey: idempotencyKey,
+            reportVersion: reportVersion
+          };
+          if (catSelect.value) payload.category = catSelect.value;
+          if (parts[0]) payload.image = parts[0];
+          if (parts[1]) payload.voice = parts[1];
 
-        var controller = new AbortController();
-        var timer = setTimeout(function () { try { controller.abort(); } catch (_) {} }, WORKER_TIMEOUT_MS);
+          var controller = new AbortController();
+          var timer = setTimeout(function () { try { controller.abort(); } catch (_) {} }, WORKER_TIMEOUT_MS);
 
-        return fetch(WORKER_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-          // `no-store` mirrors the Worker's cache contract.
-          cache: "no-store",
-          mode: "cors"
-        }).then(function (res) {
-          clearTimeout(timer);
-          return res.json().then(function (data) { return { res: res, data: data }; },
-            function () { return { res: res, data: null }; });
-        }, function (err) {
-          clearTimeout(timer);
-          throw err;
+          return fetch(WORKER_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+            // `no-store` mirrors the Worker's cache contract.
+            cache: "no-store",
+            mode: "cors"
+          }).then(function (res) {
+            clearTimeout(timer);
+            return res.json().then(function (data) { return { res: res, data: data }; },
+              function () { return { res: res, data: null }; });
+          }, function (err) {
+            clearTimeout(timer);
+            throw err;
+          });
         });
       }).then(function (r) {
         var res = r.res, data = r.data || {};
@@ -3907,8 +3935,6 @@
         show(hint);
         submitBtn.disabled = false;
       });
-      // Silence unused-var warnings in branches that don't reach them.
-      void hadImage; void hadVoice;
       // Do not auto-close; the user decides when to dismiss the dialog.
     }
 

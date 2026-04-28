@@ -9,7 +9,7 @@
 // effect. A concurrent request that arrives after the reservation
 // propagates sees it and returns a deterministic "duplicate in
 // flight" signal instead of creating a second issue. The
-// reservation TTL is short (30 s) so a crashed worker can't lock
+// reservation TTL is short (60 s) so a crashed worker can't lock
 // the key out forever — a retry after that window re-reserves and
 // proceeds.
 //
@@ -54,22 +54,22 @@
 // wins on KV put).
 //
 // Rather than ship a mitigation that still admits duplicates
-// under realistic races, this file now lets the 30-second
+// under realistic races, this file now lets the 60-second
 // inflight TTL handle cleanup unconditionally. The UX cost is
 // modest:
 //
-//   * A client retry within 30 s of a pre-create failure or
+//   * A client retry within 60 s of a pre-create failure or
 //     rate-limit rejection gets 409 duplicate_inflight instead of
 //     a fresh attempt. After the TTL, a fresh attempt proceeds.
 //   * A truly-stuck isolate (server-side crash mid-handler)
-//     also self-heals after 30 s.
+//     also self-heals after 60 s.
 //
 // The correctness win is that no code path can ever wipe a
 // successful `{done, …}` record; the 5-minute idempotency replay
 // contract is preserved on every race.
 //
 // Key format: idem:<idempotencyKey>
-// Inflight value: {status: "inflight"}                     TTL: 30s
+// Inflight value: {status: "inflight"}                     TTL: 60s
 // Done value:     {status: "done", issueUrl, issueNumber}  TTL: 300s
 
 import type { Env } from "./env";
@@ -79,7 +79,7 @@ export interface CachedResponse {
   issueNumber: number;
 }
 
-const INFLIGHT_TTL_SECONDS = 30;
+const INFLIGHT_TTL_SECONDS = 60;
 const DONE_TTL_SECONDS = 300;
 
 function keyFor(idempotencyKey: string): string {
@@ -91,7 +91,7 @@ function keyFor(idempotencyKey: string): string {
 // processing this key (kind: "inflight"); or the slot was free and
 // we wrote a fresh reservation (kind: "reserved" — caller proceeds
 // and eventually calls cacheResponse on success; nothing to do on
-// failure because the 30 s TTL handles cleanup).
+// failure because the 60 s TTL handles cleanup).
 export type ReservationResult =
   | { kind: "reserved" }
   | { kind: "done"; response: CachedResponse }

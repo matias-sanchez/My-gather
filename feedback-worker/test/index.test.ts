@@ -10,7 +10,10 @@ class FakeKV {
     return this.store.get(key) ?? null;
   }
 
-  async put(key: string, value: string): Promise<void> {
+  async put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void> {
+    if (options?.expirationTtl !== undefined && options.expirationTtl < 60) {
+      throw new Error(`KV PUT failed: Invalid expiration_ttl of ${options.expirationTtl}`);
+    }
     this.store.set(key, value);
   }
 
