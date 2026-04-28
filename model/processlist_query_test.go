@@ -41,6 +41,28 @@ func TestObservedProcesslistQueryFingerprintGroupsLiteralVariants(t *testing.T) 
 	}
 }
 
+func TestObservedProcesslistQueryFingerprintGroupsDoubledQuoteLiterals(t *testing.T) {
+	ts := time.Date(2026, 1, 29, 16, 5, 19, 0, time.UTC)
+	first, ok := NewObservedProcesslistQuery(ts, "app", "shop", "Query", "Sending data",
+		"SELECT * FROM customers WHERE name = 'Alice' AND note = \"A\"", 1200, true, 10, true, 2, true)
+	if !ok {
+		t.Fatal("first query unexpectedly ineligible")
+	}
+	second, ok := NewObservedProcesslistQuery(ts.Add(time.Second), "app", "shop", "Query", "Sending data",
+		"SELECT * FROM customers WHERE name = 'O''Reilly' AND note = \"A \"\"quoted\"\" note\"", 2500, true, 30, true, 4, true)
+	if !ok {
+		t.Fatal("second query unexpectedly ineligible")
+	}
+
+	merged := MergeObservedProcesslistQueries([]ObservedProcesslistQuery{first, second})
+	if got, want := len(merged), 1; got != want {
+		t.Fatalf("merged len = %d, want %d: %#v", got, want, merged)
+	}
+	if strings.Contains(merged[0].Snippet, "??") {
+		t.Fatalf("snippet = %q, want doubled-quote literal normalized as one placeholder", merged[0].Snippet)
+	}
+}
+
 func TestObservedProcesslistQueryFingerprintKeepsBacktickIdentifiers(t *testing.T) {
 	ts := time.Date(2026, 1, 29, 16, 5, 19, 0, time.UTC)
 	orders, ok := NewObservedProcesslistQuery(ts, "app", "shop", "Query", "Sending data",

@@ -31,7 +31,7 @@ const MaxObservedProcesslistQueries = 10
 const MaxObservedProcesslistQuerySnippetRunes = 160
 
 var (
-	processlistQuotedLiteralRE  = regexp.MustCompile(`'([^'\\]|\\.)*'|"([^"\\]|\\.)*"`)
+	processlistQuotedLiteralRE  = regexp.MustCompile(`'([^'\\]|\\.|'')*'|"([^"\\]|\\.|"")*"`)
 	processlistNumericLiteralRE = regexp.MustCompile(`\b0x[0-9a-fA-F]+\b|\b\d+(?:\.\d+)?\b`)
 )
 
