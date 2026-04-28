@@ -161,7 +161,7 @@ TS 1769702443.006126802 2026-01-29 16:00:43
 	if got, want := first.SleepingThreads, 1; got != want {
 		t.Errorf("first.SleepingThreads = %d, want %d", got, want)
 	}
-	if got, want := first.MaxTimeMS, 10050.0; got != want {
+	if got, want := first.MaxTimeMS, 99000.0; got != want {
 		t.Errorf("first.MaxTimeMS = %v, want %v", got, want)
 	}
 	if got, want := first.MaxRowsExamined, 100.0; got != want {

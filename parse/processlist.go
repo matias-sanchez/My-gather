@@ -48,7 +48,6 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		rowsExamined     float64
 		info             string
 		haveTime         bool
-		sawTimeMS        bool
 		haveTimeMS       bool
 		haveRowsSent     bool
 		haveRowsExamined bool
@@ -139,7 +138,7 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		ageMS := 0.0
 		if current.row.haveTimeMS {
 			ageMS = current.row.timeMS
-		} else if !current.row.sawTimeMS && current.row.haveTime {
+		} else if current.row.haveTime {
 			ageMS = current.row.timeSeconds * 1000
 		}
 		if ageMS > current.maxTimeMS {
@@ -220,7 +219,6 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 			}
 			current.row.anyField = true
 		case "Time_ms":
-			current.row.sawTimeMS = true
 			if parsed, ok := parseProcesslistNonNegativeFloat(val); ok {
 				current.row.timeMS = parsed
 				current.row.haveTimeMS = true

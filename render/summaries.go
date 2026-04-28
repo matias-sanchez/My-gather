@@ -252,6 +252,9 @@ func summariseNetwork(counters *model.NetstatCountersData, sockets *model.Netsta
 
 func summariseProcesslist(d *model.ProcesslistData) *processlistSummaryView {
 	sum := &processlistSummaryView{}
+	if d == nil {
+		return sum
+	}
 	var peakActive, peakSleeping, peakQueryTextRows int
 	var longestAgeMS, peakRowsExamined, peakRowsSent float64
 	for _, s := range d.ThreadStateSamples {

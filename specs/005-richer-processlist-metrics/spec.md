@@ -65,8 +65,8 @@ and the rendered report shows those maxima with stable formatting.
    rows examined and peak rows sent for the sample.
 3. **Given** a processlist sample where one or more of these numeric fields are
    absent or non-numeric, **When** the sample is parsed, **Then** valid fields
-   from the same row and sample are still preserved and invalid numeric fields
-   contribute zero to the per-sample maxima.
+   from the same row and sample are still preserved, and a valid `Time` value
+   is used when `Time_ms` is missing or invalid.
 
 ---
 
@@ -101,8 +101,8 @@ presence counts over time and does not add a raw SQL table.
   while still containing state/user/host/command fields.
 - `Time_ms` may be present as an integer or decimal value; the rendered age is
   shown in seconds.
-- `Time` may be present without `Time_ms`; `Time_ms` is preferred, and `Time`
-  is used only when `Time_ms` is missing.
+- `Time` may be present with or without `Time_ms`; `Time_ms` is preferred when
+  it is valid, and `Time` is used when `Time_ms` is missing or invalid.
 - Empty, `NULL`, or whitespace-only `Info` values do not count as query text.
 - Very large row counters remain numeric and deterministic in the embedded
   report payload.
@@ -118,8 +118,8 @@ presence counts over time and does not add a raw SQL table.
 - **FR-002**: A processlist row MUST be classified as sleeping only when its
   command is `Sleep`; all other commands count as active.
 - **FR-003**: The report MUST expose the longest thread age per processlist
-  sample, using `Time_ms` when present and falling back to `Time` when `Time_ms`
-  is absent.
+  sample, using `Time_ms` when present and valid and falling back to `Time`
+  when `Time_ms` is missing or invalid.
 - **FR-004**: The report MUST expose peak `Rows_examined` and peak `Rows_sent`
   per processlist sample.
 - **FR-005**: The report MUST expose the count of rows with non-empty query
@@ -172,7 +172,8 @@ presence counts over time and does not add a raw SQL table.
   remains available in raw pt-stalk files and is not promoted into a new report
   table by this feature.
 - `Time_ms` is the preferred age source because it has higher precision than
-  `Time`; `Time` is acceptable as a fallback when `Time_ms` is absent.
+  `Time`; `Time` is acceptable as a fallback when `Time_ms` is missing or
+  invalid.
 - A command value of `Sleep` is the only sleeping classification for the
   active/sleeping split.
 - The existing Processlist subview is the correct home for these metrics; no

@@ -41,7 +41,7 @@ SQL listing, no new raw query table, no new top-level section.
 |-----------|-------------------|-----------|
 | I. Single Static Binary | PASS | Go-only change; no dynamic runtime dependency. |
 | II. Read-Only Inputs | PASS | Parser continues to read `-processlist` through existing read-only paths. |
-| III. Graceful Degradation | PASS | Optional malformed numeric fields become zero-valued metrics, while valid row data remains available. |
+| III. Graceful Degradation | PASS | Optional malformed numeric fields are ignored without failing the row; age falls back from invalid `Time_ms` to valid `Time` when available. |
 | IV. Deterministic Output | PASS | New maps/slices must use existing stable ordering and deterministic JSON emission. |
 | V. Self-Contained HTML Reports | PASS | New metrics are embedded in the existing report payload and rendered by bundled JS. |
 | VI. Library-First Architecture | PASS | Changes stay in `parse/`, `model/`, and `render/`; CLI remains thin. |
