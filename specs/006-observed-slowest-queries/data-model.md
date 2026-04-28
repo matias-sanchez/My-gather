@@ -67,3 +67,15 @@ The existing `processlist` chart payload adds:
 
 The existing `timestamps`, `dimensions`, `metrics`, and `snapshotBoundaries`
 fields remain unchanged.
+
+## Advisor Thresholds
+
+The Query Shape Advisor rule evaluates the bounded `ObservedQueries` list:
+
+- minimum impactful age: 60 seconds
+- generic long-running query severity: Warning
+- metadata-lock wait severity: Critical
+
+The rule uses the first sorted summary that has a valid age at or above the
+threshold. Because summaries are already sorted by max observed age, this is
+the most impactful observed query in the report.

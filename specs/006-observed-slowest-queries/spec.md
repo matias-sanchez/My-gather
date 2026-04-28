@@ -94,6 +94,63 @@ stable fingerprints, and grouped variants deterministically.
    subview, **Then** only the bounded top query summaries are shown, not every
    raw processlist row.
 
+---
+
+### User Story 4 - Work the slow-query list interactively (Priority: P1)
+
+A support engineer needs to narrow the slowest observed query table while
+reviewing an incident. The panel must be easy to collapse when the chart is the
+focus, and easy to filter when query-level evidence is the focus.
+
+**Why this priority**: The slow-query table can contain wide SQL snippets and
+incident context. Clear collapse and filtering controls keep the report usable
+without removing the evidence.
+
+**Independent Test**: Render a report with several observed query rows and
+assert that the Processlist subview includes an independently collapsible query
+panel plus search/filter controls targeting user, database, state, and query
+shape fields.
+
+**Acceptance Scenarios**:
+
+1. **Given** slowest observed queries exist, **When** the Processlist subview
+   renders, **Then** the slow-query panel is an independently collapsible
+   section with a clear summary label and count.
+2. **Given** multiple slowest observed queries with different users,
+   databases, states, and query snippets, **When** the engineer enters filter
+   terms, **Then** only rows matching all populated filters remain visible.
+3. **Given** no rows match the active filters, **When** the table updates,
+   **Then** a clear filtered-empty state is shown without deleting the full
+   server-rendered table.
+
+---
+
+### User Story 5 - Surface impactful observed queries in Advisor (Priority: P1)
+
+A support engineer needs the report to call out when the observed slowest
+queries themselves are likely incident drivers, especially long metadata-lock
+waits or long-running active statements that appeared throughout the capture.
+
+**Why this priority**: The table provides evidence, but the Advisor should
+convert that evidence into a diagnostic finding so the report is smart enough
+to guide triage.
+
+**Independent Test**: Build a report with an observed processlist query older
+than the configured threshold and assert that the Advisor emits a Query Shape
+finding with the expected severity, metrics, and remediation guidance.
+
+**Acceptance Scenarios**:
+
+1. **Given** an observed query remains active for at least 60 seconds, **When**
+   Advisor findings are computed, **Then** a Query Shape warning identifies the
+   slowest observed query fingerprint and age.
+2. **Given** the slowest observed query is waiting for table metadata lock,
+   **When** Advisor findings are computed, **Then** the finding is Critical
+   because the query is blocked and likely holding or waiting on DDL/MDL.
+3. **Given** no observed active query reaches the configured age threshold,
+   **When** Advisor findings are computed, **Then** no slow-observed-query
+   finding is emitted.
+
 ### Edge Cases
 
 - Processlist files may contain no active rows with non-empty query text.
@@ -106,6 +163,8 @@ stable fingerprints, and grouped variants deterministically.
 - Query text may contain newlines, extra whitespace, quoted literals, numeric
   literals, or very long statements.
 - Large captures must keep the embedded report bounded and deterministic.
+- Client-side filters must work without network access and must degrade to the
+  fully rendered table when JavaScript is disabled.
 
 ## Requirements *(mandatory)*
 
@@ -139,6 +198,22 @@ stable fingerprints, and grouped variants deterministically.
   existing processlist breakdown.
 - **FR-011**: When no eligible query rows exist, the Processlist subview MUST
   show a clear empty state instead of an empty table.
+- **FR-012**: The slowest-observed-query panel MUST be independently
+  collapsible inside the Processlist subview and MUST show the number of
+  observed query summaries in the collapsed summary.
+- **FR-013**: The report MUST provide client-side filters for slowest observed
+  queries by user, database, state, and query text/fingerprint.
+- **FR-014**: Slow-query filters MUST combine with AND semantics across
+  populated fields and MUST show a filtered-empty state when no rendered rows
+  match.
+- **FR-015**: The Advisor MUST emit a Query Shape finding when the slowest
+  observed active query reaches at least 60 seconds.
+- **FR-016**: The slow-observed-query Advisor finding MUST be Critical when the
+  slowest observed query state indicates a metadata lock wait; otherwise it
+  MUST be Warning for age at or above 60 seconds.
+- **FR-017**: The Advisor finding MUST include the slowest query fingerprint,
+  maximum age, sighting count, representative user/database/state, and bounded
+  query shape in its metrics or explanation.
 
 ### Key Entities
 
@@ -166,6 +241,12 @@ stable fingerprints, and grouped variants deterministically.
 - **SC-005**: A real multi-snapshot pt-stalk collection continues to generate a
   report successfully and includes bounded slowest-query summaries when active
   query text exists.
+- **SC-006**: Slow-query table controls are present in the generated HTML and
+  allow rows to be filtered by user, database, state, and query content without
+  requiring any external asset.
+- **SC-007**: A capture with a 60-second or older observed query produces an
+  Advisor finding; a metadata-lock wait at that age produces a Critical
+  finding.
 
 ## Assumptions
 
@@ -177,3 +258,8 @@ stable fingerprints, and grouped variants deterministically.
   context fields.
 - The report should default to a small bounded list so query evidence is
   actionable during an incident and does not dominate the page.
+- The slowest-query panel should default open when query evidence exists, but
+  remain independently collapsible so readers can hide it while using the chart.
+- The first Advisor threshold is intentionally conservative: 60 seconds is
+  enough to be actionable in an incident processlist capture, while metadata
+  lock waits are considered more severe than generic long-running work.

@@ -326,6 +326,10 @@ type processlistSlowQueryView struct {
 	Rank            int
 	Fingerprint     string
 	Snippet         string
+	FilterText      string
+	FilterUser      string
+	FilterDB        string
+	FilterState     string
 	FirstSeen       string
 	LastSeen        string
 	SeenSamples     int

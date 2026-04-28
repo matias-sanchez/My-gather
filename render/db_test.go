@@ -227,7 +227,19 @@ func TestProcesslistSlowestObservedQueriesMarkup(t *testing.T) {
 	}
 	section := extractDetailsSection(t, buf.String(), "sec-db")
 	for _, want := range []string{
-		"Slowest observed queries",
+		"<summary><span>Slowest observed queries</span><span class=\"badge\">1 query</span></summary>",
+		`class="slow-query-search"`,
+		`placeholder="Search query or fingerprint"`,
+		`class="slow-query-filter"`,
+		`data-filter-field="user"`,
+		`data-filter-field="db"`,
+		`data-filter-field="state"`,
+		`class="slow-query-count"`,
+		`data-slow-query-empty`,
+		`data-query-user="horizon"`,
+		`data-query-db="horizon"`,
+		`data-query-state="waiting for table metadata lock"`,
+		`data-query-text="select count(contract0_.pk) from contract contract0_ where contract0_.pk = ? ` + q.Fingerprint + `"`,
 		"Waiting for table metadata lock",
 		"select count(contract0_.pk)",
 		q.Fingerprint,

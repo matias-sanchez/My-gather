@@ -3,6 +3,7 @@ package render
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/matias-sanchez/My-gather/model"
@@ -316,6 +317,10 @@ func processlistSlowQueryViews(queries []model.ObservedProcesslistQuery) []proce
 			Rank:        i + 1,
 			Fingerprint: q.Fingerprint,
 			Snippet:     q.Snippet,
+			FilterText:  strings.ToLower(q.Snippet + " " + q.Fingerprint),
+			FilterUser:  strings.ToLower(q.User),
+			FilterDB:    strings.ToLower(q.DB),
+			FilterState: strings.ToLower(q.State),
 			FirstSeen:   formatTimestamp(q.FirstSeen),
 			LastSeen:    formatTimestamp(q.LastSeen),
 			SeenSamples: q.SeenSamples,

@@ -76,6 +76,24 @@ capture.
 - [x] T019 Generate `/tmp/report-CS0060148.html` from the motivating incident and validate the slowest observed queries appear.
 - [x] T020 Update `AGENTS.md` active feature block to `006-observed-slowest-queries`.
 
+---
+
+## Phase 7: Interactive Query Panel and Advisor Enhancement
+
+**Purpose**: Add the requested collapse/filter workflow and make the Advisor
+flag impactful observed queries.
+
+- [x] T021 [US4] Amend `specs/006-observed-slowest-queries/spec.md`, `plan.md`, `contracts/ui.md`, `contracts/packages.md`, `data-model.md`, and `quickstart.md` for collapsible/filterable slow-query UI and Advisor impact detection.
+- [x] T022 [P] [US4] Extend `render/db_test.go` to require the collapsible slow-query panel, filter controls, row data attributes, visible count, and filtered-empty state.
+- [x] T023 [P] [US5] Extend `findings/findings_test.go` to require Warning and Critical Advisor findings for impactful observed processlist queries and skip behavior below threshold.
+- [x] T024 [US4] Update `render/templates/db.html.tmpl`, `render/assets/app.css`, and `render/assets/app.js` to implement independent collapse and client-side filters.
+- [x] T025 [US5] Update `findings/rules_queryshape.go` to register and compute the observed slow-query Advisor finding.
+- [x] T026 [US4] Update `testdata/golden/db.example2.html` after intentional render changes.
+- [x] T027 Run `gofmt` on modified Go files.
+- [x] T028 Run `go test ./render ./findings`.
+- [x] T029 Run `go test ./...`.
+- [x] T030 Regenerate `/tmp/report-CS0060148.html` and validate the panel filters and Advisor finding are present.
+
 ## Dependencies & Execution Order
 
 - Phase 1 must complete first.

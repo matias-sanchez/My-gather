@@ -1268,17 +1268,70 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
 
 .slow-query-panel {
   margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-elev) 70%, transparent);
 }
-.slow-query-panel h4 {
-  margin: 0 0 10px 0;
+.slow-query-panel > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
   font-size: 13px;
   font-weight: 700;
   color: var(--fg);
 }
+.slow-query-panel > summary::marker { color: var(--fg-muted); }
+.slow-query-panel > summary .badge {
+  flex: 0 0 auto;
+  font-size: 11px;
+}
+.slow-query-controls {
+  display: grid;
+  grid-template-columns: minmax(260px, 2fr) repeat(3, minmax(130px, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 0 12px 12px;
+}
+.slow-query-controls label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.slow-query-controls label span {
+  color: var(--fg-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.slow-query-controls input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  padding: 7px 9px;
+  font: inherit;
+  font-size: 12px;
+}
+.slow-query-controls input:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 1px;
+}
+.slow-query-count {
+  color: var(--fg-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding-bottom: 8px;
+}
 .slow-query-table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border-top: 1px solid var(--border);
   background: var(--bg);
 }
 .slow-query-table {
@@ -1314,6 +1367,18 @@ table.variables-table tr[data-changed="true"] td.status-label .label-changed {
 .slow-query-table .query-shape code {
   white-space: normal;
   overflow-wrap: anywhere;
+}
+.slow-query-filter-empty {
+  margin: 0 12px 12px;
+}
+@media (max-width: 980px) {
+  .slow-query-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+  .slow-query-count {
+    grid-column: 1 / -1;
+    padding-bottom: 0;
+  }
 }
 
 /* ---------- Mysqladmin filter panel ---------- */

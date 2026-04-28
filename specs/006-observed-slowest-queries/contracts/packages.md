@@ -43,3 +43,17 @@ Additional contract:
 - Add a bounded `slowQueries` array.
 - Use seconds for rendered age values in the payload.
 - Use Unix timestamps for first/last seen values.
+
+## `findings.Analyze`
+
+Input: a `*model.Report` whose `DBSection.Processlist` may contain observed
+query summaries.
+
+Additional contract:
+
+- Register one Query Shape rule for impactful observed processlist queries.
+- Skip when no observed query has a valid age at or above 60 seconds.
+- Return Warning for generic long-running observed active queries.
+- Return Critical for metadata-lock wait states.
+- Include fingerprint, max age, sightings, user, database, state, and query
+  shape evidence in the returned `Finding`.

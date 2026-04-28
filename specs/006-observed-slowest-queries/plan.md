@@ -8,8 +8,9 @@
 Add a bounded "Slowest observed queries" summary to the existing Processlist
 subview by grouping active processlist rows with query text into stable
 fingerprints. The implementation extends the existing processlist parser,
-typed model, render merge path, embedded payload, and DB template without
-adding a new collector, dependency, or top-level report section.
+typed model, render merge path, embedded payload, DB template, client-side
+report script, and Advisor rules without adding a new collector, dependency,
+or top-level report section.
 
 ## Technical Context
 
@@ -21,7 +22,8 @@ adding a new collector, dependency, or top-level report section.
 **Project Type**: CLI plus importable Go packages  
 **Performance Goals**: Process a multi-snapshot processlist-heavy incident
 collection without materially increasing report size; bound rendered query
-summaries to top entries  
+summaries to top entries; filter already-rendered rows in the browser without
+re-parsing report payloads
 **Constraints**: Read-only input tree, deterministic output, self-contained
 HTML, no runtime network, no new dependency  
 **Scale/Scope**: Existing `-processlist` collector only; no slow-query-log or
@@ -43,7 +45,7 @@ pt-query-digest parser in this feature
 | VIII. Reference Fixtures & Golden Tests | PASS | Adds focused tests and updates render golden output intentionally. |
 | IX. Zero Network at Runtime | PASS | No network code. |
 | X. Minimal Dependencies | PASS | No new direct dependency. |
-| XI. Reports Optimized for Humans Under Pressure | PASS | Adds a bounded table inside the existing Processlist subview. |
+| XI. Reports Optimized for Humans Under Pressure | PASS | Adds a bounded table, collapse controls, filters, and Advisor guidance inside the existing report flow. |
 | XII. Pinned Go Version | PASS | No Go version change. |
 | XIII. Canonical Code Path | PASS | Extends the existing processlist path; no duplicate parser. |
 | XIV. English-Only Durable Artifacts | PASS | All durable artifacts are English. |
@@ -83,13 +85,20 @@ render/
 ├── payloads.go
 ├── summaries.go
 ├── templates/db.html.tmpl
+├── assets/app.js
 ├── assets/app.css
 ├── db_test.go
 └── render_test.go
+
+findings/
+├── rules_queryshape.go
+└── findings_test.go
 ```
 
 **Structure Decision**: Extend the existing processlist parser/model/render
-pipeline in place. This preserves the canonical path for all processlist data.
+pipeline in place. Extend the existing Query Shape Advisor subsystem rather
+than adding a separate diagnostic surface. This preserves the canonical path
+for all processlist and Advisor data.
 
 ## Complexity Tracking
 

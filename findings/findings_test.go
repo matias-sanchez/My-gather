@@ -13,11 +13,12 @@ import (
 // because counter helpers skip index 0 by design (pt-mext raw tally
 // convention; see inputs.go::counterTotal).
 type builder struct {
-	counters   map[string][]float64
-	gauges     map[string][]float64
-	isCounter  map[string]bool
-	vars       map[string]string
-	windowSecs float64
+	counters    map[string][]float64
+	gauges      map[string][]float64
+	isCounter   map[string]bool
+	vars        map[string]string
+	processlist *model.ProcesslistData
+	windowSecs  float64
 }
 
 func newBuilder() *builder {
@@ -81,6 +82,11 @@ func (b *builder) withWindow(sec float64) *builder {
 	return b
 }
 
+func (b *builder) withObservedQueries(queries ...model.ObservedProcesslistQuery) *builder {
+	b.processlist = &model.ProcesslistData{ObservedQueries: queries}
+	return b
+}
+
 func (b *builder) build() *model.Report {
 	deltas := map[string][]float64{}
 	for k, v := range b.counters {
@@ -134,7 +140,7 @@ func (b *builder) build() *model.Report {
 		},
 	}
 	return &model.Report{
-		DBSection:        &model.DBSection{Mysqladmin: m},
+		DBSection:        &model.DBSection{Mysqladmin: m, Processlist: b.processlist},
 		VariablesSection: vs,
 	}
 }
@@ -152,6 +158,65 @@ func TestAnalyze_SkipsWhenNoMysqladmin(t *testing.T) {
 	got := Analyze(&model.Report{})
 	if len(got) != 0 {
 		t.Fatalf("expected no findings for empty report; got %d", len(got))
+	}
+}
+
+func TestObservedSlowProcesslistQueryFinding(t *testing.T) {
+	ts := time.Unix(1_700_000_000, 0).UTC()
+	q, ok := model.NewObservedProcesslistQuery(ts, "app", "shop", "Query", "Sending data",
+		"select * from orders where customer_id = 123", 75_000, true, 42, true, 7, true)
+	if !ok {
+		t.Fatal("query unexpectedly ineligible")
+	}
+	q.SeenSamples = 5
+
+	got := Analyze(newBuilder().withObservedQueries(q).build())
+	f := findByID(got, "queryshape.observed_slow_processlist")
+	if f == nil {
+		t.Fatalf("observed slow processlist finding not found in %+v", got)
+	}
+	if f.Severity != SeverityWarn {
+		t.Fatalf("severity = %v, want %v", f.Severity, SeverityWarn)
+	}
+	for _, want := range []string{q.Fingerprint, "75", "5", "app", "shop", "Sending data"} {
+		if !strings.Contains(f.Summary+f.Explanation+f.FormulaComputed, want) {
+			t.Errorf("finding text missing %q: %+v", want, f)
+		}
+	}
+}
+
+func TestObservedSlowProcesslistQueryFindingMetadataLockCritical(t *testing.T) {
+	ts := time.Unix(1_700_000_000, 0).UTC()
+	q, ok := model.NewObservedProcesslistQuery(ts, "horizon", "horizon", "Query", "Waiting for table metadata lock",
+		"rename table horizon.site_artifact_milestone to horizon.site_artifact_milestone_old", 3_723_600, true, 0, true, 0, true)
+	if !ok {
+		t.Fatal("query unexpectedly ineligible")
+	}
+
+	got := Analyze(newBuilder().withObservedQueries(q).build())
+	f := findByID(got, "queryshape.observed_slow_processlist")
+	if f == nil {
+		t.Fatalf("observed slow processlist finding not found in %+v", got)
+	}
+	if f.Severity != SeverityCrit {
+		t.Fatalf("severity = %v, want %v", f.Severity, SeverityCrit)
+	}
+	if !strings.Contains(f.Summary, "metadata lock") {
+		t.Fatalf("summary %q does not call out metadata lock", f.Summary)
+	}
+}
+
+func TestObservedSlowProcesslistQueryFindingSkipsBelowThreshold(t *testing.T) {
+	ts := time.Unix(1_700_000_000, 0).UTC()
+	q, ok := model.NewObservedProcesslistQuery(ts, "app", "shop", "Query", "Sending data",
+		"select * from orders", 59_999, true, 0, false, 0, false)
+	if !ok {
+		t.Fatal("query unexpectedly ineligible")
+	}
+
+	got := Analyze(newBuilder().withObservedQueries(q).build())
+	if f := findByID(got, "queryshape.observed_slow_processlist"); f != nil {
+		t.Fatalf("expected slow observed query finding to skip below threshold, got %+v", f)
 	}
 }
 

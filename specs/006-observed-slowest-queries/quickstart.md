@@ -20,6 +20,7 @@ my-gather --overwrite \
 Open `/tmp/report-CS0060148.html`, then inspect:
 
 Database Usage -> Thread states -> Slowest observed queries
+Advisor -> Query Shape
 
 Expected behavior:
 
@@ -27,4 +28,7 @@ Expected behavior:
 - Long-running active `Query` rows waiting on table metadata lock are visible.
 - Repeated sightings of the same query shape are grouped.
 - Query snippets are bounded.
+- The slowest observed queries panel can collapse independently.
+- User, database, state, and query/fingerprint filters narrow the table.
+- Advisor marks metadata-lock slow observed queries as Critical.
 - The page remains fully functional offline.
