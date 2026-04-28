@@ -33,27 +33,33 @@ different active feature.
 
 ---
 
-### User Story 2 - Codex discovers repo-local review workflows (Priority: P2)
+### User Story 2 - Codex discovers review workflows once (Priority: P2)
 
 A maintainer asks Codex to trigger, fix, or loop PR review for My-gather.
-Codex can discover My-gather-specific skill entries under `.agents/skills/`
-instead of falling back to generic global workflows that target the wrong
-project conventions.
+Codex can discover My-gather-specific skill entries from its startup skill
+directory instead of falling back to generic global workflows that target the
+wrong project conventions. The skill picker shows one row per My-gather skill,
+not duplicate rows from multiple Codex skill paths.
 
 **Why this priority**: Review automation is the highest-risk place for a
 generic workflow to violate this repository's constitution.
 
 **Independent Test**: Compare top-level skill directories under
-`.claude/skills/` and `.agents/skills/`; every Claude skill has a Codex
-counterpart.
+`.claude/skills/`, `.agents/skills/`, and `~/.codex/skills`; every Claude
+skill has a Codex exposure path, and no Codex skill slug appears in both
+`.agents/skills/` and `~/.codex/skills`.
 
 **Acceptance Scenarios**:
 
 1. **Given** `.claude/skills/pr-review-trigger-my-gather/` exists, **When**
-   Codex scans `.agents/skills/`, **Then** a matching
-   `pr-review-trigger-my-gather` skill exists.
+   Codex scans `~/.codex/skills`, **Then**
+   `pr-review-trigger-my-gather` exists there.
 2. **Given** Claude adds a new repo-local skill, **When** tests run without
-   a matching `.agents/skills/` directory, **Then** the build fails.
+   Codex exposure in either `.agents/skills/` or `~/.codex/skills`, **Then**
+   the build fails.
+3. **Given** a skill slug exists in both `.agents/skills/` and
+   `~/.codex/skills`, **When** tests run, **Then** the build fails because
+   Codex would show duplicate picker rows.
 
 ---
 
@@ -95,10 +101,11 @@ drift.
 - **FR-002**: `AGENTS.md` MUST document the side-by-side agent contract,
   including which paths are Codex-facing and Claude-facing.
 - **FR-003**: Every top-level skill directory under `.claude/skills/` MUST
-  have a matching top-level directory under `.agents/skills/`.
+  be exposed to Codex by exactly one path: `.agents/skills/` or
+  `~/.codex/skills`.
 - **FR-004**: Codex-visible wrappers MUST exist for
   `pr-review-trigger-my-gather`, `pr-review-fix-my-gather`, and
-  `pr-review-loop-my-gather`.
+  `pr-review-loop-my-gather` in `~/.codex/skills`.
 - **FR-005**: A repository test MUST fail on active-feature pointer drift.
 - **FR-006**: A repository test MUST fail when a Claude skill lacks a Codex
   skill directory.
@@ -108,13 +115,15 @@ drift.
 - **FR-008**: When `~/.codex/skills` exists on the local machine, the
   alignment check MUST verify that the My-gather PR review skills exist in
   that Codex startup path.
+- **FR-009**: The alignment check MUST fail when the same Codex skill slug
+  exists in both `.agents/skills/` and `~/.codex/skills`.
 
 ### Key Entities
 
 - **Agent Context File**: Durable repo guidance file consumed by a specific
   assistant runtime, either `AGENTS.md` for Codex or `CLAUDE.md` for Claude.
-- **Skill Mirror**: A Codex-visible `.agents/skills/<name>/` directory that
-  corresponds to a Claude-visible `.claude/skills/<name>/` directory.
+- **Codex Skill Exposure**: A Codex-visible skill reachable from exactly one
+  of `.agents/skills/<name>/` or `~/.codex/skills/<name>/`.
 - **Active Feature Pointer**: The current feature name recorded in human
   context files and `.specify/feature.json`.
 
@@ -129,10 +138,12 @@ drift.
 - **SC-003**: A future mismatch between `AGENTS.md` and `CLAUDE.md` active
   feature names produces a clear test failure.
 - **SC-004**: A future Claude-only skill addition produces a clear test
-  failure until a Codex-visible counterpart is added.
+  failure until a Codex-visible exposure path is added.
 - **SC-005**: On this maintainer machine, a missing
   `~/.codex/skills/pr-review-*-my-gather/SKILL.md` file produces a clear
   test failure.
+- **SC-006**: A duplicate Codex skill slug across `.agents/skills/` and
+  `~/.codex/skills` produces a clear test failure.
 
 ## Assumptions
 
@@ -141,6 +152,7 @@ drift.
 - `.claude/skills/` remains the canonical location for the existing
   My-gather PR review workflow text.
 - `.agents/skills/` is the correct local discovery path for Codex-visible
-  repo skills in this workspace.
+  repo skills in this workspace when the same slug is not already installed
+  globally.
 - `~/.codex/skills` is the Codex startup discovery path and is symlinked to
   `$HOME/git/my_memories/skills/codex` on this maintainer machine.

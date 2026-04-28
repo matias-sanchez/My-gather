@@ -32,17 +32,36 @@ func TestAgentAlignmentSkillMirrors(t *testing.T) {
 	root := goldens.RepoRoot(t)
 	claudeSkills := skillDirs(t, filepath.Join(root, ".claude", "skills"))
 	codexSkills := skillDirs(t, filepath.Join(root, ".agents", "skills"))
+	startupSkills := codexStartupSkillDirs(t)
 
 	var missing []string
 	for name := range claudeSkills {
-		if !codexSkills[name] {
+		if !codexSkills[name] && !startupSkills[name] {
 			missing = append(missing, name)
 		}
 	}
 	sort.Strings(missing)
 	if len(missing) > 0 {
-		t.Fatalf("Claude skills missing Codex mirrors under .agents/skills: %s",
+		t.Fatalf("Claude skills missing Codex exposure under .agents/skills or ~/.codex/skills: %s",
 			strings.Join(missing, ", "))
+	}
+}
+
+func TestAgentAlignmentNoDuplicateCodexSkillSlugs(t *testing.T) {
+	root := goldens.RepoRoot(t)
+	repoSkills := skillDirs(t, filepath.Join(root, ".agents", "skills"))
+	startupSkills := codexStartupSkillDirs(t)
+
+	var duplicates []string
+	for name := range repoSkills {
+		if startupSkills[name] {
+			duplicates = append(duplicates, name)
+		}
+	}
+	sort.Strings(duplicates)
+	if len(duplicates) > 0 {
+		t.Fatalf("Codex skill slug(s) exist in both .agents/skills and ~/.codex/skills: %s",
+			strings.Join(duplicates, ", "))
 	}
 }
 
@@ -59,22 +78,14 @@ func TestAgentAlignmentSpecKitPlanTargets(t *testing.T) {
 }
 
 func TestAgentAlignmentCodexStartupSkillCoverage(t *testing.T) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		t.Fatalf("resolve home directory: %v", err)
-	}
-	codexSkills := filepath.Join(home, ".codex", "skills")
-	if _, err := os.Stat(codexSkills); err != nil {
-		if os.IsNotExist(err) {
-			t.Skip("~/.codex/skills is not configured on this machine")
-		}
-		t.Fatalf("stat %s: %v", codexSkills, err)
+	startupSkills := codexStartupSkillDirs(t)
+	if startupSkills == nil {
+		t.Skip("~/.codex/skills is not configured on this machine")
 	}
 
 	for _, name := range requiredMyGatherSkills() {
-		path := filepath.Join(codexSkills, name, "SKILL.md")
-		if _, err := os.Stat(path); err != nil {
-			t.Fatalf("Codex startup skill %s is missing: %v", path, err)
+		if !startupSkills[name] {
+			t.Fatalf("Codex startup skill %q is missing from ~/.codex/skills", name)
 		}
 	}
 }
@@ -122,8 +133,41 @@ func skillDirs(t *testing.T, root string) map[string]bool {
 		if !entry.IsDir() {
 			continue
 		}
+		if strings.HasPrefix(entry.Name(), ".") {
+			continue
+		}
 		if _, err := os.Stat(filepath.Join(root, entry.Name(), "SKILL.md")); err != nil {
 			t.Fatalf("%s is missing SKILL.md: %v", filepath.Join(root, entry.Name()), err)
+		}
+		out[entry.Name()] = true
+	}
+	return out
+}
+
+func codexStartupSkillDirs(t *testing.T) map[string]bool {
+	t.Helper()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatalf("resolve home directory: %v", err)
+	}
+	codexSkills := filepath.Join(home, ".codex", "skills")
+	if _, err := os.Stat(codexSkills); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		t.Fatalf("stat %s: %v", codexSkills, err)
+	}
+	entries, err := os.ReadDir(codexSkills)
+	if err != nil {
+		t.Fatalf("read %s: %v", codexSkills, err)
+	}
+	out := make(map[string]bool, len(entries))
+	for _, entry := range entries {
+		if !entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(codexSkills, entry.Name(), "SKILL.md")); err != nil {
+			continue
 		}
 		out[entry.Name()] = true
 	}

@@ -28,15 +28,15 @@ Represents the machine-readable current feature selection.
 - `featureDirectory`: relative path under `specs/`
 - `featureSlug`: basename of `featureDirectory`
 
-## SkillMirror
+## CodexSkillExposure
 
-Represents one skill name that should exist for both assistant runtimes.
+Represents one skill name that should be available to Codex exactly once.
 
 - `name`: top-level skill directory name
 - `claudePath`: `.claude/skills/<name>/SKILL.md`
-- `codexPath`: `.agents/skills/<name>/SKILL.md`
-- `mode`: `native` for agent-specific skills, `wrapper` for Codex wrappers
-  delegating to canonical Claude procedure text
+- `repoCodexPath`: `.agents/skills/<name>/SKILL.md`
+- `startupCodexPath`: `~/.codex/skills/<name>/SKILL.md`
+- `mode`: `repo-local` or `startup`
 
 ## Validation Rules
 
@@ -44,8 +44,9 @@ Represents one skill name that should exist for both assistant runtimes.
   `ActiveFeaturePointer.featureSlug`.
 - `AgentContext.activeFeature` for Claude MUST equal
   `ActiveFeaturePointer.featureSlug`.
-- Every top-level directory in `.claude/skills/` MUST have a matching
-  top-level directory in `.agents/skills/`.
+- Every top-level directory in `.claude/skills/` MUST have a Codex exposure
+  in `.agents/skills/` or `~/.codex/skills`.
+- No skill name may exist in both `.agents/skills/` and `~/.codex/skills`.
 - Codex `speckit-plan` text MUST reference `AGENTS.md`.
 - Claude `speckit-plan` text MUST reference `CLAUDE.md`.
 - If `~/.codex/skills` exists, it MUST contain every required My-gather PR

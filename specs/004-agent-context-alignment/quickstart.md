@@ -16,7 +16,8 @@ go test ./tests/coverage -run AgentAlignmentSkillMirrors -count=1
 ```
 
 Expected result: every top-level `.claude/skills/<name>/` directory has a
-matching `.agents/skills/<name>/` directory.
+Codex exposure path in either `.agents/skills/<name>/` or
+`~/.codex/skills/<name>/`, and no Codex skill slug exists in both places.
 
 ## Full Alignment Check
 
@@ -24,10 +25,10 @@ matching `.agents/skills/<name>/` directory.
 go test ./tests/coverage -run AgentAlignment -count=1
 ```
 
-Expected result: active-feature pointers, skill mirrors, and agent-specific
-Spec Kit context targets all pass. On a machine with `~/.codex/skills`
-configured, this also verifies that the My-gather PR review skills are in
-Codex's startup skill path.
+Expected result: active-feature pointers, Codex exposure paths,
+duplicate-slug checks, and agent-specific Spec Kit context targets all pass.
+On a machine with `~/.codex/skills` configured, this also verifies that the
+My-gather PR review skills are in Codex's startup skill path.
 
 ## Manual Smoke Check
 
@@ -35,9 +36,9 @@ Codex's startup skill path.
    `specs/004-agent-context-alignment/`.
 2. Open `CLAUDE.md` and verify the same active feature block and prior
    feature list are present.
-3. Confirm `.agents/skills/pr-review-trigger-my-gather/SKILL.md`,
-   `.agents/skills/pr-review-fix-my-gather/SKILL.md`, and
-   `.agents/skills/pr-review-loop-my-gather/SKILL.md` exist.
+3. Confirm `.agents/skills/pr-review-trigger-my-gather/`,
+   `.agents/skills/pr-review-fix-my-gather/`, and
+   `.agents/skills/pr-review-loop-my-gather/` do not exist.
 4. Confirm `~/.codex/skills/pr-review-trigger-my-gather/SKILL.md`,
    `~/.codex/skills/pr-review-fix-my-gather/SKILL.md`, and
    `~/.codex/skills/pr-review-loop-my-gather/SKILL.md` exist locally.

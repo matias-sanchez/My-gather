@@ -28,10 +28,10 @@ description: "Task list for Agent Context Alignment implementation"
 
 ## Phase 3: User Story 2 - Codex skill discovery (Priority: P2)
 
-- [x] T006 [P] [US2] Add
+- [x] T006 [P] [US2] Initially add
   `.agents/skills/pr-review-trigger-my-gather/SKILL.md`.
-- [x] T007 [P] [US2] Add `.agents/skills/pr-review-fix-my-gather/SKILL.md`.
-- [x] T008 [P] [US2] Add `.agents/skills/pr-review-loop-my-gather/SKILL.md`.
+- [x] T007 [P] [US2] Initially add `.agents/skills/pr-review-fix-my-gather/SKILL.md`.
+- [x] T008 [P] [US2] Initially add `.agents/skills/pr-review-loop-my-gather/SKILL.md`.
 - [x] T009 [US2] Update `README.md` repository layout to include
   `.agents/`.
 
@@ -49,3 +49,8 @@ description: "Task list for Agent Context Alignment implementation"
   `$HOME/git/my_memories/skills/codex/`.
 - [x] T016 Re-run `go test ./tests/coverage -run AgentAlignment -count=1`.
 - [x] T017 Push the startup-skill coverage update to PR #35.
+- [x] T018 Remove duplicate `.agents/skills/pr-review-*-my-gather/` wrappers
+  now that the same slugs are startup skills.
+- [x] T019 Extend `tests/coverage/agent_alignment_test.go` to fail on
+  duplicate Codex skill slugs across `.agents/skills` and `~/.codex/skills`.
+- [x] T020 Re-run full validation and push the duplicate-removal update.

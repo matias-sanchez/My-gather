@@ -7,8 +7,8 @@
 
 Align Codex and Claude repository context by making `AGENTS.md`,
 `CLAUDE.md`, and `.specify/feature.json` agree on the active feature,
-adding Codex-visible wrappers for the My-gather PR review skills, and
-adding a focused Go test that catches future drift.
+using Codex startup skills for the My-gather PR review workflows, and adding
+a focused Go test that catches future drift or duplicate Codex skill slugs.
 
 ## Technical Context
 
@@ -43,9 +43,9 @@ Codex startup skill tree when available, one focused test
 - **X. Minimal Dependencies**: Passes; Go standard library only.
 - **XI. Reports Optimized for Humans Under Pressure**: Not affected.
 - **XII. Pinned Go Version**: Passes; `go.mod` is unchanged.
-- **XIII. Canonical Code Path**: Passes; Codex PR review skills are wrappers
-  that delegate to the canonical My-gather workflow text instead of copying
-  the full procedure.
+- **XIII. Canonical Code Path**: Passes; Codex PR review skills live in the
+  startup skill directory and delegate to the canonical My-gather workflow
+  text instead of copying the full procedure into repo-local duplicates.
 - **XIV. English-Only Durable Artifacts**: Passes; all added artifacts are in
   English.
 
@@ -69,9 +69,6 @@ specs/004-agent-context-alignment/
 AGENTS.md
 CLAUDE.md
 .specify/feature.json
-.agents/skills/pr-review-trigger-my-gather/SKILL.md
-.agents/skills/pr-review-fix-my-gather/SKILL.md
-.agents/skills/pr-review-loop-my-gather/SKILL.md
 tests/coverage/agent_alignment_test.go
 README.md
 ~/.codex/skills/pr-review-*-my-gather/SKILL.md  # machine-local coverage
