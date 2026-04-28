@@ -3,6 +3,7 @@ package parse
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/matias-sanchez/My-gather/tests/goldens"
@@ -88,6 +89,133 @@ func TestProcesslistGolden(t *testing.T) {
 		Diagnostics:        diags,
 	})
 	goldens.Compare(t, goldenPath, got)
+}
+
+func TestProcesslistRicherMetrics(t *testing.T) {
+	input := strings.NewReader(`TS 1769702442.006126802 2026-01-29 16:00:42
+*************************** 1. row ***************************
+           Id: 12
+         User: app
+         Host: 10.0.0.1:59136
+           db: shop
+      Command: Sleep
+         Time: 10
+        State:
+         Info: NULL
+      Time_ms: 10050
+    Rows_sent: 3
+Rows_examined: 100
+*************************** 2. row ***************************
+           Id: 13
+         User: app
+         Host: 10.0.0.2:59137
+           db: shop
+      Command: Query
+         Time: 1
+        State: Sending data
+         Info: select * from orders
+    Rows_sent: 5
+Rows_examined: not-a-number
+*************************** 3. row ***************************
+           Id: 15
+         User: app
+         Host: 10.0.0.4:59139
+           db: shop
+      Command: Execute
+         Time: 99
+        State: executing
+         Info: NULL
+      Time_ms: not-a-number
+    Rows_sent: 2
+Rows_examined: 50
+*************************** 4. row ***************************
+         Time: 999
+         Info: select phantom
+    Rows_sent: 9999
+Rows_examined: 9999
+TS 1769702443.006126802 2026-01-29 16:00:43
+*************************** 1. row ***************************
+           Id: 14
+         User: app
+         Host: 10.0.0.3:59138
+           db: shop
+      Command: Connect
+         Time: 7
+        State:
+         Info:
+`)
+
+	data, diags := parseProcesslist(input, "synthetic-processlist")
+	if len(diags) != 0 {
+		t.Fatalf("unexpected diagnostics: %+v", diags)
+	}
+	if data == nil {
+		t.Fatal("parseProcesslist returned nil")
+	}
+	if got, want := len(data.ThreadStateSamples), 2; got != want {
+		t.Fatalf("ThreadStateSamples len = %d, want %d", got, want)
+	}
+
+	first := data.ThreadStateSamples[0]
+	if got, want := first.TotalThreads, 3; got != want {
+		t.Errorf("first.TotalThreads = %d, want %d", got, want)
+	}
+	if got, want := first.ActiveThreads, 2; got != want {
+		t.Errorf("first.ActiveThreads = %d, want %d", got, want)
+	}
+	if got, want := first.SleepingThreads, 1; got != want {
+		t.Errorf("first.SleepingThreads = %d, want %d", got, want)
+	}
+	if got, want := first.MaxTimeMS, 99000.0; got != want {
+		t.Errorf("first.MaxTimeMS = %v, want %v", got, want)
+	}
+	if !first.HasTimeMetric {
+		t.Error("first.HasTimeMetric = false, want true")
+	}
+	if got, want := first.MaxRowsExamined, 100.0; got != want {
+		t.Errorf("first.MaxRowsExamined = %v, want %v", got, want)
+	}
+	if !first.HasRowsExaminedMetric {
+		t.Error("first.HasRowsExaminedMetric = false, want true")
+	}
+	if got, want := first.MaxRowsSent, 5.0; got != want {
+		t.Errorf("first.MaxRowsSent = %v, want %v", got, want)
+	}
+	if !first.HasRowsSentMetric {
+		t.Error("first.HasRowsSentMetric = false, want true")
+	}
+	if got, want := first.RowsWithQueryText, 1; got != want {
+		t.Errorf("first.RowsWithQueryText = %d, want %d", got, want)
+	}
+	if !first.HasQueryTextMetric {
+		t.Error("first.HasQueryTextMetric = false, want true")
+	}
+
+	second := data.ThreadStateSamples[1]
+	if got, want := second.ActiveThreads, 1; got != want {
+		t.Errorf("second.ActiveThreads = %d, want %d", got, want)
+	}
+	if got, want := second.SleepingThreads, 0; got != want {
+		t.Errorf("second.SleepingThreads = %d, want %d", got, want)
+	}
+	if got, want := second.MaxTimeMS, 7000.0; got != want {
+		t.Errorf("second.MaxTimeMS = %v, want %v", got, want)
+	}
+	if !second.HasTimeMetric {
+		t.Error("second.HasTimeMetric = false, want true")
+	}
+	if second.HasRowsExaminedMetric {
+		t.Error("second.HasRowsExaminedMetric = true, want false")
+	}
+	if second.HasRowsSentMetric {
+		t.Error("second.HasRowsSentMetric = true, want false")
+	}
+	if got, want := second.RowsWithQueryText, 0; got != want {
+		t.Errorf("second.RowsWithQueryText = %d, want %d", got, want)
+	}
+	if !second.HasQueryTextMetric {
+		t.Error("second.HasQueryTextMetric = false, want true")
+	}
 }
 
 func TestStripHostPort(t *testing.T) {

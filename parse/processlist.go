@@ -37,21 +37,42 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 	var diagnostics []model.Diagnostic
 
 	type rowBuild struct {
-		user     string
-		host     string
-		command  string
-		db       string
-		state    string
-		anyField bool
+		user             string
+		host             string
+		command          string
+		db               string
+		state            string
+		timeSeconds      float64
+		timeMS           float64
+		rowsSent         float64
+		rowsExamined     float64
+		info             string
+		haveTime         bool
+		haveTimeMS       bool
+		haveRowsSent     bool
+		haveRowsExamined bool
+		haveInfo         bool
+		hasCoreField     bool
 	}
 	type sampleBuild struct {
-		t       time.Time
-		state   map[string]int
-		user    map[string]int
-		host    map[string]int
-		command map[string]int
-		db      map[string]int
-		row     rowBuild
+		t                 time.Time
+		state             map[string]int
+		user              map[string]int
+		host              map[string]int
+		command           map[string]int
+		db                map[string]int
+		row               rowBuild
+		total             int
+		active            int
+		sleeping          int
+		maxTimeMS         float64
+		hasTimeMetric     bool
+		maxRowsExamined   float64
+		hasRowsExamined   bool
+		maxRowsSent       float64
+		hasRowsSent       bool
+		rowsWithQueryText int
+		hasQueryText      bool
 	}
 	var samples []sampleBuild
 	var current *sampleBuild
@@ -68,13 +89,14 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		if current == nil {
 			return
 		}
-		if !current.row.anyField {
+		if !current.row.hasCoreField {
 			// Row-separator fired with none of the tracked fields
 			// populated — nothing to attribute. This is expected for
 			// the first `*** 1. row ***` marker in every sample (it
 			// delimits the start of the first row, not the end of a
 			// prior row), so skip quietly and do not emit a
 			// diagnostic.
+			current.row = rowBuild{}
 			return
 		}
 		label := current.row.state
@@ -111,6 +133,43 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		}
 		current.db[db]++
 		dbsSet[db] = struct{}{}
+
+		current.total++
+		if current.row.command == "Sleep" {
+			current.sleeping++
+		} else {
+			current.active++
+		}
+		ageMS := 0.0
+		if current.row.haveTimeMS {
+			ageMS = current.row.timeMS
+		} else if current.row.haveTime {
+			ageMS = current.row.timeSeconds * 1000
+		}
+		if current.row.haveTimeMS || current.row.haveTime {
+			current.hasTimeMetric = true
+		}
+		if ageMS > current.maxTimeMS {
+			current.maxTimeMS = ageMS
+		}
+		if current.row.haveRowsExamined {
+			current.hasRowsExamined = true
+		}
+		if current.row.haveRowsExamined && current.row.rowsExamined > current.maxRowsExamined {
+			current.maxRowsExamined = current.row.rowsExamined
+		}
+		if current.row.haveRowsSent {
+			current.hasRowsSent = true
+		}
+		if current.row.haveRowsSent && current.row.rowsSent > current.maxRowsSent {
+			current.maxRowsSent = current.row.rowsSent
+		}
+		if current.row.haveInfo {
+			current.hasQueryText = true
+		}
+		if current.row.haveInfo && hasProcesslistQueryText(current.row.info) {
+			current.rowsWithQueryText++
+		}
 
 		current.row = rowBuild{}
 	}
@@ -157,19 +216,42 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		switch key {
 		case "State":
 			current.row.state = val
-			current.row.anyField = true
+			current.row.hasCoreField = true
 		case "User":
 			current.row.user = val
-			current.row.anyField = true
+			current.row.hasCoreField = true
 		case "Host":
 			current.row.host = val
-			current.row.anyField = true
+			current.row.hasCoreField = true
 		case "Command":
 			current.row.command = val
-			current.row.anyField = true
+			current.row.hasCoreField = true
 		case "db":
 			current.row.db = val
-			current.row.anyField = true
+			current.row.hasCoreField = true
+		case "Time":
+			if parsed, ok := parseProcesslistNonNegativeFloat(val); ok {
+				current.row.timeSeconds = parsed
+				current.row.haveTime = true
+			}
+		case "Time_ms":
+			if parsed, ok := parseProcesslistNonNegativeFloat(val); ok {
+				current.row.timeMS = parsed
+				current.row.haveTimeMS = true
+			}
+		case "Rows_sent":
+			if parsed, ok := parseProcesslistNonNegativeFloat(val); ok {
+				current.row.rowsSent = parsed
+				current.row.haveRowsSent = true
+			}
+		case "Rows_examined":
+			if parsed, ok := parseProcesslistNonNegativeFloat(val); ok {
+				current.row.rowsExamined = parsed
+				current.row.haveRowsExamined = true
+			}
+		case "Info":
+			current.row.info = val
+			current.row.haveInfo = true
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -219,12 +301,23 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 	out := make([]model.ThreadStateSample, len(samples))
 	for i, s := range samples {
 		out[i] = model.ThreadStateSample{
-			Timestamp:     s.t,
-			StateCounts:   s.state,
-			UserCounts:    s.user,
-			HostCounts:    s.host,
-			CommandCounts: s.command,
-			DbCounts:      s.db,
+			Timestamp:             s.t,
+			StateCounts:           s.state,
+			UserCounts:            s.user,
+			HostCounts:            s.host,
+			CommandCounts:         s.command,
+			DbCounts:              s.db,
+			TotalThreads:          s.total,
+			ActiveThreads:         s.active,
+			SleepingThreads:       s.sleeping,
+			MaxTimeMS:             s.maxTimeMS,
+			HasTimeMetric:         s.hasTimeMetric,
+			MaxRowsExamined:       s.maxRowsExamined,
+			HasRowsExaminedMetric: s.hasRowsExamined,
+			MaxRowsSent:           s.maxRowsSent,
+			HasRowsSentMetric:     s.hasRowsSent,
+			RowsWithQueryText:     s.rowsWithQueryText,
+			HasQueryTextMetric:    s.hasQueryText,
 		}
 	}
 
@@ -236,6 +329,19 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		Commands:           commands,
 		Dbs:                dbs,
 	}, diagnostics
+}
+
+func parseProcesslistNonNegativeFloat(s string) (float64, bool) {
+	v, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
+	if err != nil || v < 0 || math.IsNaN(v) || math.IsInf(v, 0) {
+		return 0, false
+	}
+	return v, true
+}
+
+func hasProcesslistQueryText(s string) bool {
+	trimmed := strings.TrimSpace(s)
+	return trimmed != "" && !strings.EqualFold(trimmed, "NULL")
 }
 
 // stripHostPort trims the ":port" suffix from a processlist Host value.

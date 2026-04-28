@@ -70,6 +70,7 @@ type reportView struct {
 	MysqladminCount     int
 	MysqladminSelectID  string
 	HasProcesslist      bool
+	ProcesslistSummary  *processlistSummaryView
 }
 
 type variableSnapshotView struct {
@@ -303,4 +304,18 @@ type networkSummaryView struct {
 	PeakTimeWait        string
 	PeakCloseWait       string
 	SampleCount         int
+}
+
+type processlistSummaryView struct {
+	PeakActive           string
+	PeakSleeping         string
+	LongestAge           string
+	HasLongestAge        bool
+	PeakRowsExamined     string
+	HasPeakRowsExamined  bool
+	PeakRowsSent         string
+	HasPeakRowsSent      bool
+	PeakQueryTextRows    string
+	HasPeakQueryTextRows bool
+	SampleCount          int
 }

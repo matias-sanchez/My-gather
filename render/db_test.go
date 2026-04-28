@@ -167,3 +167,21 @@ func TestMysqladminToggleMarkup(t *testing.T) {
 		}
 	}
 }
+
+func TestProcesslistRicherMetricMarkup(t *testing.T) {
+	html := renderGolden(t, model.SuffixInnodbStatus, model.SuffixMysqladmin, model.SuffixProcesslist)
+	section := extractDetailsSection(t, html, "sec-db")
+
+	for _, want := range []string{
+		`peak active`,
+		`peak sleeping`,
+		`longest age`,
+		`peak rows examined`,
+		`peak rows sent`,
+		`query text rows`,
+	} {
+		if !strings.Contains(section, want) {
+			t.Errorf("sec-db processlist markup missing %q", want)
+		}
+	}
+}

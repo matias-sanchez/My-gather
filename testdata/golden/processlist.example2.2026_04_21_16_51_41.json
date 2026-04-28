@@ -27,7 +27,18 @@
       "DbCounts": {
         "Other": 3,
         "test": 10
-      }
+      },
+      "TotalThreads": 13,
+      "ActiveThreads": 12,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2961678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 11,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:44Z",
@@ -57,7 +68,18 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 13,
+      "SleepingThreads": 2,
+      "MaxTimeMS": 2962678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:45Z",
@@ -87,7 +109,18 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2963677,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:46Z",
@@ -116,7 +149,18 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 12,
+      "SleepingThreads": 3,
+      "MaxTimeMS": 2964677,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 11,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:47Z",
@@ -148,7 +192,18 @@
       "DbCounts": {
         "Other": 6,
         "test": 10
-      }
+      },
+      "TotalThreads": 16,
+      "ActiveThreads": 15,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2965676,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 13,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:48Z",
@@ -181,7 +236,18 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2966677,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 11,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:49Z",
@@ -215,7 +281,18 @@
       "DbCounts": {
         "Other": 6,
         "test": 10
-      }
+      },
+      "TotalThreads": 16,
+      "ActiveThreads": 13,
+      "SleepingThreads": 3,
+      "MaxTimeMS": 2967678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 11,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:50Z",
@@ -248,7 +325,18 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 13,
+      "SleepingThreads": 2,
+      "MaxTimeMS": 2968679,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 11,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:51Z",
@@ -278,7 +366,18 @@
       "DbCounts": {
         "Other": 6,
         "test": 10
-      }
+      },
+      "TotalThreads": 16,
+      "ActiveThreads": 15,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2969678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:52Z",
@@ -307,7 +406,18 @@
       "DbCounts": {
         "Other": 3,
         "test": 10
-      }
+      },
+      "TotalThreads": 13,
+      "ActiveThreads": 12,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2970677,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 11,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:53Z",
@@ -337,7 +447,18 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2971677,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:54Z",
@@ -369,7 +490,18 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 14,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2972678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:55Z",
@@ -400,7 +532,18 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2973678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:56Z",
@@ -433,7 +576,18 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2974678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 11,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:57Z",
@@ -462,7 +616,18 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2975678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:58Z",
@@ -494,7 +659,18 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 14,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2976678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 11,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:51:59Z",
@@ -526,7 +702,18 @@
       "DbCounts": {
         "Other": 6,
         "test": 10
-      }
+      },
+      "TotalThreads": 16,
+      "ActiveThreads": 15,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2977678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:52:00Z",
@@ -554,7 +741,18 @@
       "DbCounts": {
         "Other": 3,
         "test": 10
-      }
+      },
+      "TotalThreads": 13,
+      "ActiveThreads": 12,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2978677,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 11,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:52:01Z",
@@ -584,7 +782,18 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2979677,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:52:02Z",
@@ -614,7 +823,18 @@
       "DbCounts": {
         "Other": 6,
         "test": 10
-      }
+      },
+      "TotalThreads": 16,
+      "ActiveThreads": 14,
+      "SleepingThreads": 2,
+      "MaxTimeMS": 2980678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 13,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:52:03Z",
@@ -643,7 +863,18 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2981678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:52:04Z",
@@ -675,7 +906,18 @@
       "DbCounts": {
         "Other": 6,
         "test": 10
-      }
+      },
+      "TotalThreads": 16,
+      "ActiveThreads": 14,
+      "SleepingThreads": 2,
+      "MaxTimeMS": 2982678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:52:05Z",
@@ -707,7 +949,18 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 14,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2983677,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 11,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:52:06Z",
@@ -738,7 +991,18 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 13,
+      "SleepingThreads": 2,
+      "MaxTimeMS": 2984678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:52:07Z",
@@ -766,7 +1030,18 @@
       "DbCounts": {
         "Other": 3,
         "test": 10
-      }
+      },
+      "TotalThreads": 13,
+      "ActiveThreads": 12,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2985679,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 11,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:52:08Z",
@@ -797,7 +1072,18 @@
       "DbCounts": {
         "Other": 3,
         "test": 10
-      }
+      },
+      "TotalThreads": 13,
+      "ActiveThreads": 12,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2986677,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 11,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:52:09Z",
@@ -829,7 +1115,18 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 14,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2987677,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 13,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:52:10Z",
@@ -866,7 +1163,18 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 11,
+      "SleepingThreads": 3,
+      "MaxTimeMS": 2988677,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 8,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:52:11Z",
@@ -899,7 +1207,18 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 14,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2989678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 543,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 543,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     },
     {
       "Timestamp": "2026-04-21T16:52:12Z",
@@ -929,7 +1248,18 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2990678,
+      "HasTimeMetric": true,
+      "MaxRowsExamined": 51,
+      "HasRowsExaminedMetric": true,
+      "MaxRowsSent": 51,
+      "HasRowsSentMetric": true,
+      "RowsWithQueryText": 12,
+      "HasQueryTextMetric": true
     }
   ],
   "states": [
