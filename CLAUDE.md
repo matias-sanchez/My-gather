@@ -22,6 +22,23 @@ English-only for all checked-in artifacts (Principle XIV of
 `.specify/memory/constitution.md`). Out-of-band chat with the user is
 not an artifact and may be in any language.
 
+## Side-by-side agent contract
+
+Codex and Claude are expected to work on this repository side by side.
+Keep the following files aligned whenever a Spec Kit workflow changes
+the active feature or agent instructions:
+
+- `AGENTS.md` is the Codex-facing context file.
+- `CLAUDE.md` is the Claude-facing context file.
+- `.specify/feature.json` is the machine-readable feature pointer.
+- `.agents/skills/` contains Codex-visible repo-local skills.
+- `.claude/skills/` contains Claude-visible repo-local skills.
+
+When `AGENTS.md` and `CLAUDE.md` say there is no active feature,
+`.specify/feature.json` may point at the latest shipped feature as a
+reference for Spec Kit scripts. When a feature is active, all three
+signals must name the same feature before running `/speckit-*` workflows.
+
 ## Repo-local Claude Code tooling
 
 - `/pr-review-trigger-my-gather` (skill at

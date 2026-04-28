@@ -1,29 +1,61 @@
 <!-- SPECKIT START -->
-Active feature: **001-ptstalk-report-mvp**
+No active feature. The latest shipped feature is **003-feedback-backend-worker**.
+The next `/speckit.specify` invocation will overwrite this block with the new
+feature's plan / spec / tasks pointers.
 
-For technologies, project structure, constitution gates, data model,
-CLI and package contracts, and shell commands, read the current plan:
+For technologies, project structure, constitution gates, and shell commands
+between features, read the constitution and (optionally) the latest shipped
+feature's plan as a reference:
 
-- Plan: `specs/001-ptstalk-report-mvp/plan.md`
-- Spec: `specs/001-ptstalk-report-mvp/spec.md`
-- Research (Phase 0): `specs/001-ptstalk-report-mvp/research.md`
-- Data model (Phase 1): `specs/001-ptstalk-report-mvp/data-model.md`
-- Contracts (Phase 1): `specs/001-ptstalk-report-mvp/contracts/cli.md`,
-  `specs/001-ptstalk-report-mvp/contracts/packages.md`
-- Quickstart (Phase 1): `specs/001-ptstalk-report-mvp/quickstart.md`
 - Constitution: `.specify/memory/constitution.md`
+- Latest shipped plan (003): `specs/003-feedback-backend-worker/plan.md`
+
+Prior features (shipped):
+- **003-feedback-backend-worker** - `specs/003-feedback-backend-worker/plan.md`
+- **002-report-feedback-button** - `specs/002-report-feedback-button/plan.md`
+- **001-ptstalk-report-mvp** - `specs/001-ptstalk-report-mvp/plan.md`
 <!-- SPECKIT END -->
 
 ## Language convention
 
-All artifacts that live inside this repository MUST be written in English:
+English-only for all checked-in artifacts (Principle XIV of
+`.specify/memory/constitution.md`). Out-of-band chat with the user is
+not an artifact and may be in any language.
 
-- Source code, comments, and identifiers.
-- Commit messages, branch names, tags.
-- Pull request titles, descriptions, and review comments.
-- `specs/`, `.specify/`, `README.md`, and any other checked-in documentation.
-- GitHub issues opened from this repo.
+## Side-by-side agent contract
 
-Out-of-band conversation with the user (chat/UI) may be in any language
-the user chooses — only the durable, shared artifacts are required to
-be English so contributors and tooling have a single consistent language.
+Codex and Claude are expected to work on this repository side by side.
+Keep the following files aligned whenever a Spec Kit workflow changes
+the active feature or agent instructions:
+
+- `AGENTS.md` is the Codex-facing context file.
+- `CLAUDE.md` is the Claude-facing context file.
+- `.specify/feature.json` is the machine-readable feature pointer.
+- `.agents/skills/` contains Codex-visible repo-local skills.
+- `.claude/skills/` contains Claude-visible repo-local skills.
+
+When `AGENTS.md` and `CLAUDE.md` say there is no active feature,
+`.specify/feature.json` may point at the latest shipped feature as a
+reference for Spec Kit scripts. When a feature is active, all three
+signals must name the same feature before running `/speckit-*` workflows.
+
+## Repo-local Codex tooling
+
+- `/pr-review-trigger-my-gather` (startup skill at
+  `~/.codex/skills/pr-review-trigger-my-gather/`) - start an external
+  Codex + Copilot review cycle on the current PR. Use this in this repo,
+  not the generic `/pr-review-trigger`.
+- `/pr-review-fix-my-gather` (startup skill at
+  `~/.codex/skills/pr-review-fix-my-gather/`) - process Codex/Copilot
+  findings using the My-gather constitution and Go-native validation.
+  Use this in this repo, not the generic `/pr-review-fix`.
+- `/pr-review-loop-my-gather` (startup skill at
+  `~/.codex/skills/pr-review-loop-my-gather/`) - bounded review loop
+  that composes the trigger and fix workflows until Codex is clean or a
+  safety rail fires.
+
+Claude owns equivalent skill entry points under `.claude/skills/`. Keep
+the semantics matched; only the agent-specific context file names and
+tool invocation details should differ. Do not duplicate the My-gather PR
+review startup skills under `.agents/skills/`; Codex loads them from
+`~/.codex/skills`.
