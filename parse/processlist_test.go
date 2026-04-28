@@ -164,14 +164,26 @@ TS 1769702443.006126802 2026-01-29 16:00:43
 	if got, want := first.MaxTimeMS, 99000.0; got != want {
 		t.Errorf("first.MaxTimeMS = %v, want %v", got, want)
 	}
+	if !first.HasTimeMetric {
+		t.Error("first.HasTimeMetric = false, want true")
+	}
 	if got, want := first.MaxRowsExamined, 100.0; got != want {
 		t.Errorf("first.MaxRowsExamined = %v, want %v", got, want)
+	}
+	if !first.HasRowsExaminedMetric {
+		t.Error("first.HasRowsExaminedMetric = false, want true")
 	}
 	if got, want := first.MaxRowsSent, 5.0; got != want {
 		t.Errorf("first.MaxRowsSent = %v, want %v", got, want)
 	}
+	if !first.HasRowsSentMetric {
+		t.Error("first.HasRowsSentMetric = false, want true")
+	}
 	if got, want := first.RowsWithQueryText, 1; got != want {
 		t.Errorf("first.RowsWithQueryText = %d, want %d", got, want)
+	}
+	if !first.HasQueryTextMetric {
+		t.Error("first.HasQueryTextMetric = false, want true")
 	}
 
 	second := data.ThreadStateSamples[1]
@@ -184,8 +196,20 @@ TS 1769702443.006126802 2026-01-29 16:00:43
 	if got, want := second.MaxTimeMS, 7000.0; got != want {
 		t.Errorf("second.MaxTimeMS = %v, want %v", got, want)
 	}
+	if !second.HasTimeMetric {
+		t.Error("second.HasTimeMetric = false, want true")
+	}
+	if second.HasRowsExaminedMetric {
+		t.Error("second.HasRowsExaminedMetric = true, want false")
+	}
+	if second.HasRowsSentMetric {
+		t.Error("second.HasRowsSentMetric = true, want false")
+	}
 	if got, want := second.RowsWithQueryText, 0; got != want {
 		t.Errorf("second.RowsWithQueryText = %d, want %d", got, want)
+	}
+	if !second.HasQueryTextMetric {
+		t.Error("second.HasQueryTextMetric = false, want true")
 	}
 }
 

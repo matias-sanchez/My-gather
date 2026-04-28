@@ -137,6 +137,9 @@ presence counts over time and does not add a raw SQL table.
   examined, peak rows sent, and peak query-text rows across the capture window.
 - **FR-010**: The feature MUST include parser-level and render-level tests that
   cover all new metrics and protect the existing processlist breakdown.
+- **FR-011**: Optional metric callouts MUST be omitted when their source fields
+  are unavailable, while real zero values from available source fields MUST
+  remain renderable as `0`.
 
 ### Key Entities
 

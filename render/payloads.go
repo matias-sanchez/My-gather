@@ -272,14 +272,26 @@ func processlistChartPayload(d *model.ProcesslistData) map[string]any {
 			"maxTimeSeconds": processlistMetricValues(d, func(s model.ThreadStateSample) float64 {
 				return s.MaxTimeMS / 1000
 			}),
+			"hasMaxTimeSeconds": processlistBoolValues(d, func(s model.ThreadStateSample) bool {
+				return s.HasTimeMetric
+			}),
 			"maxRowsExamined": processlistMetricValues(d, func(s model.ThreadStateSample) float64 {
 				return s.MaxRowsExamined
+			}),
+			"hasRowsExamined": processlistBoolValues(d, func(s model.ThreadStateSample) bool {
+				return s.HasRowsExaminedMetric
 			}),
 			"maxRowsSent": processlistMetricValues(d, func(s model.ThreadStateSample) float64 {
 				return s.MaxRowsSent
 			}),
+			"hasRowsSent": processlistBoolValues(d, func(s model.ThreadStateSample) bool {
+				return s.HasRowsSentMetric
+			}),
 			"rowsWithQueryText": processlistMetricValues(d, func(s model.ThreadStateSample) float64 {
 				return float64(s.RowsWithQueryText)
+			}),
+			"hasQueryText": processlistBoolValues(d, func(s model.ThreadStateSample) bool {
+				return s.HasQueryTextMetric
 			}),
 		},
 		"snapshotBoundaries": d.SnapshotBoundaries,
@@ -288,6 +300,14 @@ func processlistChartPayload(d *model.ProcesslistData) map[string]any {
 
 func processlistMetricValues(d *model.ProcesslistData, pick func(model.ThreadStateSample) float64) []float64 {
 	values := make([]float64, len(d.ThreadStateSamples))
+	for i, s := range d.ThreadStateSamples {
+		values[i] = pick(s)
+	}
+	return values
+}
+
+func processlistBoolValues(d *model.ProcesslistData, pick func(model.ThreadStateSample) bool) []bool {
+	values := make([]bool, len(d.ThreadStateSamples))
 	for i, s := range d.ThreadStateSamples {
 		values[i] = pick(s)
 	}

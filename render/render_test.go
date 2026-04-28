@@ -285,26 +285,34 @@ func twoSnapshotCollection() *model.Collection {
 			States: []string{"Sending data", "Sleep"},
 			ThreadStateSamples: []model.ThreadStateSample{
 				{
-					Timestamp:         ts(tsOffset),
-					StateCounts:       map[string]int{"Sending data": 2, "Sleep": 8},
-					TotalThreads:      10,
-					ActiveThreads:     2,
-					SleepingThreads:   8,
-					MaxTimeMS:         1200,
-					MaxRowsExamined:   200,
-					MaxRowsSent:       20,
-					RowsWithQueryText: 2,
+					Timestamp:             ts(tsOffset),
+					StateCounts:           map[string]int{"Sending data": 2, "Sleep": 8},
+					TotalThreads:          10,
+					ActiveThreads:         2,
+					SleepingThreads:       8,
+					MaxTimeMS:             1200,
+					HasTimeMetric:         true,
+					MaxRowsExamined:       200,
+					HasRowsExaminedMetric: true,
+					MaxRowsSent:           20,
+					HasRowsSentMetric:     true,
+					RowsWithQueryText:     2,
+					HasQueryTextMetric:    true,
 				},
 				{
-					Timestamp:         ts(tsOffset + 1),
-					StateCounts:       map[string]int{"Sending data": 3, "Sleep": 7},
-					TotalThreads:      10,
-					ActiveThreads:     3,
-					SleepingThreads:   7,
-					MaxTimeMS:         2500,
-					MaxRowsExamined:   350,
-					MaxRowsSent:       25,
-					RowsWithQueryText: 3,
+					Timestamp:             ts(tsOffset + 1),
+					StateCounts:           map[string]int{"Sending data": 3, "Sleep": 7},
+					TotalThreads:          10,
+					ActiveThreads:         3,
+					SleepingThreads:       7,
+					MaxTimeMS:             2500,
+					HasTimeMetric:         true,
+					MaxRowsExamined:       350,
+					HasRowsExaminedMetric: true,
+					MaxRowsSent:           25,
+					HasRowsSentMetric:     true,
+					RowsWithQueryText:     3,
+					HasQueryTextMetric:    true,
 				},
 			},
 			SnapshotBoundaries: []int{0},
@@ -367,9 +375,13 @@ func TestProcesslistPayloadIncludesRicherMetrics(t *testing.T) {
 				} `json:"dimensions"`
 				Metrics struct {
 					MaxTimeSeconds    []float64 `json:"maxTimeSeconds"`
+					HasMaxTimeSeconds []bool    `json:"hasMaxTimeSeconds"`
 					MaxRowsExamined   []float64 `json:"maxRowsExamined"`
+					HasRowsExamined   []bool    `json:"hasRowsExamined"`
 					MaxRowsSent       []float64 `json:"maxRowsSent"`
+					HasRowsSent       []bool    `json:"hasRowsSent"`
 					RowsWithQueryText []float64 `json:"rowsWithQueryText"`
+					HasQueryText      []bool    `json:"hasQueryText"`
 				} `json:"metrics"`
 			} `json:"processlist"`
 		} `json:"charts"`
@@ -400,11 +412,69 @@ func TestProcesslistPayloadIncludesRicherMetrics(t *testing.T) {
 	if got, want := parsed.Charts.Processlist.Metrics.MaxTimeSeconds[1], 2.5; got != want {
 		t.Errorf("MaxTimeSeconds[1] = %v, want %v", got, want)
 	}
+	if got, want := parsed.Charts.Processlist.Metrics.HasMaxTimeSeconds[1], true; got != want {
+		t.Errorf("HasMaxTimeSeconds[1] = %v, want %v", got, want)
+	}
 	if got, want := parsed.Charts.Processlist.Metrics.MaxRowsExamined[1], 350.0; got != want {
 		t.Errorf("MaxRowsExamined[1] = %v, want %v", got, want)
 	}
+	if got, want := parsed.Charts.Processlist.Metrics.HasRowsExamined[1], true; got != want {
+		t.Errorf("HasRowsExamined[1] = %v, want %v", got, want)
+	}
 	if got, want := parsed.Charts.Processlist.Metrics.RowsWithQueryText[1], 3.0; got != want {
 		t.Errorf("RowsWithQueryText[1] = %v, want %v", got, want)
+	}
+	if got, want := parsed.Charts.Processlist.Metrics.HasQueryText[1], true; got != want {
+		t.Errorf("HasQueryText[1] = %v, want %v", got, want)
+	}
+}
+
+func TestProcesslistSummaryOmitsUnavailableOptionalMetrics(t *testing.T) {
+	ts := time.Date(2026, 4, 21, 16, 52, 0, 0, time.UTC)
+	c := &model.Collection{
+		RootPath: "/tmp/example",
+		Hostname: "example-db-01",
+		Snapshots: []*model.Snapshot{
+			{
+				Timestamp: ts,
+				Prefix:    "2026_04_21_16_52_00",
+				SourceFiles: map[model.Suffix]*model.SourceFile{
+					model.SuffixProcesslist: {
+						Suffix: model.SuffixProcesslist,
+						Parsed: &model.ProcesslistData{
+							States: []string{"Sleep"},
+							ThreadStateSamples: []model.ThreadStateSample{
+								{
+									Timestamp:       ts,
+									StateCounts:     map[string]int{"Sleep": 4},
+									TotalThreads:    4,
+									ActiveThreads:   0,
+									SleepingThreads: 4,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	opts := render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}
+	if err := render.Render(&buf, c, opts); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	section := extractDetailsSection(t, buf.String(), "sec-db")
+
+	for _, want := range []string{"peak active", "peak sleeping", "samples"} {
+		if !strings.Contains(section, want) {
+			t.Errorf("sec-db processlist markup missing available callout %q", want)
+		}
+	}
+	for _, notWant := range []string{"longest age", "peak rows examined", "peak rows sent", "query text rows"} {
+		if strings.Contains(section, notWant) {
+			t.Errorf("sec-db processlist markup contains unavailable callout %q", notWant)
+		}
 	}
 }
 

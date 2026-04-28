@@ -29,9 +29,13 @@ Additional contract for this feature:
 - `ActiveThreads`
 - `SleepingThreads`
 - `MaxTimeMS`
+- `HasTimeMetric`
 - `MaxRowsExamined`
+- `HasRowsExaminedMetric`
 - `MaxRowsSent`
+- `HasRowsSentMetric`
 - `RowsWithQueryText`
+- `HasQueryTextMetric`
 
 Each exported field must have a godoc comment and must marshal
 deterministically in existing golden tests.
@@ -52,9 +56,12 @@ The payload must keep the existing `timestamps`, `dimensions`, and
 - an `Activity` dimension containing active, sleeping, and total thread counts
 - a `metrics` object containing longest age in seconds, peak rows examined,
   peak rows sent, and query-text row count arrays
+- boolean availability arrays for each optional `metrics` value so consumers
+  can distinguish unavailable source fields from real zero values
 
 ### `summariseProcesslist`
 
 The summary helper must return formatted peak values for the Processlist
 subview callouts. It must accept empty data and return an empty summary rather
-than panicking.
+than panicking. Optional callouts must be marked unavailable unless at least one
+sample contains the corresponding source metric.

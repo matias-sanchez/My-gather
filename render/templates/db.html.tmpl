@@ -198,10 +198,18 @@
     <div class="chart-summary">
       <span class="stat"><span class="k">peak active</span> <span class="v">{{.PeakActive}}</span> <span class="ctx">threads</span></span>
       <span class="stat"><span class="k">peak sleeping</span> <span class="v">{{.PeakSleeping}}</span> <span class="ctx">threads</span></span>
+      {{- if .HasLongestAge }}
       <span class="stat"><span class="k">longest age</span> <span class="v">{{.LongestAge}}</span> <span class="ctx">s</span></span>
+      {{- end }}
+      {{- if .HasPeakRowsExamined }}
       <span class="stat"><span class="k">peak rows examined</span> <span class="v">{{.PeakRowsExamined}}</span></span>
+      {{- end }}
+      {{- if .HasPeakRowsSent }}
       <span class="stat"><span class="k">peak rows sent</span> <span class="v">{{.PeakRowsSent}}</span></span>
+      {{- end }}
+      {{- if .HasPeakQueryTextRows }}
       <span class="stat"><span class="k">query text rows</span> <span class="v">{{.PeakQueryTextRows}}</span></span>
+      {{- end }}
       <span class="stat"><span class="k">samples</span> <span class="v">{{.SampleCount}}</span></span>
     </div>
     {{- end }}

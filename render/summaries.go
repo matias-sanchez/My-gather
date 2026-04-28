@@ -265,14 +265,26 @@ func summariseProcesslist(d *model.ProcesslistData) *processlistSummaryView {
 		if s.SleepingThreads > peakSleeping {
 			peakSleeping = s.SleepingThreads
 		}
+		if s.HasTimeMetric {
+			sum.HasLongestAge = true
+		}
 		if s.MaxTimeMS > longestAgeMS {
 			longestAgeMS = s.MaxTimeMS
+		}
+		if s.HasRowsExaminedMetric {
+			sum.HasPeakRowsExamined = true
 		}
 		if s.MaxRowsExamined > peakRowsExamined {
 			peakRowsExamined = s.MaxRowsExamined
 		}
+		if s.HasRowsSentMetric {
+			sum.HasPeakRowsSent = true
+		}
 		if s.MaxRowsSent > peakRowsSent {
 			peakRowsSent = s.MaxRowsSent
+		}
+		if s.HasQueryTextMetric {
+			sum.HasPeakQueryTextRows = true
 		}
 		if s.RowsWithQueryText > peakQueryTextRows {
 			peakQueryTextRows = s.RowsWithQueryText
@@ -280,9 +292,17 @@ func summariseProcesslist(d *model.ProcesslistData) *processlistSummaryView {
 	}
 	sum.PeakActive = fmt.Sprintf("%d", peakActive)
 	sum.PeakSleeping = fmt.Sprintf("%d", peakSleeping)
-	sum.LongestAge = formatFloat(longestAgeMS/1000, 1)
-	sum.PeakRowsExamined = formatFloat(peakRowsExamined, 0)
-	sum.PeakRowsSent = formatFloat(peakRowsSent, 0)
-	sum.PeakQueryTextRows = fmt.Sprintf("%d", peakQueryTextRows)
+	if sum.HasLongestAge {
+		sum.LongestAge = formatFloat(longestAgeMS/1000, 1)
+	}
+	if sum.HasPeakRowsExamined {
+		sum.PeakRowsExamined = formatFloat(peakRowsExamined, 0)
+	}
+	if sum.HasPeakRowsSent {
+		sum.PeakRowsSent = formatFloat(peakRowsSent, 0)
+	}
+	if sum.HasPeakQueryTextRows {
+		sum.PeakQueryTextRows = fmt.Sprintf("%d", peakQueryTextRows)
+	}
 	return sum
 }

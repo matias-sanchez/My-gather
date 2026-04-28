@@ -30,9 +30,13 @@ The feature adds these aggregate fields:
 | `ActiveThreads` | `int` | Rows whose command is not `Sleep` | `Command` |
 | `SleepingThreads` | `int` | Rows whose command is exactly `Sleep` | `Command` |
 | `MaxTimeMS` | `float64` | Longest row age in milliseconds | `Time_ms`, fallback `Time` |
+| `HasTimeMetric` | `bool` | Whether `MaxTimeMS` is an observed metric, not a default zero | `Time_ms`, fallback `Time` |
 | `MaxRowsExamined` | `float64` | Largest rows-examined value in the sample | `Rows_examined` |
+| `HasRowsExaminedMetric` | `bool` | Whether `MaxRowsExamined` is an observed metric, not a default zero | `Rows_examined` |
 | `MaxRowsSent` | `float64` | Largest rows-sent value in the sample | `Rows_sent` |
+| `HasRowsSentMetric` | `bool` | Whether `MaxRowsSent` is an observed metric, not a default zero | `Rows_sent` |
 | `RowsWithQueryText` | `int` | Rows with non-empty, non-`NULL` `Info` | `Info` |
+| `HasQueryTextMetric` | `bool` | Whether `RowsWithQueryText` is an observed metric, not a default zero | `Info` |
 
 ### Validation and derivation rules
 
@@ -47,6 +51,9 @@ The feature adds these aggregate fields:
   values. Missing or malformed values do not emit diagnostics.
 - `RowsWithQueryText` increments when `Info` is neither empty nor `NULL` after
   trimming whitespace.
+- `Has*Metric` flags are true only when at least one source field for that
+  metric was observed and parsed, so renderers can distinguish unavailable
+  optional data from a real zero value.
 
 ## Template entity: ProcesslistSummary
 
@@ -57,9 +64,13 @@ The template view receives a compact summary derived from all samples:
 | `PeakActive` | Maximum `ActiveThreads` across samples |
 | `PeakSleeping` | Maximum `SleepingThreads` across samples |
 | `LongestAge` | Maximum `MaxTimeMS`, formatted in seconds |
+| `HasLongestAge` | Whether the longest-age callout is available |
 | `PeakRowsExamined` | Maximum `MaxRowsExamined`, formatted as a count |
+| `HasPeakRowsExamined` | Whether the rows-examined callout is available |
 | `PeakRowsSent` | Maximum `MaxRowsSent`, formatted as a count |
+| `HasPeakRowsSent` | Whether the rows-sent callout is available |
 | `PeakQueryTextRows` | Maximum `RowsWithQueryText` across samples |
+| `HasPeakQueryTextRows` | Whether the query-text count callout is available |
 | `SampleCount` | Number of processlist samples |
 
 ## Embedded chart payload
@@ -77,9 +88,13 @@ The existing `processlist` payload keeps the current shape and adds:
   },
   "metrics": {
     "maxTimeSeconds": [0],
+    "hasMaxTimeSeconds": [true],
     "maxRowsExamined": [0],
+    "hasRowsExamined": [true],
     "maxRowsSent": [0],
-    "rowsWithQueryText": [0]
+    "hasRowsSent": [true],
+    "rowsWithQueryText": [0],
+    "hasQueryText": [true]
   }
 }
 ```

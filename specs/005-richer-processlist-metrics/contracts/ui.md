@@ -21,6 +21,14 @@ the chart:
 Each callout is omitted only if the underlying metric is unavailable. A metric
 with a real zero value may render as `0`.
 
+Optional metrics are available only when at least one sample contains the
+corresponding source field:
+
+- longest thread age requires a valid `Time_ms` or `Time`
+- peak rows examined requires a valid `Rows_examined`
+- peak rows sent requires a valid `Rows_sent`
+- peak query-text rows requires an `Info` field
+
 ## Chart controls
 
 The existing Processlist chart dimension toolbar must continue to provide:

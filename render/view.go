@@ -307,11 +307,15 @@ type networkSummaryView struct {
 }
 
 type processlistSummaryView struct {
-	PeakActive        string
-	PeakSleeping      string
-	LongestAge        string
-	PeakRowsExamined  string
-	PeakRowsSent      string
-	PeakQueryTextRows string
-	SampleCount       int
+	PeakActive           string
+	PeakSleeping         string
+	LongestAge           string
+	HasLongestAge        bool
+	PeakRowsExamined     string
+	HasPeakRowsExamined  bool
+	PeakRowsSent         string
+	HasPeakRowsSent      bool
+	PeakQueryTextRows    string
+	HasPeakQueryTextRows bool
+	SampleCount          int
 }

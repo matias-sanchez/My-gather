@@ -66,9 +66,13 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		active            int
 		sleeping          int
 		maxTimeMS         float64
+		hasTimeMetric     bool
 		maxRowsExamined   float64
+		hasRowsExamined   bool
 		maxRowsSent       float64
+		hasRowsSent       bool
 		rowsWithQueryText int
+		hasQueryText      bool
 	}
 	var samples []sampleBuild
 	var current *sampleBuild
@@ -141,14 +145,26 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		} else if current.row.haveTime {
 			ageMS = current.row.timeSeconds * 1000
 		}
+		if current.row.haveTimeMS || current.row.haveTime {
+			current.hasTimeMetric = true
+		}
 		if ageMS > current.maxTimeMS {
 			current.maxTimeMS = ageMS
+		}
+		if current.row.haveRowsExamined {
+			current.hasRowsExamined = true
 		}
 		if current.row.haveRowsExamined && current.row.rowsExamined > current.maxRowsExamined {
 			current.maxRowsExamined = current.row.rowsExamined
 		}
+		if current.row.haveRowsSent {
+			current.hasRowsSent = true
+		}
 		if current.row.haveRowsSent && current.row.rowsSent > current.maxRowsSent {
 			current.maxRowsSent = current.row.rowsSent
+		}
+		if current.row.haveInfo {
+			current.hasQueryText = true
 		}
 		if current.row.haveInfo && hasProcesslistQueryText(current.row.info) {
 			current.rowsWithQueryText++
@@ -289,19 +305,23 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 	out := make([]model.ThreadStateSample, len(samples))
 	for i, s := range samples {
 		out[i] = model.ThreadStateSample{
-			Timestamp:         s.t,
-			StateCounts:       s.state,
-			UserCounts:        s.user,
-			HostCounts:        s.host,
-			CommandCounts:     s.command,
-			DbCounts:          s.db,
-			TotalThreads:      s.total,
-			ActiveThreads:     s.active,
-			SleepingThreads:   s.sleeping,
-			MaxTimeMS:         s.maxTimeMS,
-			MaxRowsExamined:   s.maxRowsExamined,
-			MaxRowsSent:       s.maxRowsSent,
-			RowsWithQueryText: s.rowsWithQueryText,
+			Timestamp:             s.t,
+			StateCounts:           s.state,
+			UserCounts:            s.user,
+			HostCounts:            s.host,
+			CommandCounts:         s.command,
+			DbCounts:              s.db,
+			TotalThreads:          s.total,
+			ActiveThreads:         s.active,
+			SleepingThreads:       s.sleeping,
+			MaxTimeMS:             s.maxTimeMS,
+			HasTimeMetric:         s.hasTimeMetric,
+			MaxRowsExamined:       s.maxRowsExamined,
+			HasRowsExaminedMetric: s.hasRowsExamined,
+			MaxRowsSent:           s.maxRowsSent,
+			HasRowsSentMetric:     s.hasRowsSent,
+			RowsWithQueryText:     s.rowsWithQueryText,
+			HasQueryTextMetric:    s.hasQueryText,
 		}
 	}
 
