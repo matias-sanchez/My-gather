@@ -202,6 +202,27 @@ func processlistChartPayload(d *model.ProcesslistData) map[string]any {
 		return out
 	}
 
+	activitySeries := []map[string]any{
+		{
+			"label": "Active",
+			"values": processlistMetricValues(d, func(s model.ThreadStateSample) float64 {
+				return float64(s.ActiveThreads)
+			}),
+		},
+		{
+			"label": "Sleeping",
+			"values": processlistMetricValues(d, func(s model.ThreadStateSample) float64 {
+				return float64(s.SleepingThreads)
+			}),
+		},
+		{
+			"label": "Total",
+			"values": processlistMetricValues(d, func(s model.ThreadStateSample) float64 {
+				return float64(s.TotalThreads)
+			}),
+		},
+	}
+
 	dimensions := []map[string]any{
 		{
 			"key":    "state",
@@ -233,16 +254,44 @@ func processlistChartPayload(d *model.ProcesslistData) map[string]any {
 			"unit":   "threads",
 			"series": buildSeries(d.Dbs, func(s model.ThreadStateSample, l string) int { return s.DbCounts[l] }),
 		},
+		{
+			"key":    "activity",
+			"label":  "Activity",
+			"unit":   "threads",
+			"series": activitySeries,
+		},
 	}
 
 	// Primary `series` stays pointed at the State dimension so the
 	// existing renderTimeSeries fallback path remains functional.
 	return map[string]any{
-		"timestamps":         timestamps,
-		"series":             dimensions[0]["series"],
-		"dimensions":         dimensions,
+		"timestamps": timestamps,
+		"series":     dimensions[0]["series"],
+		"dimensions": dimensions,
+		"metrics": map[string]any{
+			"maxTimeSeconds": processlistMetricValues(d, func(s model.ThreadStateSample) float64 {
+				return s.MaxTimeMS / 1000
+			}),
+			"maxRowsExamined": processlistMetricValues(d, func(s model.ThreadStateSample) float64 {
+				return s.MaxRowsExamined
+			}),
+			"maxRowsSent": processlistMetricValues(d, func(s model.ThreadStateSample) float64 {
+				return s.MaxRowsSent
+			}),
+			"rowsWithQueryText": processlistMetricValues(d, func(s model.ThreadStateSample) float64 {
+				return float64(s.RowsWithQueryText)
+			}),
+		},
 		"snapshotBoundaries": d.SnapshotBoundaries,
 	}
+}
+
+func processlistMetricValues(d *model.ProcesslistData, pick func(model.ThreadStateSample) float64) []float64 {
+	values := make([]float64, len(d.ThreadStateSamples))
+	for i, s := range d.ThreadStateSamples {
+		values[i] = pick(s)
+	}
+	return values
 }
 
 // chartTimestamps extracts a unified timestamp axis from an arbitrary

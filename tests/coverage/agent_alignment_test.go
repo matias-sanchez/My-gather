@@ -16,22 +16,6 @@ func TestAgentContextFeaturePointersStayAligned(t *testing.T) {
 	agents := readRepoFile(t, root, "AGENTS.md")
 	claude := readRepoFile(t, root, "CLAUDE.md")
 
-	for name, text := range map[string]string{
-		"AGENTS.md": agents,
-		"CLAUDE.md": claude,
-	} {
-		block := speckitBlock(t, text)
-		if !strings.Contains(block, "No active feature.") {
-			t.Fatalf("%s must not advertise a stale active feature on main", name)
-		}
-		if !strings.Contains(block, "latest shipped feature is **003-feedback-backend-worker**") {
-			t.Fatalf("%s must name 003-feedback-backend-worker as latest shipped", name)
-		}
-		if strings.Contains(block, "Active feature:") {
-			t.Fatalf("%s has an active-feature marker while main is between features", name)
-		}
-	}
-
 	var pointer struct {
 		FeatureDirectory string `json:"feature_directory"`
 	}
@@ -41,11 +25,39 @@ func TestAgentContextFeaturePointersStayAligned(t *testing.T) {
 	); err != nil {
 		t.Fatalf("parse .specify/feature.json: %v", err)
 	}
-	if pointer.FeatureDirectory != "specs/003-feedback-backend-worker" {
-		t.Fatalf(
-			".specify/feature.json = %q, want latest shipped feature specs/003-feedback-backend-worker",
-			pointer.FeatureDirectory,
-		)
+	if pointer.FeatureDirectory == "" {
+		t.Fatalf(".specify/feature.json must name a feature directory")
+	}
+	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(pointer.FeatureDirectory))); err != nil {
+		t.Fatalf(".specify/feature.json points at missing feature directory %q: %v", pointer.FeatureDirectory, err)
+	}
+
+	featureName := filepath.Base(pointer.FeatureDirectory)
+	for name, text := range map[string]string{"AGENTS.md": agents, "CLAUDE.md": claude} {
+		block := speckitBlock(t, text)
+		if strings.Contains(block, "No active feature.") {
+			if pointer.FeatureDirectory != "specs/003-feedback-backend-worker" {
+				t.Fatalf("%s says no active feature but .specify/feature.json = %q, want specs/003-feedback-backend-worker", name, pointer.FeatureDirectory)
+			}
+			if !strings.Contains(block, "latest shipped feature is **003-feedback-backend-worker**") {
+				t.Fatalf("%s no-active block must name 003-feedback-backend-worker as latest shipped", name)
+			}
+			continue
+		}
+		wantMarker := "Active feature: **" + featureName + "**"
+		if !strings.Contains(block, wantMarker) {
+			t.Fatalf("%s active block missing %q", name, wantMarker)
+		}
+		for _, required := range []string{
+			pointer.FeatureDirectory + "/plan.md",
+			pointer.FeatureDirectory + "/spec.md",
+			pointer.FeatureDirectory + "/tasks.md",
+			".specify/memory/constitution.md",
+		} {
+			if !strings.Contains(block, required) {
+				t.Fatalf("%s active block missing %q", name, required)
+			}
+		}
 	}
 
 	for name, text := range map[string]string{

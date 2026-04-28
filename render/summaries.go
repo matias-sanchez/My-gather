@@ -249,3 +249,37 @@ func summariseNetwork(counters *model.NetstatCountersData, sockets *model.Netsta
 	}
 	return sum
 }
+
+func summariseProcesslist(d *model.ProcesslistData) *processlistSummaryView {
+	sum := &processlistSummaryView{}
+	var peakActive, peakSleeping, peakQueryTextRows int
+	var longestAgeMS, peakRowsExamined, peakRowsSent float64
+	for _, s := range d.ThreadStateSamples {
+		sum.SampleCount++
+		if s.ActiveThreads > peakActive {
+			peakActive = s.ActiveThreads
+		}
+		if s.SleepingThreads > peakSleeping {
+			peakSleeping = s.SleepingThreads
+		}
+		if s.MaxTimeMS > longestAgeMS {
+			longestAgeMS = s.MaxTimeMS
+		}
+		if s.MaxRowsExamined > peakRowsExamined {
+			peakRowsExamined = s.MaxRowsExamined
+		}
+		if s.MaxRowsSent > peakRowsSent {
+			peakRowsSent = s.MaxRowsSent
+		}
+		if s.RowsWithQueryText > peakQueryTextRows {
+			peakQueryTextRows = s.RowsWithQueryText
+		}
+	}
+	sum.PeakActive = fmt.Sprintf("%d", peakActive)
+	sum.PeakSleeping = fmt.Sprintf("%d", peakSleeping)
+	sum.LongestAge = formatFloat(longestAgeMS/1000, 1)
+	sum.PeakRowsExamined = formatFloat(peakRowsExamined, 0)
+	sum.PeakRowsSent = formatFloat(peakRowsSent, 0)
+	sum.PeakQueryTextRows = fmt.Sprintf("%d", peakQueryTextRows)
+	return sum
+}

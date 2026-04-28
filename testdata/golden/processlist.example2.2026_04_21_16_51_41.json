@@ -27,7 +27,14 @@
       "DbCounts": {
         "Other": 3,
         "test": 10
-      }
+      },
+      "TotalThreads": 13,
+      "ActiveThreads": 12,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2961678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 11
     },
     {
       "Timestamp": "2026-04-21T16:51:44Z",
@@ -57,7 +64,14 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 13,
+      "SleepingThreads": 2,
+      "MaxTimeMS": 2962678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 12
     },
     {
       "Timestamp": "2026-04-21T16:51:45Z",
@@ -87,7 +101,14 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2963677,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 12
     },
     {
       "Timestamp": "2026-04-21T16:51:46Z",
@@ -116,7 +137,14 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 12,
+      "SleepingThreads": 3,
+      "MaxTimeMS": 2964677,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 11
     },
     {
       "Timestamp": "2026-04-21T16:51:47Z",
@@ -148,7 +176,14 @@
       "DbCounts": {
         "Other": 6,
         "test": 10
-      }
+      },
+      "TotalThreads": 16,
+      "ActiveThreads": 15,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2965676,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 13
     },
     {
       "Timestamp": "2026-04-21T16:51:48Z",
@@ -181,7 +216,14 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2966677,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 11
     },
     {
       "Timestamp": "2026-04-21T16:51:49Z",
@@ -215,7 +257,14 @@
       "DbCounts": {
         "Other": 6,
         "test": 10
-      }
+      },
+      "TotalThreads": 16,
+      "ActiveThreads": 13,
+      "SleepingThreads": 3,
+      "MaxTimeMS": 2967678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 11
     },
     {
       "Timestamp": "2026-04-21T16:51:50Z",
@@ -248,7 +297,14 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 13,
+      "SleepingThreads": 2,
+      "MaxTimeMS": 2968679,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 11
     },
     {
       "Timestamp": "2026-04-21T16:51:51Z",
@@ -278,7 +334,14 @@
       "DbCounts": {
         "Other": 6,
         "test": 10
-      }
+      },
+      "TotalThreads": 16,
+      "ActiveThreads": 15,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2969678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 12
     },
     {
       "Timestamp": "2026-04-21T16:51:52Z",
@@ -307,7 +370,14 @@
       "DbCounts": {
         "Other": 3,
         "test": 10
-      }
+      },
+      "TotalThreads": 13,
+      "ActiveThreads": 12,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2970677,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 11
     },
     {
       "Timestamp": "2026-04-21T16:51:53Z",
@@ -337,7 +407,14 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2971677,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 12
     },
     {
       "Timestamp": "2026-04-21T16:51:54Z",
@@ -369,7 +446,14 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 14,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2972678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 12
     },
     {
       "Timestamp": "2026-04-21T16:51:55Z",
@@ -400,7 +484,14 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2973678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 12
     },
     {
       "Timestamp": "2026-04-21T16:51:56Z",
@@ -433,7 +524,14 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2974678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 11
     },
     {
       "Timestamp": "2026-04-21T16:51:57Z",
@@ -462,7 +560,14 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2975678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 12
     },
     {
       "Timestamp": "2026-04-21T16:51:58Z",
@@ -494,7 +599,14 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 14,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2976678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 11
     },
     {
       "Timestamp": "2026-04-21T16:51:59Z",
@@ -526,7 +638,14 @@
       "DbCounts": {
         "Other": 6,
         "test": 10
-      }
+      },
+      "TotalThreads": 16,
+      "ActiveThreads": 15,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2977678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 12
     },
     {
       "Timestamp": "2026-04-21T16:52:00Z",
@@ -554,7 +673,14 @@
       "DbCounts": {
         "Other": 3,
         "test": 10
-      }
+      },
+      "TotalThreads": 13,
+      "ActiveThreads": 12,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2978677,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 11
     },
     {
       "Timestamp": "2026-04-21T16:52:01Z",
@@ -584,7 +710,14 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2979677,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 12
     },
     {
       "Timestamp": "2026-04-21T16:52:02Z",
@@ -614,7 +747,14 @@
       "DbCounts": {
         "Other": 6,
         "test": 10
-      }
+      },
+      "TotalThreads": 16,
+      "ActiveThreads": 14,
+      "SleepingThreads": 2,
+      "MaxTimeMS": 2980678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 13
     },
     {
       "Timestamp": "2026-04-21T16:52:03Z",
@@ -643,7 +783,14 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2981678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 12
     },
     {
       "Timestamp": "2026-04-21T16:52:04Z",
@@ -675,7 +822,14 @@
       "DbCounts": {
         "Other": 6,
         "test": 10
-      }
+      },
+      "TotalThreads": 16,
+      "ActiveThreads": 14,
+      "SleepingThreads": 2,
+      "MaxTimeMS": 2982678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 12
     },
     {
       "Timestamp": "2026-04-21T16:52:05Z",
@@ -707,7 +861,14 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 14,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2983677,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 11
     },
     {
       "Timestamp": "2026-04-21T16:52:06Z",
@@ -738,7 +899,14 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 13,
+      "SleepingThreads": 2,
+      "MaxTimeMS": 2984678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 12
     },
     {
       "Timestamp": "2026-04-21T16:52:07Z",
@@ -766,7 +934,14 @@
       "DbCounts": {
         "Other": 3,
         "test": 10
-      }
+      },
+      "TotalThreads": 13,
+      "ActiveThreads": 12,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2985679,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 11
     },
     {
       "Timestamp": "2026-04-21T16:52:08Z",
@@ -797,7 +972,14 @@
       "DbCounts": {
         "Other": 3,
         "test": 10
-      }
+      },
+      "TotalThreads": 13,
+      "ActiveThreads": 12,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2986677,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 11
     },
     {
       "Timestamp": "2026-04-21T16:52:09Z",
@@ -829,7 +1011,14 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 14,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2987677,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 13
     },
     {
       "Timestamp": "2026-04-21T16:52:10Z",
@@ -866,7 +1055,14 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 11,
+      "SleepingThreads": 3,
+      "MaxTimeMS": 2988677,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 8
     },
     {
       "Timestamp": "2026-04-21T16:52:11Z",
@@ -899,7 +1095,14 @@
       "DbCounts": {
         "Other": 5,
         "test": 10
-      }
+      },
+      "TotalThreads": 15,
+      "ActiveThreads": 14,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2989678,
+      "MaxRowsExamined": 543,
+      "MaxRowsSent": 543,
+      "RowsWithQueryText": 12
     },
     {
       "Timestamp": "2026-04-21T16:52:12Z",
@@ -929,7 +1132,14 @@
       "DbCounts": {
         "Other": 4,
         "test": 10
-      }
+      },
+      "TotalThreads": 14,
+      "ActiveThreads": 13,
+      "SleepingThreads": 1,
+      "MaxTimeMS": 2990678,
+      "MaxRowsExamined": 51,
+      "MaxRowsSent": 51,
+      "RowsWithQueryText": 12
     }
   ],
   "states": [

@@ -1329,6 +1329,16 @@
       var n = data.timestamps.length;
       var hiddenLabels = currentHidden();
 
+      if (dim.key === "activity") {
+        plot = buildLineChart(el, {
+          timestamps: data.timestamps,
+          series: seriesData,
+          snapshotBoundaries: data.snapshotBoundaries,
+        }, dim.unit || "threads");
+        legendEl = el.nextSibling;
+        return;
+      }
+
       // Raw per-segment values per bucket. When a bucket is hidden via
       // the legend, its row is replaced with zeros so it contributes
       // nothing to the cumulative stack — the visible buckets then

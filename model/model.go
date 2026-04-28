@@ -555,6 +555,33 @@ type ThreadStateSample struct {
 	HostCounts    map[string]int
 	CommandCounts map[string]int
 	DbCounts      map[string]int
+
+	// TotalThreads is the number of completed processlist rows in
+	// this sample.
+	TotalThreads int
+
+	// ActiveThreads is the number of rows whose Command is not
+	// exactly "Sleep".
+	ActiveThreads int
+
+	// SleepingThreads is the number of rows whose Command is exactly
+	// "Sleep".
+	SleepingThreads int
+
+	// MaxTimeMS is the largest row age in milliseconds for this
+	// sample, derived from Time_ms when present and Time otherwise.
+	MaxTimeMS float64
+
+	// MaxRowsExamined is the largest Rows_examined value seen in this
+	// sample.
+	MaxRowsExamined float64
+
+	// MaxRowsSent is the largest Rows_sent value seen in this sample.
+	MaxRowsSent float64
+
+	// RowsWithQueryText is the count of rows whose Info field is
+	// non-empty and not NULL.
+	RowsWithQueryText int
 }
 
 // NetstatSocketsData is the typed payload merged from every

@@ -1,16 +1,20 @@
 <!-- SPECKIT START -->
-No active feature. The latest shipped feature is **003-feedback-backend-worker**.
-The next `/speckit.specify` invocation will overwrite this block with the new
-feature's plan / spec / tasks pointers.
+Active feature: **005-richer-processlist-metrics**
 
-For technologies, project structure, constitution gates, and shell commands
-between features, read the constitution and (optionally) the latest shipped
-feature's plan as a reference:
+For technologies, project structure, constitution gates, data model,
+package/UI contracts, and shell commands, read the current plan:
 
+- Plan: `specs/005-richer-processlist-metrics/plan.md`
+- Spec: `specs/005-richer-processlist-metrics/spec.md`
+- Research: `specs/005-richer-processlist-metrics/research.md`
+- Data model: `specs/005-richer-processlist-metrics/data-model.md`
+- Contracts: `specs/005-richer-processlist-metrics/contracts/packages.md`,
+  `specs/005-richer-processlist-metrics/contracts/ui.md`
+- Quickstart: `specs/005-richer-processlist-metrics/quickstart.md`
+- Tasks: `specs/005-richer-processlist-metrics/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
-- Latest shipped plan (003): `specs/003-feedback-backend-worker/plan.md`
 
-Prior features (shipped):
+Prior features:
 - **003-feedback-backend-worker** - `specs/003-feedback-backend-worker/plan.md`
 - **002-report-feedback-button** - `specs/002-report-feedback-button/plan.md`
 - **001-ptstalk-report-mvp** - `specs/001-ptstalk-report-mvp/plan.md`

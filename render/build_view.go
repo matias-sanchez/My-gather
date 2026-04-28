@@ -184,6 +184,9 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 		v.HasInnoDB = len(v.InnoDBMetrics) > 0
 		v.HasMysqladmin = r.DBSection.Mysqladmin != nil
 		v.HasProcesslist = r.DBSection.Processlist != nil
+		if v.HasProcesslist {
+			v.ProcesslistSummary = summariseProcesslist(r.DBSection.Processlist)
+		}
 		if v.HasMysqladmin {
 			v.MysqladminVariables = append(v.MysqladminVariables, r.DBSection.Mysqladmin.VariableNames...)
 			v.MysqladminCount = len(r.DBSection.Mysqladmin.VariableNames)
