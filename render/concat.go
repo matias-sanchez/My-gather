@@ -516,11 +516,14 @@ func concatProcesslist(ins []*model.ProcesslistData) *model.ProcesslistData {
 	}
 	boundaries := make([]int, 0, len(nonNil))
 	cumulative := 0
+	observedGroups := make([][]model.ObservedProcesslistQuery, 0, len(nonNil))
 	for _, d := range nonNil {
 		boundaries = append(boundaries, cumulative)
 		out.ThreadStateSamples = append(out.ThreadStateSamples, d.ThreadStateSamples...)
+		observedGroups = append(observedGroups, d.ObservedQueries)
 		cumulative += len(d.ThreadStateSamples)
 	}
+	out.ObservedQueries = model.MergeObservedProcesslistQueries(observedGroups...)
 	out.SnapshotBoundaries = boundaries
 	return out
 }

@@ -1,12 +1,15 @@
 package render_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/render"
 	"github.com/matias-sanchez/My-gather/tests/goldens"
 )
 
@@ -183,5 +186,91 @@ func TestProcesslistRicherMetricMarkup(t *testing.T) {
 		if !strings.Contains(section, want) {
 			t.Errorf("sec-db processlist markup missing %q", want)
 		}
+	}
+}
+
+func TestProcesslistSlowestObservedQueriesMarkup(t *testing.T) {
+	ts := time.Date(2026, 1, 29, 16, 5, 19, 0, time.UTC)
+	q, ok := model.NewObservedProcesslistQuery(ts, "horizon", "horizon", "Query", "Waiting for table metadata lock",
+		"select count(contract0_.pk) from contract contract0_ where contract0_.pk = 123",
+		3723000, true, 6114, true, 17, true)
+	if !ok {
+		t.Fatal("query unexpectedly ineligible")
+	}
+	c := &model.Collection{
+		RootPath: "/tmp/example",
+		Hostname: "example-db-01",
+		Snapshots: []*model.Snapshot{{
+			Timestamp: ts,
+			Prefix:    "2026_01_29_16_05_19",
+			SourceFiles: map[model.Suffix]*model.SourceFile{
+				model.SuffixProcesslist: {
+					Suffix: model.SuffixProcesslist,
+					Parsed: &model.ProcesslistData{
+						States: []string{"Waiting for table metadata lock"},
+						ThreadStateSamples: []model.ThreadStateSample{{
+							Timestamp:     ts,
+							StateCounts:   map[string]int{"Waiting for table metadata lock": 1},
+							TotalThreads:  1,
+							ActiveThreads: 1,
+						}},
+						ObservedQueries: []model.ObservedProcesslistQuery{q},
+					},
+				},
+			},
+		}},
+	}
+
+	var buf bytes.Buffer
+	if err := render.Render(&buf, c, render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	section := extractDetailsSection(t, buf.String(), "sec-db")
+	for _, want := range []string{
+		"Slowest observed queries",
+		"Waiting for table metadata lock",
+		"select count(contract0_.pk)",
+		q.Fingerprint,
+		"3723.0 s",
+		"6114",
+	} {
+		if !strings.Contains(section, want) {
+			t.Errorf("sec-db slowest-query markup missing %q", want)
+		}
+	}
+}
+
+func TestProcesslistSlowestObservedQueriesEmptyState(t *testing.T) {
+	ts := time.Date(2026, 1, 29, 16, 5, 19, 0, time.UTC)
+	c := &model.Collection{
+		RootPath: "/tmp/example",
+		Hostname: "example-db-01",
+		Snapshots: []*model.Snapshot{{
+			Timestamp: ts,
+			Prefix:    "2026_01_29_16_05_19",
+			SourceFiles: map[model.Suffix]*model.SourceFile{
+				model.SuffixProcesslist: {
+					Suffix: model.SuffixProcesslist,
+					Parsed: &model.ProcesslistData{
+						States: []string{"Sleep"},
+						ThreadStateSamples: []model.ThreadStateSample{{
+							Timestamp:       ts,
+							StateCounts:     map[string]int{"Sleep": 4},
+							TotalThreads:    4,
+							SleepingThreads: 4,
+						}},
+					},
+				},
+			},
+		}},
+	}
+
+	var buf bytes.Buffer
+	if err := render.Render(&buf, c, render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	section := extractDetailsSection(t, buf.String(), "sec-db")
+	if !strings.Contains(section, "No active query text was observed in processlist rows.") {
+		t.Errorf("sec-db missing slowest-query empty state")
 	}
 }

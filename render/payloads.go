@@ -265,9 +265,10 @@ func processlistChartPayload(d *model.ProcesslistData) map[string]any {
 	// Primary `series` stays pointed at the State dimension so the
 	// existing renderTimeSeries fallback path remains functional.
 	return map[string]any{
-		"timestamps": timestamps,
-		"series":     dimensions[0]["series"],
-		"dimensions": dimensions,
+		"timestamps":  timestamps,
+		"series":      dimensions[0]["series"],
+		"dimensions":  dimensions,
+		"slowQueries": processlistSlowQueryPayload(d.ObservedQueries),
 		"metrics": map[string]any{
 			"maxTimeSeconds": processlistMetricValues(d, func(s model.ThreadStateSample) float64 {
 				return s.MaxTimeMS / 1000
@@ -296,6 +297,30 @@ func processlistChartPayload(d *model.ProcesslistData) map[string]any {
 		},
 		"snapshotBoundaries": d.SnapshotBoundaries,
 	}
+}
+
+func processlistSlowQueryPayload(queries []model.ObservedProcesslistQuery) []map[string]any {
+	out := make([]map[string]any, 0, len(queries))
+	for _, q := range queries {
+		out = append(out, map[string]any{
+			"fingerprint":     q.Fingerprint,
+			"snippet":         q.Snippet,
+			"firstSeen":       q.FirstSeen.Unix(),
+			"lastSeen":        q.LastSeen.Unix(),
+			"seenSamples":     q.SeenSamples,
+			"maxTimeSeconds":  q.MaxTimeMS / 1000,
+			"hasTimeMetric":   q.HasTimeMetric,
+			"maxRowsExamined": q.MaxRowsExamined,
+			"hasRowsExamined": q.HasRowsExaminedMetric,
+			"maxRowsSent":     q.MaxRowsSent,
+			"hasRowsSent":     q.HasRowsSentMetric,
+			"user":            q.User,
+			"db":              q.DB,
+			"command":         q.Command,
+			"state":           q.State,
+		})
+	}
+	return out
 }
 
 func processlistMetricValues(d *model.ProcesslistData, pick func(model.ThreadStateSample) float64) []float64 {

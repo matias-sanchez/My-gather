@@ -281,6 +281,11 @@ func twoSnapshotCollection() *model.Collection {
 	}
 
 	processlist := func(tsOffset int) *model.ProcesslistData {
+		q, ok := model.NewObservedProcesslistQuery(ts(tsOffset+1), "app", "shop", "Query", "Sending data",
+			"select * from orders where id = 123", 2500, true, 350, true, 25, true)
+		if !ok {
+			panic("test processlist query unexpectedly ineligible")
+		}
 		return &model.ProcesslistData{
 			States: []string{"Sending data", "Sleep"},
 			ThreadStateSamples: []model.ThreadStateSample{
@@ -315,6 +320,7 @@ func twoSnapshotCollection() *model.Collection {
 					HasQueryTextMetric:    true,
 				},
 			},
+			ObservedQueries:    []model.ObservedProcesslistQuery{q},
 			SnapshotBoundaries: []int{0},
 		}
 	}
@@ -365,6 +371,21 @@ func TestProcesslistPayloadIncludesRicherMetrics(t *testing.T) {
 	var parsed struct {
 		Charts struct {
 			Processlist struct {
+				SlowQueries []struct {
+					Fingerprint     string  `json:"fingerprint"`
+					Snippet         string  `json:"snippet"`
+					SeenSamples     int     `json:"seenSamples"`
+					MaxTimeSeconds  float64 `json:"maxTimeSeconds"`
+					HasTimeMetric   bool    `json:"hasTimeMetric"`
+					MaxRowsExamined float64 `json:"maxRowsExamined"`
+					HasRowsExamined bool    `json:"hasRowsExamined"`
+					MaxRowsSent     float64 `json:"maxRowsSent"`
+					HasRowsSent     bool    `json:"hasRowsSent"`
+					User            string  `json:"user"`
+					DB              string  `json:"db"`
+					Command         string  `json:"command"`
+					State           string  `json:"state"`
+				} `json:"slowQueries"`
 				Dimensions []struct {
 					Key    string `json:"key"`
 					Label  string `json:"label"`
@@ -426,6 +447,22 @@ func TestProcesslistPayloadIncludesRicherMetrics(t *testing.T) {
 	}
 	if got, want := parsed.Charts.Processlist.Metrics.HasQueryText[1], true; got != want {
 		t.Errorf("HasQueryText[1] = %v, want %v", got, want)
+	}
+	if got, want := len(parsed.Charts.Processlist.SlowQueries), 1; got != want {
+		t.Fatalf("SlowQueries len = %d, want %d", got, want)
+	}
+	slow := parsed.Charts.Processlist.SlowQueries[0]
+	if slow.Fingerprint == "" {
+		t.Error("SlowQueries[0].Fingerprint is empty")
+	}
+	if !strings.Contains(slow.Snippet, "select * from orders") {
+		t.Errorf("SlowQueries[0].Snippet = %q, want orders query", slow.Snippet)
+	}
+	if got, want := slow.MaxTimeSeconds, 2.5; got != want {
+		t.Errorf("SlowQueries[0].MaxTimeSeconds = %v, want %v", got, want)
+	}
+	if got, want := slow.MaxRowsExamined, 350.0; got != want {
+		t.Errorf("SlowQueries[0].MaxRowsExamined = %v, want %v", got, want)
 	}
 }
 

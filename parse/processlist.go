@@ -81,6 +81,7 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 	hostsSet := map[string]struct{}{}
 	commandsSet := map[string]struct{}{}
 	dbsSet := map[string]struct{}{}
+	var observedQueries []model.ObservedProcesslistQuery
 
 	// flushRow records a completed vertical-format row's dimensions
 	// into the current sample. Called on row-separator lines and on
@@ -169,6 +170,22 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		}
 		if current.row.haveInfo && hasProcesslistQueryText(current.row.info) {
 			current.rowsWithQueryText++
+		}
+		if q, ok := model.NewObservedProcesslistQuery(
+			current.t,
+			current.row.user,
+			current.row.db,
+			current.row.command,
+			current.row.state,
+			current.row.info,
+			ageMS,
+			current.row.haveTimeMS || current.row.haveTime,
+			current.row.rowsExamined,
+			current.row.haveRowsExamined,
+			current.row.rowsSent,
+			current.row.haveRowsSent,
+		); ok {
+			observedQueries = append(observedQueries, q)
 		}
 
 		current.row = rowBuild{}
@@ -328,6 +345,7 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		Hosts:              hosts,
 		Commands:           commands,
 		Dbs:                dbs,
+		ObservedQueries:    model.MergeObservedProcesslistQueries(observedQueries),
 	}, diagnostics
 }
 

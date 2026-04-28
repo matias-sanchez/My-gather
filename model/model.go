@@ -14,8 +14,25 @@
 package model
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"regexp"
 	"sort"
+	"strings"
 	"time"
+)
+
+// MaxObservedProcesslistQueries is the maximum number of grouped active
+// processlist query summaries rendered in the report.
+const MaxObservedProcesslistQueries = 10
+
+// MaxObservedProcesslistQuerySnippetRunes is the maximum visible length of a
+// processlist query snippet, including the trailing truncation marker.
+const MaxObservedProcesslistQuerySnippetRunes = 160
+
+var (
+	processlistQuotedLiteralRE  = regexp.MustCompile(`'([^'\\]|\\.)*'|"([^"\\]|\\.)*"|` + "`" + `([^` + "`" + `\\]|\\.)*` + "`")
+	processlistNumericLiteralRE = regexp.MustCompile(`\b0x[0-9a-fA-F]+\b|\b\d+(?:\.\d+)?\b`)
 )
 
 // Suffix is the pt-stalk collector file-suffix this feature recognises
@@ -540,6 +557,225 @@ type ProcesslistData struct {
 	// Snapshot's first sample sits within the concatenated time axis.
 	// Same semantics as IostatData.SnapshotBoundaries.
 	SnapshotBoundaries []int
+
+	// ObservedQueries is a bounded, deterministically sorted list of
+	// active processlist query shapes observed across the data set.
+	ObservedQueries []ObservedProcesslistQuery
+}
+
+// ObservedProcesslistQuery is one grouped active SQL shape observed in
+// processlist rows. It is intentionally a summary, not a raw row dump:
+// repeated sightings of the same normalized query shape are merged, snippets
+// are bounded, and context fields come from the slowest sighting.
+type ObservedProcesslistQuery struct {
+	// Fingerprint is a stable identifier derived from normalized query text.
+	Fingerprint string
+
+	// Snippet is a compact, bounded query shape suitable for report display.
+	Snippet string
+
+	// FirstSeen is the first sample timestamp where this query shape appeared.
+	FirstSeen time.Time
+
+	// LastSeen is the last sample timestamp where this query shape appeared.
+	LastSeen time.Time
+
+	// SeenSamples counts eligible processlist rows grouped into this summary.
+	SeenSamples int
+
+	// MaxTimeMS is the largest observed age for this query shape.
+	MaxTimeMS float64
+
+	// HasTimeMetric reports whether MaxTimeMS came from Time_ms or Time.
+	HasTimeMetric bool
+
+	// MaxRowsExamined is the highest observed Rows_examined value.
+	MaxRowsExamined float64
+
+	// HasRowsExaminedMetric reports whether Rows_examined was observed.
+	HasRowsExaminedMetric bool
+
+	// MaxRowsSent is the highest observed Rows_sent value.
+	MaxRowsSent float64
+
+	// HasRowsSentMetric reports whether Rows_sent was observed.
+	HasRowsSentMetric bool
+
+	// User is the MySQL user from the slowest observed sighting.
+	User string
+
+	// DB is the database from the slowest observed sighting.
+	DB string
+
+	// Command is the processlist command from the slowest observed sighting.
+	Command string
+
+	// State is the processlist state from the slowest observed sighting.
+	State string
+}
+
+// NewObservedProcesslistQuery returns a grouped-query seed for one eligible
+// active processlist row. The boolean is false when the row should not
+// participate in slow-query ranking, such as Sleep/Daemon/empty commands or
+// empty/NULL query text.
+func NewObservedProcesslistQuery(
+	ts time.Time,
+	user string,
+	db string,
+	command string,
+	state string,
+	info string,
+	timeMS float64,
+	hasTime bool,
+	rowsExamined float64,
+	hasRowsExamined bool,
+	rowsSent float64,
+	hasRowsSent bool,
+) (ObservedProcesslistQuery, bool) {
+	command = strings.TrimSpace(command)
+	if command == "" || strings.EqualFold(command, "Sleep") || strings.EqualFold(command, "Daemon") {
+		return ObservedProcesslistQuery{}, false
+	}
+	if !hasProcesslistQueryText(info) {
+		return ObservedProcesslistQuery{}, false
+	}
+
+	normalized := NormalizeProcesslistQuery(info)
+	fingerprint := processlistQueryFingerprint(normalized)
+	return ObservedProcesslistQuery{
+		Fingerprint:           fingerprint,
+		Snippet:               boundProcesslistSnippet(normalized),
+		FirstSeen:             ts,
+		LastSeen:              ts,
+		SeenSamples:           1,
+		MaxTimeMS:             timeMS,
+		HasTimeMetric:         hasTime,
+		MaxRowsExamined:       rowsExamined,
+		HasRowsExaminedMetric: hasRowsExamined,
+		MaxRowsSent:           rowsSent,
+		HasRowsSentMetric:     hasRowsSent,
+		User:                  emptyAsOther(user),
+		DB:                    nullOrEmptyAsOther(db),
+		Command:               command,
+		State:                 nullOrEmptyAsOther(state),
+	}, true
+}
+
+// MergeObservedProcesslistQueries groups query sightings by fingerprint,
+// updates first/last seen bounds, keeps peak metrics, sorts deterministically,
+// and returns at most MaxObservedProcesslistQueries rows.
+func MergeObservedProcesslistQueries(groups ...[]ObservedProcesslistQuery) []ObservedProcesslistQuery {
+	byFingerprint := map[string]ObservedProcesslistQuery{}
+	for _, group := range groups {
+		for _, q := range group {
+			if q.Fingerprint == "" {
+				continue
+			}
+			current, ok := byFingerprint[q.Fingerprint]
+			if !ok {
+				byFingerprint[q.Fingerprint] = q
+				continue
+			}
+			current.SeenSamples += q.SeenSamples
+			if current.FirstSeen.IsZero() || (!q.FirstSeen.IsZero() && q.FirstSeen.Before(current.FirstSeen)) {
+				current.FirstSeen = q.FirstSeen
+			}
+			if q.LastSeen.After(current.LastSeen) {
+				current.LastSeen = q.LastSeen
+			}
+			if q.HasTimeMetric {
+				if !current.HasTimeMetric || q.MaxTimeMS > current.MaxTimeMS {
+					current.MaxTimeMS = q.MaxTimeMS
+					current.HasTimeMetric = true
+					current.User = q.User
+					current.DB = q.DB
+					current.Command = q.Command
+					current.State = q.State
+				}
+			}
+			if q.HasRowsExaminedMetric {
+				current.HasRowsExaminedMetric = true
+				if q.MaxRowsExamined > current.MaxRowsExamined {
+					current.MaxRowsExamined = q.MaxRowsExamined
+				}
+			}
+			if q.HasRowsSentMetric {
+				current.HasRowsSentMetric = true
+				if q.MaxRowsSent > current.MaxRowsSent {
+					current.MaxRowsSent = q.MaxRowsSent
+				}
+			}
+			byFingerprint[q.Fingerprint] = current
+		}
+	}
+
+	out := make([]ObservedProcesslistQuery, 0, len(byFingerprint))
+	for _, q := range byFingerprint {
+		out = append(out, q)
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		a, b := out[i], out[j]
+		if a.MaxTimeMS != b.MaxTimeMS {
+			return a.MaxTimeMS > b.MaxTimeMS
+		}
+		if a.MaxRowsExamined != b.MaxRowsExamined {
+			return a.MaxRowsExamined > b.MaxRowsExamined
+		}
+		if a.MaxRowsSent != b.MaxRowsSent {
+			return a.MaxRowsSent > b.MaxRowsSent
+		}
+		return a.Fingerprint < b.Fingerprint
+	})
+	if len(out) > MaxObservedProcesslistQueries {
+		out = out[:MaxObservedProcesslistQueries]
+	}
+	return out
+}
+
+// NormalizeProcesslistQuery returns a stable query shape by collapsing
+// whitespace, lowercasing, and replacing quoted and numeric literals with a
+// placeholder.
+func NormalizeProcesslistQuery(query string) string {
+	shape := strings.Join(strings.Fields(strings.TrimSpace(query)), " ")
+	shape = strings.ToLower(shape)
+	shape = processlistQuotedLiteralRE.ReplaceAllString(shape, "?")
+	shape = processlistNumericLiteralRE.ReplaceAllString(shape, "?")
+	return shape
+}
+
+func processlistQueryFingerprint(normalized string) string {
+	sum := sha256.Sum256([]byte(normalized))
+	return "q_" + hex.EncodeToString(sum[:8])
+}
+
+func boundProcesslistSnippet(s string) string {
+	runes := []rune(s)
+	if len(runes) <= MaxObservedProcesslistQuerySnippetRunes {
+		return s
+	}
+	if MaxObservedProcesslistQuerySnippetRunes <= 3 {
+		return string(runes[:MaxObservedProcesslistQuerySnippetRunes])
+	}
+	return string(runes[:MaxObservedProcesslistQuerySnippetRunes-3]) + "..."
+}
+
+func hasProcesslistQueryText(s string) bool {
+	trimmed := strings.TrimSpace(s)
+	return trimmed != "" && !strings.EqualFold(trimmed, "NULL")
+}
+
+func emptyAsOther(s string) string {
+	if strings.TrimSpace(s) == "" {
+		return "Other"
+	}
+	return s
+}
+
+func nullOrEmptyAsOther(s string) string {
+	if strings.TrimSpace(s) == "" || strings.EqualFold(strings.TrimSpace(s), "NULL") {
+		return "Other"
+	}
+	return s
 }
 
 // ThreadStateSample is one record per -processlist sample. Each map

@@ -2,6 +2,7 @@ package render
 
 import (
 	"math"
+	"strings"
 	"testing"
 	"time"
 
@@ -367,6 +368,64 @@ func TestConcatProcesslistUnionsDimensions(t *testing.T) {
 	wantDbs := []string{"app_db", "mysql"}
 	if !eqStrs(merged.Dbs, wantDbs) {
 		t.Errorf("Dbs = %v, want %v", merged.Dbs, wantDbs)
+	}
+}
+
+func TestConcatProcesslistMergesObservedQueries(t *testing.T) {
+	t.Parallel()
+	t0 := time.Date(2026, 1, 29, 16, 0, 0, 0, time.UTC)
+	q1, ok := model.NewObservedProcesslistQuery(t0, "app", "shop", "Query", "Sending data",
+		"select * from orders where id = 123", 1000, true, 10, true, 1, true)
+	if !ok {
+		t.Fatal("q1 unexpectedly ineligible")
+	}
+	q2, ok := model.NewObservedProcesslistQuery(t0.Add(time.Minute), "app", "shop", "Query", "Sending data",
+		"select * from orders where id = 456", 3000, true, 55, true, 2, true)
+	if !ok {
+		t.Fatal("q2 unexpectedly ineligible")
+	}
+	q3, ok := model.NewObservedProcesslistQuery(t0.Add(2*time.Minute), "app", "shop", "Query", "Waiting for table metadata lock",
+		"update customers set name = 'alice' where id = 9", 5000, true, 0, true, 0, true)
+	if !ok {
+		t.Fatal("q3 unexpectedly ineligible")
+	}
+
+	snapA := &model.ProcesslistData{
+		States: []string{"Sending data"},
+		ThreadStateSamples: []model.ThreadStateSample{{
+			Timestamp:   t0,
+			StateCounts: map[string]int{"Sending data": 1},
+		}},
+		ObservedQueries: []model.ObservedProcesslistQuery{q1},
+	}
+	snapB := &model.ProcesslistData{
+		States: []string{"Sending data", "Waiting for table metadata lock"},
+		ThreadStateSamples: []model.ThreadStateSample{{
+			Timestamp:   t0.Add(time.Minute),
+			StateCounts: map[string]int{"Sending data": 1},
+		}},
+		ObservedQueries: []model.ObservedProcesslistQuery{q2, q3},
+	}
+
+	merged := concatProcesslist([]*model.ProcesslistData{snapA, snapB})
+	if merged == nil {
+		t.Fatal("concatProcesslist returned nil")
+	}
+	if got, want := len(merged.ObservedQueries), 2; got != want {
+		t.Fatalf("ObservedQueries len = %d, want %d: %#v", got, want, merged.ObservedQueries)
+	}
+	if !strings.Contains(merged.ObservedQueries[0].Snippet, "update customers") {
+		t.Fatalf("top observed query = %q, want update query first", merged.ObservedQueries[0].Snippet)
+	}
+	grouped := merged.ObservedQueries[1]
+	if got, want := grouped.SeenSamples, 2; got != want {
+		t.Errorf("grouped.SeenSamples = %d, want %d", got, want)
+	}
+	if got, want := grouped.MaxTimeMS, 3000.0; got != want {
+		t.Errorf("grouped.MaxTimeMS = %v, want %v", got, want)
+	}
+	if got, want := grouped.MaxRowsExamined, 55.0; got != want {
+		t.Errorf("grouped.MaxRowsExamined = %v, want %v", got, want)
 	}
 }
 

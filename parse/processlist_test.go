@@ -218,6 +218,107 @@ TS 1769702443.006126802 2026-01-29 16:00:43
 	}
 }
 
+func TestProcesslistObservedSlowestQueries(t *testing.T) {
+	input := strings.NewReader(`TS 1769702442.006126802 2026-01-29 16:00:42
+*************************** 1. row ***************************
+           Id: 1
+         User: event_scheduler
+         Host: localhost
+           db: NULL
+      Command: Daemon
+         Time: 470748
+        State: Waiting on empty queue
+         Info: select should_not_rank
+      Time_ms: 470747750
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 2. row ***************************
+           Id: 2
+         User: app
+         Host: 10.0.0.1:60000
+           db: shop
+      Command: Sleep
+         Time: 400
+        State:
+         Info: select sleeping_should_not_rank
+      Time_ms: 400000
+    Rows_sent: 0
+Rows_examined: 0
+*************************** 3. row ***************************
+           Id: 3
+         User: app
+         Host: 10.0.0.2:60001
+           db: shop
+      Command: Query
+         Time: 3
+        State: Sending data
+         Info: SELECT * FROM orders WHERE id = 123
+      Time_ms: 3500
+    Rows_sent: 7
+Rows_examined: 100
+TS 1769702443.006126802 2026-01-29 16:00:43
+*************************** 1. row ***************************
+           Id: 4
+         User: app
+         Host: 10.0.0.3:60002
+           db: shop
+      Command: Query
+         Time: 5
+        State: Sending data
+         Info: select *  from orders where id = 456
+    Rows_sent: 8
+Rows_examined: 250
+*************************** 2. row ***************************
+           Id: 5
+         User: app
+         Host: 10.0.0.4:60003
+           db: shop
+      Command: Query
+         Time: 2
+        State: Waiting for table metadata lock
+         Info: update customers set name = 'alice' where id = 42
+      Time_ms: 9000
+    Rows_sent: 0
+Rows_examined: 0
+`)
+
+	data, diags := parseProcesslist(input, "synthetic-processlist")
+	if len(diags) != 0 {
+		t.Fatalf("unexpected diagnostics: %+v", diags)
+	}
+	if data == nil {
+		t.Fatal("parseProcesslist returned nil")
+	}
+	if got, want := len(data.ObservedQueries), 2; got != want {
+		t.Fatalf("ObservedQueries len = %d, want %d: %#v", got, want, data.ObservedQueries)
+	}
+
+	top := data.ObservedQueries[0]
+	if !strings.Contains(top.Snippet, "update customers") {
+		t.Fatalf("top snippet = %q, want update query first", top.Snippet)
+	}
+	if got, want := top.MaxTimeMS, 9000.0; got != want {
+		t.Errorf("top.MaxTimeMS = %v, want %v", got, want)
+	}
+	if got, want := top.State, "Waiting for table metadata lock"; got != want {
+		t.Errorf("top.State = %q, want %q", got, want)
+	}
+
+	grouped := data.ObservedQueries[1]
+	if got, want := grouped.SeenSamples, 2; got != want {
+		t.Errorf("grouped.SeenSamples = %d, want %d", got, want)
+	}
+	if got, want := grouped.MaxTimeMS, 5000.0; got != want {
+		t.Errorf("grouped.MaxTimeMS = %v, want %v", got, want)
+	}
+	if got, want := grouped.MaxRowsExamined, 250.0; got != want {
+		t.Errorf("grouped.MaxRowsExamined = %v, want %v", got, want)
+	}
+	if strings.Contains(grouped.Snippet, "456") {
+		t.Errorf("grouped.Snippet = %q, want bounded normalized snippet without literal-specific grouping", grouped.Snippet)
+	}
+}
+
 func TestStripHostPort(t *testing.T) {
 	cases := []struct {
 		in, want string
