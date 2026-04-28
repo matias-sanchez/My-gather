@@ -61,7 +61,7 @@ the count is surfaced as an aggregate metric only.
 - [x] T022 Run `go test ./...`.
 - [x] T023 Run `make lint`.
 - [x] T024 Run quickstart validation against `/Users/matias/Documents/Incidents/CS0060148/eu-hrznp-d003/pt-stalk`.
-- [ ] T025 Open a GitHub pull request for branch `005-richer-processlist-metrics`.
+- [x] T025 Open a GitHub pull request for branch `005-richer-processlist-metrics`.
 
 ## Dependencies
 
