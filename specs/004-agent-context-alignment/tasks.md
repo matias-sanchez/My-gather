@@ -48,4 +48,4 @@ description: "Task list for Agent Context Alignment implementation"
 - [x] T015 Mirror My-gather PR review skills into
   `$HOME/git/my_memories/skills/codex/`.
 - [x] T016 Re-run `go test ./tests/coverage -run AgentAlignment -count=1`.
-- [ ] T017 Push the startup-skill coverage update to PR #35.
+- [x] T017 Push the startup-skill coverage update to PR #35.
