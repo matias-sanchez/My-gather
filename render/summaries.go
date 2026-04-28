@@ -324,11 +324,14 @@ func processlistSlowQueryViews(queries []model.ObservedProcesslistQuery) []proce
 			FirstSeen:   formatTimestamp(q.FirstSeen),
 			LastSeen:    formatTimestamp(q.LastSeen),
 			SeenSamples: q.SeenSamples,
-			MaxAge:      formatFloat(q.MaxTimeMS/1000, 1) + " s",
+			MaxAge:      "-",
 			User:        q.User,
 			DB:          q.DB,
 			Command:     q.Command,
 			State:       q.State,
+		}
+		if q.HasTimeMetric {
+			v.MaxAge = formatFloat(q.MaxTimeMS/1000, 1) + " s"
 		}
 		if q.HasRowsExaminedMetric {
 			v.HasRowsExamined = true

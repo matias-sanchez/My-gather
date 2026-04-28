@@ -81,7 +81,7 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 	hostsSet := map[string]struct{}{}
 	commandsSet := map[string]struct{}{}
 	dbsSet := map[string]struct{}{}
-	var observedQueries []model.ObservedProcesslistQuery
+	observedQueriesByFingerprint := map[string]model.ObservedProcesslistQuery{}
 
 	// flushRow records a completed vertical-format row's dimensions
 	// into the current sample. Called on row-separator lines and on
@@ -185,7 +185,17 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 			current.row.rowsSent,
 			current.row.haveRowsSent,
 		); ok {
-			observedQueries = append(observedQueries, q)
+			if current, exists := observedQueriesByFingerprint[q.Fingerprint]; exists {
+				merged := model.MergeObservedProcesslistQueries(
+					[]model.ObservedProcesslistQuery{current},
+					[]model.ObservedProcesslistQuery{q},
+				)
+				if len(merged) == 1 {
+					observedQueriesByFingerprint[q.Fingerprint] = merged[0]
+				}
+			} else {
+				observedQueriesByFingerprint[q.Fingerprint] = q
+			}
 		}
 
 		current.row = rowBuild{}
@@ -336,6 +346,11 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 			RowsWithQueryText:     s.rowsWithQueryText,
 			HasQueryTextMetric:    s.hasQueryText,
 		}
+	}
+
+	observedQueries := make([]model.ObservedProcesslistQuery, 0, len(observedQueriesByFingerprint))
+	for _, q := range observedQueriesByFingerprint {
+		observedQueries = append(observedQueries, q)
 	}
 
 	return &model.ProcesslistData{

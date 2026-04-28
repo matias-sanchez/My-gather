@@ -14,7 +14,7 @@ or top-level report section.
 
 ## Technical Context
 
-**Language/Version**: Go 1.26.2 per current toolchain and `go.mod`  
+**Language/Version**: Go version per current `go.mod` declaration
 **Primary Dependencies**: Standard library plus existing embedded uPlot assets  
 **Storage**: N/A; reads pt-stalk files and writes one user-selected HTML output  
 **Testing**: `go test ./...`, focused parser/render/model tests  

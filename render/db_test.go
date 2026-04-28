@@ -286,3 +286,47 @@ func TestProcesslistSlowestObservedQueriesEmptyState(t *testing.T) {
 		t.Errorf("sec-db missing slowest-query empty state")
 	}
 }
+
+func TestProcesslistSlowestObservedQueriesMissingAge(t *testing.T) {
+	ts := time.Date(2026, 1, 29, 16, 5, 19, 0, time.UTC)
+	q, ok := model.NewObservedProcesslistQuery(ts, "app", "shop", "Query", "Sending data",
+		"select * from orders", 0, false, 0, false, 0, false)
+	if !ok {
+		t.Fatal("query unexpectedly ineligible")
+	}
+	c := &model.Collection{
+		RootPath: "/tmp/example",
+		Hostname: "example-db-01",
+		Snapshots: []*model.Snapshot{{
+			Timestamp: ts,
+			Prefix:    "2026_01_29_16_05_19",
+			SourceFiles: map[model.Suffix]*model.SourceFile{
+				model.SuffixProcesslist: {
+					Suffix: model.SuffixProcesslist,
+					Parsed: &model.ProcesslistData{
+						States: []string{"Sending data"},
+						ThreadStateSamples: []model.ThreadStateSample{{
+							Timestamp:     ts,
+							StateCounts:   map[string]int{"Sending data": 1},
+							TotalThreads:  1,
+							ActiveThreads: 1,
+						}},
+						ObservedQueries: []model.ObservedProcesslistQuery{q},
+					},
+				},
+			},
+		}},
+	}
+
+	var buf bytes.Buffer
+	if err := render.Render(&buf, c, render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	section := extractDetailsSection(t, buf.String(), "sec-db")
+	if strings.Contains(section, "0.0 s") {
+		t.Fatalf("missing query age rendered as 0.0 s")
+	}
+	if !strings.Contains(section, `<td class="mono">-</td>`) {
+		t.Fatalf("missing query age did not render as dash")
+	}
+}
