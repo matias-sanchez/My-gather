@@ -3,11 +3,9 @@ package findings_test
 import (
 	"context"
 	"encoding/json"
-	"math"
 	"path/filepath"
 	"sort"
 	"testing"
-	"time"
 
 	"github.com/matias-sanchez/My-gather/findings"
 	"github.com/matias-sanchez/My-gather/model"
@@ -142,26 +140,12 @@ func buildReportForFindings(c *model.Collection) *model.Report {
 		}
 		dbs.InnoDBPerSnapshot = append(dbs.InnoDBPerSnapshot, entry)
 	}
-	dbs.Mysqladmin = mergeMysqladmin(c)
+	dbs.Mysqladmin = model.MergeMysqladminData(mysqladminInputs(c))
 	rpt.DBSection = dbs
 	return rpt
 }
 
-// mergeMysqladmin concatenates every parsed *MysqladminData from c
-// onto a single time axis with NaN padding at snapshot boundaries.
-// Mirrors render.concatMysqladmin's contract (FR-030):
-//
-//   - VariableNames is the union, sorted alphabetically.
-//   - IsCounter[v] is true if any input declared v as a counter.
-//   - Counter slots at each non-first boundary are NaN — cross-
-//     snapshot counter deltas are not meaningful.
-//   - SnapshotBoundaries records each input's starting index in the
-//     merged Timestamps slice.
-//
-// Returns nil when no mysqladmin data is present (matches render's
-// behaviour: no charts to render, but findings.Analyze must skip
-// rules that depend on mysqladmin gracefully).
-func mergeMysqladmin(c *model.Collection) *model.MysqladminData {
+func mysqladminInputs(c *model.Collection) []*model.MysqladminData {
 	var inputs []*model.MysqladminData
 	for _, s := range c.Snapshots {
 		sf := s.SourceFiles[model.SuffixMysqladmin]
@@ -174,86 +158,5 @@ func mergeMysqladmin(c *model.Collection) *model.MysqladminData {
 		}
 		inputs = append(inputs, data)
 	}
-	if len(inputs) == 0 {
-		return nil
-	}
-	if len(inputs) == 1 {
-		return inputs[0]
-	}
-
-	// Union of variable names, sorted.
-	nameSet := map[string]bool{}
-	for _, d := range inputs {
-		for _, n := range d.VariableNames {
-			nameSet[n] = true
-		}
-	}
-	names := make([]string, 0, len(nameSet))
-	for n := range nameSet {
-		names = append(names, n)
-	}
-	sort.Strings(names)
-
-	isCounter := make(map[string]bool, len(names))
-	for _, n := range names {
-		for _, d := range inputs {
-			if d.IsCounter[n] {
-				isCounter[n] = true
-				break
-			}
-		}
-	}
-
-	var (
-		timestamps []time.Time
-		boundaries = make([]int, 0, len(inputs))
-		cumulative int
-		deltas     = make(map[string][]float64, len(names))
-	)
-	for _, n := range names {
-		deltas[n] = make([]float64, 0)
-	}
-
-	for inputIdx, d := range inputs {
-		boundaries = append(boundaries, cumulative)
-		timestamps = append(timestamps, d.Timestamps...)
-		// First pass: copy only variables this input declares.
-		written := map[string]bool{}
-		for _, n := range d.VariableNames {
-			src, present := d.Deltas[n]
-			if !present {
-				continue
-			}
-			if inputIdx > 0 && isCounter[n] && len(src) > 0 {
-				deltas[n] = append(deltas[n], math.NaN())
-				deltas[n] = append(deltas[n], src[1:]...)
-			} else {
-				deltas[n] = append(deltas[n], src...)
-			}
-			written[n] = true
-		}
-		// Second pass: NaN-pad any variable in the union that this
-		// input did not carry, so every per-name slice stays length-
-		// aligned with the merged timestamp axis.
-		for _, n := range names {
-			if written[n] {
-				continue
-			}
-			pad := make([]float64, d.SampleCount)
-			for i := range pad {
-				pad[i] = math.NaN()
-			}
-			deltas[n] = append(deltas[n], pad...)
-		}
-		cumulative = len(timestamps)
-	}
-
-	return &model.MysqladminData{
-		VariableNames:      names,
-		SampleCount:        len(timestamps),
-		Timestamps:         timestamps,
-		Deltas:             deltas,
-		IsCounter:          isCounter,
-		SnapshotBoundaries: boundaries,
-	}
+	return inputs
 }

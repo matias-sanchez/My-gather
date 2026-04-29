@@ -139,7 +139,7 @@ func buildDBSection(c *model.Collection) *model.DBSection {
 		}
 	}
 
-	sec.Mysqladmin = concatMysqladmin(mas)
+	sec.Mysqladmin = model.MergeMysqladminData(mas)
 	sec.Processlist = concatProcesslist(pls)
 
 	if allInnoDBNil(sec.InnoDBPerSnapshot) {

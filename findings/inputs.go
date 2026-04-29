@@ -132,7 +132,7 @@ func gaugeMax(r *model.Report, name string) (float64, bool) {
 // mysqladmin capture — i.e. the sum of per-snapshot wall-clock spans
 // only. Gaps BETWEEN snapshots (no collection was happening during
 // those intervals) are excluded, because counter deltas are not
-// observed across a boundary (concatMysqladmin inserts NaN there) and
+// observed across a boundary (model.MergeMysqladminData inserts NaN there) and
 // including the gap would artificially inflate the denominator and
 // suppress advisor rates.
 //

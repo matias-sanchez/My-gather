@@ -1,6 +1,7 @@
 package findings
 
 import (
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -99,6 +100,7 @@ func (b *builder) build() *model.Report {
 	for k := range deltas {
 		names = append(names, k)
 	}
+	sort.Strings(names)
 	n := 0
 	for _, v := range deltas {
 		if len(v) > n {
@@ -130,6 +132,9 @@ func (b *builder) build() *model.Report {
 	for k, v := range b.vars {
 		entries = append(entries, model.VariableEntry{Name: k, Value: v})
 	}
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Name < entries[j].Name
+	})
 	vs := &model.VariablesSection{
 		PerSnapshot: []model.SnapshotVariables{
 			{
