@@ -318,4 +318,28 @@ type processlistSummaryView struct {
 	PeakQueryTextRows    string
 	HasPeakQueryTextRows bool
 	SampleCount          int
+	SlowQueries          []processlistSlowQueryView
+	HasSlowQueries       bool
+}
+
+type processlistSlowQueryView struct {
+	Rank            int
+	Fingerprint     string
+	Snippet         string
+	FilterText      string
+	FilterUser      string
+	FilterDB        string
+	FilterState     string
+	FirstSeen       string
+	LastSeen        string
+	SeenSamples     int
+	MaxAge          string
+	RowsExamined    string
+	HasRowsExamined bool
+	RowsSent        string
+	HasRowsSent     bool
+	User            string
+	DB              string
+	Command         string
+	State           string
 }

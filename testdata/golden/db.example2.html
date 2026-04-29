@@ -189,6 +189,191 @@
     <div class="chart" id="chart-processlist" data-chart="processlist"
          aria-label="Count of threads per state over time"></div>
     <noscript><p class="banner">Charts require JavaScript. Raw processlist data is embedded in the page.</p></noscript>
+    <details class="slow-query-panel" aria-label="Slowest observed processlist queries" open>
+      <summary><span>Slowest observed queries</span><span class="badge">10 queries</span></summary>
+      <div class="slow-query-controls" role="search" aria-label="Slowest observed query filters">
+        <label>
+          <span>Query</span>
+          <input type="search" class="slow-query-search" data-filter-field="query" placeholder="Search query or fingerprint" autocomplete="off">
+        </label>
+        <label>
+          <span>User</span>
+          <input type="search" class="slow-query-filter" data-filter-field="user" placeholder="Filter user" autocomplete="off">
+        </label>
+        <label>
+          <span>DB</span>
+          <input type="search" class="slow-query-filter" data-filter-field="db" placeholder="Filter db" autocomplete="off">
+        </label>
+        <label>
+          <span>State</span>
+          <input type="search" class="slow-query-filter" data-filter-field="state" placeholder="Filter state" autocomplete="off">
+        </label>
+        <span class="slow-query-count" aria-live="polite">10 of 10 shown</span>
+      </div>
+      <p class="banner missing slow-query-filter-empty" data-slow-query-empty hidden>No slowest observed queries match the active filters.</p>
+      <div class="slow-query-table-wrap">
+        <table class="slow-query-table">
+          <thead>
+            <tr>
+              <th scope="col">Rank</th>
+              <th scope="col">Max age</th>
+              <th scope="col">Seen</th>
+              <th scope="col">First seen</th>
+              <th scope="col">Last seen</th>
+              <th scope="col">User</th>
+              <th scope="col">DB</th>
+              <th scope="col">State</th>
+              <th scope="col">Rows examined</th>
+              <th scope="col">Rows sent</th>
+              <th scope="col">Fingerprint</th>
+              <th scope="col">Query shape</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-query-text="select c from sbtest8 where id=? q_01e2bd8f360a932a" data-query-user="sysbench" data-query-db="test" data-query-state="statistics">
+              <td class="rank">1</td>
+              <td class="mono">0.5 s</td>
+              <td class="mono">29</td>
+              <td class="mono">2026-04-21T16:51:45Z</td>
+              <td class="mono">2026-04-21T16:52:42Z</td>
+              <td>sysbench</td>
+              <td>test</td>
+              <td>statistics</td>
+              <td class="mono">1</td>
+              <td class="mono">1</td>
+              <td class="mono">q_01e2bd8f360a932a</td>
+              <td class="query-shape"><code>select c from sbtest8 where id=?</code></td>
+            </tr>
+            <tr data-query-text="update sbtest10 set k=k&#43;? where id=? q_5b3f6b87519c3deb" data-query-user="sysbench" data-query-db="test" data-query-state="updating">
+              <td class="rank">2</td>
+              <td class="mono">0.5 s</td>
+              <td class="mono">7</td>
+              <td class="mono">2026-04-21T16:51:43Z</td>
+              <td class="mono">2026-04-21T16:52:41Z</td>
+              <td>sysbench</td>
+              <td>test</td>
+              <td>updating</td>
+              <td class="mono">1</td>
+              <td class="mono">0</td>
+              <td class="mono">q_5b3f6b87519c3deb</td>
+              <td class="query-shape"><code>update sbtest10 set k=k&#43;? where id=?</code></td>
+            </tr>
+            <tr data-query-text="select c from sbtest10 where id=? q_0726a22f6a25ecf4" data-query-user="sysbench" data-query-db="test" data-query-state="statistics">
+              <td class="rank">3</td>
+              <td class="mono">0.5 s</td>
+              <td class="mono">20</td>
+              <td class="mono">2026-04-21T16:51:48Z</td>
+              <td class="mono">2026-04-21T16:52:39Z</td>
+              <td>sysbench</td>
+              <td>test</td>
+              <td>statistics</td>
+              <td class="mono">0</td>
+              <td class="mono">0</td>
+              <td class="mono">q_0726a22f6a25ecf4</td>
+              <td class="query-shape"><code>select c from sbtest10 where id=?</code></td>
+            </tr>
+            <tr data-query-text="select c from sbtest9 where id=? q_430ecda45b54ecdc" data-query-user="sysbench" data-query-db="test" data-query-state="statistics">
+              <td class="rank">4</td>
+              <td class="mono">0.5 s</td>
+              <td class="mono">32</td>
+              <td class="mono">2026-04-21T16:51:44Z</td>
+              <td class="mono">2026-04-21T16:52:39Z</td>
+              <td>sysbench</td>
+              <td>test</td>
+              <td>statistics</td>
+              <td class="mono">0</td>
+              <td class="mono">0</td>
+              <td class="mono">q_430ecda45b54ecdc</td>
+              <td class="query-shape"><code>select c from sbtest9 where id=?</code></td>
+            </tr>
+            <tr data-query-text="select distinct c from sbtest8 where id between ? and ? order by c q_6836d7b7af3c5bdc" data-query-user="sysbench" data-query-db="test" data-query-state="statistics">
+              <td class="rank">5</td>
+              <td class="mono">0.5 s</td>
+              <td class="mono">4</td>
+              <td class="mono">2026-04-21T16:52:17Z</td>
+              <td class="mono">2026-04-21T16:52:35Z</td>
+              <td>sysbench</td>
+              <td>test</td>
+              <td>statistics</td>
+              <td class="mono">0</td>
+              <td class="mono">0</td>
+              <td class="mono">q_6836d7b7af3c5bdc</td>
+              <td class="query-shape"><code>select distinct c from sbtest8 where id between ? and ? order by c</code></td>
+            </tr>
+            <tr data-query-text="select c from sbtest1 where id between ? and ? order by c q_7e42bb16254a9180" data-query-user="sysbench" data-query-db="test" data-query-state="statistics">
+              <td class="rank">6</td>
+              <td class="mono">0.5 s</td>
+              <td class="mono">5</td>
+              <td class="mono">2026-04-21T16:51:53Z</td>
+              <td class="mono">2026-04-21T16:52:19Z</td>
+              <td>sysbench</td>
+              <td>test</td>
+              <td>statistics</td>
+              <td class="mono">0</td>
+              <td class="mono">0</td>
+              <td class="mono">q_7e42bb16254a9180</td>
+              <td class="query-shape"><code>select c from sbtest1 where id between ? and ? order by c</code></td>
+            </tr>
+            <tr data-query-text="select distinct c from sbtest4 where id between ? and ? order by c q_804e9698ae152b99" data-query-user="sysbench" data-query-db="test" data-query-state="statistics">
+              <td class="rank">7</td>
+              <td class="mono">0.5 s</td>
+              <td class="mono">8</td>
+              <td class="mono">2026-04-21T16:51:54Z</td>
+              <td class="mono">2026-04-21T16:52:26Z</td>
+              <td>sysbench</td>
+              <td>test</td>
+              <td>statistics</td>
+              <td class="mono">0</td>
+              <td class="mono">0</td>
+              <td class="mono">q_804e9698ae152b99</td>
+              <td class="query-shape"><code>select distinct c from sbtest4 where id between ? and ? order by c</code></td>
+            </tr>
+            <tr data-query-text="update sbtest4 set k=k&#43;? where id=? q_a93045c693d4d172" data-query-user="sysbench" data-query-db="test" data-query-state="updating">
+              <td class="rank">8</td>
+              <td class="mono">0.5 s</td>
+              <td class="mono">8</td>
+              <td class="mono">2026-04-21T16:51:46Z</td>
+              <td class="mono">2026-04-21T16:52:40Z</td>
+              <td>sysbench</td>
+              <td>test</td>
+              <td>updating</td>
+              <td class="mono">0</td>
+              <td class="mono">0</td>
+              <td class="mono">q_a93045c693d4d172</td>
+              <td class="query-shape"><code>update sbtest4 set k=k&#43;? where id=?</code></td>
+            </tr>
+            <tr data-query-text="delete from sbtest10 where id=? q_dcd856f12e9bb8f0" data-query-user="sysbench" data-query-db="test" data-query-state="updating">
+              <td class="rank">9</td>
+              <td class="mono">0.5 s</td>
+              <td class="mono">6</td>
+              <td class="mono">2026-04-21T16:51:45Z</td>
+              <td class="mono">2026-04-21T16:52:19Z</td>
+              <td>sysbench</td>
+              <td>test</td>
+              <td>updating</td>
+              <td class="mono">0</td>
+              <td class="mono">0</td>
+              <td class="mono">q_dcd856f12e9bb8f0</td>
+              <td class="query-shape"><code>delete from sbtest10 where id=?</code></td>
+            </tr>
+            <tr data-query-text="select c from sbtest10 where id between ? and ? order by c q_0f9d5cc9d50f9315" data-query-user="sysbench" data-query-db="test" data-query-state="statistics">
+              <td class="rank">10</td>
+              <td class="mono">0.5 s</td>
+              <td class="mono">3</td>
+              <td class="mono">2026-04-21T16:52:22Z</td>
+              <td class="mono">2026-04-21T16:52:37Z</td>
+              <td>sysbench</td>
+              <td>test</td>
+              <td>statistics</td>
+              <td class="mono">0</td>
+              <td class="mono">0</td>
+              <td class="mono">q_0f9d5cc9d50f9315</td>
+              <td class="query-shape"><code>select c from sbtest10 where id between ? and ? order by c</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
   </div>
 </details>
 

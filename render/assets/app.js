@@ -9,8 +9,9 @@
  *   2. Variables-section client-side filter.                    (FR-013)
  *   3. Mysqladmin filter panel: search + category chips + scrollable
  *      checkbox list + chart.                                   (FR-015)
- *   4. uPlot chart rendering for iostat, top, vmstat, processlist.
- *   5. Nav-rail scroll-spy (pure polish).
+ *   4. Slow observed query table filters.
+ *   5. uPlot chart rendering for iostat, top, vmstat, processlist.
+ *   6. Nav-rail scroll-spy (pure polish).
  *
  * Determinism note: this script MUST NOT generate timestamps, random
  * values, or content-derived identifiers that would change the
@@ -166,6 +167,54 @@
   function cssEscape(s) {
     if (window.CSS && typeof window.CSS.escape === "function") return window.CSS.escape(s);
     return String(s).replace(/"/g, '\\"');
+  }
+
+  // --- 3. Slow observed query filters ----------------------------
+
+  function initSlowQueryFilters() {
+    var panel = document.querySelector(".slow-query-panel");
+    if (!panel) return;
+    var table = panel.querySelector(".slow-query-table");
+    if (!table || !table.tBodies || !table.tBodies.length) return;
+    var rows = table.tBodies[0].rows;
+    var inputs = panel.querySelectorAll("[data-filter-field]");
+    if (!inputs.length) return;
+    var countEl = panel.querySelector(".slow-query-count");
+    var emptyEl = panel.querySelector("[data-slow-query-empty]");
+    var filters = { query: "", user: "", db: "", state: "" };
+
+    function matches(row, field, needle) {
+      if (!needle) return true;
+      var attr = field === "query" ? "data-query-text" : "data-query-" + field;
+      var value = row.getAttribute(attr) || "";
+      return value.indexOf(needle) !== -1;
+    }
+
+    function update() {
+      var shown = 0;
+      for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var hit =
+          matches(row, "query", filters.query) &&
+          matches(row, "user", filters.user) &&
+          matches(row, "db", filters.db) &&
+          matches(row, "state", filters.state);
+        row.hidden = !hit;
+        if (hit) shown++;
+      }
+      if (countEl) countEl.textContent = shown + " of " + rows.length + " shown";
+      if (emptyEl) emptyEl.hidden = shown !== 0;
+    }
+
+    inputs.forEach(function (input) {
+      input.addEventListener("input", function () {
+        var field = input.getAttribute("data-filter-field");
+        if (!Object.prototype.hasOwnProperty.call(filters, field)) return;
+        filters[field] = input.value.trim().toLowerCase();
+        update();
+      });
+    });
+    update();
   }
 
   // --- Chart registry + resize handling ---------------------------
@@ -4011,6 +4060,7 @@
   function boot() {
     initCollapsePersistence();
     initVariablesSearch();
+    initSlowQueryFilters();
     initCharts();
     initNavGroups();
     initNavCollapse();

@@ -1,12 +1,15 @@
 package render_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/render"
 	"github.com/matias-sanchez/My-gather/tests/goldens"
 )
 
@@ -183,5 +186,147 @@ func TestProcesslistRicherMetricMarkup(t *testing.T) {
 		if !strings.Contains(section, want) {
 			t.Errorf("sec-db processlist markup missing %q", want)
 		}
+	}
+}
+
+func TestProcesslistSlowestObservedQueriesMarkup(t *testing.T) {
+	ts := time.Date(2026, 1, 29, 16, 5, 19, 0, time.UTC)
+	q, ok := model.NewObservedProcesslistQuery(ts, "horizon", "horizon", "Query", "Waiting for table metadata lock",
+		"select count(contract0_.pk) from contract contract0_ where contract0_.pk = 123",
+		3723000, true, 6114, true, 17, true)
+	if !ok {
+		t.Fatal("query unexpectedly ineligible")
+	}
+	c := &model.Collection{
+		RootPath: "/tmp/example",
+		Hostname: "example-db-01",
+		Snapshots: []*model.Snapshot{{
+			Timestamp: ts,
+			Prefix:    "2026_01_29_16_05_19",
+			SourceFiles: map[model.Suffix]*model.SourceFile{
+				model.SuffixProcesslist: {
+					Suffix: model.SuffixProcesslist,
+					Parsed: &model.ProcesslistData{
+						States: []string{"Waiting for table metadata lock"},
+						ThreadStateSamples: []model.ThreadStateSample{{
+							Timestamp:     ts,
+							StateCounts:   map[string]int{"Waiting for table metadata lock": 1},
+							TotalThreads:  1,
+							ActiveThreads: 1,
+						}},
+						ObservedQueries: []model.ObservedProcesslistQuery{q},
+					},
+				},
+			},
+		}},
+	}
+
+	var buf bytes.Buffer
+	if err := render.Render(&buf, c, render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	section := extractDetailsSection(t, buf.String(), "sec-db")
+	for _, want := range []string{
+		"<summary><span>Slowest observed queries</span><span class=\"badge\">1 query</span></summary>",
+		`class="slow-query-search"`,
+		`placeholder="Search query or fingerprint"`,
+		`class="slow-query-filter"`,
+		`data-filter-field="user"`,
+		`data-filter-field="db"`,
+		`data-filter-field="state"`,
+		`class="slow-query-count"`,
+		`data-slow-query-empty`,
+		`data-query-user="horizon"`,
+		`data-query-db="horizon"`,
+		`data-query-state="waiting for table metadata lock"`,
+		`data-query-text="select count(contract0_.pk) from contract contract0_ where contract0_.pk = ? ` + q.Fingerprint + `"`,
+		"Waiting for table metadata lock",
+		"select count(contract0_.pk)",
+		q.Fingerprint,
+		"3723.0 s",
+		"6114",
+	} {
+		if !strings.Contains(section, want) {
+			t.Errorf("sec-db slowest-query markup missing %q", want)
+		}
+	}
+}
+
+func TestProcesslistSlowestObservedQueriesEmptyState(t *testing.T) {
+	ts := time.Date(2026, 1, 29, 16, 5, 19, 0, time.UTC)
+	c := &model.Collection{
+		RootPath: "/tmp/example",
+		Hostname: "example-db-01",
+		Snapshots: []*model.Snapshot{{
+			Timestamp: ts,
+			Prefix:    "2026_01_29_16_05_19",
+			SourceFiles: map[model.Suffix]*model.SourceFile{
+				model.SuffixProcesslist: {
+					Suffix: model.SuffixProcesslist,
+					Parsed: &model.ProcesslistData{
+						States: []string{"Sleep"},
+						ThreadStateSamples: []model.ThreadStateSample{{
+							Timestamp:       ts,
+							StateCounts:     map[string]int{"Sleep": 4},
+							TotalThreads:    4,
+							SleepingThreads: 4,
+						}},
+					},
+				},
+			},
+		}},
+	}
+
+	var buf bytes.Buffer
+	if err := render.Render(&buf, c, render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	section := extractDetailsSection(t, buf.String(), "sec-db")
+	if !strings.Contains(section, "No active query text was observed in processlist rows.") {
+		t.Errorf("sec-db missing slowest-query empty state")
+	}
+}
+
+func TestProcesslistSlowestObservedQueriesMissingAge(t *testing.T) {
+	ts := time.Date(2026, 1, 29, 16, 5, 19, 0, time.UTC)
+	q, ok := model.NewObservedProcesslistQuery(ts, "app", "shop", "Query", "Sending data",
+		"select * from orders", 0, false, 0, false, 0, false)
+	if !ok {
+		t.Fatal("query unexpectedly ineligible")
+	}
+	c := &model.Collection{
+		RootPath: "/tmp/example",
+		Hostname: "example-db-01",
+		Snapshots: []*model.Snapshot{{
+			Timestamp: ts,
+			Prefix:    "2026_01_29_16_05_19",
+			SourceFiles: map[model.Suffix]*model.SourceFile{
+				model.SuffixProcesslist: {
+					Suffix: model.SuffixProcesslist,
+					Parsed: &model.ProcesslistData{
+						States: []string{"Sending data"},
+						ThreadStateSamples: []model.ThreadStateSample{{
+							Timestamp:     ts,
+							StateCounts:   map[string]int{"Sending data": 1},
+							TotalThreads:  1,
+							ActiveThreads: 1,
+						}},
+						ObservedQueries: []model.ObservedProcesslistQuery{q},
+					},
+				},
+			},
+		}},
+	}
+
+	var buf bytes.Buffer
+	if err := render.Render(&buf, c, render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	section := extractDetailsSection(t, buf.String(), "sec-db")
+	if strings.Contains(section, "0.0 s") {
+		t.Fatalf("missing query age rendered as 0.0 s")
+	}
+	if !strings.Contains(section, `<td class="mono">-</td>`) {
+		t.Fatalf("missing query age did not render as dash")
 	}
 }

@@ -3,6 +3,7 @@ package render
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/matias-sanchez/My-gather/model"
@@ -304,5 +305,43 @@ func summariseProcesslist(d *model.ProcesslistData) *processlistSummaryView {
 	if sum.HasPeakQueryTextRows {
 		sum.PeakQueryTextRows = fmt.Sprintf("%d", peakQueryTextRows)
 	}
+	sum.SlowQueries = processlistSlowQueryViews(d.ObservedQueries)
+	sum.HasSlowQueries = len(sum.SlowQueries) > 0
 	return sum
+}
+
+func processlistSlowQueryViews(queries []model.ObservedProcesslistQuery) []processlistSlowQueryView {
+	out := make([]processlistSlowQueryView, 0, len(queries))
+	for i, q := range queries {
+		v := processlistSlowQueryView{
+			Rank:        i + 1,
+			Fingerprint: q.Fingerprint,
+			Snippet:     q.Snippet,
+			FilterText:  strings.ToLower(q.Snippet + " " + q.Fingerprint),
+			FilterUser:  strings.ToLower(q.User),
+			FilterDB:    strings.ToLower(q.DB),
+			FilterState: strings.ToLower(q.State),
+			FirstSeen:   formatTimestamp(q.FirstSeen),
+			LastSeen:    formatTimestamp(q.LastSeen),
+			SeenSamples: q.SeenSamples,
+			MaxAge:      "-",
+			User:        q.User,
+			DB:          q.DB,
+			Command:     q.Command,
+			State:       q.State,
+		}
+		if q.HasTimeMetric {
+			v.MaxAge = formatFloat(q.MaxTimeMS/1000, 1) + " s"
+		}
+		if q.HasRowsExaminedMetric {
+			v.HasRowsExamined = true
+			v.RowsExamined = formatFloat(q.MaxRowsExamined, 0)
+		}
+		if q.HasRowsSentMetric {
+			v.HasRowsSent = true
+			v.RowsSent = formatFloat(q.MaxRowsSent, 0)
+		}
+		out = append(out, v)
+	}
+	return out
 }

@@ -81,6 +81,7 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 	hostsSet := map[string]struct{}{}
 	commandsSet := map[string]struct{}{}
 	dbsSet := map[string]struct{}{}
+	observedQueriesByFingerprint := map[string]model.ObservedProcesslistQuery{}
 
 	// flushRow records a completed vertical-format row's dimensions
 	// into the current sample. Called on row-separator lines and on
@@ -169,6 +170,32 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		}
 		if current.row.haveInfo && hasProcesslistQueryText(current.row.info) {
 			current.rowsWithQueryText++
+		}
+		if q, ok := model.NewObservedProcesslistQuery(
+			current.t,
+			current.row.user,
+			current.row.db,
+			current.row.command,
+			current.row.state,
+			current.row.info,
+			ageMS,
+			current.row.haveTimeMS || current.row.haveTime,
+			current.row.rowsExamined,
+			current.row.haveRowsExamined,
+			current.row.rowsSent,
+			current.row.haveRowsSent,
+		); ok {
+			if current, exists := observedQueriesByFingerprint[q.Fingerprint]; exists {
+				merged := model.MergeAllObservedProcesslistQueries(
+					[]model.ObservedProcesslistQuery{current},
+					[]model.ObservedProcesslistQuery{q},
+				)
+				if len(merged) == 1 {
+					observedQueriesByFingerprint[q.Fingerprint] = merged[0]
+				}
+			} else {
+				observedQueriesByFingerprint[q.Fingerprint] = q
+			}
 		}
 
 		current.row = rowBuild{}
@@ -321,6 +348,11 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		}
 	}
 
+	observedQueries := make([]model.ObservedProcesslistQuery, 0, len(observedQueriesByFingerprint))
+	for _, q := range observedQueriesByFingerprint {
+		observedQueries = append(observedQueries, q)
+	}
+
 	return &model.ProcesslistData{
 		ThreadStateSamples: out,
 		States:             states,
@@ -328,6 +360,7 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		Hosts:              hosts,
 		Commands:           commands,
 		Dbs:                dbs,
+		ObservedQueries:    model.MergeAllObservedProcesslistQueries(observedQueries),
 	}, diagnostics
 }
 

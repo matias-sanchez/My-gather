@@ -2,9 +2,12 @@ package findings
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/matias-sanchez/My-gather/model"
 )
+
+const observedSlowQueryWarnSeconds = 60.0
 
 // ruleFullScanSelectScan flags any Select_scan activity — joins that
 // did a full scan of the first table.
@@ -81,6 +84,80 @@ func init() {
 		Severity:           SeverityHintVariable,
 		Run:                ruleProcesslistAbuse,
 	})
+	register(RuleDefinition{
+		ID:                 "queryshape.observed_slow_processlist",
+		Subsystem:          "Query Shape",
+		Title:              "Slow observed processlist query",
+		FormulaText:        "max observed processlist query age >= 60s",
+		MinRecommendations: 3,
+		Severity:           SeverityHintVariable,
+		Run:                ruleObservedSlowProcesslistQuery,
+	})
+}
+
+// ruleObservedSlowProcesslistQuery flags the most impactful active
+// processlist query shape observed during the capture. The processlist
+// model is already sorted by max age, so the first summary at or above
+// threshold is the strongest evidence to present.
+func ruleObservedSlowProcesslistQuery(r *model.Report) Finding {
+	if r == nil || r.DBSection == nil || r.DBSection.Processlist == nil {
+		return Finding{Severity: SeveritySkip}
+	}
+	var top model.ObservedProcesslistQuery
+	found := false
+	for _, q := range r.DBSection.Processlist.ObservedQueries {
+		if !q.HasTimeMetric {
+			continue
+		}
+		if q.MaxTimeMS/1000 < observedSlowQueryWarnSeconds {
+			continue
+		}
+		top = q
+		found = true
+		break
+	}
+	if !found {
+		return Finding{Severity: SeveritySkip}
+	}
+
+	ageSeconds := top.MaxTimeMS / 1000
+	sev := SeverityWarn
+	summary := fmt.Sprintf("Observed query %s ran for %s s across %s sightings.",
+		top.Fingerprint, formatNum(ageSeconds), formatNum(float64(top.SeenSamples)))
+	stateLower := strings.ToLower(top.State)
+	if strings.Contains(stateLower, "metadata lock") {
+		sev = SeverityCrit
+		summary = fmt.Sprintf("Observed query %s waited on metadata lock for %s s across %s sightings.",
+			top.Fingerprint, formatNum(ageSeconds), formatNum(float64(top.SeenSamples)))
+	}
+
+	explanation := fmt.Sprintf(
+		"The slowest observed active processlist query was seen as user %s on database %s with state %s. Query shape: %s",
+		top.User, top.DB, top.State, top.Snippet,
+	)
+	return Finding{
+		ID:          "queryshape.observed_slow_processlist",
+		Subsystem:   "Query Shape",
+		Title:       "Slow observed processlist query",
+		Severity:    sev,
+		Summary:     summary,
+		Explanation: explanation,
+		FormulaText: "max observed processlist query age >= 60s",
+		FormulaComputed: fmt.Sprintf("%s s >= %s s  (fingerprint %s, user %s, db %s, state %s)",
+			formatNum(ageSeconds), formatNum(observedSlowQueryWarnSeconds), top.Fingerprint, top.User, top.DB, top.State),
+		Metrics: []MetricRef{
+			{Name: "max observed age", Value: ageSeconds, Unit: "s"},
+			{Name: "sightings", Value: float64(top.SeenSamples), Unit: "count"},
+			{Name: "rows examined", Value: top.MaxRowsExamined, Unit: "rows"},
+			{Name: "rows sent", Value: top.MaxRowsSent, Unit: "rows"},
+		},
+		Recommendations: []string{
+			"Use the fingerprint and query shape in this report to locate matching application code, slow log entries, or performance_schema statement history.",
+			"If the state is a lock wait, identify the blocking session or DDL path before tuning the query itself.",
+			"Review the query's EXPLAIN plan and supporting indexes once lock waits or blocking transactions are ruled out.",
+		},
+		Source: "pt-stalk processlist observed query summary",
+	}
 }
 
 // ruleFullScanSelectFullJoin flags joins that performed table scans

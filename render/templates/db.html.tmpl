@@ -216,6 +216,71 @@
     <div class="chart" id="chart-processlist" data-chart="processlist"
          aria-label="Count of threads per state over time"></div>
     <noscript><p class="banner">Charts require JavaScript. Raw processlist data is embedded in the page.</p></noscript>
+    <details class="slow-query-panel" aria-label="Slowest observed processlist queries"{{if .ProcesslistSummary.HasSlowQueries}} open{{end}}>
+      <summary><span>Slowest observed queries</span><span class="badge">{{len .ProcesslistSummary.SlowQueries}} {{if eq (len .ProcesslistSummary.SlowQueries) 1}}query{{else}}queries{{end}}</span></summary>
+      {{- if .ProcesslistSummary.HasSlowQueries }}
+      <div class="slow-query-controls" role="search" aria-label="Slowest observed query filters">
+        <label>
+          <span>Query</span>
+          <input type="search" class="slow-query-search" data-filter-field="query" placeholder="Search query or fingerprint" autocomplete="off">
+        </label>
+        <label>
+          <span>User</span>
+          <input type="search" class="slow-query-filter" data-filter-field="user" placeholder="Filter user" autocomplete="off">
+        </label>
+        <label>
+          <span>DB</span>
+          <input type="search" class="slow-query-filter" data-filter-field="db" placeholder="Filter db" autocomplete="off">
+        </label>
+        <label>
+          <span>State</span>
+          <input type="search" class="slow-query-filter" data-filter-field="state" placeholder="Filter state" autocomplete="off">
+        </label>
+        <span class="slow-query-count" aria-live="polite">{{len .ProcesslistSummary.SlowQueries}} of {{len .ProcesslistSummary.SlowQueries}} shown</span>
+      </div>
+      <p class="banner missing slow-query-filter-empty" data-slow-query-empty hidden>No slowest observed queries match the active filters.</p>
+      <div class="slow-query-table-wrap">
+        <table class="slow-query-table">
+          <thead>
+            <tr>
+              <th scope="col">Rank</th>
+              <th scope="col">Max age</th>
+              <th scope="col">Seen</th>
+              <th scope="col">First seen</th>
+              <th scope="col">Last seen</th>
+              <th scope="col">User</th>
+              <th scope="col">DB</th>
+              <th scope="col">State</th>
+              <th scope="col">Rows examined</th>
+              <th scope="col">Rows sent</th>
+              <th scope="col">Fingerprint</th>
+              <th scope="col">Query shape</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{- range .ProcesslistSummary.SlowQueries }}
+            <tr data-query-text="{{.FilterText}}" data-query-user="{{.FilterUser}}" data-query-db="{{.FilterDB}}" data-query-state="{{.FilterState}}">
+              <td class="rank">{{.Rank}}</td>
+              <td class="mono">{{.MaxAge}}</td>
+              <td class="mono">{{.SeenSamples}}</td>
+              <td class="mono">{{.FirstSeen}}</td>
+              <td class="mono">{{.LastSeen}}</td>
+              <td>{{.User}}</td>
+              <td>{{.DB}}</td>
+              <td>{{.State}}</td>
+              <td class="mono">{{if .HasRowsExamined}}{{.RowsExamined}}{{else}}-{{end}}</td>
+              <td class="mono">{{if .HasRowsSent}}{{.RowsSent}}{{else}}-{{end}}</td>
+              <td class="mono">{{.Fingerprint}}</td>
+              <td class="query-shape"><code>{{.Snippet}}</code></td>
+            </tr>
+            {{- end }}
+          </tbody>
+        </table>
+      </div>
+      {{- else }}
+      <p class="banner missing">No active query text was observed in processlist rows.</p>
+      {{- end }}
+    </details>
     {{- else }}
     <p class="banner missing">Data not available — no <code>-processlist</code> files were present in this collection.</p>
     {{- end }}
