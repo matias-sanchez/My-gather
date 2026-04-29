@@ -1,11 +1,13 @@
 package parse
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/matias-sanchez/My-gather/model"
 	"github.com/matias-sanchez/My-gather/tests/goldens"
 )
 
@@ -316,6 +318,43 @@ Rows_examined: 0
 	}
 	if strings.Contains(grouped.Snippet, "456") {
 		t.Errorf("grouped.Snippet = %q, want bounded normalized snippet without literal-specific grouping", grouped.Snippet)
+	}
+}
+
+func TestProcesslistObservedQueriesRemainUnbounded(t *testing.T) {
+	var b strings.Builder
+	b.WriteString("TS 1769702259.006126802 2026-01-29 15:57:39\n")
+	for i := 0; i < model.MaxObservedProcesslistQueries+2; i++ {
+		tableName := string(rune('a' + i))
+		fmt.Fprintf(&b, `*************************** %d. row ***************************
+           Id: %d
+         User: app
+         Host: 10.0.0.%d:60000
+           db: shop
+      Command: Query
+         Time: %d
+        State: Sending data
+         Info: select * from table_%s where id = %d
+      Time_ms: %d
+    Rows_sent: 1
+Rows_examined: %d
+`, i+1, i+1, i+1, i+1, tableName, i+1, (i+1)*1000, i+10)
+	}
+
+	data, diags := parseProcesslist(strings.NewReader(b.String()), "synthetic-processlist")
+	if len(diags) != 0 {
+		t.Fatalf("unexpected diagnostics: %+v", diags)
+	}
+	if data == nil {
+		t.Fatal("parseProcesslist returned nil")
+	}
+	if got, want := len(data.ObservedQueries), model.MaxObservedProcesslistQueries+2; got != want {
+		t.Fatalf("ObservedQueries len = %d, want unbounded parser output len %d", got, want)
+	}
+	for i := 1; i < len(data.ObservedQueries); i++ {
+		if data.ObservedQueries[i-1].MaxTimeMS < data.ObservedQueries[i].MaxTimeMS {
+			t.Fatalf("ObservedQueries not sorted by age descending at %d: %v < %v", i, data.ObservedQueries[i-1].MaxTimeMS, data.ObservedQueries[i].MaxTimeMS)
+		}
 	}
 }
 

@@ -558,8 +558,10 @@ type ProcesslistData struct {
 	// Same semantics as IostatData.SnapshotBoundaries.
 	SnapshotBoundaries []int
 
-	// ObservedQueries is a bounded, deterministically sorted list of
-	// active processlist query shapes observed across the data set.
+	// ObservedQueries is a deterministically sorted list of active
+	// processlist query shapes observed across the data set. Parser
+	// outputs may keep all fingerprints so later snapshot concatenation
+	// can merge complete evidence; render-facing merged data is bounded.
 	ObservedQueries []ObservedProcesslistQuery
 }
 
@@ -665,6 +667,17 @@ func NewObservedProcesslistQuery(
 // updates first/last seen bounds, keeps peak metrics, sorts deterministically,
 // and returns at most MaxObservedProcesslistQueries rows.
 func MergeObservedProcesslistQueries(groups ...[]ObservedProcesslistQuery) []ObservedProcesslistQuery {
+	out := MergeAllObservedProcesslistQueries(groups...)
+	if len(out) > MaxObservedProcesslistQueries {
+		out = out[:MaxObservedProcesslistQueries]
+	}
+	return out
+}
+
+// MergeAllObservedProcesslistQueries groups query sightings by fingerprint,
+// updates first/last seen bounds, keeps peak metrics, and sorts
+// deterministically without applying the render-facing top-N cap.
+func MergeAllObservedProcesslistQueries(groups ...[]ObservedProcesslistQuery) []ObservedProcesslistQuery {
 	byFingerprint := map[string]ObservedProcesslistQuery{}
 	for _, group := range groups {
 		for _, q := range group {
@@ -726,9 +739,6 @@ func MergeObservedProcesslistQueries(groups ...[]ObservedProcesslistQuery) []Obs
 		}
 		return a.Fingerprint < b.Fingerprint
 	})
-	if len(out) > MaxObservedProcesslistQueries {
-		out = out[:MaxObservedProcesslistQueries]
-	}
 	return out
 }
 

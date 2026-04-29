@@ -145,4 +145,14 @@ func TestMergeObservedProcesslistQueriesSortsAndBounds(t *testing.T) {
 			t.Fatalf("merged not sorted by age descending at %d: %v < %v", i, merged[i-1].MaxTimeMS, merged[i].MaxTimeMS)
 		}
 	}
+
+	all := MergeAllObservedProcesslistQueries(rows)
+	if got, want := len(all), MaxObservedProcesslistQueries+3; got != want {
+		t.Fatalf("unbounded merged len = %d, want %d", got, want)
+	}
+	for i := 1; i < len(all); i++ {
+		if all[i-1].MaxTimeMS < all[i].MaxTimeMS {
+			t.Fatalf("unbounded merged not sorted by age descending at %d: %v < %v", i, all[i-1].MaxTimeMS, all[i].MaxTimeMS)
+		}
+	}
 }

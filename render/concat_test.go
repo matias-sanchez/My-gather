@@ -429,6 +429,80 @@ func TestConcatProcesslistMergesObservedQueries(t *testing.T) {
 	}
 }
 
+func TestConcatProcesslistDefersObservedQueryTopNUntilAfterMerge(t *testing.T) {
+	t.Parallel()
+	t0 := time.Date(2026, 1, 29, 16, 0, 0, 0, time.UTC)
+
+	mustQuery := func(ts time.Time, info string, ageMS float64) model.ObservedProcesslistQuery {
+		t.Helper()
+		q, ok := model.NewObservedProcesslistQuery(ts, "app", "shop", "Query", "Sending data",
+			info, ageMS, true, ageMS/100, true, 1, true)
+		if !ok {
+			t.Fatalf("query %q unexpectedly ineligible", info)
+		}
+		return q
+	}
+
+	persistentA := mustQuery(t0, "select * from persistent_orders where id = 123", 1000)
+	snapAQueries := []model.ObservedProcesslistQuery{persistentA}
+	for i := 0; i < model.MaxObservedProcesslistQueries+1; i++ {
+		tableName := string(rune('a' + i))
+		snapAQueries = append(snapAQueries, mustQuery(t0,
+			"select * from blocker_"+tableName+" where id = 123",
+			float64(i+2)*1000,
+		))
+	}
+	persistentB := mustQuery(t0.Add(time.Minute), "select * from persistent_orders where id = 456", 50000)
+
+	snapA := &model.ProcesslistData{
+		States: []string{"Sending data"},
+		ThreadStateSamples: []model.ThreadStateSample{{
+			Timestamp:   t0,
+			StateCounts: map[string]int{"Sending data": len(snapAQueries)},
+		}},
+		ObservedQueries: model.MergeAllObservedProcesslistQueries(snapAQueries),
+	}
+	snapB := &model.ProcesslistData{
+		States: []string{"Sending data"},
+		ThreadStateSamples: []model.ThreadStateSample{{
+			Timestamp:   t0.Add(time.Minute),
+			StateCounts: map[string]int{"Sending data": 1},
+		}},
+		ObservedQueries: []model.ObservedProcesslistQuery{persistentB},
+	}
+
+	merged := concatProcesslist([]*model.ProcesslistData{snapA, snapB})
+	if merged == nil {
+		t.Fatal("concatProcesslist returned nil")
+	}
+	if got, want := len(merged.ObservedQueries), model.MaxObservedProcesslistQueries; got != want {
+		t.Fatalf("ObservedQueries len = %d, want final bounded len %d", got, want)
+	}
+
+	var grouped *model.ObservedProcesslistQuery
+	for i := range merged.ObservedQueries {
+		if merged.ObservedQueries[i].Fingerprint == persistentA.Fingerprint {
+			grouped = &merged.ObservedQueries[i]
+			break
+		}
+	}
+	if grouped == nil {
+		t.Fatalf("persistent query fingerprint %s missing from final top queries: %#v", persistentA.Fingerprint, merged.ObservedQueries)
+	}
+	if got, want := grouped.SeenSamples, 2; got != want {
+		t.Errorf("SeenSamples = %d, want %d", got, want)
+	}
+	if !grouped.FirstSeen.Equal(t0) {
+		t.Errorf("FirstSeen = %s, want %s", grouped.FirstSeen, t0)
+	}
+	if !grouped.LastSeen.Equal(t0.Add(time.Minute)) {
+		t.Errorf("LastSeen = %s, want %s", grouped.LastSeen, t0.Add(time.Minute))
+	}
+	if got, want := grouped.MaxTimeMS, 50000.0; got != want {
+		t.Errorf("MaxTimeMS = %v, want %v", got, want)
+	}
+}
+
 // TestConcatNetstatSPreservesSubSecondTimestamps — regression guard
 // for the rate-math collapse Codex flagged on bf7e8fc. pt-stalk polls
 // can land within the same whole second; if concatNetstatS truncates

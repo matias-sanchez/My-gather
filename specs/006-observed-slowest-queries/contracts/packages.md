@@ -15,7 +15,8 @@ Additional contract:
 - Ignore empty or `NULL` `Info` values for slowest-query ranking.
 - Use valid `Time_ms`, falling back to valid `Time`, for observed age.
 - Preserve valid row data when optional numeric fields are malformed.
-- Emit deterministic grouped query summaries in `ProcesslistData`.
+- Emit deterministic grouped query summaries in `ProcesslistData` without
+  per-file top-N truncation.
 
 ## `concatProcesslist`
 

@@ -186,7 +186,7 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 			current.row.haveRowsSent,
 		); ok {
 			if current, exists := observedQueriesByFingerprint[q.Fingerprint]; exists {
-				merged := model.MergeObservedProcesslistQueries(
+				merged := model.MergeAllObservedProcesslistQueries(
 					[]model.ObservedProcesslistQuery{current},
 					[]model.ObservedProcesslistQuery{q},
 				)
@@ -360,7 +360,7 @@ func parseProcesslist(r io.Reader, sourcePath string) (*model.ProcesslistData, [
 		Hosts:              hosts,
 		Commands:           commands,
 		Dbs:                dbs,
-		ObservedQueries:    model.MergeObservedProcesslistQueries(observedQueries),
+		ObservedQueries:    model.MergeAllObservedProcesslistQueries(observedQueries),
 	}, diagnostics
 }
 
