@@ -1,20 +1,20 @@
 <!-- SPECKIT START -->
-Active feature: **007-advisor-intelligence**
+Active feature: **008-archive-input**
 
 For technologies, project structure, constitution gates, data model,
-package/UI contracts, and shell commands, read the current plan:
+CLI contracts, and shell commands, read the current plan:
 
-- Plan: `specs/007-advisor-intelligence/plan.md`
-- Spec: `specs/007-advisor-intelligence/spec.md`
-- Research: `specs/007-advisor-intelligence/research.md`
-- Data model: `specs/007-advisor-intelligence/data-model.md`
-- Contracts: `specs/007-advisor-intelligence/contracts/packages.md`,
-  `specs/007-advisor-intelligence/contracts/ui.md`
-- Quickstart: `specs/007-advisor-intelligence/quickstart.md`
-- Tasks: `specs/007-advisor-intelligence/tasks.md`
+- Plan: `specs/008-archive-input/plan.md`
+- Spec: `specs/008-archive-input/spec.md`
+- Research: `specs/008-archive-input/research.md`
+- Data model: `specs/008-archive-input/data-model.md`
+- Contracts: `specs/008-archive-input/contracts/cli.md`
+- Quickstart: `specs/008-archive-input/quickstart.md`
+- Tasks: `specs/008-archive-input/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
+- **007-advisor-intelligence** - `specs/007-advisor-intelligence/plan.md`
 - **006-observed-slowest-queries** - `specs/006-observed-slowest-queries/plan.md`
 - **005-richer-processlist-metrics** - `specs/005-richer-processlist-metrics/plan.md`
 - **003-feedback-backend-worker** - `specs/003-feedback-backend-worker/plan.md`
