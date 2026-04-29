@@ -1,6 +1,7 @@
 package findings
 
 import (
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -99,6 +100,7 @@ func (b *builder) build() *model.Report {
 	for k := range deltas {
 		names = append(names, k)
 	}
+	sort.Strings(names)
 	n := 0
 	for _, v := range deltas {
 		if len(v) > n {
@@ -130,6 +132,9 @@ func (b *builder) build() *model.Report {
 	for k, v := range b.vars {
 		entries = append(entries, model.VariableEntry{Name: k, Value: v})
 	}
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Name < entries[j].Name
+	})
 	vs := &model.VariablesSection{
 		PerSnapshot: []model.SnapshotVariables{
 			{
@@ -204,6 +209,15 @@ func TestObservedSlowProcesslistQueryFindingMetadataLockCritical(t *testing.T) {
 	if !strings.Contains(f.Summary, "metadata lock") {
 		t.Fatalf("summary %q does not call out metadata lock", f.Summary)
 	}
+	if f.Category != CategorySaturation && f.Category != CategoryCombined {
+		t.Fatalf("category = %q, want saturation-style query pressure", f.Category)
+	}
+	if f.Confidence != ConfidenceHigh {
+		t.Fatalf("confidence = %q, want %q", f.Confidence, ConfidenceHigh)
+	}
+	if len(f.Evidence) == 0 {
+		t.Fatal("expected observed slow query evidence")
+	}
 }
 
 func TestObservedSlowProcesslistQueryFindingSkipsBelowThreshold(t *testing.T) {
@@ -249,6 +263,105 @@ func TestBPHitRatio(t *testing.T) {
 				t.Errorf("summary %q does not contain %q", f.Summary, tc.wantSubs)
 			}
 		})
+	}
+}
+
+func TestAnalyzeEnrichesEvidenceRecommendationsAndRelations(t *testing.T) {
+	got := Analyze(newBuilder().
+		counter("Innodb_buffer_pool_wait_free", 30).
+		counter("Innodb_buffer_pool_reads", 90).
+		gauge("Innodb_buffer_pool_pages_free", 1).
+		variable("innodb_lru_scan_depth", "1024").
+		variable("innodb_buffer_pool_instances", "1").
+		build())
+
+	waitFree := findByID(got, "bp.wait_free")
+	if waitFree == nil {
+		t.Fatal("bp.wait_free not found")
+	}
+	if waitFree.Category != CategorySaturation {
+		t.Fatalf("category = %q, want %q", waitFree.Category, CategorySaturation)
+	}
+	if waitFree.Confidence != ConfidenceHigh {
+		t.Fatalf("confidence = %q, want %q", waitFree.Confidence, ConfidenceHigh)
+	}
+	if waitFree.CoverageTopic == "" {
+		t.Fatal("coverage topic is empty")
+	}
+	if len(waitFree.Evidence) == 0 {
+		t.Fatal("expected evidence rows")
+	}
+	if waitFree.Evidence[0].Kind != EvidenceDerivedRate {
+		t.Fatalf("evidence kind = %q, want %q", waitFree.Evidence[0].Kind, EvidenceDerivedRate)
+	}
+	if len(waitFree.RecommendationItems) == 0 {
+		t.Fatal("expected structured recommendations")
+	}
+	hasConfirm := false
+	for _, rec := range waitFree.RecommendationItems {
+		if rec.Kind == RecommendationConfirm {
+			hasConfirm = true
+			break
+		}
+	}
+	if !hasConfirm {
+		t.Fatalf("expected at least one confirmation recommendation: %+v", waitFree.RecommendationItems)
+	}
+	if !hasRelatedFinding(*waitFree, "bp.free_pages_low") {
+		t.Fatalf("expected bp.wait_free to reference bp.free_pages_low: %+v", waitFree.RelatedFindings)
+	}
+}
+
+func TestRecommendationsPreserveConfirmationStep(t *testing.T) {
+	got := Analyze(newBuilder().
+		counter("Innodb_buffer_pool_wait_free", 30).
+		counter("Innodb_buffer_pool_reads", 90).
+		gauge("Innodb_buffer_pool_pages_free", 1).
+		variable("innodb_lru_scan_depth", "1024").
+		variable("innodb_buffer_pool_instances", "1").
+		build())
+
+	for _, f := range got {
+		if f.Severity == SeverityOK {
+			continue
+		}
+		if len(f.RecommendationItems) == 0 {
+			t.Fatalf("%s has no structured recommendations", f.ID)
+		}
+		hasConfirm := false
+		hasAction := false
+		for _, rec := range f.RecommendationItems {
+			if rec.Kind == RecommendationConfirm {
+				hasConfirm = true
+			}
+			if rec.Kind == RecommendationInvestigate || rec.Kind == RecommendationMitigate {
+				hasAction = true
+			}
+		}
+		if !hasConfirm {
+			t.Fatalf("%s has no confirmation recommendation: %+v", f.ID, f.RecommendationItems)
+		}
+		if !hasAction && len(f.RecommendationItems) < 2 {
+			t.Fatalf("%s has no investigation or mitigation direction: %+v", f.ID, f.RecommendationItems)
+		}
+	}
+}
+
+func TestEvidenceKindForSlashRatioMetric(t *testing.T) {
+	got := evidenceKindForMetric(MetricRef{Name: "buffer pool / 1k slots"})
+	if got != EvidenceDerivedRatio {
+		t.Fatalf("evidence kind = %q, want %q", got, EvidenceDerivedRatio)
+	}
+}
+
+func TestSparseCaptureSkipsUnsupportedFindings(t *testing.T) {
+	got := Analyze(newBuilder().build())
+	if len(got) != 0 {
+		t.Fatalf("expected sparse capture to skip unsupported findings, got %+v", got)
+	}
+	e := missingInputEvidence("Innodb_buffer_pool_reads", "Innodb_buffer_pool_read_requests")
+	if e.Kind != EvidenceInference || e.Strength != EvidenceWeak {
+		t.Fatalf("missing input evidence = %+v, want weak inference", e)
 	}
 }
 

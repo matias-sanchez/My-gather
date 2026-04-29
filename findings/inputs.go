@@ -132,7 +132,7 @@ func gaugeMax(r *model.Report, name string) (float64, bool) {
 // mysqladmin capture — i.e. the sum of per-snapshot wall-clock spans
 // only. Gaps BETWEEN snapshots (no collection was happening during
 // those intervals) are excluded, because counter deltas are not
-// observed across a boundary (concatMysqladmin inserts NaN there) and
+// observed across a boundary (model.MergeMysqladminData inserts NaN there) and
 // including the gap would artificially inflate the denominator and
 // suppress advisor rates.
 //
@@ -212,6 +212,19 @@ func variableRaw(r *model.Report, name string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// missingInputEvidence records unavailable inputs as low-strength
+// context. It is intentionally not used by rules that skip outright:
+// missing inputs must not create or escalate a warning.
+func missingInputEvidence(names ...string) EvidenceRef {
+	return EvidenceRef{
+		Name:     "Missing inputs",
+		Value:    strings.Join(names, ", "),
+		Kind:     EvidenceInference,
+		Strength: EvidenceWeak,
+		Note:     "not used to escalate severity",
+	}
 }
 
 // formatNum renders a float with a sensible precision for display in

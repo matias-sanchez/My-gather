@@ -8,8 +8,8 @@ import (
 	"github.com/matias-sanchez/My-gather/model"
 )
 
-// TestConcatMysqladminDivergentVariables exercises the two-pass algorithm
-// in concatMysqladmin when two consecutive -mysqladmin snapshots declare
+// TestMergeMysqladminDataDivergentVariables exercises the two-pass algorithm
+// in model.MergeMysqladminData when two consecutive -mysqladmin snapshots declare
 // partially-overlapping variable sets. It locks in four invariants of
 // the merge:
 //
@@ -22,7 +22,7 @@ import (
 //     each snapshot's first sample.
 //  4. Timestamp order is preserved (snap A's timestamps come first,
 //     followed by snap B's, unmodified).
-func TestConcatMysqladminDivergentVariables(t *testing.T) {
+func TestMergeMysqladminDataDivergentVariables(t *testing.T) {
 	t0 := time.Date(2026, 4, 21, 16, 51, 41, 0, time.UTC)
 	t1 := t0.Add(10 * time.Second)
 	t2 := t0.Add(20 * time.Second) // snap B
@@ -66,9 +66,9 @@ func TestConcatMysqladminDivergentVariables(t *testing.T) {
 		SnapshotBoundaries: []int{0},
 	}
 
-	merged := concatMysqladmin([]*model.MysqladminData{snapA, snapB})
+	merged := model.MergeMysqladminData([]*model.MysqladminData{snapA, snapB})
 	if merged == nil {
-		t.Fatal("concatMysqladmin returned nil for two non-empty inputs")
+		t.Fatal("MergeMysqladminData returned nil for two non-empty inputs")
 	}
 
 	// 3) SnapshotBoundaries must point at snap A's first sample (0) and

@@ -1,20 +1,21 @@
 <!-- SPECKIT START -->
-Active feature: **006-observed-slowest-queries**
+Active feature: **007-advisor-intelligence**
 
 For technologies, project structure, constitution gates, data model,
 package/UI contracts, and shell commands, read the current plan:
 
-- Plan: `specs/006-observed-slowest-queries/plan.md`
-- Spec: `specs/006-observed-slowest-queries/spec.md`
-- Research: `specs/006-observed-slowest-queries/research.md`
-- Data model: `specs/006-observed-slowest-queries/data-model.md`
-- Contracts: `specs/006-observed-slowest-queries/contracts/packages.md`,
-  `specs/006-observed-slowest-queries/contracts/ui.md`
-- Quickstart: `specs/006-observed-slowest-queries/quickstart.md`
-- Tasks: `specs/006-observed-slowest-queries/tasks.md`
+- Plan: `specs/007-advisor-intelligence/plan.md`
+- Spec: `specs/007-advisor-intelligence/spec.md`
+- Research: `specs/007-advisor-intelligence/research.md`
+- Data model: `specs/007-advisor-intelligence/data-model.md`
+- Contracts: `specs/007-advisor-intelligence/contracts/packages.md`,
+  `specs/007-advisor-intelligence/contracts/ui.md`
+- Quickstart: `specs/007-advisor-intelligence/quickstart.md`
+- Tasks: `specs/007-advisor-intelligence/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
+- **006-observed-slowest-queries** - `specs/006-observed-slowest-queries/plan.md`
 - **005-richer-processlist-metrics** - `specs/005-richer-processlist-metrics/plan.md`
 - **003-feedback-backend-worker** - `specs/003-feedback-backend-worker/plan.md`
 - **002-report-feedback-button** - `specs/002-report-feedback-button/plan.md`

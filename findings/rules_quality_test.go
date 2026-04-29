@@ -45,9 +45,49 @@ func TestRuleQuality_MetadataIsComplete(t *testing.T) {
 		if def.FormulaText == "" {
 			t.Errorf("rule %q has empty FormulaText", def.ID)
 		}
+		if def.Category == "" {
+			t.Errorf("rule %q has empty Category", def.ID)
+		}
+		if def.CoverageTopic == "" {
+			t.Errorf("rule %q has empty CoverageTopic", def.ID)
+		}
 		if def.Run == nil {
 			t.Errorf("rule %q has nil Run function", def.ID)
 		}
+	}
+}
+
+func TestRuleQuality_DiagnosticCategoryIsKnown(t *testing.T) {
+	for _, def := range registry {
+		switch def.Category {
+		case CategoryUtilization, CategorySaturation, CategoryError, CategoryCombined:
+		default:
+			t.Errorf("rule %q declares unknown Category %q", def.ID, def.Category)
+		}
+	}
+}
+
+func TestRuleQuality_DiagnosticCategoryExamples(t *testing.T) {
+	want := map[string]DiagnosticCategory{
+		"bp.hit_ratio":                         CategoryUtilization,
+		"bp.wait_free":                         CategorySaturation,
+		"config.slow_log_disabled":             CategoryCombined,
+		"connections.aborted_rate":             CategoryError,
+		"queryshape.observed_slow_processlist": CategoryCombined,
+		"redo.pending_writes":                  CategorySaturation,
+	}
+	for _, def := range Registry() {
+		expected, ok := want[def.ID]
+		if !ok {
+			continue
+		}
+		if def.Category != expected {
+			t.Errorf("rule %q Category = %q, want %q", def.ID, def.Category, expected)
+		}
+		delete(want, def.ID)
+	}
+	for id := range want {
+		t.Errorf("expected diagnostic category fixture for missing rule %q", id)
 	}
 }
 
