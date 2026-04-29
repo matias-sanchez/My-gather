@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/matias-sanchez/My-gather/parse"
 )
 
 func TestInstallRenderedFileDoesNotOverwriteExistingOutput(t *testing.T) {
@@ -142,6 +144,8 @@ func TestRunAcceptsGzipArchiveContainingTarStream(t *testing.T) {
 
 func TestRunRejectsArchivePathTraversal(t *testing.T) {
 	dir := t.TempDir()
+	t.Setenv("TMPDIR", dir)
+	t.Setenv("TEMP", dir)
 	archivePath := filepath.Join(dir, "bad.zip")
 	file, err := os.Create(archivePath)
 	if err != nil {
@@ -172,6 +176,54 @@ func TestRunRejectsArchivePathTraversal(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(dir, "escape")); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("path traversal created file, stat err = %v", err)
+	}
+}
+
+func TestRunAcceptsTarArchiveWithRootDirectoryEntry(t *testing.T) {
+	dir := t.TempDir()
+	archivePath := filepath.Join(dir, "capture.tar.gz")
+	writeTarGzipFixtureWithOptions(t, archivePath, "pt-stalk", true)
+	outPath := filepath.Join(dir, "report.html")
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--overwrite", "-o", outPath, archivePath}, &stdout, &stderr)
+	if code != exitOK {
+		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitOK, stderr.String())
+	}
+	if st, err := os.Stat(outPath); err != nil || st.Size() == 0 {
+		t.Fatalf("output stat = (%v, %v), want non-empty report", st, err)
+	}
+}
+
+func TestRunMapsInvalidZipToInputPathError(t *testing.T) {
+	dir := t.TempDir()
+	archivePath := filepath.Join(dir, "broken.zip")
+	if err := os.WriteFile(archivePath, []byte("not a zip"), 0o600); err != nil {
+		t.Fatalf("write broken zip: %v", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--overwrite", "-o", filepath.Join(dir, "report.html"), archivePath}, &stdout, &stderr)
+	if code != exitInputPath {
+		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitInputPath, stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "invalid archive input") {
+		t.Fatalf("stderr = %q, want invalid archive input message", stderr.String())
+	}
+}
+
+func TestWriteExtractedFileEnforcesPerFileLimit(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(dir, "large")
+	var written int64
+
+	err := writeExtractedFileWithLimits(target, 0o600, strings.NewReader("abcdef"), &written, 100, 5)
+	var sizeErr *parse.SizeError
+	if !errors.As(err, &sizeErr) {
+		t.Fatalf("error = %v, want parse.SizeError", err)
+	}
+	if sizeErr.Kind != parse.SizeErrorFile {
+		t.Fatalf("size error kind = %v, want %v", sizeErr.Kind, parse.SizeErrorFile)
 	}
 }
 
@@ -245,6 +297,11 @@ func writeZipFixture(t *testing.T, archivePath, prefix string) {
 
 func writeTarGzipFixture(t *testing.T, archivePath, prefix string) {
 	t.Helper()
+	writeTarGzipFixtureWithOptions(t, archivePath, prefix, false)
+}
+
+func writeTarGzipFixtureWithOptions(t *testing.T, archivePath, prefix string, includeRootDir bool) {
+	t.Helper()
 	file, err := os.Create(archivePath)
 	if err != nil {
 		t.Fatalf("create tar.gz: %v", err)
@@ -262,6 +319,11 @@ func writeTarGzipFixture(t *testing.T, archivePath, prefix string) {
 			t.Fatalf("close tar: %v", err)
 		}
 	}()
+	if includeRootDir {
+		if err := tw.WriteHeader(&tar.Header{Name: "./", Mode: 0o755, Typeflag: tar.TypeDir}); err != nil {
+			t.Fatalf("tar write root header: %v", err)
+		}
+	}
 	walkFixture(t, func(srcPath, rel string, info os.FileInfo) {
 		if info.IsDir() {
 			return

@@ -19,6 +19,7 @@ import (
 )
 
 const maxArchiveExtractedBytes = parse.DefaultMaxCollectionBytes
+const maxArchiveFileBytes = parse.DefaultMaxFileBytes
 
 var errUnsupportedArchive = errors.New("unsupported archive format")
 
@@ -43,6 +44,25 @@ type unsafeArchivePathError struct {
 
 func (e *unsafeArchivePathError) Error() string {
 	return fmt.Sprintf("archive entry %q would extract outside the temporary directory", e.entry)
+}
+
+type archiveInputError struct {
+	path  string
+	entry string
+	err   error
+}
+
+func (e *archiveInputError) Error() string {
+	if e.entry != "" {
+		return fmt.Sprintf("archive %s entry %q: %v", e.path, e.entry, e.err)
+	}
+	return fmt.Sprintf("archive %s: %v", e.path, e.err)
+}
+
+func (e *archiveInputError) Unwrap() error { return e.err }
+
+func newArchiveInputError(path, entry string, err error) error {
+	return &archiveInputError{path: path, entry: entry, err: err}
 }
 
 type archiveFormat int
@@ -129,7 +149,7 @@ func extractArchive(archivePath, destDir string) error {
 		defer file.Close()
 		gz, err := gzip.NewReader(file)
 		if err != nil {
-			return fmt.Errorf("read gzip archive %s: %w", archivePath, err)
+			return newArchiveInputError(archivePath, "", err)
 		}
 		defer gz.Close()
 		return extractTarReader(tar.NewReader(gz), archivePath, destDir, &written)
@@ -143,16 +163,19 @@ func extractArchive(archivePath, destDir string) error {
 func extractZipArchive(archivePath, destDir string, written *int64) error {
 	reader, err := zip.OpenReader(archivePath)
 	if err != nil {
-		return fmt.Errorf("open zip archive %s: %w", archivePath, err)
+		return newArchiveInputError(archivePath, "", err)
 	}
 	defer reader.Close()
 
 	for _, entry := range reader.File {
-		target, err := safeArchiveTarget(destDir, entry.Name)
+		target, isRoot, err := safeArchiveTarget(destDir, entry.Name)
 		if err != nil {
 			return err
 		}
 		mode := entry.FileInfo().Mode()
+		if isRoot && !entry.FileInfo().IsDir() {
+			return newArchiveInputError(archivePath, entry.Name, errors.New("root archive entry must be a directory"))
+		}
 		if entry.FileInfo().IsDir() {
 			if err := os.MkdirAll(target, 0o755); err != nil {
 				return fmt.Errorf("create archive directory %s: %w", target, err)
@@ -160,21 +183,21 @@ func extractZipArchive(archivePath, destDir string, written *int64) error {
 			continue
 		}
 		if !mode.IsRegular() {
-			return fmt.Errorf("zip archive %s: unsupported non-regular entry %q", archivePath, entry.Name)
+			return newArchiveInputError(archivePath, entry.Name, errors.New("unsupported non-regular entry"))
 		}
 		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 			return fmt.Errorf("create archive parent %s: %w", filepath.Dir(target), err)
 		}
 		src, err := entry.Open()
 		if err != nil {
-			return fmt.Errorf("open zip entry %q: %w", entry.Name, err)
+			return newArchiveInputError(archivePath, entry.Name, err)
 		}
 		if err := writeExtractedFile(target, mode.Perm(), src, written); err != nil {
 			_ = src.Close()
 			return err
 		}
 		if err := src.Close(); err != nil {
-			return fmt.Errorf("close zip entry %q: %w", entry.Name, err)
+			return newArchiveInputError(archivePath, entry.Name, err)
 		}
 	}
 	return nil
@@ -187,9 +210,9 @@ func extractTarReader(reader *tar.Reader, archivePath, destDir string, written *
 			return nil
 		}
 		if err != nil {
-			return fmt.Errorf("read tar archive %s: %w", archivePath, err)
+			return newArchiveInputError(archivePath, "", err)
 		}
-		target, err := safeArchiveTarget(destDir, header.Name)
+		target, isRoot, err := safeArchiveTarget(destDir, header.Name)
 		if err != nil {
 			return err
 		}
@@ -199,6 +222,9 @@ func extractTarReader(reader *tar.Reader, archivePath, destDir string, written *
 				return fmt.Errorf("create archive directory %s: %w", target, err)
 			}
 		case tar.TypeReg, tar.TypeRegA:
+			if isRoot {
+				return newArchiveInputError(archivePath, header.Name, errors.New("root archive entry must be a directory"))
+			}
 			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 				return fmt.Errorf("create archive parent %s: %w", filepath.Dir(target), err)
 			}
@@ -208,7 +234,7 @@ func extractTarReader(reader *tar.Reader, archivePath, destDir string, written *
 		case tar.TypeXGlobalHeader, tar.TypeXHeader:
 			continue
 		default:
-			return fmt.Errorf("tar archive %s: unsupported non-regular entry %q", archivePath, header.Name)
+			return newArchiveInputError(archivePath, header.Name, errors.New("unsupported non-regular entry"))
 		}
 	}
 }
@@ -222,7 +248,7 @@ func extractGzipArchive(archivePath, destDir string, written *int64) error {
 
 	gz, err := gzip.NewReader(file)
 	if err != nil {
-		return fmt.Errorf("read gzip archive %s: %w", archivePath, err)
+		return newArchiveInputError(archivePath, "", err)
 	}
 	defer gz.Close()
 
@@ -235,7 +261,7 @@ func extractGzipArchive(archivePath, destDir string, written *int64) error {
 	if name == "" || name == "." {
 		name = "decompressed"
 	}
-	target, err := safeArchiveTarget(destDir, name)
+	target, _, err := safeArchiveTarget(destDir, name)
 	if err != nil {
 		return err
 	}
@@ -252,21 +278,31 @@ func looksLikeTarHeader(block []byte) bool {
 	return bytes.HasPrefix(block[257:], []byte("ustar"))
 }
 
-func safeArchiveTarget(destDir, entryName string) (string, error) {
+func safeArchiveTarget(destDir, entryName string) (string, bool, error) {
 	entryName = strings.ReplaceAll(entryName, "\\", "/")
+	if entryName == "" {
+		return "", false, &unsafeArchivePathError{entry: entryName}
+	}
 	clean := filepath.Clean(filepath.FromSlash(entryName))
-	if clean == "." || clean == "" || filepath.IsAbs(clean) || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
-		return "", &unsafeArchivePathError{entry: entryName}
+	if clean == "." {
+		return destDir, true, nil
+	}
+	if filepath.IsAbs(clean) || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
+		return "", false, &unsafeArchivePathError{entry: entryName}
 	}
 	target := filepath.Join(destDir, clean)
 	rel, err := filepath.Rel(destDir, target)
 	if err != nil || filepath.IsAbs(rel) || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", &unsafeArchivePathError{entry: entryName}
+		return "", false, &unsafeArchivePathError{entry: entryName}
 	}
-	return target, nil
+	return target, false, nil
 }
 
 func writeExtractedFile(target string, mode os.FileMode, src io.Reader, written *int64) error {
+	return writeExtractedFileWithLimits(target, mode, src, written, maxArchiveExtractedBytes, maxArchiveFileBytes)
+}
+
+func writeExtractedFileWithLimits(target string, mode os.FileMode, src io.Reader, written *int64, maxTotal, maxFile int64) error {
 	perm := mode.Perm()
 	if perm == 0 {
 		perm = 0o600
@@ -277,18 +313,30 @@ func writeExtractedFile(target string, mode os.FileMode, src io.Reader, written 
 	}
 	defer file.Close()
 
-	remaining := maxArchiveExtractedBytes - *written
+	remaining := maxTotal - *written
 	if remaining < 0 {
 		remaining = 0
 	}
-	n, err := io.Copy(file, io.LimitReader(src, remaining+1))
+	limit := maxFile
+	if remaining < limit {
+		limit = remaining
+	}
+	n, err := io.Copy(file, io.LimitReader(src, limit+1))
 	*written += n
-	if *written > maxArchiveExtractedBytes {
+	if n > maxFile {
+		return &parse.SizeError{
+			Kind:  parse.SizeErrorFile,
+			Path:  target,
+			Bytes: n,
+			Limit: maxFile,
+		}
+	}
+	if *written > maxTotal {
 		return &parse.SizeError{
 			Kind:  parse.SizeErrorTotal,
 			Path:  target,
 			Bytes: *written,
-			Limit: maxArchiveExtractedBytes,
+			Limit: maxTotal,
 		}
 	}
 	if err != nil {

@@ -195,6 +195,11 @@ func mapInputPreparationError(err error, inputPath string, stderr io.Writer) int
 		fmt.Fprintf(stderr, "my-gather: unsafe archive %s: %v\n", inputPath, unsafe)
 		return exitInputPath
 	}
+	var archiveInput *archiveInputError
+	if errors.As(err, &archiveInput) {
+		fmt.Fprintf(stderr, "my-gather: invalid archive input: %v\n", archiveInput)
+		return exitInputPath
+	}
 	var multiple *multiplePtStalkRootsError
 	if errors.As(err, &multiple) {
 		fmt.Fprintf(stderr, "my-gather: %s is not a single pt-stalk collection: %v\n", inputPath, multiple)
