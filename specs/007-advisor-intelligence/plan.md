@@ -94,7 +94,7 @@ render/
 
 testdata/
 └── golden/
-    └── advisor.example2.json
+    └── findings.example2.json
 ```
 
 **Structure Decision**: Extend the native Advisor registry and render path in

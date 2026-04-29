@@ -55,7 +55,7 @@
     "id": "config.slow_log_disabled",
     "subsystem": "Configuration",
     "title": "Slow query log is disabled",
-    "category": "Utilization",
+    "category": "Combined",
     "severity": "warn",
     "confidence": "High",
     "coverage_topic": "Configuration - Slow query log is disabled",

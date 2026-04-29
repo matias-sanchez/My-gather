@@ -71,6 +71,7 @@ func TestRuleQuality_DiagnosticCategoryExamples(t *testing.T) {
 	want := map[string]DiagnosticCategory{
 		"bp.hit_ratio":                         CategoryUtilization,
 		"bp.wait_free":                         CategorySaturation,
+		"config.slow_log_disabled":             CategoryCombined,
 		"connections.aborted_rate":             CategoryError,
 		"queryshape.observed_slow_processlist": CategoryCombined,
 		"redo.pending_writes":                  CategorySaturation,

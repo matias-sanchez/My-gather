@@ -90,8 +90,8 @@ func buildTopDriverViews(fs []findings.Finding) []findingDriverView {
 		if ranked[i].score != ranked[j].score {
 			return ranked[i].score > ranked[j].score
 		}
-		if ranked[i].f.Subsystem != ranked[j].f.Subsystem {
-			return ranked[i].f.Subsystem < ranked[j].f.Subsystem
+		if findings.SubsystemOrder(ranked[i].f.Subsystem) != findings.SubsystemOrder(ranked[j].f.Subsystem) {
+			return findings.SubsystemOrder(ranked[i].f.Subsystem) < findings.SubsystemOrder(ranked[j].f.Subsystem)
 		}
 		return ranked[i].f.ID < ranked[j].f.ID
 	})

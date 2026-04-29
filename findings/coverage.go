@@ -63,7 +63,7 @@ func inferCategory(id, subsystem, title, formula string) DiagnosticCategory {
 	if id == "queryshape.observed_slow_processlist" {
 		return CategoryCombined
 	}
-	text := id + " " + subsystem + " " + title + " " + formula
+	text := id + " " + title + " " + formula
 	switch {
 	case containsAny(text, "error", "aborted"):
 		return CategoryError

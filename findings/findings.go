@@ -423,7 +423,7 @@ func evidenceKindForMetric(m MetricRef) EvidenceKind {
 	switch {
 	case containsAny(name, "/s", "rate"):
 		return EvidenceDerivedRate
-	case containsAny(name, "ratio", "pct", "%", " per "):
+	case containsAny(name, "ratio", "pct", "%", " per ") || (strings.Contains(name, " / ") && !strings.Contains(name, "/s")):
 		return EvidenceDerivedRatio
 	case containsAny(name, "state", "processlist", "metadata lock"):
 		return EvidenceObservedState
@@ -524,6 +524,13 @@ func subsystemOrder(s string) int {
 		return 9
 	}
 	return 99
+}
+
+// SubsystemOrder returns the canonical Advisor subsystem rank. Render
+// code uses this exported wrapper so top-driver tie-breaks stay aligned
+// with normal finding group order.
+func SubsystemOrder(s string) int {
+	return subsystemOrder(s)
 }
 
 // Counts summarises the severity distribution. Rendered at the top of

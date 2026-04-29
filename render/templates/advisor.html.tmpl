@@ -39,7 +39,7 @@
 </div>
 
 {{- if .TopDrivers }}
-<div class="advisor-top-drivers" aria-label="Top suspected incident drivers">
+<section class="advisor-top-drivers" aria-label="Top suspected incident drivers">
   <div class="k">Top suspected drivers</div>
   <ol>
     {{- range .TopDrivers }}
@@ -54,7 +54,7 @@
     </li>
     {{- end }}
   </ol>
-</div>
+</section>
 {{- end }}
 
 {{- /* Group by Subsystem while preserving order. The template iterates
@@ -120,7 +120,7 @@
         <div class="k">Recommendations</div>
         <ul>
           {{- range .Recommendations }}
-          <li>{{if .Kind}}<span class="rec-kind">{{.Kind}}</span>{{end}}{{.Text}}{{if .AppliesWhen}} <span class="note">{{.AppliesWhen}}</span>{{end}}</li>
+          <li>{{if .Kind}}<span class="rec-kind">{{.Kind}}</span> {{end}}{{.Text}}{{if .AppliesWhen}} <span class="note">{{.AppliesWhen}}</span>{{end}}</li>
           {{ end }}
         </ul>
       </div>

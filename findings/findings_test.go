@@ -342,6 +342,13 @@ func TestRecommendationsPreserveConfirmationStep(t *testing.T) {
 	}
 }
 
+func TestEvidenceKindForSlashRatioMetric(t *testing.T) {
+	got := evidenceKindForMetric(MetricRef{Name: "buffer pool / 1k slots"})
+	if got != EvidenceDerivedRatio {
+		t.Fatalf("evidence kind = %q, want %q", got, EvidenceDerivedRatio)
+	}
+}
+
 func TestSparseCaptureSkipsUnsupportedFindings(t *testing.T) {
 	got := Analyze(newBuilder().build())
 	if len(got) != 0 {

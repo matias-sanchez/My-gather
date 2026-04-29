@@ -67,7 +67,7 @@ func TestGoldenAdvisor(t *testing.T) {
 			CoverageTopic:      f.CoverageTopic,
 			FormulaText:        f.FormulaText,
 			EvidenceLen:        len(f.Evidence),
-			RecommendationsLen: len(f.Recommendations),
+			RecommendationsLen: len(f.RecommendationItems),
 			RelatedLen:         len(f.RelatedFindings),
 		})
 	}
