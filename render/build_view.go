@@ -195,6 +195,7 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 	// Advisor: rule-based findings derived from the captured data.
 	fs := findings.Analyze(r)
 	v.Findings = buildFindingViews(fs)
+	v.TopDrivers = buildTopDriverViews(fs)
 	v.AdvisorCounts = summariseFindings(fs)
 	v.HasFindings = len(v.Findings) > 0
 	v.AdvisorBadge = advisorBadge(v.AdvisorCounts)

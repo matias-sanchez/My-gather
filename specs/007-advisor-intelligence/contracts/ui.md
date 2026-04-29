@@ -18,6 +18,8 @@ Behavior:
 - Summary content is rendered in the self-contained HTML report.
 - Summary does not fetch remote assets or data.
 - Summary order is deterministic for the same report.
+- Top-driver ranking is derived from severity, confidence, evidence count, and
+  relation count, with stable rule-ID tie breaking.
 
 ## Finding Cards
 
@@ -41,6 +43,7 @@ Behavior:
 - Existing severity filters continue to work.
 - The card remains readable when evidence or recommendations are longer than
   one line.
+- Category and confidence appear as compact chips beside the severity label.
 
 ## Evidence Display
 
@@ -58,6 +61,7 @@ Behavior:
 - Missing evidence is never rendered as if it were observed.
 - Derived values identify the direct inputs used in the finding text or formula.
 - Ordering is stable and meaningful.
+- Derived rates and ratios are labelled separately from direct measurements.
 
 ## Correlated Findings
 
@@ -75,6 +79,8 @@ Behavior:
 
 - Related links or references stay inside the generated report.
 - Critical related findings remain visible as normal findings.
+- Relationships are additive references. They never suppress or merge the
+  target finding card.
 
 ## Empty and Healthy States
 

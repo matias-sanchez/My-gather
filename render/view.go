@@ -41,6 +41,7 @@ type reportView struct {
 
 	// Advisor section payload.
 	Findings      []findingView
+	TopDrivers    []findingDriverView
 	AdvisorCounts findingCountsView
 	HasFindings   bool
 
@@ -227,6 +228,8 @@ type findingView struct {
 	ID              string
 	Subsystem       string
 	Title           string
+	Category        string
+	Confidence      string
 	SeverityClass   string // "crit" | "warn" | "info" | "ok"
 	SeverityLabel   string // "Critical" | "Warning" | "Info" | "OK"
 	OpenByDefault   bool   // crit findings start expanded
@@ -235,7 +238,10 @@ type findingView struct {
 	FormulaText     string
 	FormulaComputed string
 	Metrics         []findingMetricView
-	Recommendations []string
+	Evidence        []findingEvidenceView
+	Recommendations []findingRecommendationView
+	RelatedFindings []findingRelatedView
+	CoverageTopic   string
 }
 
 type findingMetricView struct {
@@ -243,6 +249,40 @@ type findingMetricView struct {
 	Value string
 	Unit  string
 	Note  string
+}
+
+type findingEvidenceView struct {
+	Name     string
+	Value    string
+	Unit     string
+	Kind     string
+	Strength string
+	Note     string
+}
+
+type findingRecommendationView struct {
+	Kind            string
+	Text            string
+	AppliesWhen     string
+	RelatedEvidence []string
+}
+
+type findingRelatedView struct {
+	ID           string
+	Relationship string
+	Reason       string
+}
+
+type findingDriverView struct {
+	ID            string
+	Subsystem     string
+	Title         string
+	Category      string
+	Confidence    string
+	SeverityClass string
+	SeverityLabel string
+	Summary       string
+	Why           string
 }
 
 type findingCountsView struct {

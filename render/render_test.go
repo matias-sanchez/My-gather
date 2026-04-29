@@ -79,17 +79,31 @@ func TestAdvisorCardRenders(t *testing.T) {
 	t0 := time.Date(2026, 4, 21, 16, 52, 0, 0, time.UTC)
 	t1 := t0.Add(30 * time.Second)
 	mysqladmin := &model.MysqladminData{
-		VariableNames: []string{"Innodb_buffer_pool_wait_free"},
-		SampleCount:   2,
-		Timestamps:    []time.Time{t0, t1},
+		VariableNames: []string{
+			"Innodb_buffer_pool_wait_free",
+			"Innodb_buffer_pool_reads",
+			"Innodb_buffer_pool_pages_free",
+		},
+		SampleCount: 2,
+		Timestamps:  []time.Time{t0, t1},
 		Deltas: map[string][]float64{
 			// Index 0 = raw initial tally (skipped by counterTotal);
 			// index 1 = per-sample delta (contributes to the rate).
-			"Innodb_buffer_pool_wait_free": {100, 50},
+			"Innodb_buffer_pool_wait_free":  {100, 50},
+			"Innodb_buffer_pool_reads":      {100, 25},
+			"Innodb_buffer_pool_pages_free": {1, 1},
 		},
-		IsCounter:          map[string]bool{"Innodb_buffer_pool_wait_free": true},
+		IsCounter: map[string]bool{
+			"Innodb_buffer_pool_wait_free":  true,
+			"Innodb_buffer_pool_reads":      true,
+			"Innodb_buffer_pool_pages_free": false,
+		},
 		SnapshotBoundaries: []int{0},
 	}
+	variables := &model.VariablesData{Entries: []model.VariableEntry{
+		{Name: "innodb_lru_scan_depth", Value: "1024"},
+		{Name: "innodb_buffer_pool_instances", Value: "1"},
+	}}
 
 	c := &model.Collection{
 		RootPath: "/tmp/example",
@@ -102,6 +116,10 @@ func TestAdvisorCardRenders(t *testing.T) {
 					model.SuffixMysqladmin: {
 						Suffix: model.SuffixMysqladmin,
 						Parsed: mysqladmin,
+					},
+					model.SuffixVariables: {
+						Suffix: model.SuffixVariables,
+						Parsed: variables,
 					},
 				},
 			},
@@ -166,10 +184,75 @@ func TestAdvisorCardRenders(t *testing.T) {
 	if !strings.Contains(out, `class="sev-chip sev-crit"`) {
 		t.Errorf("output missing Critical severity pill (class=\"sev-chip sev-crit\")")
 	}
+	if !strings.Contains(out, `Top suspected drivers`) {
+		t.Errorf("output missing Advisor top-driver summary")
+	}
+	if !strings.Contains(out, `Evidence`) {
+		t.Errorf("output missing Advisor evidence bundle")
+	}
+	if !strings.Contains(out, `Confirm`) {
+		t.Errorf("output missing grouped confirmation recommendation")
+	}
+	if !strings.Contains(out, `High confidence`) {
+		t.Errorf("output missing confidence chip")
+	}
+	if !strings.Contains(out, `Coverage`) {
+		t.Errorf("output missing coverage topic")
+	}
+	if !strings.Contains(out, `Related findings`) {
+		t.Errorf("output missing related findings")
+	}
 	// Specific Crit-rule identity: bp.wait_free's summary line names
 	// the metric by its canonical status variable.
 	if !strings.Contains(out, `Innodb_buffer_pool_wait_free`) {
 		t.Errorf("output missing canonical counter name in finding body")
+	}
+}
+
+func TestAdvisorLowConfidenceInfoRenders(t *testing.T) {
+	t0 := time.Date(2026, 4, 21, 16, 52, 0, 0, time.UTC)
+	t1 := t0.Add(30 * time.Second)
+	mysqladmin := &model.MysqladminData{
+		VariableNames: []string{"Deprecated_use_i_s_processlist_count"},
+		SampleCount:   2,
+		Timestamps:    []time.Time{t0, t1},
+		Deltas: map[string][]float64{
+			"Deprecated_use_i_s_processlist_count": {0, 15},
+		},
+		IsCounter:          map[string]bool{"Deprecated_use_i_s_processlist_count": true},
+		SnapshotBoundaries: []int{0},
+	}
+	c := &model.Collection{
+		RootPath: "/tmp/example",
+		Hostname: "example-db-01",
+		Snapshots: []*model.Snapshot{
+			{
+				Timestamp: t0,
+				Prefix:    "2026_04_21_16_52_00",
+				SourceFiles: map[model.Suffix]*model.SourceFile{
+					model.SuffixMysqladmin: {
+						Suffix: model.SuffixMysqladmin,
+						Parsed: mysqladmin,
+					},
+				},
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	opts := render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}
+	if err := render.Render(&buf, c, opts); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	out := buf.String()
+	for _, want := range []string{
+		`Low confidence`,
+		`derived rate`,
+		`information_schema.PROCESSLIST usage`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output missing %q", want)
+		}
 	}
 }
 

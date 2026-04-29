@@ -11,6 +11,7 @@ package/UI contracts, and shell commands, read the current plan:
 - Contracts: `specs/007-advisor-intelligence/contracts/packages.md`,
   `specs/007-advisor-intelligence/contracts/ui.md`
 - Quickstart: `specs/007-advisor-intelligence/quickstart.md`
+- Tasks: `specs/007-advisor-intelligence/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:

@@ -3,160 +3,260 @@
     "id": "bp.dirty_pct",
     "subsystem": "Buffer Pool",
     "title": "Dirty-page ratio",
+    "category": "Saturation",
     "severity": "ok",
+    "confidence": "High",
+    "coverage_topic": "Buffer Pool - Dirty-page ratio",
     "formula_text": "dirty_pct = Innodb_buffer_pool_pages_dirty / Innodb_buffer_pool_pages_total × 100  vs  innodb_max_dirty_pages_pct",
-    "recommendations_len": 3
+    "evidence_len": 3,
+    "recommendations_len": 3,
+    "related_len": 0
   },
   {
     "id": "bp.free_pages_low",
     "subsystem": "Buffer Pool",
     "title": "Buffer pool free pages exhausted",
+    "category": "Saturation",
     "severity": "warn",
+    "confidence": "High",
+    "coverage_topic": "Buffer Pool - Buffer pool free pages exhausted",
     "formula_text": "free_pages \u003c= innodb_lru_scan_depth × innodb_buffer_pool_instances  AND  Innodb_buffer_pool_reads/s \u003e 0",
-    "recommendations_len": 3
+    "evidence_len": 4,
+    "recommendations_len": 3,
+    "related_len": 0
   },
   {
     "id": "bp.hit_ratio",
     "subsystem": "Buffer Pool",
     "title": "Buffer pool hit ratio",
+    "category": "Utilization",
     "severity": "crit",
+    "confidence": "High",
+    "coverage_topic": "Buffer Pool - Buffer pool hit ratio",
     "formula_text": "hit_ratio = 1 − Innodb_buffer_pool_reads / Innodb_buffer_pool_read_requests",
-    "recommendations_len": 3
+    "evidence_len": 2,
+    "recommendations_len": 3,
+    "related_len": 0
   },
   {
     "id": "bp.wait_free",
     "subsystem": "Buffer Pool",
     "title": "Query threads waiting for free buffer pool pages",
+    "category": "Saturation",
     "severity": "crit",
+    "confidence": "High",
+    "coverage_topic": "Buffer Pool - Query threads waiting for free buffer pool pages",
     "formula_text": "Innodb_buffer_pool_wait_free/s \u003e 0",
-    "recommendations_len": 3
+    "evidence_len": 1,
+    "recommendations_len": 3,
+    "related_len": 1
   },
   {
     "id": "config.slow_log_disabled",
     "subsystem": "Configuration",
     "title": "Slow query log is disabled",
+    "category": "Utilization",
     "severity": "warn",
+    "confidence": "High",
+    "coverage_topic": "Configuration - Slow query log is disabled",
     "formula_text": "slow_query_log = OFF  AND  Questions/s \u003e 0",
-    "recommendations_len": 3
+    "evidence_len": 3,
+    "recommendations_len": 3,
+    "related_len": 0
   },
   {
     "id": "connections.saturation",
     "subsystem": "Connections",
     "title": "Connection pool saturation",
+    "category": "Saturation",
     "severity": "ok",
+    "confidence": "High",
+    "coverage_topic": "Connections - Connection pool saturation",
     "formula_text": "Threads_connected / max_connections  and  Threads_running (max)",
-    "recommendations_len": 3
+    "evidence_len": 3,
+    "recommendations_len": 3,
+    "related_len": 1
   },
   {
     "id": "innodb.flushing",
     "subsystem": "Buffer Pool",
     "title": "InnoDB flushing pressure",
+    "category": "Saturation",
     "severity": "warn",
+    "confidence": "High",
+    "coverage_topic": "Buffer Pool - InnoDB flushing pressure",
     "formula_text": "any of {singlePage, fsyncLog, LRU, flushList, fsyncBP} \u003e 0",
-    "recommendations_len": 4
+    "evidence_len": 8,
+    "recommendations_len": 4,
+    "related_len": 2
   },
   {
     "id": "innodb.semaphores",
     "subsystem": "InnoDB Semaphores",
     "title": "InnoDB semaphore contention",
+    "category": "Saturation",
     "severity": "warn",
+    "confidence": "High",
+    "coverage_topic": "InnoDB Semaphores - InnoDB semaphore contention",
     "formula_text": "peak waiting threads \u003e 0  (crit ≥ 500)",
-    "recommendations_len": 5
+    "evidence_len": 3,
+    "recommendations_len": 5,
+    "related_len": 0
   },
   {
     "id": "queryshape.handler_read_rnd_next",
     "subsystem": "Query Shape",
     "title": "Sequential row reads (table scans)",
+    "category": "Saturation",
     "severity": "warn",
+    "confidence": "High",
+    "coverage_topic": "Query Shape - Sequential row reads (table scans)",
     "formula_text": "Handler_read_rnd_next/s  and  Handler_read_rnd_next / Com_select",
-    "recommendations_len": 2
+    "evidence_len": 3,
+    "recommendations_len": 2,
+    "related_len": 0
   },
   {
     "id": "queryshape.is_processlist",
     "subsystem": "Query Shape",
     "title": "information_schema.PROCESSLIST usage",
+    "category": "Saturation",
     "severity": "warn",
+    "confidence": "Medium",
+    "coverage_topic": "Query Shape - information_schema.PROCESSLIST usage",
     "formula_text": "Deprecated_use_i_s_processlist_count/s",
-    "recommendations_len": 2
+    "evidence_len": 1,
+    "recommendations_len": 2,
+    "related_len": 0
   },
   {
     "id": "queryshape.select_full_join",
     "subsystem": "Query Shape",
     "title": "Joins without usable indexes",
+    "category": "Saturation",
     "severity": "crit",
+    "confidence": "High",
+    "coverage_topic": "Query Shape - Joins without usable indexes",
     "formula_text": "Select_full_join/s \u003e 0",
-    "recommendations_len": 2
+    "evidence_len": 1,
+    "recommendations_len": 2,
+    "related_len": 1
   },
   {
     "id": "queryshape.select_scan",
     "subsystem": "Query Shape",
     "title": "Full table scans on the first join input",
+    "category": "Saturation",
     "severity": "crit",
+    "confidence": "High",
+    "coverage_topic": "Query Shape - Full table scans on the first join input",
     "formula_text": "Select_scan/s \u003e 0",
-    "recommendations_len": 2
+    "evidence_len": 1,
+    "recommendations_len": 2,
+    "related_len": 1
   },
   {
     "id": "redo.checkpoint_age",
     "subsystem": "Redo Log",
     "title": "Redo log checkpoint age",
+    "category": "Utilization",
     "severity": "ok",
+    "confidence": "High",
+    "coverage_topic": "Redo Log - Redo log checkpoint age",
     "formula_text": "checkpoint_age / checkpoint_max_age",
-    "recommendations_len": 3
+    "evidence_len": 2,
+    "recommendations_len": 3,
+    "related_len": 1
   },
   {
     "id": "redo.pending_fsyncs",
     "subsystem": "Redo Log",
     "title": "Redo log pending fsyncs",
+    "category": "Saturation",
     "severity": "crit",
+    "confidence": "High",
+    "coverage_topic": "Redo Log - Redo log pending fsyncs",
     "formula_text": "max(Innodb_os_log_pending_fsyncs) \u003e 0",
-    "recommendations_len": 3
+    "evidence_len": 1,
+    "recommendations_len": 3,
+    "related_len": 0
   },
   {
     "id": "redo.pending_writes",
     "subsystem": "Redo Log",
     "title": "Redo log pending writes",
+    "category": "Saturation",
     "severity": "crit",
+    "confidence": "High",
+    "coverage_topic": "Redo Log - Redo log pending writes",
     "formula_text": "max(Innodb_os_log_pending_writes) \u003e 0",
-    "recommendations_len": 3
+    "evidence_len": 1,
+    "recommendations_len": 3,
+    "related_len": 1
   },
   {
     "id": "tablecache.miss_ratio",
     "subsystem": "Table Open Cache",
     "title": "Table cache miss ratio",
+    "category": "Saturation",
     "severity": "ok",
+    "confidence": "High",
+    "coverage_topic": "Table Open Cache - Table cache miss ratio",
     "formula_text": "miss_ratio = Table_open_cache_misses / (Table_open_cache_hits + Table_open_cache_misses)",
-    "recommendations_len": 2
+    "evidence_len": 2,
+    "recommendations_len": 2,
+    "related_len": 0
   },
   {
     "id": "tablecache.usage",
     "subsystem": "Table Open Cache",
     "title": "Table cache saturation",
+    "category": "Saturation",
     "severity": "ok",
+    "confidence": "High",
+    "coverage_topic": "Table Open Cache - Table cache saturation",
     "formula_text": "usage = Open_tables / table_open_cache",
-    "recommendations_len": 3
+    "evidence_len": 2,
+    "recommendations_len": 3,
+    "related_len": 0
   },
   {
     "id": "thread.max_queue_depth",
     "subsystem": "Connections",
     "title": "Threads_running peak across capture",
+    "category": "Saturation",
     "severity": "ok",
+    "confidence": "High",
+    "coverage_topic": "Connections - Threads_running peak across capture",
     "formula_text": "max(Threads_running) across capture  vs  {max_connections/2 warn, max_connections*0.9 crit}",
-    "recommendations_len": 3
+    "evidence_len": 4,
+    "recommendations_len": 3,
+    "related_len": 0
   },
   {
     "id": "threadcache.hit_ratio",
     "subsystem": "Thread Cache",
     "title": "Thread cache hit ratio",
+    "category": "Utilization",
     "severity": "ok",
+    "confidence": "High",
+    "coverage_topic": "Thread Cache - Thread cache hit ratio",
     "formula_text": "hit_ratio = 1 − Threads_created / Connections",
-    "recommendations_len": 2
+    "evidence_len": 3,
+    "recommendations_len": 2,
+    "related_len": 0
   },
   {
     "id": "tmp.disk_ratio",
     "subsystem": "Temp Tables",
     "title": "Internal temp tables spilling to disk",
+    "category": "Saturation",
     "severity": "ok",
+    "confidence": "High",
+    "coverage_topic": "Temp Tables - Internal temp tables spilling to disk",
     "formula_text": "disk_ratio = Created_tmp_disk_tables / Created_tmp_tables",
-    "recommendations_len": 3
+    "evidence_len": 4,
+    "recommendations_len": 3,
+    "related_len": 0
   }
 ]

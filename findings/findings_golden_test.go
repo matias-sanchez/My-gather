@@ -22,8 +22,9 @@ import (
 //
 // The golden is a compact, sorted-by-ID JSON projection of the
 // Findings slice — only the metadata fields that matter for review
-// (ID, Subsystem, Title, Severity, FormulaText, recommendation count)
-// so the file stays small enough to read in code review and is
+// (ID, Subsystem, category, confidence, FormulaText, evidence count,
+// recommendation count, and relation count) so the file stays small
+// enough to read in code review and is
 // resilient to incidental wording changes inside Summary /
 // Explanation.
 func TestGoldenAdvisor(t *testing.T) {
@@ -45,9 +46,14 @@ func TestGoldenAdvisor(t *testing.T) {
 		ID                 string `json:"id"`
 		Subsystem          string `json:"subsystem"`
 		Title              string `json:"title"`
+		Category           string `json:"category"`
 		Severity           string `json:"severity"`
+		Confidence         string `json:"confidence"`
+		CoverageTopic      string `json:"coverage_topic"`
 		FormulaText        string `json:"formula_text"`
+		EvidenceLen        int    `json:"evidence_len"`
 		RecommendationsLen int    `json:"recommendations_len"`
+		RelatedLen         int    `json:"related_len"`
 	}
 	rows := make([]goldenRow, 0, len(got))
 	for _, f := range got {
@@ -55,9 +61,14 @@ func TestGoldenAdvisor(t *testing.T) {
 			ID:                 f.ID,
 			Subsystem:          f.Subsystem,
 			Title:              f.Title,
+			Category:           string(f.Category),
 			Severity:           severityName(f.Severity),
+			Confidence:         string(f.Confidence),
+			CoverageTopic:      f.CoverageTopic,
 			FormulaText:        f.FormulaText,
+			EvidenceLen:        len(f.Evidence),
 			RecommendationsLen: len(f.Recommendations),
+			RelatedLen:         len(f.RelatedFindings),
 		})
 	}
 	sort.Slice(rows, func(i, j int) bool { return rows[i].ID < rows[j].ID })

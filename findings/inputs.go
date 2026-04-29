@@ -214,6 +214,19 @@ func variableRaw(r *model.Report, name string) (string, bool) {
 	return "", false
 }
 
+// missingInputEvidence records unavailable inputs as low-strength
+// context. It is intentionally not used by rules that skip outright:
+// missing inputs must not create or escalate a warning.
+func missingInputEvidence(names ...string) EvidenceRef {
+	return EvidenceRef{
+		Name:     "Missing inputs",
+		Value:    strings.Join(names, ", "),
+		Kind:     EvidenceInference,
+		Strength: EvidenceWeak,
+		Note:     "not used to escalate severity",
+	}
+}
+
 // formatNum renders a float with a sensible precision for display in
 // the FormulaComputed line. Integers print without decimals;
 // fractions get up to 2 decimal places; very small fractions use

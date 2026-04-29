@@ -20,6 +20,9 @@ go test ./render -run Advisor -count=1
 ```
 
 Expected result: existing Advisor rules and render tests pass before changes.
+At the start of implementation this is the baseline used for regression
+checks; both commands are expected to be green before feature edits and after
+each completed story checkpoint.
 
 ## 3. Validate rule metadata quality during implementation
 
@@ -28,7 +31,8 @@ go test ./findings -run 'TestRuleQuality|TestGoldenAdvisor' -count=1
 ```
 
 Expected result: every registered rule has stable metadata, known subsystem,
-recommendations, and deterministic golden output.
+recommendations, diagnostic category, coverage topic, and deterministic golden
+output.
 
 ## 4. Validate full report rendering
 
@@ -64,6 +68,18 @@ Review checklist:
 - Critical and warning findings are easy to identify.
 - Top suspected drivers are visible near the start of the Advisor section.
 - Each non-OK finding shows evidence, interpretation, and next checks.
+- Evidence rows identify whether values are direct measurements, derived rates,
+  derived ratios, observed states, observed errors, or inference.
+- Recommendations are grouped by intent: confirm, investigate, mitigate, or
+  caution.
 - Missing inputs are not presented as observed evidence.
 - Related findings are cross-referenced without hiding important cards.
 - The report works offline as a single HTML file.
+
+## 7. Implemented checkpoint
+
+The implementation enriches all visible Advisor findings with category,
+confidence, evidence bundles, structured recommendations, coverage topics, and
+deterministic related-finding references. The HTML render adds category and
+confidence chips, top suspected drivers, evidence bundles, grouped
+recommendations, and related finding links.

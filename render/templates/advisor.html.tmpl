@@ -38,6 +38,25 @@
   </button>
 </div>
 
+{{- if .TopDrivers }}
+<div class="advisor-top-drivers" aria-label="Top suspected incident drivers">
+  <div class="k">Top suspected drivers</div>
+  <ol>
+    {{- range .TopDrivers }}
+    <li>
+      <a href="#finding-{{.ID}}">{{.Title}}</a>
+      <span class="sev-chip sev-{{.SeverityClass}}">{{.SeverityLabel}}</span>
+      {{- if .Category }}<span class="advisor-chip">{{.Category}}</span>{{end}}
+      {{- if .Confidence }}<span class="advisor-chip muted">{{.Confidence}} confidence</span>{{end}}
+      <span class="driver-subsystem">{{.Subsystem}}</span>
+      <span class="driver-summary">{{.Summary}}</span>
+      {{- if .Why }}<span class="driver-why">{{.Why}}</span>{{end}}
+    </li>
+    {{- end }}
+  </ol>
+</div>
+{{- end }}
+
 {{- /* Group by Subsystem while preserving order. The template iterates
        the already-sorted slice and injects a subhead whenever the
        subsystem changes. The wrapping <section> lets app.js hide the
@@ -56,6 +75,8 @@
   <details class="finding sev-{{.SeverityClass}}" data-sev="{{.SeverityClass}}" id="finding-{{.ID}}"{{if .OpenByDefault}} open{{end}}>
     <summary>
       <span class="sev-chip sev-{{.SeverityClass}}">{{.SeverityLabel}}</span>
+      {{- if .Category }}<span class="advisor-chip">{{.Category}}</span>{{end}}
+      {{- if .Confidence }}<span class="advisor-chip muted">{{.Confidence}} confidence</span>{{end}}
       <span class="finding-title">{{.Title}}</span>
       <span class="finding-summary">{{.Summary}}</span>
     </summary>
@@ -75,6 +96,22 @@
         {{- end }}
       </ul>
       {{- end }}
+      {{- if .Evidence }}
+      <div class="finding-evidence">
+        <div class="k">Evidence</div>
+        <ul>
+          {{- range .Evidence }}
+          <li>
+            <span class="name">{{.Name}}</span>
+            {{- if .Value }}<span class="value">{{.Value}}{{if .Unit}} <em class="unit">{{.Unit}}</em>{{end}}</span>{{end}}
+            {{- if .Kind }}<span class="note">{{.Kind}}</span>{{end}}
+            {{- if .Strength }}<span class="note">{{.Strength}}</span>{{end}}
+            {{- if .Note }}<span class="note">{{.Note}}</span>{{end}}
+          </li>
+          {{- end }}
+        </ul>
+      </div>
+      {{- end }}
       {{- if .Explanation }}
       <p class="finding-explain">{{.Explanation}}</p>
       {{- end }}
@@ -82,9 +119,22 @@
       <div class="finding-recs">
         <div class="k">Recommendations</div>
         <ul>
-          {{- range .Recommendations }}<li>{{.}}</li>{{ end }}
+          {{- range .Recommendations }}
+          <li>{{if .Kind}}<span class="rec-kind">{{.Kind}}</span>{{end}}{{.Text}}{{if .AppliesWhen}} <span class="note">{{.AppliesWhen}}</span>{{end}}</li>
+          {{ end }}
         </ul>
       </div>
+      {{- end }}
+      {{- if .RelatedFindings }}
+      <div class="finding-related">
+        <div class="k">Related findings</div>
+        <ul>
+          {{- range .RelatedFindings }}<li><a href="#finding-{{.ID}}">{{.ID}}</a>{{if .Relationship}} <span class="note">{{.Relationship}}</span>{{end}}{{if .Reason}} - {{.Reason}}{{end}}</li>{{ end }}
+        </ul>
+      </div>
+      {{- end }}
+      {{- if .CoverageTopic }}
+      <div class="finding-source"><span class="k">Coverage</span> {{.CoverageTopic}}</div>
       {{- end }}
     </div>
   </details>

@@ -69,6 +69,13 @@ type RuleDefinition struct {
 	// than enforced today.
 	FormulaText string
 
+	// Category is the USE-style diagnostic category represented by
+	// the rule's dominant signal.
+	Category DiagnosticCategory
+
+	// CoverageTopic is the Rosetta Stone topic this rule covers.
+	CoverageTopic string
+
 	// MinRecommendations is the minimum number of remediation steps
 	// the rule must produce when it fires non-OK. The quality harness
 	// requires CRITICAL-bucket rules to have at least 3 and INFO-only
@@ -103,6 +110,12 @@ var registry []RuleDefinition
 // register appends a RuleDefinition to the package-level registry. It
 // is intended to be called from init() in the per-subsystem files.
 func register(d RuleDefinition) {
+	if d.Category == "" {
+		d.Category = inferCategory(d.ID, d.Subsystem, d.Title, d.FormulaText)
+	}
+	if d.CoverageTopic == "" {
+		d.CoverageTopic = defaultCoverageTopic(d.Subsystem, d.Title)
+	}
 	registry = append(registry, d)
 }
 

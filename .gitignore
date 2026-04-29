@@ -3,6 +3,8 @@
 # Go build artefacts
 bin/
 dist/
+vendor/
+*.exe
 *.test
 *.out
 

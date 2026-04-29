@@ -20,9 +20,9 @@ testable increments.
 
 **Purpose**: Prepare durable planning and baseline context before shared code changes.
 
-- [ ] T001 Create the Rosetta Stone topic coverage skeleton in `specs/007-advisor-intelligence/coverage-map.md`
-- [ ] T002 [P] Record current Advisor baseline commands and expected green tests in `specs/007-advisor-intelligence/quickstart.md`
-- [ ] T003 [P] Add a short implementation scope note for deferred Rosetta topics in `specs/007-advisor-intelligence/coverage-map.md`
+- [x] T001 Create the Rosetta Stone topic coverage skeleton in `specs/007-advisor-intelligence/coverage-map.md`
+- [x] T002 [P] Record current Advisor baseline commands and expected green tests in `specs/007-advisor-intelligence/quickstart.md`
+- [x] T003 [P] Add a short implementation scope note for deferred Rosetta topics in `specs/007-advisor-intelligence/coverage-map.md`
 
 ---
 
@@ -32,14 +32,14 @@ testable increments.
 
 **Critical**: No user story work can begin until this phase is complete.
 
-- [ ] T004 Add diagnostic category, evidence kind, evidence strength, confidence, recommendation kind, and correlation types in `findings/findings.go`
-- [ ] T005 Extend `Finding` with category, confidence, evidence bundle, recommendation metadata, related finding IDs, and coverage topic in `findings/findings.go`
-- [ ] T006 Extend `RuleDefinition` with category and coverage metadata in `findings/register.go`
-- [ ] T007 Add coverage map types and deterministic exported coverage accessors in `findings/coverage.go`
-- [ ] T008 Update Advisor view structs for category, confidence, evidence, recommendations, relations, and source topic in `render/view.go`
-- [ ] T009 Update `buildFindingViews` mapping for the new Advisor fields in `render/advisor_view.go`
-- [ ] T010 [P] Add rule metadata quality assertions for category and coverage topic in `findings/rules_quality_test.go`
-- [ ] T011 [P] Add coverage map quality tests for unique topics and valid statuses in `findings/coverage_test.go`
+- [x] T004 Add diagnostic category, evidence kind, evidence strength, confidence, recommendation kind, and correlation types in `findings/findings.go`
+- [x] T005 Extend `Finding` with category, confidence, evidence bundle, recommendation metadata, related finding IDs, and coverage topic in `findings/findings.go`
+- [x] T006 Extend `RuleDefinition` with category and coverage metadata in `findings/register.go`
+- [x] T007 Add coverage map types and deterministic exported coverage accessors in `findings/coverage.go`
+- [x] T008 Update Advisor view structs for category, confidence, evidence, recommendations, relations, and source topic in `render/view.go`
+- [x] T009 Update `buildFindingViews` mapping for the new Advisor fields in `render/advisor_view.go`
+- [x] T010 [P] Add rule metadata quality assertions for category and coverage topic in `findings/rules_quality_test.go`
+- [x] T011 [P] Add coverage map quality tests for unique topics and valid statuses in `findings/coverage_test.go`
 
 **Checkpoint**: Shared Advisor metadata compiles, rule quality tests cover required metadata, and story work can begin.
 
@@ -56,19 +56,19 @@ subsystem, severity, evidence, interpretation, and next checks.
 
 ### Tests for User Story 1
 
-- [ ] T012 [P] [US1] Add finding evidence and interpretation tests for major subsystem signals in `findings/findings_test.go`
-- [ ] T013 [P] [US1] Add Advisor card rendering tests for evidence bundles and next checks in `render/render_test.go`
+- [x] T012 [P] [US1] Add finding evidence and interpretation tests for major subsystem signals in `findings/findings_test.go`
+- [x] T013 [P] [US1] Add Advisor card rendering tests for evidence bundles and next checks in `render/render_test.go`
 
 ### Implementation for User Story 1
 
-- [ ] T014 [P] [US1] Populate evidence, interpretation, confidence, and next checks for buffer pool findings in `findings/rules_bufferpool.go`
-- [ ] T015 [P] [US1] Populate evidence, interpretation, confidence, and next checks for redo findings in `findings/rules_redo.go`
-- [ ] T016 [P] [US1] Populate evidence, interpretation, confidence, and next checks for table cache findings in `findings/rules_tablecache.go`
-- [ ] T017 [P] [US1] Populate evidence, interpretation, confidence, and next checks for connection findings in `findings/rules_connections.go`
-- [ ] T018 [P] [US1] Populate evidence, interpretation, confidence, and next checks for query-shape findings in `findings/rules_queryshape.go`
-- [ ] T019 [US1] Render evidence bundles and recommendation groups in `render/templates/advisor.html.tmpl`
-- [ ] T020 [US1] Style evidence bundles, category chips, confidence chips, and recommendation groups in `render/assets/app.css`
-- [ ] T021 [US1] Update Advisor golden output for evidence and recommendations in `testdata/golden/advisor.example2.json`
+- [x] T014 [P] [US1] Populate evidence, interpretation, confidence, and next checks for buffer pool findings in `findings/rules_bufferpool.go`
+- [x] T015 [P] [US1] Populate evidence, interpretation, confidence, and next checks for redo findings in `findings/rules_redo.go`
+- [x] T016 [P] [US1] Populate evidence, interpretation, confidence, and next checks for table cache findings in `findings/rules_tablecache.go`
+- [x] T017 [P] [US1] Populate evidence, interpretation, confidence, and next checks for connection findings in `findings/rules_connections.go`
+- [x] T018 [P] [US1] Populate evidence, interpretation, confidence, and next checks for query-shape findings in `findings/rules_queryshape.go`
+- [x] T019 [US1] Render evidence bundles and recommendation groups in `render/templates/advisor.html.tmpl`
+- [x] T020 [US1] Style evidence bundles, category chips, confidence chips, and recommendation groups in `render/assets/app.css`
+- [x] T021 [US1] Update Advisor golden output for evidence and recommendations in `testdata/golden/findings.example2.json`
 
 **Checkpoint**: User Story 1 is independently functional and the Advisor can explain top incident drivers with evidence.
 
@@ -84,25 +84,25 @@ diagnostic category and does not overstate utilization-only signals.
 
 ### Tests for User Story 2
 
-- [ ] T022 [P] [US2] Add diagnostic category table tests for registered rules in `findings/rules_quality_test.go`
-- [ ] T023 [P] [US2] Add category-specific rule behavior tests for utilization, saturation, and error examples in `findings/findings_test.go`
+- [x] T022 [P] [US2] Add diagnostic category table tests for registered rules in `findings/rules_quality_test.go`
+- [x] T023 [P] [US2] Add category-specific rule behavior tests for utilization, saturation, and error examples in `findings/findings_test.go`
 
 ### Implementation for User Story 2
 
-- [ ] T024 [P] [US2] Classify buffer pool findings by diagnostic category in `findings/rules_bufferpool.go`
-- [ ] T025 [P] [US2] Classify redo findings by diagnostic category in `findings/rules_redo.go`
-- [ ] T026 [P] [US2] Classify flushing findings by diagnostic category in `findings/rules_flushing.go`
-- [ ] T027 [P] [US2] Classify table cache findings by diagnostic category in `findings/rules_tablecache.go`
-- [ ] T028 [P] [US2] Classify thread cache findings by diagnostic category in `findings/rules_threadcache.go`
-- [ ] T029 [P] [US2] Classify thread queue findings by diagnostic category in `findings/rules_threadqueue.go`
-- [ ] T030 [P] [US2] Classify connection findings by diagnostic category in `findings/rules_connections.go`
-- [ ] T031 [P] [US2] Classify temporary table findings by diagnostic category in `findings/rules_tmp.go`
-- [ ] T032 [P] [US2] Classify binary log findings by diagnostic category in `findings/rules_binlog.go`
-- [ ] T033 [P] [US2] Classify query-shape findings by diagnostic category in `findings/rules_queryshape.go`
-- [ ] T034 [P] [US2] Classify semaphore findings by diagnostic category in `findings/rules_semaphores.go`
-- [ ] T035 [US2] Complete Rosetta Stone coverage rows for covered, partial, deferred, and excluded topics in `findings/coverage.go`
-- [ ] T036 [US2] Update the feature coverage map with implementation coverage status in `specs/007-advisor-intelligence/coverage-map.md`
-- [ ] T037 [US2] Update Advisor golden output for diagnostic category metadata in `testdata/golden/advisor.example2.json`
+- [x] T024 [P] [US2] Classify buffer pool findings by diagnostic category in `findings/rules_bufferpool.go`
+- [x] T025 [P] [US2] Classify redo findings by diagnostic category in `findings/rules_redo.go`
+- [x] T026 [P] [US2] Classify flushing findings by diagnostic category in `findings/rules_flushing.go`
+- [x] T027 [P] [US2] Classify table cache findings by diagnostic category in `findings/rules_tablecache.go`
+- [x] T028 [P] [US2] Classify thread cache findings by diagnostic category in `findings/rules_threadcache.go`
+- [x] T029 [P] [US2] Classify thread queue findings by diagnostic category in `findings/rules_threadqueue.go`
+- [x] T030 [P] [US2] Classify connection findings by diagnostic category in `findings/rules_connections.go`
+- [x] T031 [P] [US2] Classify temporary table findings by diagnostic category in `findings/rules_tmp.go`
+- [x] T032 [P] [US2] Classify binary log findings by diagnostic category in `findings/rules_binlog.go`
+- [x] T033 [P] [US2] Classify query-shape findings by diagnostic category in `findings/rules_queryshape.go`
+- [x] T034 [P] [US2] Classify semaphore findings by diagnostic category in `findings/rules_semaphores.go`
+- [x] T035 [US2] Complete Rosetta Stone coverage rows for covered, partial, deferred, and excluded topics in `findings/coverage.go`
+- [x] T036 [US2] Update the feature coverage map with implementation coverage status in `specs/007-advisor-intelligence/coverage-map.md`
+- [x] T037 [US2] Update Advisor golden output for diagnostic category metadata in `testdata/golden/findings.example2.json`
 
 **Checkpoint**: User Story 2 is independently functional and every visible finding has an auditable diagnostic category.
 
@@ -118,20 +118,20 @@ findings ahead of weaker related symptoms and cross-references relationships.
 
 ### Tests for User Story 3
 
-- [ ] T038 [P] [US3] Add deterministic top-driver ranking tests in `findings/findings_test.go`
-- [ ] T039 [P] [US3] Add correlated finding render tests in `render/render_test.go`
+- [x] T038 [P] [US3] Add deterministic top-driver ranking tests in `findings/findings_test.go`
+- [x] T039 [P] [US3] Add correlated finding render tests in `render/render_test.go`
 
 ### Implementation for User Story 3
 
-- [ ] T040 [US3] Implement deterministic finding correlation helpers in `findings/findings.go`
-- [ ] T041 [US3] Add related-finding IDs for redo and flushing relationships in `findings/rules_flushing.go`
-- [ ] T042 [US3] Add related-finding IDs for metadata-lock and query-shape relationships in `findings/rules_queryshape.go`
-- [ ] T043 [US3] Add related-finding IDs for table-cache relationships in `findings/rules_tablecache.go`
-- [ ] T044 [US3] Derive top suspected drivers from visible findings in `render/advisor_view.go`
-- [ ] T045 [US3] Render the Advisor top-driver summary and related finding references in `render/templates/advisor.html.tmpl`
-- [ ] T046 [US3] Style top-driver summary and related finding references in `render/assets/app.css`
-- [ ] T047 [US3] Update Advisor golden output for top-driver summary in `testdata/golden/advisor.example2.json`
-- [ ] T048 [US3] Update DB HTML golden output for top-driver summary in `testdata/golden/db.example2.html`
+- [x] T040 [US3] Implement deterministic finding correlation helpers in `findings/findings.go`
+- [x] T041 [US3] Add related-finding IDs for redo and flushing relationships in `findings/rules_flushing.go`
+- [x] T042 [US3] Add related-finding IDs for metadata-lock and query-shape relationships in `findings/rules_queryshape.go`
+- [x] T043 [US3] Add related-finding IDs for table-cache relationships in `findings/rules_tablecache.go`
+- [x] T044 [US3] Derive top suspected drivers from visible findings in `render/advisor_view.go`
+- [x] T045 [US3] Render the Advisor top-driver summary and related finding references in `render/templates/advisor.html.tmpl`
+- [x] T046 [US3] Style top-driver summary and related finding references in `render/assets/app.css`
+- [x] T047 [US3] Update Advisor golden output for top-driver summary in `testdata/golden/findings.example2.json`
+- [x] T048 [US3] Update DB HTML golden output for top-driver summary in `testdata/golden/db.example2.html`
 
 **Checkpoint**: User Story 3 is independently functional and correlated findings are prioritized and cross-referenced.
 
@@ -147,24 +147,24 @@ finding recommends relevant checks without unrelated advice.
 
 ### Tests for User Story 4
 
-- [ ] T049 [P] [US4] Add recommendation coverage tests for subsystem families in `findings/findings_test.go`
-- [ ] T050 [P] [US4] Add recommendation rendering tests for grouped confirmation and investigation steps in `render/render_test.go`
+- [x] T049 [P] [US4] Add recommendation coverage tests for subsystem families in `findings/findings_test.go`
+- [x] T050 [P] [US4] Add recommendation rendering tests for grouped confirmation and investigation steps in `render/render_test.go`
 
 ### Implementation for User Story 4
 
-- [ ] T051 [P] [US4] Add focused recommendations for buffer pool findings in `findings/rules_bufferpool.go`
-- [ ] T052 [P] [US4] Add focused recommendations for redo findings in `findings/rules_redo.go`
-- [ ] T053 [P] [US4] Add focused recommendations for flushing findings in `findings/rules_flushing.go`
-- [ ] T054 [P] [US4] Add focused recommendations for table cache findings in `findings/rules_tablecache.go`
-- [ ] T055 [P] [US4] Add focused recommendations for thread cache findings in `findings/rules_threadcache.go`
-- [ ] T056 [P] [US4] Add focused recommendations for thread queue findings in `findings/rules_threadqueue.go`
-- [ ] T057 [P] [US4] Add focused recommendations for connection findings in `findings/rules_connections.go`
-- [ ] T058 [P] [US4] Add focused recommendations for temporary table findings in `findings/rules_tmp.go`
-- [ ] T059 [P] [US4] Add focused recommendations for binary log findings in `findings/rules_binlog.go`
-- [ ] T060 [P] [US4] Add focused recommendations for query-shape findings in `findings/rules_queryshape.go`
-- [ ] T061 [P] [US4] Add focused recommendations for semaphore findings in `findings/rules_semaphores.go`
-- [ ] T062 [US4] Render recommendation kind labels and scoped cautions in `render/templates/advisor.html.tmpl`
-- [ ] T063 [US4] Update Advisor golden output for recommendation groups in `testdata/golden/advisor.example2.json`
+- [x] T051 [P] [US4] Add focused recommendations for buffer pool findings in `findings/rules_bufferpool.go`
+- [x] T052 [P] [US4] Add focused recommendations for redo findings in `findings/rules_redo.go`
+- [x] T053 [P] [US4] Add focused recommendations for flushing findings in `findings/rules_flushing.go`
+- [x] T054 [P] [US4] Add focused recommendations for table cache findings in `findings/rules_tablecache.go`
+- [x] T055 [P] [US4] Add focused recommendations for thread cache findings in `findings/rules_threadcache.go`
+- [x] T056 [P] [US4] Add focused recommendations for thread queue findings in `findings/rules_threadqueue.go`
+- [x] T057 [P] [US4] Add focused recommendations for connection findings in `findings/rules_connections.go`
+- [x] T058 [P] [US4] Add focused recommendations for temporary table findings in `findings/rules_tmp.go`
+- [x] T059 [P] [US4] Add focused recommendations for binary log findings in `findings/rules_binlog.go`
+- [x] T060 [P] [US4] Add focused recommendations for query-shape findings in `findings/rules_queryshape.go`
+- [x] T061 [P] [US4] Add focused recommendations for semaphore findings in `findings/rules_semaphores.go`
+- [x] T062 [US4] Render recommendation kind labels and scoped cautions in `render/templates/advisor.html.tmpl`
+- [x] T063 [US4] Update Advisor golden output for recommendation groups in `testdata/golden/findings.example2.json`
 
 **Checkpoint**: User Story 4 is independently functional and every non-OK finding points to relevant next checks.
 
@@ -180,17 +180,17 @@ valid findings while skipping or downgrading unsupported findings.
 
 ### Tests for User Story 5
 
-- [ ] T064 [P] [US5] Add sparse and partial capture behavior tests in `findings/findings_test.go`
-- [ ] T065 [P] [US5] Add missing-input and inference display tests in `render/render_test.go`
+- [x] T064 [P] [US5] Add sparse and partial capture behavior tests in `findings/findings_test.go`
+- [x] T065 [P] [US5] Add missing-input and inference display tests in `render/render_test.go`
 
 ### Implementation for User Story 5
 
-- [ ] T066 [US5] Add missing-input and inference representation helpers in `findings/inputs.go`
-- [ ] T067 [US5] Update config rules that currently warn on weak evidence to skip, downgrade, or mark low confidence in `findings/rules_config_max_connections.go`
-- [ ] T068 [US5] Update query-shape rules to avoid unsupported findings on sparse captures in `findings/rules_queryshape.go`
-- [ ] T069 [US5] Render missing-input context, inference labels, and low-confidence labels in `render/templates/advisor.html.tmpl`
-- [ ] T070 [US5] Style missing-input context and low-confidence labels in `render/assets/app.css`
-- [ ] T071 [US5] Update Advisor golden output for sparse-input and confidence behavior in `testdata/golden/advisor.example2.json`
+- [x] T066 [US5] Add missing-input and inference representation helpers in `findings/inputs.go`
+- [x] T067 [US5] Update config rules that currently warn on weak evidence to skip, downgrade, or mark low confidence in `findings/rules_config_max_connections.go`
+- [x] T068 [US5] Update query-shape rules to avoid unsupported findings on sparse captures in `findings/rules_queryshape.go`
+- [x] T069 [US5] Render missing-input context, inference labels, and low-confidence labels in `render/templates/advisor.html.tmpl`
+- [x] T070 [US5] Style missing-input context and low-confidence labels in `render/assets/app.css`
+- [x] T071 [US5] Update Advisor golden output for sparse-input and confidence behavior in `testdata/golden/findings.example2.json`
 
 **Checkpoint**: User Story 5 is independently functional and unsupported findings are skipped or clearly downgraded.
 
@@ -200,12 +200,12 @@ valid findings while skipping or downgrading unsupported findings.
 
 **Purpose**: Finalize documentation, goldens, and repo-wide quality gates.
 
-- [ ] T072 [P] Update package contracts with final implementation decisions in `specs/007-advisor-intelligence/contracts/packages.md`
-- [ ] T073 [P] Update UI contract with final Advisor labels and empty-state behavior in `specs/007-advisor-intelligence/contracts/ui.md`
-- [ ] T074 [P] Update implementation notes and validation commands in `specs/007-advisor-intelligence/quickstart.md`
-- [ ] T075 Run gofmt on `findings/findings.go`, `findings/register.go`, `findings/coverage.go`, and `render/advisor_view.go`
-- [ ] T076 Run focused Advisor validation from quickstart and record any intentional golden updates in `specs/007-advisor-intelligence/quickstart.md`
-- [ ] T077 Run full local validation commands from quickstart in `specs/007-advisor-intelligence/quickstart.md`
+- [x] T072 [P] Update package contracts with final implementation decisions in `specs/007-advisor-intelligence/contracts/packages.md`
+- [x] T073 [P] Update UI contract with final Advisor labels and empty-state behavior in `specs/007-advisor-intelligence/contracts/ui.md`
+- [x] T074 [P] Update implementation notes and validation commands in `specs/007-advisor-intelligence/quickstart.md`
+- [x] T075 Run gofmt on `findings/findings.go`, `findings/register.go`, `findings/coverage.go`, and `render/advisor_view.go`
+- [x] T076 Run focused Advisor validation from quickstart and record any intentional golden updates in `specs/007-advisor-intelligence/quickstart.md`
+- [x] T077 Run full local validation commands from quickstart in `specs/007-advisor-intelligence/quickstart.md`
 
 ---
 
