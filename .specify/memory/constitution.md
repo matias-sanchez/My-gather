@@ -1,6 +1,37 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.4.0 → 1.5.0
+Bump rationale: MINOR-level addition of a new Core Principle — XV.
+  Bounded Source File Size — plus a companion mechanical quality gate.
+  The rule forbids first-party source-code files over 1000 lines so
+  god files are blocked before review. It is scoped intentionally to
+  source code, not specs, docs, JSON data, raw pt-stalk fixtures,
+  reference captures, generated lockfiles, or golden snapshots. The
+  repository is brought into compliance in the same PR by splitting
+  the maintained report JS/CSS assets into ordered embedded source
+  parts.
+
+Added principles:
+  - XV. Bounded Source File Size
+
+Modified sections:
+  - Development Workflow & Quality Gates → added 9th merge gate:
+      "No governed first-party source-code file exceeds 1000 lines
+      (Principle XV)."
+
+Templates requiring updates:
+  - .specify/templates/plan-template.md             compatible
+  - .specify/templates/spec-template.md             compatible
+  - .specify/templates/tasks-template.md            compatible
+  - .specify/templates/checklist-template.md        compatible
+  - .claude/skills/speckit-*/                       compatible
+  - .agents/skills/speckit-*/                       compatible
+
+Deferred items / follow-up TODOs: none.
+
+Prior Sync Impact Report (1.4.0) follows for history:
+-----------------------------------------------------
 Version change: 1.3.1 → 1.4.0
 Bump rationale: MINOR-level mechanisation of two previously REVIEW-
   only gates. Gates 5 (Principle VI godoc-on-exports) and 8
@@ -467,6 +498,19 @@ checked-in artifact. A change that introduces non-English text into any
 other artifact MUST be rejected unless the same pull request carries a
 constitution amendment adopting a named exception.
 
+### XV. Bounded Source File Size
+
+First-party source-code files MUST NOT exceed 1000 lines. This is a
+maintainability boundary against god files: when a source file grows past the
+limit, the change MUST split it by responsibility before merge. Governed
+source-code files include Go, JavaScript, TypeScript, CSS, shell, HTML template,
+and similar maintained implementation files. The rule does not apply to specs,
+docs, JSON data, raw pt-stalk fixtures under `testdata/`, reference captures
+under `_references/`, committed golden snapshots, generated dependency
+lockfiles, or vendored third-party/minified assets. Exemptions for maintained
+first-party source code are prohibited without a constitution amendment naming
+the exception and its removal plan.
+
 ## Distribution & Platform Support
 
 Release artifacts MUST be produced reproducibly from tagged commits and
@@ -547,10 +591,17 @@ is the only line of defence:
    byte-counting test fixture at
    `feedback-worker/test/validate.test.ts:69-70`) are exempt by
    file:line.
+9. **[MECHANICAL]** No governed first-party source-code file exceeds
+   1000 lines (Principle XV). Enforced by
+   `tests/coverage/file_size_test.go`, which scans tracked source files
+   and fails with every offending path and line count. Raw fixtures,
+   references, specs, docs, JSON data, generated dependency lockfiles,
+   golden snapshots, and vendored third-party/minified assets are outside
+   this source-code rule.
 
 The MECHANICAL / REVIEW split documents what the repo enforces with code
 today, not the strictness of each gate — every gate is equally
-non-negotiable for a merge. As of v1.4 only gate 7 (Principle XIII
+non-negotiable for a merge. As of v1.5 only gate 7 (Principle XIII
 canonical code path) remains [REVIEW]; a future amendment may convert
 it once a duplicate-implementation scan is designed. The constitution
 does not require that conversion, but the absence of mechanical teeth
@@ -588,4 +639,4 @@ invocation via the Constitution Check gate. Runtime development guidance
 and feature-local `plan.md` / `quickstart.md` files and MUST defer to this
 constitution when conflicts arise.
 
-**Version**: 1.4.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-27
+**Version**: 1.5.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-05-01
