@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -29,16 +30,13 @@ var governedSourceExtensions = map[string]bool{
 // maintained first-party source files must stay below the god-file line limit.
 func TestGovernedSourceFileLineLimit(t *testing.T) {
 	root := goldens.RepoRoot(t)
-	paths := gitTrackedFiles(t, root)
+	paths := governedSourceFiles(t, root)
 
 	var offenders []string
 	for _, path := range paths {
-		if !isGovernedSourcePath(path) {
-			continue
-		}
 		lines := countLines(t, filepath.Join(root, filepath.FromSlash(path)))
 		if lines > governedSourceLineLimit {
-			offenders = append(offenders, path+" has "+itoa(lines)+" lines")
+			offenders = append(offenders, path+" has "+strconv.Itoa(lines)+" lines")
 		}
 	}
 
@@ -53,19 +51,72 @@ func TestGovernedSourceFileLineLimit(t *testing.T) {
 	)
 }
 
-func gitTrackedFiles(t *testing.T, root string) []string {
+func governedSourceFiles(t *testing.T, root string) []string {
 	t.Helper()
+	if paths, ok := gitTrackedSourceFiles(root); ok {
+		return paths
+	}
+	return walkedSourceFiles(t, root)
+}
+
+func gitTrackedSourceFiles(root string) ([]string, bool) {
 	cmd := exec.Command("git", "ls-files")
 	cmd.Dir = root
 	out, err := cmd.Output()
 	if err != nil {
-		t.Fatalf("git ls-files: %v", err)
+		return nil, false
 	}
 	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
 	if len(lines) == 1 && lines[0] == "" {
-		return nil
+		return nil, true
 	}
-	return lines
+
+	var paths []string
+	for _, path := range lines {
+		if isGovernedSourcePath(path) {
+			paths = append(paths, path)
+		}
+	}
+	return paths, true
+}
+
+func walkedSourceFiles(t *testing.T, root string) []string {
+	t.Helper()
+	var paths []string
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			switch entry.Name() {
+			case ".git", "node_modules":
+				return filepath.SkipDir
+			}
+			rel, err := filepath.Rel(root, path)
+			if err != nil {
+				return err
+			}
+			rel = filepath.ToSlash(rel)
+			if strings.HasPrefix(rel, "_references/") || strings.HasPrefix(rel, "testdata/") {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		rel = filepath.ToSlash(rel)
+		if isGovernedSourcePath(rel) {
+			paths = append(paths, rel)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk source files: %v", err)
+	}
+	sort.Strings(paths)
+	return paths
 }
 
 func isGovernedSourcePath(path string) bool {
@@ -92,18 +143,4 @@ func countLines(t *testing.T, path string) int {
 		lines++
 	}
 	return lines
-}
-
-func itoa(v int) string {
-	if v == 0 {
-		return "0"
-	}
-	var buf [20]byte
-	i := len(buf)
-	for v > 0 {
-		i--
-		buf[i] = byte('0' + v%10)
-		v /= 10
-	}
-	return string(buf[i:])
 }

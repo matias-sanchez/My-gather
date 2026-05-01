@@ -1,12 +1,12 @@
 /*
- * my-gather report stylesheet.
+ * my-gather report stylesheet asset part.
  *
  * Palette: dark-first, with a `prefers-color-scheme: light` override.
  * Typography: system font stack for prose, system monospace for data.
  * Layout: CSS Grid with a sticky left-rail at ≥801px, top-horizontal
  * nav at ≤800px. No CSS frameworks, no external font fetches.
  *
- * Keep this file well under 8 KB.
+ * Keep this asset part within the governed source-file line limit.
  */
 
 :root {
