@@ -1,19 +1,20 @@
 <!-- SPECKIT START -->
-Active feature: **008-archive-input**
+Active feature: **009-spec-code-reconciliation**
 
 For technologies, project structure, constitution gates, data model,
-CLI contracts, and shell commands, read the current plan:
+contracts, and shell commands, read the current plan:
 
-- Plan: `specs/008-archive-input/plan.md`
-- Spec: `specs/008-archive-input/spec.md`
-- Research: `specs/008-archive-input/research.md`
-- Data model: `specs/008-archive-input/data-model.md`
-- Contracts: `specs/008-archive-input/contracts/cli.md`
-- Quickstart: `specs/008-archive-input/quickstart.md`
-- Tasks: `specs/008-archive-input/tasks.md`
+- Plan: `specs/009-spec-code-reconciliation/plan.md`
+- Spec: `specs/009-spec-code-reconciliation/spec.md`
+- Research: `specs/009-spec-code-reconciliation/research.md`
+- Data model: `specs/009-spec-code-reconciliation/data-model.md`
+- Contracts: `specs/009-spec-code-reconciliation/contracts/reconciliation.md`
+- Quickstart: `specs/009-spec-code-reconciliation/quickstart.md`
+- Tasks: `specs/009-spec-code-reconciliation/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
+- **008-archive-input** - `specs/008-archive-input/plan.md`
 - **007-advisor-intelligence** - `specs/007-advisor-intelligence/plan.md`
 - **006-observed-slowest-queries** - `specs/006-observed-slowest-queries/plan.md`
 - **005-richer-processlist-metrics** - `specs/005-richer-processlist-metrics/plan.md`

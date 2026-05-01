@@ -2,7 +2,7 @@
 
 **Feature Branch**: `006-observed-slowest-queries`  
 **Created**: 2026-04-28  
-**Status**: Draft  
+**Status**: Complete
 **Input**: User description: "Detect the slowest queries obtained or reported in pt-stalk captures and add this to the report using the spec-driven workflow."
 
 ## User Scenarios & Testing *(mandatory)*

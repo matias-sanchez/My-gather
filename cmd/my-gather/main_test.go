@@ -227,6 +227,61 @@ func TestRunMapsCorruptGzipPayloadToInputPathError(t *testing.T) {
 	}
 }
 
+func TestRunRejectsArchiveWithNoPtStalkRoot(t *testing.T) {
+	dir := t.TempDir()
+	archivePath := filepath.Join(dir, "unrelated.zip")
+	file, err := os.Create(archivePath)
+	if err != nil {
+		t.Fatalf("create archive: %v", err)
+	}
+	zw := zip.NewWriter(file)
+	entry, err := zw.Create("notes/readme.txt")
+	if err != nil {
+		t.Fatalf("create zip entry: %v", err)
+	}
+	if _, err := entry.Write([]byte("not a pt-stalk collection")); err != nil {
+		t.Fatalf("write zip entry: %v", err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatalf("close zip: %v", err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatalf("close archive: %v", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--overwrite", "-o", filepath.Join(dir, "report.html"), archivePath}, &stdout, &stderr)
+	if code != exitNotAPtStalkDir {
+		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitNotAPtStalkDir, stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "not recognised as a pt-stalk output directory") {
+		t.Fatalf("stderr = %q, want no-root pt-stalk message", stderr.String())
+	}
+}
+
+func TestRunRejectsUnsupportedRegularInputFile(t *testing.T) {
+	dir := t.TempDir()
+	inputPath := filepath.Join(dir, "capture.txt")
+	if err := os.WriteFile(inputPath, []byte("not an archive"), 0o600); err != nil {
+		t.Fatalf("write input: %v", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--overwrite", "-o", filepath.Join(dir, "report.html"), inputPath}, &stdout, &stderr)
+	if code != exitInputPath {
+		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitInputPath, stderr.String())
+	}
+	got := stderr.String()
+	if !strings.Contains(got, "not a supported input archive") {
+		t.Fatalf("stderr = %q, want unsupported archive message", got)
+	}
+	for _, format := range []string{".zip", ".tar", ".tar.gz", ".tgz", ".gz"} {
+		if !strings.Contains(got, format) {
+			t.Fatalf("stderr = %q, want supported format %s", got, format)
+		}
+	}
+}
+
 func TestWriteExtractedFileEnforcesPerFileLimit(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "large")

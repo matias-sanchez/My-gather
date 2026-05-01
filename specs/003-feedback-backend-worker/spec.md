@@ -2,7 +2,7 @@
 
 **Feature Branch**: `003-feedback-backend-worker`
 **Created**: 2026-04-24
-**Status**: Draft
+**Status**: Complete
 **Input**: User description: "Cuando el user hace Submit en el report-feedback dialog, la discussion se tiene que registrar sola en GitHub Discussions del repo matias-sanchez/My-gather (categoría Ideas), sin que el user tenga que pegar nada ni clickear más. El user ve un success inline y listo. Image y voice tienen que quedar también en la discussion. No se puede shipping un token de GitHub en el HTML (cualquier lector lo extrae)." *(Verbatim user input. Pivoted to Issues during 2026-04-26 clarification — see below.)*
 
 ## Clarifications (2026-04-24)
