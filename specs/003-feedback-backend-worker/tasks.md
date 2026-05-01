@@ -102,7 +102,7 @@ description: "Task list for Feedback Backend Worker implementation"
 - [x] T039 Reconcile `contracts/ui.md` against deployed reality (commit `fb0aba8`).
 - [x] T040 Reconcile `research.md`, `plan.md`, `quickstart.md`, `tasks.md`, `checklists/requirements.md` against deployed reality (this commit).
 - [x] T041 (commit `b168a71`) Add `AbortController` 10 000 ms timeout to all GitHub fetches in `feedback-worker/src/github-app.ts` via a `fetchWithTimeout` helper. On timeout throw `GitHubTimeoutError` (sibling — not subclass — of `GitHubError`); `feedback-worker/src/index.ts` catches it and returns HTTP 504 with `error: "github_timeout"` per FR-014 + contracts/api.md §504. Tests: `feedback-worker/test/github-app.test.ts` +2 cases (signal-passed-through + AbortError → GitHubTimeoutError conversion). `npm test` 43/43 PASS.
-- [ ] T042 PR #30 review cycle via `/pr-review-trigger-my-gather` and `/pr-review-fix-my-gather` until clean; merge.
+- [x] T042 PR #30 review cycle via `/pr-review-trigger-my-gather` and `/pr-review-fix-my-gather` until clean; merged as PR #30 on 2026-04-27.
 
 ---
 

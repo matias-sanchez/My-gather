@@ -2,7 +2,7 @@
 
 **Feature Branch**: `008-archive-input`  
 **Created**: 2026-04-29  
-**Status**: Draft  
+**Status**: Complete
 **Input**: User description: "Search `/Users/matias/Documents/Incidents/` for folders containing pt-stalk data and compressed files, then adapt the tool so it can accept either a folder or compressed file. Compressed files must extract into a temporary folder and open through the tool as well."
 
 ## User Scenarios & Testing *(mandatory)*

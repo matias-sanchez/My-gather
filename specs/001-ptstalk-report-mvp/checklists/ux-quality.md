@@ -272,14 +272,14 @@ File path: `specs/001-ptstalk-report-mvp/ux-audits/<YYYY-MM-DD>-<label>.md`
 | G-1 | PASS | — |
 | G-2 | PASS | — |
 | …   | …    | … |
-| OS-3 | DEFERRED → T??? | vmstat legend overlaps at 1280 px |
+| OS-3 | DEFERRED -> T110 | vmstat legend overlaps at 1280 px |
 | …   | …    | … |
 
 ## Deferred items
 
 | ID | Follow-up task | Owner | Target |
 |---|---|---|---|
-| OS-3 | T??? | @matias-sanchez | next cut |
+| OS-3 | T110 | @matias-sanchez | next cut |
 
 ## Summary
 

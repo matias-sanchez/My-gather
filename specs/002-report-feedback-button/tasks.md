@@ -8,6 +8,14 @@ description: "Task list for Report Feedback Button implementation"
 **Input**: Design documents from `/specs/002-report-feedback-button/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/ui.md, quickstart.md
 
+**Historical state**: This task file preserves the original 2026-04-24
+implementation plan for feature 002. The shipped feedback flow was later
+reconciled and superseded by feature 003's Worker-backed submit path; do not
+read the unchecked boxes below as live remaining work for the current product.
+Use `specs/002-report-feedback-button/spec.md` for the still-authoritative
+dialog and attachment behavior, and `specs/003-feedback-backend-worker/` for
+the authoritative submit path.
+
 **Tests**: Test tasks are included — this feature touches render-layer code, which Principle VIII (Reference Fixtures & Golden Tests) and the constitution's Quality Gate #3 (determinism byte-diff) hard-require tests for.
 
 **Organization**: One phase per user story in priority order (US1 P1 → US2 P2 → US3/4/5 P3). Every story is independently testable per its spec acceptance criteria and its quickstart scenario.
