@@ -268,7 +268,14 @@ func extractGzipArchive(archivePath, destDir string, written *int64) error {
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		return fmt.Errorf("create archive parent %s: %w", filepath.Dir(target), err)
 	}
-	return writeExtractedFile(target, 0o600, buffered, written)
+	if err := writeExtractedFile(target, 0o600, buffered, written); err != nil {
+		var sizeErr *parse.SizeError
+		if errors.As(err, &sizeErr) {
+			return err
+		}
+		return newArchiveInputError(archivePath, name, err)
+	}
+	return nil
 }
 
 func looksLikeTarHeader(block []byte) bool {

@@ -212,6 +212,21 @@ func TestRunMapsInvalidZipToInputPathError(t *testing.T) {
 	}
 }
 
+func TestRunMapsCorruptGzipPayloadToInputPathError(t *testing.T) {
+	dir := t.TempDir()
+	archivePath := filepath.Join(dir, "broken.gz")
+	writeTruncatedGzip(t, archivePath)
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--overwrite", "-o", filepath.Join(dir, "report.html"), archivePath}, &stdout, &stderr)
+	if code != exitInputPath {
+		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitInputPath, stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "invalid archive input") {
+		t.Fatalf("stderr = %q, want invalid archive input message", stderr.String())
+	}
+}
+
 func TestWriteExtractedFileEnforcesPerFileLimit(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "large")
@@ -371,5 +386,24 @@ func copyFileToWriter(t *testing.T, srcPath string, writer io.Writer) {
 	defer src.Close()
 	if _, err := io.Copy(writer, src); err != nil {
 		t.Fatalf("copy fixture %s: %v", srcPath, err)
+	}
+}
+
+func writeTruncatedGzip(t *testing.T, path string) {
+	t.Helper()
+	var buf bytes.Buffer
+	gz := gzip.NewWriter(&buf)
+	if _, err := gz.Write([]byte("truncated payload")); err != nil {
+		t.Fatalf("write gzip payload: %v", err)
+	}
+	if err := gz.Close(); err != nil {
+		t.Fatalf("close gzip: %v", err)
+	}
+	data := buf.Bytes()
+	if len(data) < 8 {
+		t.Fatalf("gzip fixture too small: %d bytes", len(data))
+	}
+	if err := os.WriteFile(path, data[:len(data)-4], 0o600); err != nil {
+		t.Fatalf("write truncated gzip: %v", err)
 	}
 }
