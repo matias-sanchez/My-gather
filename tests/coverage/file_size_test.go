@@ -89,7 +89,7 @@ func walkedSourceFiles(t *testing.T, root string) []string {
 		}
 		if entry.IsDir() {
 			switch entry.Name() {
-			case ".git", "node_modules":
+			case ".git", "node_modules", "vendor", "third_party", "third-party":
 				return filepath.SkipDir
 			}
 			rel, err := filepath.Rel(root, path)
@@ -123,10 +123,22 @@ func isGovernedSourcePath(path string) bool {
 	if strings.HasPrefix(path, "_references/") || strings.HasPrefix(path, "testdata/") {
 		return false
 	}
-	if path == "render/assets/chart.min.js" || path == "render/assets/chart.min.css" {
+	if strings.HasPrefix(path, "vendor/") ||
+		strings.HasPrefix(path, "third_party/") ||
+		strings.HasPrefix(path, "third-party/") ||
+		isMinifiedAssetPath(path) {
 		return false
 	}
 	return governedSourceExtensions[filepath.Ext(path)]
+}
+
+func isMinifiedAssetPath(path string) bool {
+	ext := filepath.Ext(path)
+	if ext != ".css" && ext != ".js" {
+		return false
+	}
+	stem := strings.TrimSuffix(filepath.Base(path), ext)
+	return strings.HasSuffix(stem, ".min")
 }
 
 func countLines(t *testing.T, path string) int {
