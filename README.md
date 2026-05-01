@@ -141,7 +141,7 @@ parse/                    Per-collector parsers + directory discovery
 model/                    Typed in-memory representation
 render/                   HTML templates + embedded assets + renderer
   ├── templates/          html/template sources
-  └── assets/             app.css, app.js, chart.min.*, logo.png
+  └── assets/             app-css/*, app-js/*, chart.min.*, logo.png
 findings/                 Advisor rules (one file per rule family)
 feedback-worker/          Cloudflare Worker backend for the feedback button
 testdata/                 Anonymised fixtures + golden outputs

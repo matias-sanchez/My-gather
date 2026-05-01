@@ -51,6 +51,35 @@ func TestGovernedSourceFileLineLimit(t *testing.T) {
 	)
 }
 
+func TestGovernedSourcePathExemptions(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		path     string
+		governed bool
+	}{
+		{path: "render/assets/app-js/00.js", governed: true},
+		{path: "render/assets/app-css/00.css", governed: true},
+		{path: "render/assets/internal.min.js", governed: true},
+		{path: "render/assets/chart.min.js", governed: false},
+		{path: "render/assets/chart.min.css", governed: false},
+		{path: "vendor/tool/generated.go", governed: false},
+		{path: "third_party/lib/minified.min.js", governed: false},
+		{path: "third-party/lib/minified.min.css", governed: false},
+		{path: "testdata/sample.js", governed: false},
+		{path: "_references/capture.css", governed: false},
+		{path: "render/assets/mysql-defaults.json", governed: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			if got := isGovernedSourcePath(tt.path); got != tt.governed {
+				t.Fatalf("isGovernedSourcePath(%q) = %v, want %v", tt.path, got, tt.governed)
+			}
+		})
+	}
+}
+
 func governedSourceFiles(t *testing.T, root string) []string {
 	t.Helper()
 	if paths, ok := gitTrackedSourceFiles(root); ok {
@@ -126,19 +155,19 @@ func isGovernedSourcePath(path string) bool {
 	if strings.HasPrefix(path, "vendor/") ||
 		strings.HasPrefix(path, "third_party/") ||
 		strings.HasPrefix(path, "third-party/") ||
-		isMinifiedAssetPath(path) {
+		isVendoredMinifiedAssetPath(path) {
 		return false
 	}
 	return governedSourceExtensions[filepath.Ext(path)]
 }
 
-func isMinifiedAssetPath(path string) bool {
-	ext := filepath.Ext(path)
-	if ext != ".css" && ext != ".js" {
+func isVendoredMinifiedAssetPath(path string) bool {
+	switch path {
+	case "render/assets/chart.min.css", "render/assets/chart.min.js":
+		return true
+	default:
 		return false
 	}
-	stem := strings.TrimSuffix(filepath.Base(path), ext)
-	return strings.HasSuffix(stem, ".min")
 }
 
 func countLines(t *testing.T, path string) int {
