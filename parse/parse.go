@@ -81,6 +81,49 @@ var snapshotPrefix = regexp.MustCompile(`^(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})-
 // signal per research R5.
 var summaryFiles = []string{"pt-summary.out", "pt-mysql-summary.out"}
 
+// LooksLikePtStalkRoot reports whether rootDir contains the top-level
+// signals Discover uses to recognize a pt-stalk collection. It does
+// not parse source files or enforce size limits; callers use it only
+// for cheap root selection before the canonical Discover pass.
+func LooksLikePtStalkRoot(rootDir string) (bool, error) {
+	absRoot, err := filepath.Abs(rootDir)
+	if err != nil {
+		return false, &PathError{Op: "abs", Path: rootDir, Err: err}
+	}
+	info, err := os.Stat(absRoot)
+	if err != nil {
+		return false, &PathError{Op: "stat", Path: absRoot, Err: err}
+	}
+	if !info.IsDir() {
+		return false, &PathError{Op: "stat", Path: absRoot, Err: errors.New("not a directory")}
+	}
+	entries, err := os.ReadDir(absRoot)
+	if err != nil {
+		return false, &PathError{Op: "readdir", Path: absRoot, Err: err}
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		if isPtStalkRootSignal(entry.Name()) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func isPtStalkRootSignal(name string) bool {
+	if snapshotPrefix.FindStringSubmatch(name) != nil {
+		return true
+	}
+	for _, s := range summaryFiles {
+		if name == s {
+			return true
+		}
+	}
+	return false
+}
+
 // Discover walks rootDir, recognises pt-stalk snapshots, and returns
 // a fully-populated model.Collection. Behaviour:
 //

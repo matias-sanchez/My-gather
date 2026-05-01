@@ -6,12 +6,13 @@ change to this contract requires a spec amendment.
 ## Invocation
 
 ```text
-my-gather [flags] <input-dir>
+my-gather [flags] <input>
 ```
 
-- `<input-dir>` — **Required positional argument.** Path to a pt-stalk
-  output directory. Relative paths are resolved against the CWD before
-  any further processing.
+- `<input>` — **Required positional argument.** Path to a pt-stalk
+  output directory or supported archive file (`.zip`, `.tar`,
+  `.tar.gz`, `.tgz`, `.gz`). Relative paths are resolved against the
+  CWD before any further processing.
 
 Exactly one positional argument is accepted. Zero positional arguments
 or two or more positional arguments is a usage error (exit code 2).
@@ -39,8 +40,8 @@ an explicit flag.
 |------|---------|----------------|
 | `0` | Success. HTML file written. | Empty on success (unless `-v`); parser diagnostics mirrored as they occur. |
 | `2` | Usage error (missing positional, unknown flag, bad flag value). | One line describing the usage error + usage summary. |
-| `3` | Input path does not exist, is unreadable, or is not a directory. | One line naming the path and the condition. |
-| `4` | Input directory is not recognised as a pt-stalk output directory (no timestamped collectors and no `pt-summary.out`). | One line. |
+| `3` | Input path does not exist, is unreadable, is neither a directory nor supported archive, or archive extraction is unsafe. | One line naming the path and the condition. |
+| `4` | Input is not recognised as a single pt-stalk collection (no timestamped collectors and no `pt-summary.out`, or an archive contains multiple candidate roots). | One line. |
 | `5` | Input size bound exceeded (> 1 GB total or > 200 MB for any single source file). | One line naming the violated bound and the offending path. |
 | `6` | Output path already exists and `--overwrite` was not set. | One line naming the output path. |
 | `7` | Output path resolves to a location inside the input directory tree (would violate read-only-inputs principle). | One line naming both the input path and the offending output path. |
@@ -110,8 +111,11 @@ log call so partial outputs survive a SIGKILL.
 
 ## File I/O contract
 
-- The tool MUST NOT write, rename, or delete anything inside
-  `<input-dir>` or any subdirectory of it (Principle II, FR-003).
+- The tool MUST NOT write, rename, or delete anything inside directory
+  input, archive input, or any subdirectory of a directory input
+  (Principle II, FR-003). Archive input may be extracted only into a
+  process-owned temporary directory outside the input tree, and that
+  temporary directory MUST be removed before exit.
 - The tool MUST write exactly one file to the `--out` path. No
   temporary side-car files under the output's parent dir, no lock
   files, no `.bak` files. If atomic-replace behaviour is needed the
@@ -127,10 +131,11 @@ log call so partial outputs survive a SIGKILL.
 my-gather — self-contained HTML reports for pt-stalk collections
 
 USAGE
-  my-gather [flags] <input-dir>
+  my-gather [flags] <input>
 
 ARGUMENTS
-  <input-dir>    Path to a pt-stalk output directory (required).
+  <input>    Path to a pt-stalk output directory or supported archive
+             (.zip, .tar, .tar.gz, .tgz, .gz).
 
 FLAGS
   -o, --out <path>    Output HTML file path (default: ./report.html).
@@ -156,7 +161,7 @@ Help output goes to stdout, never stderr.
 
 Before calling into `parse.Discover`, `cmd/my-gather` MUST:
 
-1. Resolve `<input-dir>` to an absolute path with symlinks expanded
+1. Resolve `<input>` to an absolute path with symlinks expanded
    (`filepath.EvalSymlinks` after `filepath.Abs`).
 2. Resolve `--out` to an absolute path with symlinks expanded on the
    parent directory (the output file itself does not exist yet).
@@ -166,6 +171,11 @@ Before calling into `parse.Discover`, `cmd/my-gather` MUST:
 This check is what enforces spec FR-029 and closes the Principle II
 foot-gun where a naive `-o ./report.html` from inside the input tree
 would land a write inside the pt-stalk dump.
+
+For archive input, `cmd/my-gather` MUST safely extract the archive into
+a temporary directory, discover exactly one pt-stalk root, and pass that
+root directory to `parse.Discover`. Unsafe archive paths, unsupported
+special entries, and multiple extracted pt-stalk roots are rejected.
 
 ## Backwards-compatibility policy
 

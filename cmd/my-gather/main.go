@@ -88,15 +88,15 @@ func run(args []string, stdout, stderr io.Writer) int {
 
 	rest := fs.Args()
 	if len(rest) == 0 {
-		fmt.Fprintln(stderr, "my-gather: missing required <input-dir>")
+		fmt.Fprintln(stderr, "my-gather: missing required <input>")
 		fmt.Fprint(stderr, "See 'my-gather --help'.\n")
 		return exitUsage
 	}
 	if len(rest) > 1 {
-		fmt.Fprintf(stderr, "my-gather: expected exactly one <input-dir>, got %d\n", len(rest))
+		fmt.Fprintf(stderr, "my-gather: expected exactly one <input>, got %d\n", len(rest))
 		return exitUsage
 	}
-	inputDir := rest[0]
+	inputPath := rest[0]
 	if outPath == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -106,7 +106,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		outPath = filepath.Join(cwd, "report.html")
 	}
 
-	absInput, err := filepath.Abs(inputDir)
+	absInput, err := filepath.Abs(inputPath)
 	if err != nil {
 		fmt.Fprintf(stderr, "my-gather: input path: %v\n", err)
 		return exitInputPath
@@ -145,10 +145,18 @@ func run(args []string, stdout, stderr io.Writer) int {
 	sink := &stderrSink{w: stderr}
 
 	ctx := context.Background()
-	if verbose {
-		fmt.Fprintf(stderr, "[parse] reading %s\n", absInput)
+	prepared, err := prepareInput(ctx, absInput)
+	if err != nil {
+		return mapInputPreparationError(err, absInput, stderr)
 	}
-	collection, err := parse.Discover(ctx, absInput, parse.DiscoverOptions{Sink: sink})
+	defer prepared.cleanup()
+	if verbose && prepared.isArchive {
+		fmt.Fprintf(stderr, "[input] extracted %s to %s; using %s\n", absInput, prepared.tempDir, prepared.parseDir)
+	}
+	if verbose {
+		fmt.Fprintf(stderr, "[parse] reading %s\n", prepared.parseDir)
+	}
+	collection, err := parse.Discover(ctx, prepared.parseDir, parse.DiscoverOptions{Sink: sink})
 	if err != nil {
 		return mapDiscoverError(err, absInput, stderr)
 	}
@@ -175,6 +183,29 @@ func run(args []string, stdout, stderr io.Writer) int {
 		}
 	}
 	return exitOK
+}
+
+func mapInputPreparationError(err error, inputPath string, stderr io.Writer) int {
+	if errors.Is(err, errUnsupportedArchive) {
+		fmt.Fprintf(stderr, "my-gather: %s is not a supported input archive; supported archives: .zip, .tar, .tar.gz, .tgz, .gz\n", inputPath)
+		return exitInputPath
+	}
+	var unsafe *unsafeArchivePathError
+	if errors.As(err, &unsafe) {
+		fmt.Fprintf(stderr, "my-gather: unsafe archive %s: %v\n", inputPath, unsafe)
+		return exitInputPath
+	}
+	var archiveInput *archiveInputError
+	if errors.As(err, &archiveInput) {
+		fmt.Fprintf(stderr, "my-gather: invalid archive input: %v\n", archiveInput)
+		return exitInputPath
+	}
+	var multiple *multiplePtStalkRootsError
+	if errors.As(err, &multiple) {
+		fmt.Fprintf(stderr, "my-gather: %s is not a single pt-stalk collection: %v\n", inputPath, multiple)
+		return exitNotAPtStalkDir
+	}
+	return mapDiscoverError(err, inputPath, stderr)
 }
 
 // mapDiscoverError converts a parse.Discover error into the correct
@@ -325,10 +356,11 @@ func pathIsUnder(child, parent string) bool {
 const usageText = `my-gather — self-contained HTML reports for pt-stalk collections
 
 USAGE
-  my-gather [flags] <input-dir>
+  my-gather [flags] <input>
 
 ARGUMENTS
-  <input-dir>    Path to a pt-stalk output directory (required).
+  <input>    Path to a pt-stalk output directory or supported archive
+             (.zip, .tar, .tar.gz, .tgz, .gz).
 
 FLAGS
   -o, --out <path>    Output HTML file path (default: ./report.html).
