@@ -51,7 +51,7 @@ For each principle below, look for the listed signals in the diff. This list is 
 
 ## The 9 merge gates (also check each explicitly)
 
-1. `go vet ./...` and `go test ./...` — run them if you can (`bash` with a short timeout); at minimum confirm the diff doesn't obviously break compilation.
+1. `go vet ./...` and `go test -count=1 ./...` — run them if you can (`bash` with a short timeout); at minimum confirm the diff doesn't obviously break compilation.
 2. New/modified parser has fixture + golden (Principle VIII).
 3. Determinism check plausible — render-path changes have a rationale preserving byte-identical output (Principle IV).
 4. New direct dependency justified in `plan.md` (Principle X).

@@ -34,7 +34,8 @@
 [Gates determined based on constitution file]
 
 **Canonical Path Audit (Principle XIII)**:
-- Canonical owner/path for touched behaviour: [package/file/workflow/API]
+- Canonical owner/path for touched behaviour: [feature/workflow/API/helper/parser/
+  validator/renderer path/worker route/UI behaviour/review skill/automation path]
 - Replaced or retired paths: [deleted in this change | unchanged | N/A]
 - External degradation paths, if any: [observable/tested or explicitly reviewed
   route through the canonical owner | N/A]

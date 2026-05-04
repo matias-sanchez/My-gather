@@ -20,7 +20,7 @@ this source-code rule.
 ## Mechanical Enforcement
 
 ```bash
-go test ./tests/coverage -run TestGovernedSourceFileLineLimit
+go test -count=1 ./tests/coverage -run TestGovernedSourceFileLineLimit
 ```
 
 The test must fail with each offending path and line count.

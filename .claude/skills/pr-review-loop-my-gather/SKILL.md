@@ -97,7 +97,7 @@ Call the fix skill:
 
 > `/pr-review-fix-my-gather`
 
-The fix skill runs its full procedure: verify each finding, walk all 15 principles, apply fixes (or alternative remedies, or dismissals), run `go vet ./...` and `go test ./...`, invoke `@agent-pre-review-constitution-guard`, commit, push, and resolve each processed thread via GraphQL.
+The fix skill runs its full procedure: verify each finding, walk all 15 principles, apply fixes (or alternative remedies, or dismissals), run `go vet ./...` and `go test -count=1 ./...`, invoke `@agent-pre-review-constitution-guard`, commit, push, and resolve each processed thread via GraphQL.
 
 **Critical contract for this loop**: if the fix skill dismisses a finding because the only remedy would violate a principle (most commonly XIII — duplicated code / silent fallback — or XIV — non-English content), that dismissal is **final**. The loop MUST NOT retry that finding on the next iteration. Because the fix skill resolves the thread on dismissal, Codex's next review will not re-raise a thread it already resolved — but if Codex does raise it again anyway, the fix skill will dismiss it again with the same XIII/XIV citation. That is correct behaviour; not a bug to work around.
 

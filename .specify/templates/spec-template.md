@@ -93,7 +93,8 @@
 ### Canonical Path Expectations *(include when changing existing behavior)*
 
 - **Canonical owner/path**: [Name the existing feature, workflow, API, helper,
-  UI behavior, worker route, or automation path this change updates]
+  parser, validator, renderer path, UI behavior, worker route, review skill, or
+  automation path this change updates]
 - **Old path treatment**: [deleted in this feature | unchanged because not
   replaced | N/A]
 - **External degradation**: [observable user/caller outcome and test/review

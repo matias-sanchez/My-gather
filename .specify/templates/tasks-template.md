@@ -14,7 +14,8 @@ description: "Task list template for feature implementation"
 
 ## Canonical Path Metadata *(Principle XIII; include when changing existing behavior)*
 
-- **Canonical owner/path**: [package/file/workflow/API from plan.md]
+- **Canonical owner/path**: [feature/workflow/API/helper/parser/validator/
+  renderer path/worker route/UI behavior/review skill/automation path from plan.md]
 - **Old path treatment**: [deleted by task IDs | unchanged because not replaced | N/A]
 - **External degradation evidence**: [test task IDs or explicit review task | N/A]
 

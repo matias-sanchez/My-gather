@@ -17,8 +17,9 @@ and refactor.
 File-size limits should be enforced by CI rather than remembered manually in
 review.
 
-**Independent Test**: Run the coverage test package. It fails if a governed
-first-party file has more than 1000 lines and reports the offending path.
+**Independent Test**: Run the coverage test package with `-count=1`. It fails if
+a governed first-party file has more than 1000 lines and reports the offending
+path.
 
 **Acceptance Scenarios**:
 
@@ -39,8 +40,8 @@ already passes it.
 **Why this priority**: A constitution rule that fails on main would block all
 future work and create noise instead of quality.
 
-**Independent Test**: Run the file-size test and `go test ./...` on this branch.
-Both pass with no governed source code file over 1000 lines.
+**Independent Test**: Run the file-size test and `go test -count=1 ./...` on this
+branch. Both pass with no governed source code file over 1000 lines.
 
 **Acceptance Scenarios**:
 
@@ -105,6 +106,19 @@ the same governed scope and exemptions.
 - **FR-008**: Validation MUST include the file-size coverage test and the full Go
   suite before opening the PR.
 
+### Canonical Path Expectations
+
+- **Canonical owner/path**: `render/assets.go` owns embedded report asset
+  concatenation; maintained app code lives under `render/assets/app-js/` and
+  maintained app styles live under `render/assets/app-css/`.
+- **Old path treatment**: replaced monolithic maintained paths
+  `render/assets/app.js` and `render/assets/app.css` are deleted in this
+  feature. Bundled third-party Chart.js assets remain explicit allowlist entries.
+- **External degradation**: N/A; rendered reports continue embedding one CSS block
+  and one JS block.
+- **Review check**: verify no duplicate monolithic app asset path, fallback asset
+  loader, compatibility shim, or competing concatenation path remains.
+
 ### Key Entities
 
 - **Governed Source File**: A checked-in first-party source code file subject to
@@ -119,8 +133,8 @@ the same governed scope and exemptions.
 
 ### Measurable Outcomes
 
-- **SC-001**: `go test ./tests/coverage -run TestGovernedSourceFileLineLimit`
-  passes.
+- **SC-001**: `go test -count=1 ./tests/coverage -run
+  TestGovernedSourceFileLineLimit` passes.
 - **SC-002**: `go test -count=1 ./...` passes.
 - **SC-003**: No governed checked-in source code file has more than 1000 lines.
 - **SC-004**: Rendered CSS and JS are concatenated from smaller files in stable

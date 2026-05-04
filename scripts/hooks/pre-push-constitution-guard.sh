@@ -345,7 +345,6 @@ for v in "${VIOLATIONS[@]}"; do
 done
 REASON_LINES+=("")
 REASON_LINES+=("Fix the above, or invoke @agent-pre-review-constitution-guard for a full LLM review.")
-REASON_LINES+=("To bypass for a WIP backup push, run: git push --no-verify (discouraged).")
 REASON="$(printf '%s\n' "${REASON_LINES[@]}")"
 
 if command -v jq >/dev/null 2>&1; then

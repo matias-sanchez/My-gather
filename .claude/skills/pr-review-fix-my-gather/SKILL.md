@@ -9,7 +9,7 @@ Read Codex / Copilot findings on the current PR, verify each against the code, a
 
 This skill is one half of the review loop:
 
-1. **`/pr-review-trigger`** — post review requests.
+1. **`/pr-review-trigger-my-gather`** — post review requests.
 2. **`/pr-review-fix-my-gather`** (this skill) — verify, principle-walk, fix, resolve threads, commit, clean, re-trigger.
 
 ## Scope and goals
@@ -134,7 +134,7 @@ Match the CI gates and the 9 merge gates from `Development Workflow & Quality Ga
 
 ```bash
 go vet ./...
-go test ./... -count=1
+go test -count=1 ./...
 ```
 
 If CI has additional targets (determinism diff, cross-compile, lint), run their `make` equivalents when available (`make determinism`, `make lint`, etc.) — check the `Makefile` at the repo root for the current target names. Do not fabricate target names.
@@ -219,8 +219,8 @@ Only run Step 9 if the user asked for a clean trigger lead-in, or if Step 10 wil
 
 ### Step 10 — Decide next action
 
-- **Fixes were applied.** Tell the user: count of fixes, count of dismissals, count of threads resolved, count of threads still open (should be 0 for bots). Ask whether to run `/pr-review-trigger` for another round.
-- **Only dismissals.** Tell the user every finding was either a false positive or a principle-conflicting suggestion. Threads are resolved with dismissal notes. Ask whether to re-trigger anyway.
+- **Fixes were applied.** Tell the user: count of fixes, count of dismissals, count of threads resolved, count of threads still open (should be 0 for bots). Ask whether to run `/pr-review-trigger-my-gather` for another round.
+- **Only dismissals.** Tell the user every finding was either a false positive or a principle-conflicting suggestion. Threads are resolved with dismissal notes. Ask whether to run the normal My-gather trigger again.
 - **No findings at all.** The PR is review-clean. Suggest merging.
 
 ## Non-negotiable rules

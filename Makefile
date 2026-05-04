@@ -32,7 +32,7 @@ SHA256 := $(shell command -v sha256sum 2>/dev/null || echo "shasum -a 256")
 help:
 	@echo "Targets:"
 	@echo "  build     Build local binary into ./bin/$(BIN_NAME)"
-	@echo "  test      Run go test ./..."
+	@echo "  test      Run go test -count=1 ./..."
 	@echo "  vet       Run go vet ./..."
 	@echo "  lint      Run gofmt check + go vet"
 	@echo "  release   Cross-compile + package tarballs + SHA256SUMS into $(DIST)/"
@@ -44,7 +44,7 @@ build:
 	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o bin/$(BIN_NAME) ./cmd/$(BIN_NAME)
 
 test:
-	$(GO) test ./...
+	$(GO) test -count=1 ./...
 
 vet:
 	$(GO) vet ./...

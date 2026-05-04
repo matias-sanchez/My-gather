@@ -158,7 +158,7 @@ _references/              Source material (real pt-stalk dumps, pt-mext referenc
 ## Build & test
 
 ```bash
-make test         # go test ./... -count=1
+make test         # go test -count=1 ./...
 make vet          # go vet ./...
 make build        # build ./bin/my-gather with version / commit / build-time ldflags
 make release      # cross-compile linux/{amd64,arm64} + darwin/{amd64,arm64} -> dist/
@@ -192,7 +192,7 @@ A dedicated test renders the same fixture twice and asserts byte-identical outpu
 
 1. Read the [constitution](.specify/memory/constitution.md). Every contribution gates on those fifteen principles.
 2. New features go through the spec-driven pipeline — see `specs/` for prior examples (spec → plan → research → data-model → contracts → tasks → implement).
-3. Local pre-push enforces the constitution via `scripts/hooks/pre-push-constitution-guard.sh` (wired through `.claude/settings.json`); CI runs the same checks on every PR.
+3. Local pre-push enforces diff-scoped mechanical constitution gates via `scripts/hooks/pre-push-constitution-guard.sh` (wired through `.claude/settings.json`); `go test -count=1 ./...` and CI enforce coverage gates including bounded source file size.
 4. Issues + discussions: the in-report "Report feedback" button is the preferred path; manual filing is also welcome at [github.com/matias-sanchez/My-gather/issues](https://github.com/matias-sanchez/My-gather/issues).
 
 ## License

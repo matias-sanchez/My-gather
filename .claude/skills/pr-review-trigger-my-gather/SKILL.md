@@ -40,9 +40,9 @@ Read the verdict on the last line of the guard's report.
 
 - **`READY TO PUSH`** — proceed to Step 1.
 - **`FIX P1s FIRST`** — stop. Report the P1s to the user. Do not post external triggers. Triggering with known-broken P1s just asks bots to re-find them, which is the exact loop this skill is built to shorten.
-- **`FIX P1s + REVIEW P2s`** — stop for the same reason, then ask the user whether to proceed anyway (sometimes a P2 is acceptable mid-iteration).
+- **`FIX P1s + REVIEW P2s`** — stop for the same reason and report the P2s to the user.
 
-This step is non-negotiable except when the user explicitly says "trigger anyway" or "bypass guard" — record that choice in the trigger comment itself ("Guard bypassed: <reason>") so reviewers know the local check did not pass.
+This step is non-negotiable for normal review triggers.
 
 ### Step 1 — Detect PR
 
@@ -73,7 +73,7 @@ VET_STATUS=$(go vet ./... 2>&1 | head -1)
 [ -z "$VET_STATUS" ] && VET_STATUS="go vet clean"
 
 # Go tests — pass/fail summary
-TEST_OUT=$(go test ./... -count=1 2>&1)
+TEST_OUT=$(go test -count=1 ./... 2>&1)
 TEST_STATUS=$(printf '%s\n' "$TEST_OUT" | awk '
   /^ok/      { ok++ }
   /^FAIL/    { fail++ }
