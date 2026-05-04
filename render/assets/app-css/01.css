@@ -1,0 +1,900 @@
+}
+.semaphore-breakdown .cb-caption {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+}
+.semaphore-breakdown .cb-caption code {
+  background: transparent;
+  color: var(--fg-muted);
+  padding: 0;
+}
+.semaphore-breakdown .cb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.semaphore-breakdown .cb-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.semaphore-breakdown .cb-table td {
+  padding: 3px 8px 3px 0;
+  color: var(--fg);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+}
+.semaphore-breakdown .cb-table th.num,
+.semaphore-breakdown .cb-table td.num {
+  text-align: right;
+}
+.semaphore-breakdown .cb-table tbody tr:first-child td {
+  color: var(--fg);
+  font-weight: 600;
+}
+.semaphore-breakdown .cb-more {
+  margin-top: 8px;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+.semaphore-breakdown .cb-more:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+
+/* Smaller min/avg/max distribution footer under the main (worst) value.
+   Visually de-emphasised so the peak is what the reader lands on. */
+.callout .stats {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  margin: 6px 0 0;
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+}
+.callout .stats span {
+  white-space: nowrap;
+}
+
+/* ---------- Charts ---------- */
+
+.chart {
+  position: relative;
+  min-height: 260px;
+  width: 100%;
+  /* Layered background: a subtle accent vignette across the top, a
+     downward gradient from the elevated card surface to a deeper base
+     (so the plot "sits" in a well), and a per-chart inset rule along
+     the bottom for depth. */
+  background:
+    radial-gradient(1400px 300px at 50% -60%,
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      transparent 70%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--bg) 96%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 100%, transparent) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  /* Tight internal padding so the plot fills edge-to-edge; the y-axis
+     gutter was also cut in basePlotOpts (88 px → 48 px). */
+  padding: 4px 4px 2px 2px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--accent) 12%, transparent),
+    inset 0 -18px 24px -20px rgba(0, 0, 0, 0.45);
+}
+.chart .u-over { cursor: crosshair; }
+
+/* Floating reset-zoom button overlaid on each chart. Visible at all
+   times so undoing a drag-zoom is never a mystery. */
+.chart-zoom-reset {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 100;               /* above uPlot's .u-over (no z-index by default) */
+  pointer-events: auto;
+  background: color-mix(in srgb, var(--bg-elev) 92%, transparent);
+  border: 1px solid var(--border-strong);
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  transition: color 120ms, border-color 120ms, background 120ms;
+}
+.chart-zoom-reset:hover {
+  color: var(--fg);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 80%, transparent);
+}
+.chart .u-select {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* KPI pills — compact, self-contained, scannable.
+   Each stat renders as a rounded pill with a leading uppercase label,
+   a prominent value, and an optional faded context suffix. */
+.chart-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 2px 2px 10px;
+  margin: 0 0 8px 0;
+  font-size: 12px;
+}
+.chart-summary .stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: linear-gradient(180deg,
+      color-mix(in srgb, var(--bg-elev-2) 85%, transparent),
+      color-mix(in srgb, var(--bg-elev)   85%, transparent));
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  font-family: var(--mono);
+  line-height: 1;
+  transition: border-color 140ms ease, transform 120ms ease;
+}
+.chart-summary .stat:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+.chart-summary .stat .k {
+  color: var(--fg-dim);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 600;
+}
+.chart-summary .stat .v {
+  color: var(--fg);
+  font-weight: 700;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.chart-summary .stat .ctx {
+  color: var(--fg-muted);
+  font-size: 11px;
+  font-style: italic;
+}
+
+/* uPlot theming overrides. uPlot's default legend is verbose; we hide
+   it and render our own pill legend underneath. */
+.uplot { font-family: var(--mono) !important; position: relative; }
+.uplot .u-title { display: none; }
+.uplot .u-legend { display: none; }
+.uplot .u-over { cursor: crosshair; }
+
+/* Y-axis unit badge: small overlay in the plot's top-left corner so a
+   reader can tell "20 40 60" means %CPU vs threads vs Δ/sample
+   without widening the axis gutter. Non-interactive (pointer-events:
+   none) so it never intercepts cursor moves or zoom drags. */
+.uplot .chart-unit {
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  z-index: 1;
+  pointer-events: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  border-radius: 999px;
+  padding: 1px 8px;
+  backdrop-filter: blur(4px);
+}
+
+/* Hover tooltip — rendered inside .u-over and position:absolute. */
+.chart-tooltip {
+  position: absolute;
+  z-index: 20;
+  pointer-events: none;
+  min-width: 200px;
+  max-width: 420px;
+  background: rgba(14, 17, 22, 0.96);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+  padding: 6px 8px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg);
+  line-height: 1.45;
+}
+@media (prefers-color-scheme: light) {
+  .chart-tooltip {
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  }
+}
+.chart-tooltip .tt-ts {
+  font-size: 11px;
+  color: var(--fg-muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+}
+.chart-tooltip .tt-row {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  gap: 8px;
+  align-items: baseline;
+  padding: 1px 0;
+  max-width: 100%;
+}
+.chart-tooltip .tt-row .tt-sw {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  align-self: center;
+}
+.chart-tooltip .tt-row .tt-label {
+  color: var(--fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chart-tooltip .tt-row .tt-value {
+  color: var(--fg);
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.chart-tooltip .tt-empty {
+  color: var(--fg-dim);
+  font-style: italic;
+}
+/* Focused row: the series the cursor is currently pointing at — the
+   band under Y in a stacked chart, or the line closest to the cursor
+   in a line chart. Bolded and accented with a 2 px bar in the series
+   color (set as a custom property from app.js). */
+.chart-tooltip .tt-row.is-focused {
+  border-left: 2px solid var(--focus-color, var(--fg));
+  padding-left: 6px;
+  margin-left: -2px;
+  font-weight: 700;
+}
+.chart-tooltip .tt-row.is-focused .tt-label,
+.chart-tooltip .tt-row.is-focused .tt-value {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+/* Dedup subtitle shown on a kept variables snapshot that represents
+   an identical run (e.g. "Identical values seen in snapshots #2–#10"). */
+.snapshot-range-note {
+  margin: 0 0 10px 0;
+  padding: 6px 10px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-left: 2px solid color-mix(in srgb, var(--accent) 60%, var(--border));
+  border-radius: 3px;
+  letter-spacing: 0.01em;
+}
+
+/* Clickable pill legend rendered by app.js directly after the chart. */
+.series-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  padding: 8px 4px 2px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.series-legend .series-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 6px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--fg-muted);
+  cursor: pointer;
+  font: inherit;
+}
+.series-legend .series-pill:hover { border-color: var(--border-strong); color: var(--fg); }
+.series-legend .series-pill .swatch {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--fg-dim);
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35) inset;
+}
+.series-legend .series-pill.active { color: var(--fg); background: var(--bg-elev); }
+.series-legend .series-pill:not(.active) .swatch { opacity: 0.3; }
+.series-legend .series-pill:not(.active) .lbl { text-decoration: line-through; opacity: 0.55; }
+/* is-focused: the series the chart cursor is pointing at right now.
+   Driven live by app.js; independent of the persistent .active
+   (show/hide) state and the transient hover-to-focus alpha fade. */
+.series-legend .series-pill.is-focused {
+  background: color-mix(in srgb, var(--pill-focus-color, var(--accent)) 18%, var(--bg-elev-2));
+  border-color: var(--pill-focus-color, var(--accent));
+  color: var(--fg);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--pill-focus-color, var(--accent)) 45%, transparent) inset;
+}
+
+/* Chart view-toggle toolbar (used by iostat for util / aqu-sz). */
+.chart-view-toolbar {
+  display: inline-flex;
+  gap: 4px;
+  margin: 0 0 10px 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px;
+}
+.chart-view-toolbar .view-btn {
+  background: transparent;
+  border: 0;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.chart-view-toolbar .view-btn.active {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+.chart-view-toolbar .view-btn:hover:not(.active) { color: var(--fg); }
+
+.slow-query-panel {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-elev) 70%, transparent);
+}
+.slow-query-panel > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.slow-query-panel > summary::marker { color: var(--fg-muted); }
+.slow-query-panel > summary .badge {
+  flex: 0 0 auto;
+  font-size: 11px;
+}
+.slow-query-controls {
+  display: grid;
+  grid-template-columns: minmax(260px, 2fr) repeat(3, minmax(130px, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 0 12px 12px;
+}
+.slow-query-controls label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.slow-query-controls label span {
+  color: var(--fg-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.slow-query-controls input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  padding: 7px 9px;
+  font: inherit;
+  font-size: 12px;
+}
+.slow-query-controls input:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 1px;
+}
+.slow-query-count {
+  color: var(--fg-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding-bottom: 8px;
+}
+.slow-query-table-wrap {
+  overflow-x: auto;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+.slow-query-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.slow-query-table th,
+.slow-query-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.slow-query-table th {
+  color: var(--fg-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.slow-query-table tr:last-child td {
+  border-bottom: 0;
+}
+.slow-query-table .rank {
+  color: var(--fg-muted);
+  font-weight: 700;
+}
+.slow-query-table .query-shape {
+  min-width: 360px;
+  white-space: normal;
+}
+.slow-query-table .query-shape code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.slow-query-filter-empty {
+  margin: 0 12px 12px;
+}
+@media (max-width: 980px) {
+  .slow-query-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+  .slow-query-count {
+    grid-column: 1 / -1;
+    padding-bottom: 0;
+  }
+}
+
+/* ---------- Mysqladmin filter panel ---------- */
+
+/* Floating counter-selection panel.
+   .ma-panel-host is a positioning shell that holds the always-visible
+   sticky strip + the (normally hidden) full panel. The panel pops
+   open as a backdrop-blurred overlay anchored below the strip so it
+   never pushes the chart stack down — charts always own the full
+   vertical real estate. */
+.ma-panel-host {
+  position: relative;
+  margin-bottom: 12px;
+}
+.ma-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding: 8px 14px;
+  background: color-mix(in srgb, var(--bg-elev-2) 78%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  cursor: pointer;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 12px;
+  transition: border-color 180ms ease, background 180ms ease;
+  text-align: left;
+}
+.ma-strip:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--bg-elev) 90%, transparent);
+}
+.ma-panel-host.is-open .ma-strip {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent) inset;
+}
+.ma-strip-pencil {
+  color: var(--accent);
+  font-size: 13px;
+}
+.ma-strip-editing { display: inline-flex; align-items: baseline; gap: 6px; }
+.ma-strip-editing .k {
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+}
+.ma-strip-editing .v { color: var(--accent); font-weight: 600; }
+.ma-strip-sep { color: var(--fg-dim); }
+.ma-strip-count { color: var(--fg-muted); }
+.ma-strip-hint {
+  margin-left: auto;
+  color: var(--fg-dim);
+  font-size: 11.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ma-strip-hint kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 1px;
+  text-align: center;
+  box-shadow: 0 1px 0 color-mix(in srgb, #000 30%, transparent);
+}
+
+/* Option A: the panel is a viewport-fixed popover. JS (positionMaPanel)
+   syncs its top/left/width to the sticky strip on open + on scroll +
+   on resize so it visually "drops" from the strip without ever
+   entering document flow. Smooth open (220 ms) and close (160 ms)
+   transitions, no display:none swap — relies on opacity +
+   pointer-events instead so the close animation can run to
+   completion before the popover disappears. */
+.ma-panel {
+  position: fixed;
+  z-index: 100;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg-elev) 90%, transparent);
+  backdrop-filter: blur(14px) saturate(130%);
+  box-shadow:
+    0 30px 70px -18px rgba(0, 0, 0, 0.65),
+    0 6px 18px rgba(0, 0, 0, 0.35),
+    0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+  padding: 12px 14px;
+  max-height: min(72vh, 620px);
+  overflow-y: auto;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
+  transform-origin: top center;
+  pointer-events: none;
+  visibility: hidden;
+  /* Close: opacity + transform ease over 160 ms, then visibility flips
+     hidden (delayed so transforms finish first). */
+  transition:
+    opacity 160ms cubic-bezier(.4, 0, 1, 1),
+    transform 160ms cubic-bezier(.4, 0, 1, 1),
+    visibility 0s linear 160ms;
+}
+.ma-panel.ma-panel-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  visibility: visible;
+  /* Open: slightly longer + spring-y ease. */
+  transition:
+    opacity 220ms cubic-bezier(.2, .9, .2, 1),
+    transform 220ms cubic-bezier(.2, .9, .2, 1),
+    visibility 0s linear 0s;
+}
+/* The in-panel "EDITING X" badge is redundant now that the strip is
+   always visible above the popover. Hide it to reclaim vertical space
+   and remove the duplicate-header effect. */
+.ma-panel .ma-editing { display: none; }
+
+/* Floating action button — a persistent pencil icon in the bottom-
+   right corner that opens the counter-deltas editor regardless of
+   where the user has scrolled. Mirrors the strip's toggle behaviour
+   and the ⌘⇧E hotkey. Visibility is JS-driven via .is-visible: only
+   shown when the mysqladmin section is in view AND the popover is
+   not already open. */
+.ma-fab-stack {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column-reverse; /* edit-FAB at the bottom, add-FAB on top */
+  gap: 12px;
+  pointer-events: none; /* children re-enable */
+}
+.ma-fab {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--accent);
+  color: #0b1220;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow:
+    0 12px 28px -8px rgba(0, 0, 0, 0.7),
+    0 4px 12px rgba(0, 0, 0, 0.45),
+    0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.ma-fab.is-visible { display: inline-flex; pointer-events: auto; }
+.ma-fab-add {
+  /* Secondary: glass background, accent outline + accent text, so the
+     two FABs are visually distinct at a glance. */
+  background: color-mix(in srgb, var(--bg-elev) 92%, transparent);
+  backdrop-filter: blur(12px) saturate(130%);
+  color: var(--accent);
+  font-size: 22px;
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--border));
+  box-shadow:
+    0 10px 24px -8px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.ma-fab-add:hover {
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-elev));
+}
+.ma-fab:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    0 16px 32px -8px rgba(0, 0, 0, 0.75),
+    0 6px 16px rgba(0, 0, 0, 0.5),
+    0 0 0 5px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.ma-fab:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+.ma-fab-pencil {
+  display: inline-block;
+  transform: translateY(-1px);
+}
+/* Custom tooltip for the FABs — renders to the LEFT of the button so
+   it doesn't slide off-screen near the page edge. Appears on hover
+   and on keyboard focus. */
+.ma-fab[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  padding: 6px 10px;
+  background: var(--bg-elev-2, #1a2131);
+  color: var(--fg, #e6ebf5);
+  border: 1px solid var(--border, #263047);
+  border-radius: 6px;
+  font: 500 12px/1.2 var(--mono, ui-monospace, Menlo, monospace);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+.ma-fab[data-tooltip]::before {
+  /* Little arrow pointing at the FAB. */
+  content: "";
+  position: absolute;
+  right: calc(100% + 6px);
+  top: 50%;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  border-left-color: var(--border, #263047);
+  transform: translateY(-50%) translateX(4px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+.ma-fab { position: relative; }
+.ma-fab:hover[data-tooltip]::after,
+.ma-fab:focus-visible[data-tooltip]::after,
+.ma-fab:hover[data-tooltip]::before,
+.ma-fab:focus-visible[data-tooltip]::before {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Dim-blur backdrop behind the open popover. One instance per panel
+   (JS appends / removes via a 'is-visible' class). Clicks on it close
+   the panel (unless pinned) via the existing click-outside listener,
+   which treats the backdrop as "outside". */
+.ma-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  background: rgba(8, 12, 22, 0.42);
+  backdrop-filter: blur(3px) saturate(110%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+.ma-backdrop.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.ma-panel-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+.ma-panel-pin,
+.ma-panel-close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  padding: 0;
+  line-height: 1;
+}
+.ma-panel-pin:hover,
+.ma-panel-close:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+.ma-panel-pin.active {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-color: var(--accent);
+  color: var(--fg);
+}
+.ma-panel-close { font-size: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .ma-panel,
+  .ma-backdrop { transition: none !important; }
+}
+/* Two-row labelled chip layout. */
+.ma-chip-row {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.ma-chip-row:last-of-type { border-bottom: 0; padding-bottom: 10px; }
+.ma-chip-row + .ma-chip-row { margin-top: 0; }
+.ma-chip-row-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-dim);
+  font-weight: 600;
+  font-family: var(--mono);
+  padding-top: 6px;
+  text-align: right;
+  white-space: nowrap;
+}
+.ma-chip-bag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.ma-chip-bag .ma-chip {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 10px 3px 12px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--fg-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.ma-chip-bag .ma-chip:hover { color: var(--fg); border-color: var(--border-strong); }
+.ma-chip-bag .ma-chip.active {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  color: var(--fg);
+}
+.ma-chip .ct {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  background: var(--bg);
+  padding: 0 5px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+}
+.ma-chip.active .ct { color: var(--fg); background: rgba(0, 0, 0, 0.25); }
+.ma-chip.flash {
+  background: color-mix(in srgb, var(--ok) 30%, var(--bg-elev-2));
+  border-color: var(--ok);
+  color: var(--fg);
+}
+/* Categories row — custom dropdown + two action buttons. */
+.ma-cat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding-top: 2px;
+}
+.ma-cat-dd {
+  position: relative;
+  display: inline-block;
+}
+.ma-cat-dd-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  min-width: 260px;
+  cursor: pointer;
+  text-align: left;
+}
+.ma-cat-dd-toggle:hover  { border-color: var(--border-strong); }
+.ma-cat-dd-toggle.open   { border-color: var(--accent); background: var(--bg-elev); }
+.ma-cat-dd-text { color: var(--fg); }
+.ma-cat-dd-chev {
+  color: var(--fg-muted);
+  font-size: 10px;
+  transition: transform 120ms ease;
+}
+.ma-cat-dd-toggle.open .ma-cat-dd-chev { transform: rotate(180deg); }
+
+.ma-cat-dd-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  list-style: none;
+  margin: 0;

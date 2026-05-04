@@ -1,0 +1,900 @@
+  padding: 4px;
+  min-width: 100%;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+.ma-cat-dd-popup[hidden] { display: none; }
+.ma-cat-dd-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--fg);
+}
+.ma-cat-dd-opt:hover { background: var(--bg-elev-2); }
+.ma-cat-dd-opt .opt-lbl { color: var(--fg); }
+.ma-cat-dd-opt .opt-ct  {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  background: var(--bg);
+  padding: 0 6px;
+  border-radius: 999px;
+  min-width: 22px;
+  text-align: center;
+}
+
+.ma-cat-load {
+  background: var(--bg-elev-2);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  color: var(--fg);
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.ma-cat-load:hover { background: var(--accent-soft); border-color: var(--accent); }
+.ma-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.ma-search input[type="search"] {
+  flex: 1 1 auto;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 13px;
+}
+.ma-search input[type="search"]:focus { outline: none; border-color: var(--accent); }
+.ma-count {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+.ma-actions { display: flex; gap: 4px; }
+.ma-actions .ma-action {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.ma-actions .ma-action:hover { color: var(--fg); border-color: var(--border-strong); }
+
+.ma-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev-2);
+  padding: 2px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0;
+}
+.ma-list .ma-row {
+  /* checkbox | tag (fixed 22px) | name (flex) */
+  display: grid;
+  grid-template-columns: auto 22px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+}
+.ma-list .ma-row:hover { background: var(--bg); }
+.ma-list .ma-row input[type="checkbox"] { margin: 0; cursor: pointer; }
+.ma-list .ma-row .name {
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ma-list .ma-row .tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 0;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+  text-align: center;
+  width: 18px;
+}
+.ma-list .ma-row.counter .tag {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.ma-list .ma-row.gauge .tag {
+  color: var(--fg-dim);
+  background: color-mix(in srgb, var(--fg-dim) 15%, transparent);
+}
+.ma-empty {
+  padding: 20px 14px;
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ---------- Mysqladmin multi-chart grid ---------- */
+
+.ma-editing {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 10px 6px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.ma-editing .k {
+  color: var(--fg-dim);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+}
+.ma-editing .v {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.ma-charts-host {
+  width: 100%;
+}
+.ma-charts-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 4px 0 10px;
+}
+.ma-charts-hint {
+  color: var(--fg-dim);
+  font-size: 11.5px;
+  font-family: var(--mono);
+}
+.ma-action-primary {
+  background: var(--bg-elev-2);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  color: var(--fg);
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.ma-action-primary:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.ma-charts {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+}
+.ma-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ma-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.ma-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px 8px;
+  border-bottom: 1px dashed var(--border);
+  margin-bottom: 6px;
+}
+.ma-card-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--fg);
+  font-weight: 600;
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ma-card-count {
+  color: var(--fg-dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  flex: 0 0 auto;
+}
+.ma-card-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  flex: 0 0 auto;
+}
+.ma-card-btn:hover:not(:disabled) {
+  background: var(--bg-elev-2);
+  border-color: var(--border-strong);
+  color: var(--fg);
+}
+.ma-card-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.ma-card-plot {
+  position: relative;
+  width: 100%;
+  min-height: 280px;
+  background:
+    radial-gradient(1200px 260px at 50% -40%,
+      color-mix(in srgb, var(--accent) 10%, transparent),
+      transparent 70%),
+    var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 6px 4px 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25) inset;
+}
+.ma-card-plot .u-select {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.ma-empty-chart {
+  padding: 40px 14px 48px;
+  color: var(--fg-muted);
+  font-size: 13px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.ma-empty-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elev));
+  color: var(--fg);
+  font: 600 14px/1 inherit;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, transform 140ms ease;
+}
+.ma-empty-edit:hover {
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg-elev));
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.ma-empty-edit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.ma-empty-pencil {
+  font-size: 18px;
+  color: var(--accent);
+  line-height: 1;
+}
+.ma-empty-label { letter-spacing: 0.02em; }
+.ma-empty-hint {
+  color: var(--fg-dim);
+  font-size: 12px;
+  font-style: italic;
+}
+/* Per-chart pencil in the header controls row — styled identically to
+   the other ma-card-btn icons so it reads as "just another control". */
+.ma-card-edit { color: var(--accent); }
+.ma-card-edit:hover { color: var(--fg); }
+
+/* ---------- Advisor / Findings ---------- */
+
+/* Counts strip doubles as a severity filter. Each button is a toggle
+   (multi-select): active = findings of that severity are visible.
+   Dim / desaturated when inactive so the filter state is obvious. */
+.advisor-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 18px 0;
+}
+.advisor-count {
+  /* override user-agent button styling */
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  text-align: left;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg,
+      color-mix(in srgb, var(--bg-elev-2) 85%, transparent),
+      color-mix(in srgb, var(--bg-elev)   90%, transparent));
+  min-width: 140px;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 140ms ease,
+              box-shadow 140ms ease, opacity 140ms ease, filter 140ms ease;
+}
+.advisor-count:hover { transform: translateY(-1px); }
+.advisor-count:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+.advisor-count .n {
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.advisor-count .k {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+  font-weight: 600;
+}
+/* Per-severity active state: coloured border + glow. Inactive state is
+   low-contrast so the filter toggle reads at a glance. */
+.advisor-count.crit.is-active {
+  border-color: color-mix(in srgb, var(--err) 65%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--err) 35%, transparent) inset,
+              0 6px 18px -10px color-mix(in srgb, var(--err) 80%, transparent);
+}
+.advisor-count.crit.is-active .n { color: var(--err); }
+.advisor-count.warn.is-active {
+  border-color: color-mix(in srgb, var(--warn) 65%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--warn) 35%, transparent) inset,
+              0 6px 18px -10px color-mix(in srgb, var(--warn) 70%, transparent);
+}
+.advisor-count.warn.is-active .n { color: var(--warn); }
+.advisor-count.info.is-active {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent) inset,
+              0 6px 18px -10px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.advisor-count.info.is-active .n { color: var(--accent); }
+.advisor-count.ok.is-active {
+  border-color: color-mix(in srgb, var(--ok) 55%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ok) 28%, transparent) inset,
+              0 6px 18px -10px color-mix(in srgb, var(--ok) 70%, transparent);
+}
+.advisor-count.ok.is-active .n { color: var(--ok); }
+.advisor-count:not(.is-active) {
+  opacity: 0.48;
+  filter: saturate(0.35);
+}
+.advisor-count:not(.is-active) .n { color: var(--fg-muted); }
+
+.advisor-top-drivers {
+  margin: -4px 0 20px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-elev-2) 62%, transparent);
+}
+.advisor-top-drivers > .k {
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10.5px;
+  font-weight: 700;
+  margin-bottom: 9px;
+}
+.advisor-top-drivers ol {
+  list-style-position: inside;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.advisor-top-drivers li {
+  display: grid;
+  grid-template-columns: auto auto auto auto 1fr;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bg-elev) 74%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 68%, transparent);
+}
+.advisor-top-drivers a {
+  color: var(--fg);
+  font-weight: 700;
+  text-decoration: none;
+}
+.advisor-top-drivers a:hover { color: var(--accent); }
+.driver-subsystem,
+.driver-why {
+  color: var(--fg-dim);
+  font-size: 11.5px;
+}
+.driver-summary {
+  grid-column: 1 / -1;
+  color: var(--fg-muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.driver-why {
+  grid-column: 1 / -1;
+  font-family: var(--mono);
+}
+@media (max-width: 820px) {
+  .advisor-top-drivers li { grid-template-columns: 1fr; }
+  .driver-summary,
+  .driver-why { grid-column: 1; }
+}
+
+/* Subsystem group */
+.advisor-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.advisor-group { margin: 0; }
+.advisor-group.is-hidden { display: none; }
+.advisor-group-title {
+  /* row-reverse puts the text on the LEFT and the gradient rule on
+     the RIGHT — reading order stays left-to-right (title first, then
+     rule). */
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px 0;
+  padding: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: var(--fg-muted);
+}
+.advisor-group-title .rule {
+  flex: 1;
+  height: 1px;
+  /* Gradient now flows from the title outwards: accent-tinted near
+     the text, fading into the border colour and then transparent. */
+  background: linear-gradient(90deg,
+      color-mix(in srgb, var(--accent) 35%, transparent),
+      var(--border) 40%,
+      transparent);
+}
+.advisor-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------- Finding cards ---------- */
+
+.finding {
+  position: relative;
+  background: linear-gradient(180deg,
+      color-mix(in srgb, var(--bg-elev)   96%, transparent),
+      color-mix(in srgb, var(--bg-elev-2) 92%, transparent));
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 120ms ease;
+}
+.finding:hover {
+  border-color: color-mix(in srgb, var(--fg-muted) 25%, var(--border));
+  box-shadow: 0 8px 24px -18px rgba(0,0,0,0.55);
+}
+.finding.is-hidden { display: none; }
+
+.finding.sev-crit { border-left-color: var(--err); }
+.finding.sev-warn { border-left-color: var(--warn); }
+.finding.sev-info { border-left-color: var(--accent); }
+.finding.sev-ok   { border-left-color: var(--ok); }
+.finding.sev-crit::before,
+.finding.sev-warn::before,
+.finding.sev-info::before,
+.finding.sev-ok::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 60px;
+  pointer-events: none;
+  opacity: 0.5;
+}
+.finding.sev-crit::before { background: linear-gradient(90deg, color-mix(in srgb, var(--err)   18%, transparent), transparent); }
+.finding.sev-warn::before { background: linear-gradient(90deg, color-mix(in srgb, var(--warn)  16%, transparent), transparent); }
+.finding.sev-info::before { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 14%, transparent), transparent); }
+.finding.sev-ok::before   { background: linear-gradient(90deg, color-mix(in srgb, var(--ok)    12%, transparent), transparent); }
+
+.finding > summary {
+  list-style: none;
+  cursor: pointer;
+  position: relative;
+  padding: 12px 16px 12px 14px;
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  column-gap: 14px;
+  row-gap: 4px;
+  align-items: baseline;
+}
+.finding > summary::after {
+  content: "▸";
+  grid-column: 4 / 5;
+  color: var(--fg-dim);
+  font-size: 11px;
+  transition: transform 160ms ease, color 140ms ease;
+  align-self: center;
+}
+.finding[open] > summary::after { transform: rotate(90deg); color: var(--fg-muted); }
+.finding > summary:hover::after { color: var(--fg); }
+
+/* Severity pill. Dot + label; soft inner glow on top of the tinted bg. */
+.sev-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.sev-chip::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  background: currentColor;
+  box-shadow: 0 0 6px 0 currentColor;
+}
+.sev-chip.sev-crit { color: var(--err);    background: color-mix(in srgb, var(--err)    18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--err)    30%, transparent); }
+.sev-chip.sev-warn { color: var(--warn);   background: color-mix(in srgb, var(--warn)   18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warn)   30%, transparent); }
+.sev-chip.sev-info { color: var(--accent); background: color-mix(in srgb, var(--accent) 30%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }
+.sev-chip.sev-ok   { color: var(--ok);     background: color-mix(in srgb, var(--ok)     18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ok)     30%, transparent); }
+
+.advisor-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+}
+.advisor-chip.muted {
+  color: var(--fg-muted);
+  background: color-mix(in srgb, var(--bg-elev-2) 80%, transparent);
+  border-color: var(--border);
+}
+
+.finding-title {
+  font-weight: 600;
+  color: var(--fg);
+  font-size: 13.5px;
+  letter-spacing: 0.01em;
+}
+.finding-summary {
+  color: var(--fg-muted);
+  font-size: 13px;
+  grid-column: 3 / 4;
+}
+/* On narrow viewports the summary drops under the title for readability. */
+@media (max-width: 820px) {
+  .finding > summary { grid-template-columns: auto 1fr auto; }
+  .finding-summary { grid-column: 1 / -1; }
+}
+
+.finding-body {
+  padding: 4px 18px 16px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 13px;
+}
+
+/* Formula panel: compact two-row table with tinted background so the
+   substituted numbers stand out. */
+.finding-formula {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 14px;
+  row-gap: 2px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  background: color-mix(in srgb, var(--bg-elev-2) 70%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.finding-formula .row {
+  display: contents;
+  font-family: var(--mono);
+}
+.finding-formula .row .k {
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 0;
+  align-self: baseline;
+}
+.finding-formula code {
+  color: var(--fg);
+  background: transparent;
+  padding: 2px 0;
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Metrics grid — definition-list style, aligned columns. */
+.finding-metrics {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 6px 18px;
+}
+.finding-metrics li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 10px;
+  align-items: baseline;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bg-elev-2) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.finding-metrics li .name  { color: var(--fg-muted); overflow: hidden; text-overflow: ellipsis; }
+.finding-metrics li .value { color: var(--fg); font-weight: 700; font-variant-numeric: tabular-nums; }
+.finding-metrics li .value .unit {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--fg-dim);
+  margin-left: 3px;
+  font-size: 11px;
+}
+.finding-metrics li .note  {
+  grid-column: 1 / -1;
+  color: var(--fg-dim);
+  font-style: italic;
+  font-size: 11.5px;
+  margin-top: 2px;
+}
+
+.finding-evidence .k,
+.finding-related .k,
+.finding-source .k {
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10.5px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.finding-evidence ul,
+.finding-related ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.finding-evidence li,
+.finding-related li {
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bg-elev-2) 48%, transparent);
+  line-height: 1.5;
+}
+.finding-evidence .name {
+  color: var(--fg);
+  font-weight: 650;
+  margin-right: 8px;
+}
+.finding-evidence .value {
+  color: var(--fg);
+  font-family: var(--mono);
+  font-weight: 700;
+  margin-right: 8px;
+}
+.finding-evidence .unit {
+  color: var(--fg-dim);
+  font-style: normal;
+}
+.finding-evidence .note,
+.finding-related .note,
+.finding-recs .note {
+  color: var(--fg-dim);
+  font-size: 11.5px;
+  margin-left: 6px;
+}
+
+.finding-explain {
+  margin: 0;
+  color: var(--fg);
+  line-height: 1.6;
+}
+
+.finding-recs .k {
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10.5px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.finding-recs ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--fg);
+}
+.finding-recs li {
+  position: relative;
+  padding: 3px 0 3px 22px;
+  line-height: 1.5;
+}
+.finding-recs li::before {
+  content: "→";
+  position: absolute;
+  left: 4px;
+  top: 3px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.finding-recs .rec-kind {
+  display: inline-flex;
+  margin-right: 8px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.finding-source {
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+/* ---------- Parser diagnostics panel ---------- */
+
+details.diagnostics {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: var(--gap-lg) 0 0 0;
+}
+details.diagnostics > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 10px var(--pad);
+  font-weight: 600;
+  color: var(--fg-muted);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+}
+details.diagnostics > summary::before {
+  content: "▶";
+  color: var(--fg-dim);
+  font-size: 10px;
+  display: inline-block;
+  grid-column: 1;
+  justify-self: start;
+  transition: transform 120ms ease;
+}
+details.diagnostics > summary > span:first-of-type {
+  grid-column: 2;
+  justify-self: center;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+details.diagnostics > summary .badge {
+  grid-column: 3;
+  justify-self: end;
+}
+details.diagnostics[open] > summary::before { transform: rotate(90deg); }
+details.diagnostics > .body { padding: 0; }
+details.diagnostics ul { list-style: none; margin: 0; padding: 0; }
+details.diagnostics li {
+  padding: 8px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  font-family: var(--mono);
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 10px;
+  align-items: start;
+}
+details.diagnostics li .sev {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 3px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sev.info  { background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--accent); }
+.sev.warn  { background: color-mix(in srgb, var(--warn)  30%, transparent); color: var(--warn); }
+.sev.err   { background: color-mix(in srgb, var(--err)   30%, transparent); color: var(--err); }
+details.diagnostics li .loc { color: var(--fg-dim); white-space: nowrap; }
+details.diagnostics li .msg { color: var(--fg); word-break: break-word; }
+
+/* ---------- Narrow viewport (≤800px) ---------- */
+
+@media (max-width: 800px) {
+  main.content { padding: 14px 16px 24px; }
+  .app-header { padding: 12px 16px; }
+}
+
+/* ---------- Print media (FR-032, F23 remediation) ---------- */
+
+@media print {
+  :root { color-scheme: light only; }
+  body  { background: #fff !important; color: #000; }
+  nav.index { display: none !important; }
+  details          { break-inside: avoid; }
+  details > summary { break-after: avoid; }
+  /* Can't programmatically open details in CSS; use a body class that
+     app.js sets before window.print(). As a belt-and-braces,
+     display the body of all details in print so content is visible
+     even if [open] wasn't set. */
+  details > .body,
+  details > ul,

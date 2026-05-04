@@ -1,6 +1,7 @@
 package render
 
 import (
+	"bytes"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -19,11 +20,11 @@ var embeddedChartJS string
 //go:embed assets/chart.min.css
 var embeddedChartCSS string
 
-//go:embed assets/app.js
-var embeddedAppJS string
+//go:embed assets/app-js/*.js assets/app-css/*.css
+var embeddedAppAssets embed.FS
 
-//go:embed assets/app.css
-var embeddedAppCSS string
+var embeddedAppJS = mustConcatEmbeddedAssetParts("assets/app-js")
+var embeddedAppCSS = mustConcatEmbeddedAssetParts("assets/app-css")
 
 //go:embed assets/mysql-defaults.json
 var embeddedMySQLDefaultsJSON []byte
@@ -33,6 +34,28 @@ var embeddedMysqladminCategoriesJSON []byte
 
 //go:embed assets/logo.png
 var embeddedLogoPNG []byte
+
+func mustConcatEmbeddedAssetParts(dir string) string {
+	entries, err := embeddedAppAssets.ReadDir(dir)
+	if err != nil {
+		panic(fmt.Sprintf("render/%s: read embedded asset parts: %v", dir, err))
+	}
+	sort.Slice(entries, func(i, j int) bool { return entries[i].Name() < entries[j].Name() })
+
+	var buf bytes.Buffer
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		path := dir + "/" + entry.Name()
+		data, err := embeddedAppAssets.ReadFile(path)
+		if err != nil {
+			panic(fmt.Sprintf("render/%s: read embedded asset part: %v", path, err))
+		}
+		buf.Write(data)
+	}
+	return buf.String()
+}
 
 type mysqladminCategoryDef struct {
 	Key             string   `json:"key"`

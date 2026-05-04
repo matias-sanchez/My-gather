@@ -40,9 +40,9 @@ Read the verdict on the last line of the guard's report.
 
 - **`READY TO PUSH`** — proceed to Step 1.
 - **`FIX P1s FIRST`** — stop. Report the P1s to the user. Do not post external triggers. Triggering with known-broken P1s just asks bots to re-find them, which is the exact loop this skill is built to shorten.
-- **`FIX P1s + REVIEW P2s`** — stop for the same reason, then ask the user whether to proceed anyway (sometimes a P2 is acceptable mid-iteration).
+- **`FIX P1s + REVIEW P2s`** — stop for the same reason and report the P2s to the user.
 
-This step is non-negotiable except when the user explicitly says "trigger anyway" or "bypass guard" — record that choice in the trigger comment itself ("Guard bypassed: <reason>") so reviewers know the local check did not pass.
+This step is non-negotiable for normal review triggers.
 
 ### Step 1 — Detect PR
 
@@ -73,7 +73,7 @@ VET_STATUS=$(go vet ./... 2>&1 | head -1)
 [ -z "$VET_STATUS" ] && VET_STATUS="go vet clean"
 
 # Go tests — pass/fail summary
-TEST_OUT=$(go test ./... -count=1 2>&1)
+TEST_OUT=$(go test -count=1 ./... 2>&1)
 TEST_STATUS=$(printf '%s\n' "$TEST_OUT" | awk '
   /^ok/      { ok++ }
   /^FAIL/    { fail++ }
@@ -125,8 +125,9 @@ Code review requested on `${BRANCH}` — ${COMMIT_COUNT} commits, ${DIFF_STAT}, 
 
 - **Principle IV (Deterministic Output)**: output MUST be byte-identical across runs. No map iteration without sorted keys, no unstable sort, no `time.Now()` reaching the render path, no locale-dependent float formatting, no random IDs.
 - **Principle VIII (Reference Fixtures & Golden Tests)**: new parsers MUST ship with a fixture under `testdata/` and a golden under `testdata/golden/` in the same change.
-- **Principle XIII (Canonical Code Path, NON-NEGOTIABLE)**: exactly one implementation per behaviour. No duplicated code, no silent fallbacks (`try A, on error try B`), no post-rename compatibility shims, no `if useNew { ... } else { ... }` internal flags. When a function is replaced, the old one is deleted in the same change.
+- **Principle XIII (Canonical Code Path, NON-NEGOTIABLE)**: exactly one canonical implementation path per behaviour, workflow, API, helper, worker route, UI behaviour, review skill, or automation path. No duplicated code, no hidden internal fallbacks (`try A, on error try B`), no post-rename compatibility shims, no `if useNew { ... } else { ... }` internal flags. When a path is replaced, the old one is deleted in the same change. External degradation must be observable, tested or explicitly reviewed, and routed through the canonical owner.
 - **Principle XIV (English-Only Durable Artifacts)**: all checked-in code, comments, commit messages, docs, and configuration MUST be English. The only exempt content is under `testdata/` and `_references/` (raw pt-stalk input).
+- **Principle XV (Bounded Source File Size)**: governed first-party source-code files MUST stay at or below 1000 lines. Specs, docs, fixtures, goldens, lockfiles, vendor-style third-party assets, and explicitly allowlisted bundled third-party minified assets are outside this source-code rule.
 
 **Focus:** real bugs, correctness, determinism regressions, exception handling, behavioural drift from deleted code, principle violations.
 
@@ -134,6 +135,7 @@ Code review requested on `${BRANCH}` — ${COMMIT_COUNT} commits, ${DIFF_STAT}, 
 
 - Keeping legacy/fallback code or dual implementations (Principle XIII).
 - Re-exports or compatibility aliases after a rename (Principle XIII).
+- External degradation that is hidden, untested, or routed around the canonical owner (Principle XIII).
 - Goroutines, parallelism, or concurrent parsing anywhere in `parse/`, `model/`, or `render/` (Principle IV).
 - External fetches, CDN links, or runtime network I/O (Principles V + IX).
 - Silent fallback parsers — always attach a structured diagnostic instead (Principle III).
@@ -143,6 +145,7 @@ Code review requested on `${BRANCH}` — ${COMMIT_COUNT} commits, ${DIFF_STAT}, 
 - `fmt.Errorf` for branchable conditions — use typed errors with `%w` (Principle VII).
 - Bumping the Go directive in `go.mod` as a side effect (Principle XII).
 - Non-English content in code, comments, commit messages, docs, or configuration outside `testdata/` and `_references/` (Principle XIV).
+- Letting a governed first-party source-code file exceed 1000 lines (Principle XV).
 - Style, formatting, or import ordering — CI and `gofmt` already enforce those.
 
 **Do NOT implement or push changes.** Review-only. Findings as inline comments, please.

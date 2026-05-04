@@ -1,6 +1,114 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.6.0 → 1.6.1
+Bump rationale: PATCH-level wording clarification for Principle XV. The
+  source-size exemption for bundled third-party minified assets outside
+  vendor-style directories is now described as an explicit reviewed
+  allowlist, not a filename-pattern fallback. This preserves the existing
+  requirement that maintained first-party minified source remains governed
+  by the 1000-line limit.
+
+Added principles: none.
+
+Modified principles:
+  - XV. Bounded Source File Size → clarified vendored/minified asset
+    exemption wording without changing the forbidden or required
+    behaviours.
+
+Modified sections:
+  - Development Workflow & Quality Gates → gate 9 uses the same explicit
+    allowlist wording for bundled third-party minified assets.
+
+Templates requiring updates:
+  - .specify/templates/*                          compatible
+  - .claude/agents/pre-review-constitution-guard.md compatible
+  - .claude/skills/pr-review-*-my-gather/         compatible
+  - AGENTS.md                                     compatible
+  - CLAUDE.md                                     compatible
+  - README.md                                     updated
+
+Deferred items / follow-up TODOs: none.
+
+Prior Sync Impact Report (1.6.0) follows for history:
+-----------------------------------------------------
+Version change: 1.5.0 → 1.6.0
+Bump rationale: MINOR-level material expansion of existing Principle
+  XIII. The canonical-code-path rule already forbade duplicated
+  implementations, silent fallbacks, and internal compatibility shims;
+  this amendment broadens the wording to match the full project
+  surface (features, workflows, APIs, helpers, contracts, worker
+  routes, UI behaviours, and review skills) and adds explicit
+  external-degradation criteria so legitimate graceful degradation
+  cannot be confused with forbidden internal fallback paths. No new
+  principle is added.
+
+Added principles: none.
+
+Modified principles:
+  - XIII. Canonical Code Path (NON-NEGOTIABLE) → broadened from
+    function/type/code-path wording to every maintained behaviour,
+    workflow, API, helper, parser, validator, renderer path, worker
+    route, UI behaviour, and review skill; added observable/tested
+    external-degradation criteria and a requirement that specs/plans/
+    tasks identify the canonical path for touched behaviour.
+
+Modified sections:
+  - Development Workflow & Quality Gates → gate 7 now names the
+    expanded canonical-path audit expectations for specs, plans, tasks,
+    and review.
+
+Templates requiring updates:
+  - .specify/templates/plan-template.md             updated
+  - .specify/templates/tasks-template.md            updated
+  - .specify/templates/spec-template.md             updated
+  - .specify/templates/checklist-template.md        compatible
+  - .claude/agents/pre-review-constitution-guard.md updated
+  - .claude/skills/pr-review-*-my-gather/           updated
+  - AGENTS.md                                      compatible
+  - CLAUDE.md                                      updated
+  - README.md                                      updated
+
+Deferred items / follow-up TODOs:
+  - Existing source-code canonical-path smells identified during the
+    audit (for example render-side helper duplication and legacy
+    fallback/migration comments) are intentionally not changed in this
+    documentation-only amendment. They should be handled in a separate
+    source refactor.
+
+Prior Sync Impact Report (1.5.0) follows for history:
+-----------------------------------------------------
+Version change: 1.4.0 → 1.5.0
+Bump rationale: MINOR-level addition of a new Core Principle — XV.
+  Bounded Source File Size — plus a companion mechanical quality gate.
+  The rule forbids first-party source-code files over 1000 lines so
+  god files are blocked before review. It is scoped intentionally to
+  source code, not specs, docs, JSON data, raw pt-stalk fixtures,
+  reference captures, generated lockfiles, or golden snapshots. The
+  repository is brought into compliance in the same PR by splitting
+  the maintained report JS/CSS assets into ordered embedded source
+  parts.
+
+Added principles:
+  - XV. Bounded Source File Size
+
+Modified sections:
+  - Development Workflow & Quality Gates → added 9th merge gate:
+      "No governed first-party source-code file exceeds 1000 lines
+      (Principle XV)."
+
+Templates requiring updates:
+  - .specify/templates/plan-template.md             compatible
+  - .specify/templates/spec-template.md             compatible
+  - .specify/templates/tasks-template.md            compatible
+  - .specify/templates/checklist-template.md        compatible
+  - .claude/skills/speckit-*/                       compatible
+  - .agents/skills/speckit-*/                       compatible
+
+Deferred items / follow-up TODOs: none.
+
+Prior Sync Impact Report (1.4.0) follows for history:
+-----------------------------------------------------
 Version change: 1.3.1 → 1.4.0
 Bump rationale: MINOR-level mechanisation of two previously REVIEW-
   only gates. Gates 5 (Principle VI godoc-on-exports) and 8
@@ -437,18 +545,37 @@ of another commit.
 
 ### XIII. Canonical Code Path (NON-NEGOTIABLE)
 
-Every behaviour in My-gather MUST have exactly one implementation. When a
-function, type, or code path is replaced, the old one MUST be deleted in
-the same change — not left behind, not guarded by an internal flag, not
-retained "for safety". Silent fallbacks (try A, on failure silently try B)
-are prohibited; recoverable failures MUST surface as typed errors
-(Principle VII) or structured diagnostics in the report (Principle III),
-never as a second hidden attempt. Re-exports and compatibility shims for
-internal identifiers after a rename are prohibited; all call sites MUST
-be updated in the same commit. This principle does not forbid branching
-driven by genuine input variation (e.g., distinct pt-stalk file format
-versions) or platform primitives (`path/filepath`), provided the branches
-converge into a single typed model as early as possible.
+Every behaviour, feature, workflow, API, helper, parser, validator,
+renderer path, worker route, UI behaviour, review skill, and automation
+entry point in My-gather MUST have exactly one canonical implementation
+path. New code MUST reuse, move, or improve that canonical path instead
+of creating a parallel helper, wrapper, duplicate API, compatibility shim,
+internal feature flag, or competing implementation. When a function, type,
+contract, file layout, or code path is replaced, the old path MUST be
+deleted in the same change — not left behind, not guarded by an internal
+flag, not retained "for safety". Re-exports and compatibility shims for
+internal identifiers after a rename are prohibited; all call sites MUST be
+updated in the same commit.
+
+Silent internal fallbacks (try A, on failure silently try B) are prohibited.
+Recoverable failures MUST surface as typed errors (Principle VII) or
+structured diagnostics in the report (Principle III), never as a second
+hidden attempt. External degradation paths are allowed only for genuine
+runtime boundaries outside the canonical implementation's control, such as
+missing or malformed pt-stalk inputs, unavailable browser capabilities,
+network or upstream-service failure on the named feedback exception, or
+platform primitives (`path/filepath`). Such degradation MUST be observable
+to the user or caller, covered by tests or explicit review evidence, and
+routed through the canonical owner rather than a preserved old
+implementation.
+
+This principle does not forbid branching driven by genuine input variation
+(e.g., distinct pt-stalk file format versions), provided the branches
+converge into a single typed model as early as possible. Specs, plans, and
+tasks that touch existing behaviour MUST identify the canonical owner/path,
+state whether an old path is removed or unchanged, and include a review
+step that verifies no duplicate implementation, hidden fallback, or
+compatibility shim remains.
 
 ### XIV. English-Only Durable Artifacts
 
@@ -466,6 +593,21 @@ Claude Code TUI or another interactive channel, which is not a
 checked-in artifact. A change that introduces non-English text into any
 other artifact MUST be rejected unless the same pull request carries a
 constitution amendment adopting a named exception.
+
+### XV. Bounded Source File Size
+
+First-party source-code files MUST NOT exceed 1000 lines. This is a
+maintainability boundary against god files: when a source file grows past the
+limit, the change MUST split it by responsibility before merge. Governed
+source-code files include Go, JavaScript, TypeScript, CSS, shell, HTML template,
+and similar maintained implementation files. The rule does not apply to specs,
+docs, JSON data, raw pt-stalk fixtures under `testdata/`, reference captures
+under `_references/`, committed golden snapshots, generated dependency
+lockfiles, vendored third-party/minified assets under vendor-style directories,
+or explicitly allowlisted bundled third-party minified assets. Maintained
+first-party minified source remains governed. Exemptions for maintained
+first-party source code are prohibited without a constitution amendment naming
+the exception and its removal plan.
 
 ## Distribution & Platform Support
 
@@ -528,11 +670,17 @@ is the only line of defence:
    `ioutil.WriteFile` lands in `parse/` or `cmd/` (Principle II,
    pre-push hook greps the diff). All three halves now block the
    push without human action.
-7. **[REVIEW]** No change leaves a duplicated or fallback implementation
-   of an existing behaviour in place (Principle XIII). Replaced
-   functions, types, and code paths MUST be deleted in the same change;
-   internal re-exports and compatibility shims after a rename are
-   prohibited. Reviewers verify on the diff; no mechanical check today.
+7. **[REVIEW]** No change leaves a duplicated, competing, or fallback
+   implementation of an existing behaviour in place (Principle XIII).
+   Replaced functions, types, contracts, file layouts, workflows, APIs,
+   helpers, worker routes, UI behaviours, review skills, and automation
+   paths MUST delete the old path in the same change unless a separate
+   constitution amendment names a temporary exception and removal plan.
+   Specs, plans, tasks, and review notes MUST identify the canonical
+   owner/path for touched behaviour and verify that any external
+   degradation path is observable, tested or explicitly reviewed, and
+   routed through that owner. Reviewers verify on the diff; no mechanical
+   check today.
 8. **[MECHANICAL]** No change introduces non-English content into any
    checked-in artifact outside `testdata/` and `_references/`
    (Principle XIV). Enforced by a byte-level grep in
@@ -547,10 +695,19 @@ is the only line of defence:
    byte-counting test fixture at
    `feedback-worker/test/validate.test.ts:69-70`) are exempt by
    file:line.
+9. **[MECHANICAL]** No governed first-party source-code file exceeds
+   1000 lines (Principle XV). Enforced by
+   `tests/coverage/file_size_test.go`, which scans tracked source files
+   and fails with every offending path and line count. Raw fixtures,
+   references, specs, docs, JSON data, generated dependency lockfiles,
+   golden snapshots, vendored third-party/minified assets under vendor-style
+   directories, and explicitly allowlisted bundled third-party minified
+   assets are outside this source-code rule. Maintained first-party minified
+   source remains governed.
 
 The MECHANICAL / REVIEW split documents what the repo enforces with code
 today, not the strictness of each gate — every gate is equally
-non-negotiable for a merge. As of v1.4 only gate 7 (Principle XIII
+non-negotiable for a merge. As of v1.6.1 only gate 7 (Principle XIII
 canonical code path) remains [REVIEW]; a future amendment may convert
 it once a duplicate-implementation scan is designed. The constitution
 does not require that conversion, but the absence of mechanical teeth
@@ -588,4 +745,4 @@ invocation via the Constitution Check gate. Runtime development guidance
 and feature-local `plan.md` / `quickstart.md` files and MUST defer to this
 constitution when conflicts arise.
 
-**Version**: 1.4.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-04-27
+**Version**: 1.6.1 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-05-04

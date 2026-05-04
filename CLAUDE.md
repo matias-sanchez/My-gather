@@ -1,19 +1,20 @@
 <!-- SPECKIT START -->
-Active feature: **009-spec-code-reconciliation**
+Active feature: **010-file-size-constitution**
 
 For technologies, project structure, constitution gates, data model,
 contracts, and shell commands, read the current plan:
 
-- Plan: `specs/009-spec-code-reconciliation/plan.md`
-- Spec: `specs/009-spec-code-reconciliation/spec.md`
-- Research: `specs/009-spec-code-reconciliation/research.md`
-- Data model: `specs/009-spec-code-reconciliation/data-model.md`
-- Contracts: `specs/009-spec-code-reconciliation/contracts/reconciliation.md`
-- Quickstart: `specs/009-spec-code-reconciliation/quickstart.md`
-- Tasks: `specs/009-spec-code-reconciliation/tasks.md`
+- Plan: `specs/010-file-size-constitution/plan.md`
+- Spec: `specs/010-file-size-constitution/spec.md`
+- Research: `specs/010-file-size-constitution/research.md`
+- Data model: `specs/010-file-size-constitution/data-model.md`
+- Contracts: `specs/010-file-size-constitution/contracts/file-size.md`
+- Quickstart: `specs/010-file-size-constitution/quickstart.md`
+- Tasks: `specs/010-file-size-constitution/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
+- **009-spec-code-reconciliation** - `specs/009-spec-code-reconciliation/plan.md`
 - **008-archive-input** - `specs/008-archive-input/plan.md`
 - **007-advisor-intelligence** - `specs/007-advisor-intelligence/plan.md`
 - **006-observed-slowest-queries** - `specs/006-observed-slowest-queries/plan.md`
@@ -56,7 +57,7 @@ signals must name the same feature before running `/speckit-*` workflows.
   list the My-gather-specific anti-patterns so bots can self-filter.
   **Use this in this repo, not the global `/pr-review-trigger`.**
 - `/pr-review-fix-my-gather` (skill at `.claude/skills/pr-review-fix-my-gather/`)
-  — the My-gather variant of the PR review-fix workflow. Walks the 14
+  — the My-gather variant of the PR review-fix workflow. Walks the 15
   principles in `.specify/memory/constitution.md`, uses Go-native
   validation, and marks review threads resolved on GitHub. **Use this
   in this repo, not the global `/pr-review-fix`** — the global one
@@ -75,4 +76,6 @@ signals must name the same feature before running `/speckit-*` workflows.
   before you push.
 - Pre-push hook (`scripts/hooks/pre-push-constitution-guard.sh`) wired
   via `.claude/settings.json` — mechanical checks that block pushes
-  violating Principles I, VIII, or X.
+  violating the diff-scoped mechanical gates, including Principles I,
+  II, VI, VIII, IX, X, and XIV. Principle XV is enforced by
+  `tests/coverage/file_size_test.go` in the Go test suite.

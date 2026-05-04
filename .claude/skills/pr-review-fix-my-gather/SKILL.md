@@ -1,15 +1,15 @@
 ---
 name: pr-review-fix-my-gather
-description: "Triage Codex / Copilot findings on the current My-gather PR, verify each one, apply fixes that respect the 14-principle constitution in .specify/memory/constitution.md, mark resolved threads as resolved on GitHub, clean stale trigger comments, and optionally re-trigger the review cycle. Use in the My-gather repo whenever the user says `/pr-review-fix-my-gather`, `address review findings`, `fix codex comments`, `fix copilot comments`, `resolve PR review`, or is cycling through a codex-review round on the current branch. Prefer this over the generic `/pr-review-fix` when working in this repo — only this variant walks the 14 principles and uses Go-native validation. <example>Context: Codex has posted findings on the current PR. user: \"address the codex findings\" assistant: \"Invoking /pr-review-fix-my-gather to triage each finding, walk the constitution, apply valid fixes, mark the threads resolved, and commit.\"</example> <example>Context: User wants to clear an iteration. user: \"fix review comments and resolve them\" assistant: \"Launching /pr-review-fix-my-gather — will verify each comment against the code, apply only principle-compliant fixes, resolve the threads on GitHub, and push.\"</example> <example>Context: After a fresh codex round lands. user: \"process the codex round and push the fixes\" assistant: \"Running /pr-review-fix-my-gather: verify, principle-walk, fix, resolve threads, push.\"</example>"
+description: "Triage Codex / Copilot findings on the current My-gather PR, verify each one, apply fixes that respect the 15-principle constitution in .specify/memory/constitution.md, mark resolved threads as resolved on GitHub, clean stale trigger comments, and optionally re-trigger the review cycle. Use in the My-gather repo whenever the user says `/pr-review-fix-my-gather`, `address review findings`, `fix codex comments`, `fix copilot comments`, `resolve PR review`, or is cycling through a codex-review round on the current branch. Prefer this over the generic `/pr-review-fix` when working in this repo — only this variant walks the 15 principles and uses Go-native validation. <example>Context: Codex has posted findings on the current PR. user: \"address the codex findings\" assistant: \"Invoking /pr-review-fix-my-gather to triage each finding, walk the constitution, apply valid fixes, mark the threads resolved, and commit.\"</example> <example>Context: User wants to clear an iteration. user: \"fix review comments and resolve them\" assistant: \"Launching /pr-review-fix-my-gather — will verify each comment against the code, apply only principle-compliant fixes, resolve the threads on GitHub, and push.\"</example> <example>Context: After a fresh codex round lands. user: \"process the codex round and push the fixes\" assistant: \"Running /pr-review-fix-my-gather: verify, principle-walk, fix, resolve threads, push.\"</example>"
 ---
 
 # PR Review Fix (My-gather)
 
-Read Codex / Copilot findings on the current PR, verify each against the code, apply only fixes that satisfy the 14-principle constitution, mark fixed review threads resolved on GitHub, clean stale trigger comments, and optionally re-trigger the review cycle.
+Read Codex / Copilot findings on the current PR, verify each against the code, apply only fixes that satisfy the 15-principle constitution, mark fixed review threads resolved on GitHub, clean stale trigger comments, and optionally re-trigger the review cycle.
 
 This skill is one half of the review loop:
 
-1. **`/pr-review-trigger`** — post review requests.
+1. **`/pr-review-trigger-my-gather`** — post review requests.
 2. **`/pr-review-fix-my-gather`** (this skill) — verify, principle-walk, fix, resolve threads, commit, clean, re-trigger.
 
 ## Scope and goals
@@ -96,8 +96,9 @@ Re-read `.specify/memory/constitution.md` at the start of each run; the version 
 | X. Minimal Dependencies | Does the fix add a `go.mod require` entry without a justification line in the active feature's `plan.md`? |
 | XI. Reports Optimized for Humans Under Pressure | Does the fix promote an exhaustive dump above the "what triggered / state at trigger / deltas" spine? |
 | XII. Pinned Go Version | Does the fix change `go.mod`'s `go` directive as a side effect of another change? |
-| **XIII. Canonical Code Path (NON-NEGOTIABLE)** | Does the fix leave an old function, type, or code path alongside a replacement? Add a fallback (`try A, on error silently try B`)? Introduce an `if useNew { ... } else { ... }` internal flag? Keep a re-export or alias after a rename? Preserve a compat shim for internal callers? |
+| **XIII. Canonical Code Path (NON-NEGOTIABLE)** | Does the fix leave an old function, type, workflow, API, helper, worker route, UI behaviour, review skill, or automation path alongside a replacement? Add a hidden internal fallback (`try A, on error silently try B`)? Introduce an `if useNew { ... } else { ... }` internal flag? Keep a re-export or alias after a rename? Preserve a compat shim for internal callers? Add external degradation that is not observable, tested or explicitly reviewed, and routed through the canonical owner? |
 | XIV. English-Only Durable Artifacts | Does the fix add non-English content (identifiers, comments, godoc, commit message, docs, skill/agent/hook text) anywhere outside `testdata/` and `_references/`? Rewrite in English, keeping the fix intact. |
+| XV. Bounded Source File Size | Does the fix leave any governed first-party source-code file over 1000 lines or add a maintained source-code exemption without a constitution amendment naming the exception and removal plan? |
 
 Any yes means: **do not apply this fix as proposed**. Your options are:
 
@@ -129,11 +130,11 @@ For each `FIX` and `ALT`:
 
 ### Step 6 — Full local validation
 
-Match the CI gates and the 7 merge gates from `Development Workflow & Quality Gates`:
+Match the CI gates and the 9 merge gates from `Development Workflow & Quality Gates`:
 
 ```bash
 go vet ./...
-go test ./... -count=1
+go test -count=1 ./...
 ```
 
 If CI has additional targets (determinism diff, cross-compile, lint), run their `make` equivalents when available (`make determinism`, `make lint`, etc.) — check the `Makefile` at the repo root for the current target names. Do not fabricate target names.
@@ -218,8 +219,8 @@ Only run Step 9 if the user asked for a clean trigger lead-in, or if Step 10 wil
 
 ### Step 10 — Decide next action
 
-- **Fixes were applied.** Tell the user: count of fixes, count of dismissals, count of threads resolved, count of threads still open (should be 0 for bots). Ask whether to run `/pr-review-trigger` for another round.
-- **Only dismissals.** Tell the user every finding was either a false positive or a principle-conflicting suggestion. Threads are resolved with dismissal notes. Ask whether to re-trigger anyway.
+- **Fixes were applied.** Tell the user: count of fixes, count of dismissals, count of threads resolved, count of threads still open (should be 0 for bots). Ask whether to run `/pr-review-trigger-my-gather` for another round.
+- **Only dismissals.** Tell the user every finding was either a false positive or a principle-conflicting suggestion. Threads are resolved with dismissal notes. Ask whether to run the normal My-gather trigger again.
 - **No findings at all.** The PR is review-clean. Suggest merging.
 
 ## Non-negotiable rules
@@ -249,6 +250,7 @@ Dismiss these when codex / copilot proposes them. Cite the principle in the dism
 11. **"Bump Go to the latest tip as part of this fix."** → Dismiss. Principle XII — Go upgrades are their own reviewed commit.
 12. **"Add a pre-existing-pattern refactor."** → Dismiss. Out of scope for a review-fix cycle; propose it as a separate issue if worth doing.
 13. **"Localize this comment / message / identifier to Spanish (or any non-English language)."** → Dismiss. Principle XIV — checked-in artifacts are English-only.
+14. **"Allow this source file to exceed 1000 lines for now."** → Dismiss. Principle XV — split governed first-party source code before merge or amend the constitution with a named exception and removal plan.
 
 ## Convergence metric
 
