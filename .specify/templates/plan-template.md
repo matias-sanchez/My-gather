@@ -36,8 +36,8 @@
 **Canonical Path Audit (Principle XIII)**:
 - Canonical owner/path for touched behaviour: [package/file/workflow/API]
 - Replaced or retired paths: [deleted in this change | unchanged | N/A]
-- External degradation paths, if any: [observable/tested route through the
-  canonical owner | N/A]
+- External degradation paths, if any: [observable/tested or explicitly reviewed
+  route through the canonical owner | N/A]
 - Review check: [how reviewers verify no duplicate implementation, hidden
   fallback, compatibility shim, or competing helper remains]
 

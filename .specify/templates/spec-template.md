@@ -98,6 +98,8 @@
   replaced | N/A]
 - **External degradation**: [observable user/caller outcome and test/review
   evidence | N/A]
+- **Review check**: [how review verifies no duplicate implementation, hidden
+  fallback, compatibility shim, or competing path remains]
 
 *Example of marking unclear requirements:*
 

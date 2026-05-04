@@ -76,5 +76,6 @@ signals must name the same feature before running `/speckit-*` workflows.
   before you push.
 - Pre-push hook (`scripts/hooks/pre-push-constitution-guard.sh`) wired
   via `.claude/settings.json` — mechanical checks that block pushes
-  violating the mechanically enforced constitution gates, including
-  Principles I, II, VI, VIII, IX, X, XIV, and XV.
+  violating the diff-scoped mechanical gates, including Principles I,
+  II, VI, VIII, IX, X, and XIV. Principle XV is enforced by
+  `tests/coverage/file_size_test.go` in the Go test suite.

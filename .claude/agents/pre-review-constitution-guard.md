@@ -22,6 +22,7 @@ Always, in this order:
 3. Active feature context from `CLAUDE.md` (`Active feature:` line) and then:
    - `specs/<active-feature>/plan.md`
    - `specs/<active-feature>/spec.md`
+   - `specs/<active-feature>/tasks.md`
    - `specs/<active-feature>/contracts/` (every file)
    - `specs/<active-feature>/data-model.md` if present
 4. Touched source files in full (not just the diff hunks) when a finding needs broader context — for example, to verify that a sort is stable across the whole function, not just the edited lines.

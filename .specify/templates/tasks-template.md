@@ -12,6 +12,12 @@ description: "Task list template for feature implementation"
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
+## Canonical Path Metadata *(Principle XIII; include when changing existing behavior)*
+
+- **Canonical owner/path**: [package/file/workflow/API from plan.md]
+- **Old path treatment**: [deleted by task IDs | unchanged because not replaced | N/A]
+- **External degradation evidence**: [test task IDs or explicit review task | N/A]
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -152,9 +158,10 @@ Examples of foundational tasks (adjust based on your project):
 
 - [ ] TXXX [P] Documentation updates in docs/
 - [ ] TXXX Code cleanup and refactoring
-- [ ] TXXX Canonical-path audit: verify the plan's Principle XIII owner/path is
-      the only implementation, replaced paths are deleted, external degradation
-      paths are observable/tested, and no compatibility shim or hidden fallback
+- [ ] TXXX Canonical-path audit: verify the Principle XIII metadata above
+      identifies the canonical owner/path and old-path treatment, replaced
+      paths are deleted, external degradation paths are observable and covered
+      by tests or explicit review, and no compatibility shim or hidden fallback
       remains.
 - [ ] TXXX Performance optimization across all stories
 - [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
