@@ -90,6 +90,15 @@
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
+### Canonical Path Expectations *(include when changing existing behavior)*
+
+- **Canonical owner/path**: [Name the existing feature, workflow, API, helper,
+  UI behavior, worker route, or automation path this change updates]
+- **Old path treatment**: [deleted in this feature | unchanged because not
+  replaced | N/A]
+- **External degradation**: [observable user/caller outcome and test/review
+  evidence | N/A]
+
 *Example of marking unclear requirements:*
 
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]

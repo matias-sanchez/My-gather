@@ -125,8 +125,9 @@ Code review requested on `${BRANCH}` — ${COMMIT_COUNT} commits, ${DIFF_STAT}, 
 
 - **Principle IV (Deterministic Output)**: output MUST be byte-identical across runs. No map iteration without sorted keys, no unstable sort, no `time.Now()` reaching the render path, no locale-dependent float formatting, no random IDs.
 - **Principle VIII (Reference Fixtures & Golden Tests)**: new parsers MUST ship with a fixture under `testdata/` and a golden under `testdata/golden/` in the same change.
-- **Principle XIII (Canonical Code Path, NON-NEGOTIABLE)**: exactly one implementation per behaviour. No duplicated code, no silent fallbacks (`try A, on error try B`), no post-rename compatibility shims, no `if useNew { ... } else { ... }` internal flags. When a function is replaced, the old one is deleted in the same change.
+- **Principle XIII (Canonical Code Path, NON-NEGOTIABLE)**: exactly one canonical implementation path per behaviour, workflow, API, helper, worker route, UI behaviour, review skill, or automation path. No duplicated code, no hidden internal fallbacks (`try A, on error try B`), no post-rename compatibility shims, no `if useNew { ... } else { ... }` internal flags. When a path is replaced, the old one is deleted in the same change. External degradation must be observable, tested or explicitly reviewed, and routed through the canonical owner.
 - **Principle XIV (English-Only Durable Artifacts)**: all checked-in code, comments, commit messages, docs, and configuration MUST be English. The only exempt content is under `testdata/` and `_references/` (raw pt-stalk input).
+- **Principle XV (Bounded Source File Size)**: governed first-party source-code files MUST stay at or below 1000 lines. Specs, docs, fixtures, goldens, lockfiles, and vendored/minified third-party assets are outside this source-code rule.
 
 **Focus:** real bugs, correctness, determinism regressions, exception handling, behavioural drift from deleted code, principle violations.
 
@@ -134,6 +135,7 @@ Code review requested on `${BRANCH}` — ${COMMIT_COUNT} commits, ${DIFF_STAT}, 
 
 - Keeping legacy/fallback code or dual implementations (Principle XIII).
 - Re-exports or compatibility aliases after a rename (Principle XIII).
+- External degradation that is hidden, untested, or routed around the canonical owner (Principle XIII).
 - Goroutines, parallelism, or concurrent parsing anywhere in `parse/`, `model/`, or `render/` (Principle IV).
 - External fetches, CDN links, or runtime network I/O (Principles V + IX).
 - Silent fallback parsers — always attach a structured diagnostic instead (Principle III).
@@ -143,6 +145,7 @@ Code review requested on `${BRANCH}` — ${COMMIT_COUNT} commits, ${DIFF_STAT}, 
 - `fmt.Errorf` for branchable conditions — use typed errors with `%w` (Principle VII).
 - Bumping the Go directive in `go.mod` as a side effect (Principle XII).
 - Non-English content in code, comments, commit messages, docs, or configuration outside `testdata/` and `_references/` (Principle XIV).
+- Letting a governed first-party source-code file exceed 1000 lines (Principle XV).
 - Style, formatting, or import ordering — CI and `gofmt` already enforce those.
 
 **Do NOT implement or push changes.** Review-only. Findings as inline comments, please.

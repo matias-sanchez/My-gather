@@ -152,6 +152,10 @@ Examples of foundational tasks (adjust based on your project):
 
 - [ ] TXXX [P] Documentation updates in docs/
 - [ ] TXXX Code cleanup and refactoring
+- [ ] TXXX Canonical-path audit: verify the plan's Principle XIII owner/path is
+      the only implementation, replaced paths are deleted, external degradation
+      paths are observable/tested, and no compatibility shim or hidden fallback
+      remains.
 - [ ] TXXX Performance optimization across all stories
 - [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
 - [ ] TXXX Security hardening

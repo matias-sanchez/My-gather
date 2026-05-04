@@ -22,7 +22,7 @@ Operationally, after running `/pr-review-fix-my-gather` and `/pr-review-trigger-
 ## Scope and non-negotiables
 
 - **Composes, never duplicates.** This skill calls the other two via their slugs — it does not reimplement the fix or trigger logic. Any change to fix or trigger semantics happens in those files (Principle XIII: canonical code path, no duplicated implementations).
-- **Every applied fix inherits the full 14-principle walk** from `/pr-review-fix-my-gather`. That walk is **not** bypassed, shortened, or softened inside this loop. If a proposed fix would violate a principle, the fix skill dismisses it or applies an alternative remedy — same as a single-shot run.
+- **Every applied fix inherits the full 15-principle walk** from `/pr-review-fix-my-gather`. That walk is **not** bypassed, shortened, or softened inside this loop. If a proposed fix would violate a principle, the fix skill dismisses it or applies an alternative remedy — same as a single-shot run.
 - **No fix ever introduces a duplicated or fallback implementation** (Principle XIII). If the fix skill returns without applying a change for a given finding because the only remedy would violate XIII, that finding is dismissed with a reply citing XIII — the loop does not retry it with a looser remedy.
 - **English-only** (Principle XIV) across every artifact this skill touches: commit messages, review replies, thread-resolution notes, and log lines.
 - **Commit + push is the default flow** — inherited from `/pr-review-fix-my-gather`'s Step 7. This skill never modifies code directly; code changes only come through the fix skill.
@@ -97,7 +97,7 @@ Call the fix skill:
 
 > `/pr-review-fix-my-gather`
 
-The fix skill runs its full procedure: verify each finding, walk all 14 principles, apply fixes (or alternative remedies, or dismissals), run `go vet ./...` and `go test ./...`, invoke `@agent-pre-review-constitution-guard`, commit, push, and resolve each processed thread via GraphQL.
+The fix skill runs its full procedure: verify each finding, walk all 15 principles, apply fixes (or alternative remedies, or dismissals), run `go vet ./...` and `go test ./...`, invoke `@agent-pre-review-constitution-guard`, commit, push, and resolve each processed thread via GraphQL.
 
 **Critical contract for this loop**: if the fix skill dismisses a finding because the only remedy would violate a principle (most commonly XIII — duplicated code / silent fallback — or XIV — non-English content), that dismissal is **final**. The loop MUST NOT retry that finding on the next iteration. Because the fix skill resolves the thread on dismissal, Codex's next review will not re-raise a thread it already resolved — but if Codex does raise it again anyway, the fix skill will dismiss it again with the same XIII/XIV citation. That is correct behaviour; not a bug to work around.
 
