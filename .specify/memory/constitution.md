@@ -1,6 +1,37 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.6.0 → 1.6.1
+Bump rationale: PATCH-level wording clarification for Principle XV. The
+  source-size exemption for bundled third-party minified assets outside
+  vendor-style directories is now described as an explicit reviewed
+  allowlist, not a filename-pattern fallback. This preserves the existing
+  requirement that maintained first-party minified source remains governed
+  by the 1000-line limit.
+
+Added principles: none.
+
+Modified principles:
+  - XV. Bounded Source File Size → clarified vendored/minified asset
+    exemption wording without changing the forbidden or required
+    behaviours.
+
+Modified sections:
+  - Development Workflow & Quality Gates → gate 9 uses the same explicit
+    allowlist wording for bundled third-party minified assets.
+
+Templates requiring updates:
+  - .specify/templates/*                          compatible
+  - .claude/agents/pre-review-constitution-guard.md compatible
+  - .claude/skills/pr-review-*-my-gather/         compatible
+  - AGENTS.md                                     compatible
+  - CLAUDE.md                                     compatible
+  - README.md                                     updated
+
+Deferred items / follow-up TODOs: none.
+
+Prior Sync Impact Report (1.6.0) follows for history:
+-----------------------------------------------------
 Version change: 1.5.0 → 1.6.0
 Bump rationale: MINOR-level material expansion of existing Principle
   XIII. The canonical-code-path rule already forbade duplicated
@@ -572,7 +603,9 @@ source-code files include Go, JavaScript, TypeScript, CSS, shell, HTML template,
 and similar maintained implementation files. The rule does not apply to specs,
 docs, JSON data, raw pt-stalk fixtures under `testdata/`, reference captures
 under `_references/`, committed golden snapshots, generated dependency
-lockfiles, or vendored third-party/minified assets. Exemptions for maintained
+lockfiles, vendored third-party/minified assets under vendor-style directories,
+or explicitly allowlisted bundled third-party minified assets. Maintained
+first-party minified source remains governed. Exemptions for maintained
 first-party source code are prohibited without a constitution amendment naming
 the exception and its removal plan.
 
@@ -667,12 +700,14 @@ is the only line of defence:
    `tests/coverage/file_size_test.go`, which scans tracked source files
    and fails with every offending path and line count. Raw fixtures,
    references, specs, docs, JSON data, generated dependency lockfiles,
-   golden snapshots, and vendored third-party/minified assets are outside
-   this source-code rule.
+   golden snapshots, vendored third-party/minified assets under vendor-style
+   directories, and explicitly allowlisted bundled third-party minified
+   assets are outside this source-code rule. Maintained first-party minified
+   source remains governed.
 
 The MECHANICAL / REVIEW split documents what the repo enforces with code
 today, not the strictness of each gate — every gate is equally
-non-negotiable for a merge. As of v1.5 only gate 7 (Principle XIII
+non-negotiable for a merge. As of v1.6.1 only gate 7 (Principle XIII
 canonical code path) remains [REVIEW]; a future amendment may convert
 it once a duplicate-implementation scan is designed. The constitution
 does not require that conversion, but the absence of mechanical teeth
@@ -710,4 +745,4 @@ invocation via the Constitution Check gate. Runtime development guidance
 and feature-local `plan.md` / `quickstart.md` files and MUST defer to this
 constitution when conflicts arise.
 
-**Version**: 1.6.0 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-05-04
+**Version**: 1.6.1 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-05-04

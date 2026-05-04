@@ -76,7 +76,8 @@ the same governed scope and exemptions.
 
 - Some generated third-party source artifacts, such as vendored minified
   libraries, can be large by byte count without being god files. These must be
-  explicitly exempted by path or class.
+  exempted by vendor-style directory class or explicit reviewed path allowlist;
+  maintained first-party minified source remains governed.
 - Raw fixtures and golden snapshots must remain faithful to source data and
   should not be reformatted just to satisfy a maintainability rule.
 - Splitting embedded JS/CSS must preserve deterministic rendered output and

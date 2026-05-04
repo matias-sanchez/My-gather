@@ -162,6 +162,9 @@ func isGovernedSourcePath(path string) bool {
 }
 
 func isVendoredMinifiedAssetPath(path string) bool {
+	// Bundled third-party minified assets outside vendor-style directories are
+	// exempt only by explicit reviewed allowlist; first-party minified source is
+	// still governed by Principle XV.
 	switch path {
 	case "render/assets/chart.min.css", "render/assets/chart.min.js":
 		return true

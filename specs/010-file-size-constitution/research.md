@@ -25,8 +25,10 @@ The repository contains specs, docs, JSON data, raw pt-stalk captures under
 These are not source-code god files and should not be rewritten for this source
 line-count rule.
 
-Decision: the mechanical test only considers source-code extensions and still
-exempts vendored/minified third-party assets.
+Decision: the mechanical test only considers source-code extensions, exempts
+third-party minified assets under vendor-style directories, and requires an
+explicit reviewed allowlist for bundled third-party minified assets outside
+those directories. Maintained first-party minified source remains governed.
 
 ## Finding: Embedded Asset Ordering
 

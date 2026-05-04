@@ -127,7 +127,7 @@ Code review requested on `${BRANCH}` — ${COMMIT_COUNT} commits, ${DIFF_STAT}, 
 - **Principle VIII (Reference Fixtures & Golden Tests)**: new parsers MUST ship with a fixture under `testdata/` and a golden under `testdata/golden/` in the same change.
 - **Principle XIII (Canonical Code Path, NON-NEGOTIABLE)**: exactly one canonical implementation path per behaviour, workflow, API, helper, worker route, UI behaviour, review skill, or automation path. No duplicated code, no hidden internal fallbacks (`try A, on error try B`), no post-rename compatibility shims, no `if useNew { ... } else { ... }` internal flags. When a path is replaced, the old one is deleted in the same change. External degradation must be observable, tested or explicitly reviewed, and routed through the canonical owner.
 - **Principle XIV (English-Only Durable Artifacts)**: all checked-in code, comments, commit messages, docs, and configuration MUST be English. The only exempt content is under `testdata/` and `_references/` (raw pt-stalk input).
-- **Principle XV (Bounded Source File Size)**: governed first-party source-code files MUST stay at or below 1000 lines. Specs, docs, fixtures, goldens, lockfiles, and vendored/minified third-party assets are outside this source-code rule.
+- **Principle XV (Bounded Source File Size)**: governed first-party source-code files MUST stay at or below 1000 lines. Specs, docs, fixtures, goldens, lockfiles, vendor-style third-party assets, and explicitly allowlisted bundled third-party minified assets are outside this source-code rule.
 
 **Focus:** real bugs, correctness, determinism regressions, exception handling, behavioural drift from deleted code, principle violations.
 

@@ -132,7 +132,7 @@ The project's [constitution](.specify/memory/constitution.md) locks in fifteen n
 12. **Pinned Go version.** Upgrades are their own reviewed commit.
 13. **Canonical code path** *(NON-NEGOTIABLE)*. One canonical implementation path per behaviour, workflow, API, helper, UI path, worker route, and review skill — no duplicate implementations, hidden internal fallbacks, or post-rename shims.
 14. **English-only durable artifacts.** Code, comments, commit messages, specs, docs — all English. Exempt: `testdata/` and `_references/` (raw pt-stalk input).
-15. **Bounded source file size.** First-party source-code files stay at or below 1000 lines; specs, docs, fixtures, goldens, lockfiles, and vendored/minified third-party assets are outside this source-code rule.
+15. **Bounded source file size.** First-party source-code files stay at or below 1000 lines; specs, docs, fixtures, goldens, lockfiles, vendor-style third-party assets, and explicitly allowlisted bundled third-party minified assets are outside this source-code rule.
 
 ## Repository layout
 

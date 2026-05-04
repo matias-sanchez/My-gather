@@ -31,8 +31,9 @@ Fields:
 Rules:
 
 - The mechanical test should not need exemptions for non-source extensions.
-- Explicit source-code exemptions are limited to vendored/minified third-party
-  assets.
+- Explicit source-code exemptions are limited to vendor-style third-party assets
+  and reviewed allowlisted bundled third-party minified assets; maintained
+  first-party minified source remains governed.
 
 ## Embedded Asset Part
 

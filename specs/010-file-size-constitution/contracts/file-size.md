@@ -11,7 +11,8 @@ exempts:
 
 - `_references/**`
 - `testdata/**`
-- vendored third-party minified assets
+- third-party minified assets under vendor-style directories
+- explicitly allowlisted bundled third-party minified assets
 
 Specs, docs, JSON data, golden snapshots, and generated lockfiles are outside
 this source-code rule.
