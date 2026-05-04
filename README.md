@@ -116,7 +116,7 @@ If the backend is unreachable the dialog degrades gracefully to GitHub's new-iss
 
 ## Design principles
 
-The project's [constitution](.specify/memory/constitution.md) locks in fourteen non-negotiables:
+The project's [constitution](.specify/memory/constitution.md) locks in fifteen non-negotiables:
 
 1. **Single static binary.** No CGO, no libc version negotiation, no runtime install step.
 2. **Read-only inputs.** Never modify the pt-stalk tree.
@@ -130,8 +130,9 @@ The project's [constitution](.specify/memory/constitution.md) locks in fourteen 
 10. **Minimal dependencies.** Stdlib-first; every third-party module justifies itself in the active feature's plan.
 11. **Reports optimised for humans under pressure.** Primary narrative (trigger + state at trigger + deltas) takes precedence over exhaustive metric dumps.
 12. **Pinned Go version.** Upgrades are their own reviewed commit.
-13. **Canonical code path** *(NON-NEGOTIABLE)*. One implementation per behaviour — no silent fallbacks, no post-rename shims.
+13. **Canonical code path** *(NON-NEGOTIABLE)*. One canonical implementation path per behaviour, workflow, API, helper, UI path, worker route, and review skill — no duplicate implementations, hidden internal fallbacks, or post-rename shims.
 14. **English-only durable artifacts.** Code, comments, commit messages, specs, docs — all English. Exempt: `testdata/` and `_references/` (raw pt-stalk input).
+15. **Bounded source file size.** First-party source-code files stay at or below 1000 lines; specs, docs, fixtures, goldens, lockfiles, and vendored/minified third-party assets are outside this source-code rule.
 
 ## Repository layout
 
@@ -189,7 +190,7 @@ A dedicated test renders the same fixture twice and asserts byte-identical outpu
 
 ## Contributing
 
-1. Read the [constitution](.specify/memory/constitution.md). Every contribution gates on those fourteen principles.
+1. Read the [constitution](.specify/memory/constitution.md). Every contribution gates on those fifteen principles.
 2. New features go through the spec-driven pipeline — see `specs/` for prior examples (spec → plan → research → data-model → contracts → tasks → implement).
 3. Local pre-push enforces the constitution via `scripts/hooks/pre-push-constitution-guard.sh` (wired through `.claude/settings.json`); CI runs the same checks on every PR.
 4. Issues + discussions: the in-report "Report feedback" button is the preferred path; manual filing is also welcome at [github.com/matias-sanchez/My-gather/issues](https://github.com/matias-sanchez/My-gather/issues).
