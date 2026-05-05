@@ -59,7 +59,7 @@ mechanical gates catch the intended source/spec surfaces.
 - [x] T018 Run `go test -count=1 ./...`.
 - [x] T019 Run `make lint`.
 - [x] T020 Run `cd feedback-worker && npm run typecheck && npm test`.
-- [ ] T021 Run the constitution guard in CI mode.
+- [x] T021 Run the constitution guard in CI mode.
 - [x] T022 Run canonical-path searches for retired paths and summarize the
   result in `contracts/audit.md`.
-- [ ] T023 Commit, push, open PR, and trigger review.
+- [x] T023 Commit, push, open PR, and trigger review.

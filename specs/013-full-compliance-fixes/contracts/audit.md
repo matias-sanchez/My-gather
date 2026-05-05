@@ -26,6 +26,9 @@ All required resolutions are complete only when validation in
 - Go lint gate: `make lint` passed.
 - Worker gates: `npm run typecheck` and `npm test` passed with
   `@cloudflare/vitest-pool-workers`.
+- Constitution guard: `CONSTITUTION_GUARD_CI=1
+  CONSTITUTION_GUARD_RANGE=origin/main..HEAD
+  scripts/hooks/pre-push-constitution-guard.sh` passed.
 - Canonical path searches: no remaining source matches for
   `ParseEnvMeminfo(`, `formatThousands`, `find_feature_dir_by_prefix`, or
   `legacy fallback`; deleted core Spec Kit branch-creation path is absent from
