@@ -73,7 +73,7 @@ The Worker enforces a rate limit: maximum 5 Submit requests per IP address per h
 
 ### User Story 4 — Oversized or malformed payloads are rejected at the Worker (Priority: P3)
 
-The Worker validates every incoming payload: title non-empty (≤ 200 chars), body ≤ 10 KB of text, image ≤ 5 MB, voice ≤ 15 MB (decoded — the 15 MB cap fits ~10 min of Opus at the browser's default bitrate with margin; matches `feedback-worker/src/validate.ts` `VOICE_MAX_BYTES = 15_728_640`). Over-limit or malformed requests return HTTP 400 with a structured error. (Spam/abuse content per se is not filtered at the Worker — the rate limit + the GitHub App's auditable identity carry the abuse story; a profanity filter would be a separate, opt-in feature with its own spec.)
+The Worker validates every incoming payload using the canonical feedback contract at `render/assets/feedback-contract.json`: title non-empty (≤ 200 chars), body ≤ 10 KB of text, image ≤ 5 MB, voice ≤ 15 MB decoded (the 15 MB cap fits ~10 min of Opus at the browser's default bitrate with margin). Over-limit or malformed requests return HTTP 400 with a structured error. (Spam/abuse content per se is not filtered at the Worker — the rate limit + the GitHub App's auditable identity carry the abuse story; a profanity filter would be a separate, opt-in feature with its own spec.)
 
 **Why this priority**: enhances robustness but isn't core to the user story.
 

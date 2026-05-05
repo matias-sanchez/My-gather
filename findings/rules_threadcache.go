@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // ruleThreadCacheHitRatio computes the thread-cache hit ratio as
@@ -47,7 +48,7 @@ func ruleThreadCacheHitRatio(r *model.Report) Finding {
 		sev = SeverityWarn
 		summary = fmt.Sprintf("Thread-cache hit ratio is %s — below the 90 %% comfort band.", formatPercent(display))
 	}
-	cacheSize, _ := variableFloat(r, "thread_cache_size")
+	cacheSize, _ := reportutil.VariableFloat(r, "thread_cache_size")
 	return Finding{
 		ID:        "threadcache.hit_ratio",
 		Subsystem: "Thread Cache",
@@ -63,7 +64,7 @@ func ruleThreadCacheHitRatio(r *model.Report) Finding {
 		// hide the anomaly. The Summary above still uses the clamped
 		// display value for human readability.
 		FormulaComputed: fmt.Sprintf("1 − %s / %s = %s",
-			formatNum(threadsCreated), formatNum(connections), formatPercent(ratio)),
+			reportutil.FormatNum(threadsCreated), reportutil.FormatNum(connections), formatPercent(ratio)),
 		Metrics: []MetricRef{
 			{Name: "Threads_created", Value: threadsCreated, Unit: "count"},
 			{Name: "Connections", Value: connections, Unit: "count"},

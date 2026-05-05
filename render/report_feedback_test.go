@@ -14,6 +14,8 @@ package render_test
 
 import (
 	"bytes"
+	"encoding/json"
+	"html"
 	"regexp"
 	"strings"
 	"testing"
@@ -63,6 +65,7 @@ func TestFeedbackButtonMarkupPresent(t *testing.T) {
 // emitted as an <option>.
 func TestFeedbackDialogMarkupPresent(t *testing.T) {
 	out := renderFeedbackFixture(t)
+	contract := renderedFeedbackContract(t, out)
 
 	wantSubstrings := []string{
 		`id="feedback-dialog"`,
@@ -77,12 +80,11 @@ func TestFeedbackDialogMarkupPresent(t *testing.T) {
 		// detects a popup-blocker and reveals the manual link.
 		`id="feedback-fallback"`,
 		`hidden`,
+	}
+	for _, category := range contract.Categories {
 		// Each category lands as <option value="X">X</option>; the
 		// `>X<` text literal survives regardless of attribute order.
-		`>UI<`,
-		`>Parser<`,
-		`>Advisor<`,
-		`>Other<`,
+		wantSubstrings = append(wantSubstrings, `>`+category+`<`)
 	}
 	for _, s := range wantSubstrings {
 		if !strings.Contains(out, s) {
@@ -148,17 +150,44 @@ var feedbackCategorySelectRE = regexp.MustCompile(
 // slice reflects document order, which is the determinism contract.
 var feedbackOptionValueRE = regexp.MustCompile(`<option\s+value="([^"]*)"`)
 
-// TestFeedbackDialogHasWorkerUrl: spec 003-feedback-backend-worker —
-// the <dialog> must carry the data-feedback-worker-url attribute
-// pointing at the Cloudflare Worker endpoint. The constant is
-// build-time (render/feedback.go), so the rendered value is fixed and
-// deterministic (Principle IV).
-func TestFeedbackDialogHasWorkerUrl(t *testing.T) {
-	out := renderFeedbackFixture(t)
+var feedbackContractAttrRE = regexp.MustCompile(`data-feedback-contract="([^"]+)"`)
 
-	want := `data-feedback-worker-url="https://my-gather-feedback.mati-orfeo.workers.dev/feedback"`
-	if !strings.Contains(out, want) {
-		t.Errorf("rendered HTML missing Worker URL attribute %q", want)
+type feedbackContractForTest struct {
+	GitHubURL  string   `json:"githubUrl"`
+	WorkerURL  string   `json:"workerUrl"`
+	Categories []string `json:"categories"`
+}
+
+func renderedFeedbackContract(t *testing.T, out string) feedbackContractForTest {
+	t.Helper()
+	m := feedbackContractAttrRE.FindStringSubmatch(out)
+	if m == nil {
+		t.Fatalf("rendered HTML missing data-feedback-contract")
+	}
+	var contract feedbackContractForTest
+	if err := json.Unmarshal([]byte(html.UnescapeString(m[1])), &contract); err != nil {
+		t.Fatalf("data-feedback-contract is not valid JSON: %v", err)
+	}
+	return contract
+}
+
+// TestFeedbackDialogHasCanonicalContract: spec
+// 003-feedback-backend-worker -- the <dialog> must carry the
+// canonical feedback contract with both endpoints. The contract is
+// build-time data, so the rendered value is fixed and deterministic
+// (Principle IV).
+func TestFeedbackDialogHasCanonicalContract(t *testing.T) {
+	out := renderFeedbackFixture(t)
+	contract := renderedFeedbackContract(t, out)
+
+	if contract.WorkerURL == "" {
+		t.Fatal("feedback contract missing Worker URL")
+	}
+	if contract.GitHubURL == "" {
+		t.Fatal("feedback contract missing GitHub URL")
+	}
+	if strings.Contains(out, "data-feedback-worker-url") || strings.Contains(out, "data-feedback-url") {
+		t.Fatal("rendered HTML must use data-feedback-contract instead of legacy per-URL attrs")
 	}
 }
 
@@ -194,12 +223,13 @@ func TestFeedbackSuccessMarkupPresent(t *testing.T) {
 
 // TestFeedbackCategoriesRenderInExactOrder: ui.md / feedback.go —
 // the dialog's category selector must emit options in the exact order
-// ["", "UI", "Parser", "Advisor", "Other"]. The empty-value entry is
-// the "—" placeholder rendered first so users can submit without
+// declared by the canonical feedback contract. The empty-value entry
+// is the "—" placeholder rendered first so users can submit without
 // picking a bucket; the rest come from FeedbackView.Categories in
 // declaration order.
 func TestFeedbackCategoriesRenderInExactOrder(t *testing.T) {
 	out := renderFeedbackFixture(t)
+	contract := renderedFeedbackContract(t, out)
 
 	selectMatch := feedbackCategorySelectRE.FindStringSubmatch(out)
 	if selectMatch == nil {
@@ -213,7 +243,7 @@ func TestFeedbackCategoriesRenderInExactOrder(t *testing.T) {
 		got = append(got, m[1])
 	}
 
-	want := []string{"", "UI", "Parser", "Advisor", "Other"}
+	want := append([]string{""}, contract.Categories...)
 	if len(got) != len(want) {
 		t.Fatalf("unexpected option count: got %d (%v), want %d (%v)", len(got), got, len(want), want)
 	}

@@ -265,10 +265,9 @@
       setErr(""); hide(fallback); hide(hint);
       if (successEl) hide(successEl);
 
-      // If the template didn't emit a Worker URL (older report), go
-      // straight to the legacy flow. Still one code path — the "no
-      // worker" case is just a pre-computed failure.
-      if (!WORKER_URL || typeof window.fetch !== "function") {
+      // Missing fetch is an external browser capability boundary, so
+      // route to the observable GitHub handoff path.
+      if (typeof window.fetch !== "function") {
         doLegacyFallback();
         return;
       }
@@ -277,7 +276,7 @@
       finishActiveRecordingForSubmit().then(function () {
         var reportVersion = "unknown";
         var genMeta = document.querySelector('meta[name="generator"]');
-        if (genMeta && genMeta.content) reportVersion = genMeta.content.slice(0, 64);
+        if (genMeta && genMeta.content) reportVersion = genMeta.content.slice(0, LIMITS.reportVersionMaxChars);
 
         // Mint the idempotency key lazily, and only if we don't
         // already have one. A persisted key carried across retries is

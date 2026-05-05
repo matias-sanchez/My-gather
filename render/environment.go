@@ -9,6 +9,7 @@ import (
 
 	"github.com/matias-sanchez/My-gather/model"
 	"github.com/matias-sanchez/My-gather/parse"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // buildEnvironmentSection constructs the render-ready EnvironmentSection
@@ -219,7 +220,7 @@ func buildMySQLEnv(c *model.Collection) *model.MySQLEnv {
 	// Buffer pool size, human-formatted.
 	if raw := get("innodb_buffer_pool_size"); raw != "" {
 		if bytes, err := strconv.ParseFloat(raw, 64); err == nil {
-			mys.InnodbBufferPoolSize = humanBytesEnv(bytes)
+			mys.InnodbBufferPoolSize = reportutil.HumanBytes(bytes)
 		} else {
 			mys.InnodbBufferPoolSize = raw
 		}
@@ -420,38 +421,6 @@ func guessOSFromOutput(content string) string {
 	return ""
 }
 
-// humanBytesEnv formats a byte count for the Environment panel. Mirrors
-// findings/rules_bufferpool.go's humanBytes but kept local so the render
-// layer does not depend on the findings package for a formatter.
-func humanBytesEnv(v float64) string {
-	const (
-		KiB = 1024.0
-		MiB = KiB * 1024
-		GiB = MiB * 1024
-		TiB = GiB * 1024
-	)
-	switch {
-	case v >= TiB:
-		return fmt.Sprintf("%.2f TiB", v/TiB)
-	case v >= GiB:
-		return fmt.Sprintf("%.2f GiB", v/GiB)
-	case v >= MiB:
-		return fmt.Sprintf("%.0f MiB", v/MiB)
-	case v >= KiB:
-		return fmt.Sprintf("%.0f KiB", v/KiB)
-	default:
-		return fmt.Sprintf("%.0f B", v)
-	}
-}
-
-// humanKBBytes wraps humanBytesEnv with a kB input.
-func humanKBBytes(kb int64) string {
-	if kb <= 0 {
-		return ""
-	}
-	return humanBytesEnv(float64(kb) * 1024.0)
-}
-
 // envView is the flattened, string-only shape the environment template
 // consumes. Empty strings become "—" at render time.
 type envView struct {
@@ -532,8 +501,8 @@ type envFsRow struct {
 
 // buildEnvironmentView flattens the typed EnvironmentSection into the
 // string-only shape the template renders. Formatting is deterministic:
-// byte counts go through humanBytesEnv, durations through formatDuration,
-// empty strings through the "—" template helper.
+// byte counts go through reportutil.HumanBytes, durations through
+// formatDuration, empty strings through the "—" template helper.
 func buildEnvironmentView(r *model.Report) envView {
 	v := envView{}
 	if r == nil || r.EnvironmentSection == nil {
@@ -556,19 +525,19 @@ func buildEnvironmentView(r *model.Report) envView {
 			v.OSUptime = formatDurationHuman(h.OSUptimeSeconds)
 		}
 		if m := h.Meminfo; m != nil {
-			v.MemTotal = humanKBBytes(m.MemTotalKB)
-			v.MemAvailable = humanKBBytes(m.MemAvailableKB)
-			v.MemFree = humanKBBytes(m.MemFreeKB)
+			v.MemTotal = reportutil.HumanKBBytes(m.MemTotalKB)
+			v.MemAvailable = reportutil.HumanKBBytes(m.MemAvailableKB)
+			v.MemFree = reportutil.HumanKBBytes(m.MemFreeKB)
 			if m.BuffersKB > 0 || m.CachedKB > 0 {
-				v.BuffersCached = humanKBBytes(m.BuffersKB + m.CachedKB)
+				v.BuffersCached = reportutil.HumanKBBytes(m.BuffersKB + m.CachedKB)
 			}
 			// Swap: a swapless host is a real configuration, not missing
 			// data — render "0 B" explicitly instead of "—" when the
 			// meminfo sample is present.
 			if m.SwapTotalKB > 0 {
-				v.SwapTotal = humanKBBytes(m.SwapTotalKB)
+				v.SwapTotal = reportutil.HumanKBBytes(m.SwapTotalKB)
 				if used := m.SwapTotalKB - m.SwapFreeKB; used > 0 {
-					v.SwapUsed = humanKBBytes(used)
+					v.SwapUsed = reportutil.HumanKBBytes(used)
 				} else {
 					v.SwapUsed = "0 B"
 				}
@@ -585,8 +554,8 @@ func buildEnvironmentView(r *model.Report) envView {
 		for _, fs := range h.Filesystems {
 			v.Filesystems = append(v.Filesystems, envFsRow{
 				Mount: fs.Mount,
-				Used:  humanKBBytes(fs.UsedKB),
-				Total: humanKBBytes(fs.SizeKB),
+				Used:  reportutil.HumanKBBytes(fs.UsedKB),
+				Total: reportutil.HumanKBBytes(fs.SizeKB),
 				Pct:   strconv.Itoa(fs.UsePct) + "%",
 			})
 		}
@@ -642,8 +611,8 @@ func buildEnvironmentView(r *model.Report) envView {
 // together with a severity class for bar colouring. Empty strings mean
 // "unavailable" (no mysqladmin data, or counters absent).
 func bufferPoolFillPct(r *model.Report) (pct string, sev string) {
-	total, ok1 := gaugeLastReport(r, "Innodb_buffer_pool_pages_total")
-	free, ok2 := gaugeLastReport(r, "Innodb_buffer_pool_pages_free")
+	total, ok1 := reportutil.GaugeLast(r, "Innodb_buffer_pool_pages_total")
+	free, ok2 := reportutil.GaugeLast(r, "Innodb_buffer_pool_pages_free")
 	if !ok1 || !ok2 || total <= 0 {
 		return "", ""
 	}
@@ -663,8 +632,8 @@ func bufferPoolFillPct(r *model.Report) (pct string, sev string) {
 // Warn at ≥50 %, crit at ≥80 % — thresholds chosen to flag buffer pool
 // under flush pressure before the max_dirty_pages_pct ceiling kicks in.
 func bufferPoolDirtyPct(r *model.Report) (pct string, sev string) {
-	total, ok1 := gaugeLastReport(r, "Innodb_buffer_pool_pages_total")
-	dirty, ok2 := gaugeLastReport(r, "Innodb_buffer_pool_pages_dirty")
+	total, ok1 := reportutil.GaugeLast(r, "Innodb_buffer_pool_pages_total")
+	dirty, ok2 := reportutil.GaugeLast(r, "Innodb_buffer_pool_pages_dirty")
 	if !ok1 || !ok2 || total <= 0 {
 		return "", ""
 	}
@@ -681,12 +650,12 @@ func bufferPoolDirtyPct(r *model.Report) (pct string, sev string) {
 // tableCacheUsage returns (size, usagePct, severity) for the table
 // cache — Open_tables / table_open_cache. Warn ≥80 %, crit ≥95 %.
 func tableCacheUsage(r *model.Report) (size string, pct string, sev string) {
-	toc, ok1 := variableFloatReport(r, "table_open_cache")
+	toc, ok1 := reportutil.VariableFloat(r, "table_open_cache")
 	if !ok1 || toc <= 0 {
 		return "", "", ""
 	}
 	size = fmt.Sprintf("%.0f", toc)
-	open, ok2 := gaugeLastReport(r, "Open_tables")
+	open, ok2 := reportutil.GaugeLast(r, "Open_tables")
 	if !ok2 {
 		return size, "", ""
 	}
@@ -710,59 +679,6 @@ func severityForFrac(frac, warn, crit float64) string {
 	default:
 		return "ok"
 	}
-}
-
-// gaugeLastReport is a render-side mirror of findings.gaugeLast — the
-// findings helper is unexported, so we duplicate the minimal logic
-// here rather than pulling in an import cycle. Returns (value, ok).
-func gaugeLastReport(r *model.Report, name string) (float64, bool) {
-	if r == nil || r.DBSection == nil || r.DBSection.Mysqladmin == nil {
-		return 0, false
-	}
-	m := r.DBSection.Mysqladmin
-	if m.IsCounter[name] {
-		return 0, false
-	}
-	arr, ok := m.Deltas[name]
-	if !ok || len(arr) == 0 {
-		return 0, false
-	}
-	for i := len(arr) - 1; i >= 0; i-- {
-		v := arr[i]
-		if !math.IsNaN(v) && !math.IsInf(v, 0) {
-			return v, true
-		}
-	}
-	return 0, false
-}
-
-// variableFloatReport returns the numeric value of the named SHOW
-// GLOBAL VARIABLES entry from the last snapshot that captured it.
-func variableFloatReport(r *model.Report, name string) (float64, bool) {
-	if r == nil || r.VariablesSection == nil {
-		return 0, false
-	}
-	snaps := r.VariablesSection.PerSnapshot
-	for i := len(snaps) - 1; i >= 0; i-- {
-		data := snaps[i].Data
-		if data == nil {
-			continue
-		}
-		for _, e := range data.Entries {
-			if strings.EqualFold(e.Name, name) {
-				s := strings.TrimSpace(e.Value)
-				if s == "" || strings.EqualFold(s, "NULL") {
-					return 0, false
-				}
-				f, err := strconv.ParseFloat(s, 64)
-				if err != nil {
-					return 0, false
-				}
-				return f, true
-			}
-		}
-	}
-	return 0, false
 }
 
 func joinNonEmpty(sep string, parts ...string) string {

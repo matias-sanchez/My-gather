@@ -6,8 +6,8 @@
 ## Summary
 
 Run a six-dimension repository audit, consolidate findings, apply minimal
-confirmed fixes, and document larger follow-ups that require dedicated source
-design.
+confirmed fixes, and document any remaining follow-ups that require dedicated
+source design.
 
 ## Technical Context
 
@@ -39,7 +39,7 @@ implementation paths; no hidden fallback-style behavior
 | X. Minimal Dependencies | PASS | No new dependency added. |
 | XI. Reports Optimized for Humans Under Pressure | PASS | UI changes are limited to existing feedback success state. |
 | XII. Pinned Go Version | PASS | Go line is updated as its own explicit branch change. |
-| XIII. Canonical Code Path | PASS | Legacy mysqladmin persistence path is removed. Larger duplicate-helper follow-ups are documented. |
+| XIII. Canonical Code Path | PASS | Legacy mysqladmin persistence, duplicate helper paths, feedback contract duplication, and confirmed parser fallback observability gaps are resolved without adding parallel implementations. |
 | XIV. English-Only Durable Artifacts | PASS | New durable text is English. |
 | XV. Bounded File Size | PASS | No governed source file may exceed 1000 lines. |
 
@@ -47,12 +47,13 @@ implementation paths; no hidden fallback-style behavior
 
 - **Canonical owner/path**: each touched behavior is edited in its existing owner
   (`render/assets/app-js/*`, `feedback-worker/src/index.ts`, CI/hook files,
-  Spec Kit artifacts).
+  `reportutil`, parser files, Spec Kit artifacts).
 - **Replaced or retired paths**: the legacy mysqladmin single-selection
-  `localStorage` key is removed.
+  `localStorage` key, duplicate render/findings helpers, and legacy per-URL
+  feedback dialog attributes are removed.
 - **External degradation paths**: none introduced.
-- **Review check**: verify no duplicate localStorage path, no alternate feedback
-  success path, and no CI bypass path remains.
+- **Review check**: verify no duplicate localStorage path, no duplicate helper
+  owner, no alternate feedback contract path, and no CI bypass path remains.
 
 ## Project Structure
 

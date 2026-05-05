@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/matias-sanchez/My-gather/model"
 	"github.com/matias-sanchez/My-gather/tests/goldens"
 )
 
@@ -25,6 +26,7 @@ func netstatSnapshotStart() time.Time {
 func TestNetstatGolden(t *testing.T) {
 	root := goldens.RepoRoot(t)
 	fixture := filepath.Join(root, "testdata", "example2", "2026_04_21_16_51_41-netstat")
+	sourceName := filepath.ToSlash(filepath.Join("testdata", "example2", "2026_04_21_16_51_41-netstat"))
 	goldenPath := filepath.Join(root, "testdata", "golden", "netstat.example2.2026_04_21_16_51_41.json")
 
 	f, err := os.Open(fixture)
@@ -33,7 +35,7 @@ func TestNetstatGolden(t *testing.T) {
 	}
 	defer f.Close()
 
-	samples, diags := parseNetstat(f, netstatSnapshotStart(), fixture)
+	samples, diags := parseNetstat(f, netstatSnapshotStart(), sourceName)
 	if len(samples) == 0 {
 		t.Fatalf("parseNetstat returned zero samples (diagnostics: %+v)", diags)
 	}
@@ -55,6 +57,7 @@ func TestNetstatGolden(t *testing.T) {
 func TestNetstatSGolden(t *testing.T) {
 	root := goldens.RepoRoot(t)
 	fixture := filepath.Join(root, "testdata", "example2", "2026_04_21_16_51_41-netstat_s")
+	sourceName := filepath.ToSlash(filepath.Join("testdata", "example2", "2026_04_21_16_51_41-netstat_s"))
 	goldenPath := filepath.Join(root, "testdata", "golden", "netstat_s.example2.2026_04_21_16_51_41.json")
 
 	f, err := os.Open(fixture)
@@ -63,7 +66,7 @@ func TestNetstatSGolden(t *testing.T) {
 	}
 	defer f.Close()
 
-	samples, diags := parseNetstatS(f, netstatSnapshotStart(), fixture)
+	samples, diags := parseNetstatS(f, netstatSnapshotStart(), sourceName)
 	if len(samples) == 0 {
 		t.Fatalf("parseNetstatS returned zero samples (diagnostics: %+v)", diags)
 	}
@@ -137,7 +140,7 @@ tcp        0      0 0.0.0.0:22     0.0.0.0:*       LISTEN
 udp        0      0 0.0.0.0:53     0.0.0.0:*
 `
 	snapshotStart := time.Unix(1769702259, 0).UTC()
-	samples, _ := parseNetstat(strings.NewReader(input), snapshotStart, "test-netstat")
+	samples, diags := parseNetstat(strings.NewReader(input), snapshotStart, "test-netstat")
 	if len(samples) != 1 {
 		t.Fatalf("want 1 sample, got %d", len(samples))
 	}
@@ -146,6 +149,27 @@ udp        0      0 0.0.0.0:53     0.0.0.0:*
 	}
 	if samples[0].StateCounts["LISTEN"] != 1 || samples[0].StateCounts["UDP"] != 1 {
 		t.Errorf("unexpected counts: %+v", samples[0].StateCounts)
+	}
+	if !hasDiagnostic(diags, model.SeverityInfo, "no TS marker") {
+		t.Fatalf("expected no-TS compatibility diagnostic, got %+v", diags)
+	}
+}
+
+func TestParseNetstat_AmbiguousStateFirstESTABEmitsDiagnostic(t *testing.T) {
+	input := `State      Recv-Q Send-Q Local Address:Port         Peer Address:Port
+ESTAB      0      0      10.0.0.1:5678              10.0.0.2:80
+ESTAB      0      0      10.0.0.1:5679              10.0.0.2:443
+`
+	snapshotStart := time.Unix(1769702259, 0).UTC()
+	samples, diags := parseNetstat(strings.NewReader(input), snapshotStart, "test-ambiguous-ss")
+	if len(samples) != 1 {
+		t.Fatalf("want 1 sample, got %d (diagnostics: %+v)", len(samples), diags)
+	}
+	if got := samples[0].StateCounts["ESTABLISHED"]; got != 2 {
+		t.Fatalf("ESTABLISHED: want 2, got %d (full map: %+v)", got, samples[0].StateCounts)
+	}
+	if !hasDiagnostic(diags, model.SeverityWarning, "could not be disambiguated") {
+		t.Fatalf("expected ambiguous ESTAB warning diagnostic, got %+v", diags)
 	}
 }
 
@@ -418,7 +442,7 @@ func TestParseNetstatS_NoTSFallsBackToSnapshotStart(t *testing.T) {
     5000 segments received
 `
 	snapshotStart := time.Unix(1769702259, 0).UTC()
-	samples, _ := parseNetstatS(strings.NewReader(input), snapshotStart, "test-netstat_s")
+	samples, diags := parseNetstatS(strings.NewReader(input), snapshotStart, "test-netstat_s")
 	if len(samples) != 1 {
 		t.Fatalf("want 1 sample, got %d", len(samples))
 	}
@@ -428,4 +452,16 @@ func TestParseNetstatS_NoTSFallsBackToSnapshotStart(t *testing.T) {
 	if samples[0].Values["tcp_segs_in"] != 5000 {
 		t.Errorf("unexpected value: %v", samples[0].Values["tcp_segs_in"])
 	}
+	if !hasDiagnostic(diags, model.SeverityInfo, "no TS marker") {
+		t.Fatalf("expected no-TS compatibility diagnostic, got %+v", diags)
+	}
+}
+
+func hasDiagnostic(diags []model.Diagnostic, severity model.Severity, substr string) bool {
+	for _, d := range diags {
+		if d.Severity == severity && strings.Contains(d.Message, substr) {
+			return true
+		}
+	}
+	return false
 }

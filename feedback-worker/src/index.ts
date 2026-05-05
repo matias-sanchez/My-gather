@@ -14,12 +14,14 @@ import { cacheResponse, reserveResponse } from "./idempotency";
 import { logRequest } from "./log";
 import { checkRateLimit, hashIp } from "./ratelimit";
 import { deleteAttachment, type AttachmentUpload, uploadAttachment } from "./r2-upload";
+import { feedbackContract } from "./feedback-contract";
 import { validatePayload } from "./validate";
 
 export type { Env } from "./env";
 
 const WORKER_VERSION = "0.1.0";
-const MAX_REQUEST_BYTES = 30_000_000; // accommodates 15MB voice + 5MB image after base64 overhead (see contracts/api.md §"Request size limit")
+const MAX_REQUEST_BYTES = feedbackContract.limits.requestMaxBytes;
+const REQUEST_TOO_LARGE_MESSAGE = `Request body exceeds ${Math.round(MAX_REQUEST_BYTES / 1_000_000)} MB.`;
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -123,7 +125,7 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
         duration_ms: Date.now() - startedAt,
         ip_hash: ipHash,
       });
-      return errorResponse(413, "payload_too_large", "Request body exceeds 30 MB.");
+      return errorResponse(413, "payload_too_large", REQUEST_TOO_LARGE_MESSAGE);
     }
   }
 
@@ -158,7 +160,7 @@ async function handleFeedback(req: Request, env: Env, startedAt: number): Promis
           duration_ms: Date.now() - startedAt,
           ip_hash: ipHash,
         });
-        return errorResponse(413, "payload_too_large", "Request body exceeds 30 MB.");
+        return errorResponse(413, "payload_too_large", REQUEST_TOO_LARGE_MESSAGE);
       }
       chunks.push(value);
     }

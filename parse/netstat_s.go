@@ -39,11 +39,11 @@ import (
 func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*model.NetstatCountersSample, []model.Diagnostic) {
 	scanner := newLineScanner(r)
 	var diagnostics []model.Diagnostic
-	addDiag := func(line int, msg string) {
+	addDiag := func(line int, sev model.Severity, msg string) {
 		diagnostics = append(diagnostics, model.Diagnostic{
 			SourceFile: sourcePath,
 			Location:   fmt.Sprintf("line %d", line),
-			Severity:   model.SeverityWarning,
+			Severity:   sev,
 			Message:    msg,
 		})
 	}
@@ -54,7 +54,22 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 		curVals    map[string]float64
 		curAny     bool
 		curSection string // last non-indented "Section:" header
+
+		sawTS                  bool
+		usedImplicitSampleTime bool
 	)
+	ensureSample := func(line int) {
+		if curVals == nil {
+			// No TS seen yet — treat the whole file as one sample.
+			curVals = map[string]float64{}
+			curTS = snapshotStart
+			if !sawTS && !usedImplicitSampleTime {
+				addDiag(line, model.SeverityInfo,
+					"netstat_s: no TS marker found; using snapshot start for single-sample compatibility")
+				usedImplicitSampleTime = true
+			}
+		}
+	}
 	flush := func() {
 		if curVals != nil && curAny {
 			samples = append(samples, &model.NetstatCountersSample{
@@ -77,6 +92,7 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 		}
 		if m := reTimestampLine.FindStringSubmatch(line); m != nil {
 			flush()
+			sawTS = true
 			curTS = epochToTime(m[1], snapshotStart)
 			curVals = map[string]float64{}
 			continue
@@ -98,15 +114,11 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 			}
 			continue
 		}
-		if curVals == nil {
-			// No TS seen yet — treat the whole file as one sample.
-			curVals = map[string]float64{}
-			curTS = snapshotStart
-		}
 		sectionMap, sectionKnown := netstatSRawToCanon[curSection]
 		if !sectionKnown {
 			continue
 		}
+		ensureSample(lineNum)
 
 		// Try "LABEL: N"
 		if idx := strings.Index(line, ":"); idx >= 0 {
@@ -120,7 +132,7 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 						curAny = true
 						continue
 					} else {
-						addDiag(lineNum, fmt.Sprintf("non-numeric value for %q: %q", label, toks[0]))
+						addDiag(lineNum, model.SeverityWarning, fmt.Sprintf("non-numeric value for %q: %q", label, toks[0]))
 					}
 				}
 				continue

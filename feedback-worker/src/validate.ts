@@ -1,7 +1,7 @@
 // Payload validation for POST /feedback.
 // Every constraint comes from specs/003-feedback-backend-worker/contracts/api.md.
 
-export type Category = "UI" | "Parser" | "Advisor" | "Other";
+import { feedbackContract, isFeedbackCategory, type Category } from "./feedback-contract";
 
 export interface ValidatedImage {
   mime: string;
@@ -42,13 +42,6 @@ export type ValidationResult =
   | { ok: true; data: ValidatedPayload }
   | { ok: false; error: ValidationError; message: string };
 
-const TITLE_MAX = 200;
-const BODY_MAX_BYTES = 10_240;
-const IMAGE_MAX_BYTES = 5_242_880; // 5 MB
-const VOICE_MAX_BYTES = 15_728_640; // 15 MB — 10 min Opus at the browser's default bitrate fits with margin
-const REPORT_VERSION_MAX = 64;
-
-const CATEGORIES: readonly Category[] = ["UI", "Parser", "Advisor", "Other"];
 const IMAGE_MIME_RE = /^image\/(png|jpeg|gif|webp)$/;
 const VOICE_MIME_RE = /^audio\/(webm|mp4|ogg|mpeg)(;.*)?$/;
 // RFC 4122 v4: 8-4-4-4-12 hex groups with the version nibble fixed
@@ -106,9 +99,6 @@ function validateBlob(
   }
   if (bytes.byteLength > maxBytes) {
     const code: ValidationError = label === "image" ? "image_too_large" : "voice_too_large";
-    // Derive the human-readable limit from the configured cap so a
-    // future bump to IMAGE_MAX_BYTES / VOICE_MAX_BYTES doesn't leave
-    // the error message stale.
     const mb = Math.round(maxBytes / 1_048_576);
     return fail(code, `${label[0]?.toUpperCase()}${label.slice(1)} exceeds ${mb} MB.`);
   }
@@ -129,8 +119,8 @@ export function validatePayload(raw: unknown): ValidationResult {
   if (title.length === 0) {
     return fail("title_required", "Title is required.");
   }
-  if (title.length > TITLE_MAX) {
-    return fail("title_too_long", `Title exceeds ${TITLE_MAX} characters.`);
+  if (title.length > feedbackContract.limits.titleMaxChars) {
+    return fail("title_too_long", `Title exceeds ${feedbackContract.limits.titleMaxChars} characters.`);
   }
 
   // Body (may be empty).
@@ -141,24 +131,24 @@ export function validatePayload(raw: unknown): ValidationResult {
   } else if (bodyRaw !== undefined && bodyRaw !== null) {
     return fail("malformed_payload", "Body must be a string.");
   }
-  if (utf8ByteLength(body) > BODY_MAX_BYTES) {
-    return fail("body_too_long", `Body exceeds ${BODY_MAX_BYTES} UTF-8 bytes.`);
+  if (utf8ByteLength(body) > feedbackContract.limits.bodyMaxBytes) {
+    return fail("body_too_long", `Body exceeds ${feedbackContract.limits.bodyMaxBytes} UTF-8 bytes.`);
   }
 
   // Category (optional)
   let category: Category | undefined;
   const catRaw = raw["category"];
   if (catRaw !== undefined && catRaw !== null && catRaw !== "") {
-    if (typeof catRaw !== "string" || !CATEGORIES.includes(catRaw as Category)) {
+    if (typeof catRaw !== "string" || !isFeedbackCategory(catRaw)) {
       return fail("category_invalid", "Category is not one of the allowed values.");
     }
-    category = catRaw as Category;
+    category = catRaw;
   }
 
   // Image (optional)
   let image: ValidatedImage | undefined;
   if (raw["image"] !== undefined && raw["image"] !== null) {
-    const res = validateBlob("image", raw["image"], IMAGE_MIME_RE, IMAGE_MAX_BYTES);
+    const res = validateBlob("image", raw["image"], IMAGE_MIME_RE, feedbackContract.limits.imageMaxBytes);
     if ("ok" in res && res.ok === false) return res;
     if ("blob" in res) image = res.blob;
   }
@@ -166,7 +156,7 @@ export function validatePayload(raw: unknown): ValidationResult {
   // Voice (optional)
   let voice: ValidatedVoice | undefined;
   if (raw["voice"] !== undefined && raw["voice"] !== null) {
-    const res = validateBlob("voice", raw["voice"], VOICE_MIME_RE, VOICE_MAX_BYTES);
+    const res = validateBlob("voice", raw["voice"], VOICE_MIME_RE, feedbackContract.limits.voiceMaxBytes);
     if ("ok" in res && res.ok === false) return res;
     if ("blob" in res) voice = res.blob;
   }
@@ -179,8 +169,15 @@ export function validatePayload(raw: unknown): ValidationResult {
 
   // Report version
   const verRaw = raw["reportVersion"];
-  if (typeof verRaw !== "string" || verRaw.length === 0 || verRaw.length > REPORT_VERSION_MAX) {
-    return fail("report_version_invalid", `reportVersion must be a 1-${REPORT_VERSION_MAX} char string.`);
+  if (
+    typeof verRaw !== "string" ||
+    verRaw.length === 0 ||
+    verRaw.length > feedbackContract.limits.reportVersionMaxChars
+  ) {
+    return fail(
+      "report_version_invalid",
+      `reportVersion must be a 1-${feedbackContract.limits.reportVersionMaxChars} char string.`,
+    );
   }
 
   return {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // ruleTmpDiskRatio computes the fraction of internal temporary tables
@@ -33,8 +34,8 @@ func ruleTmpDiskRatio(r *model.Report) Finding {
 		sev = SeverityWarn
 		summary = fmt.Sprintf("%s of internal temp tables went to disk.", formatPercent(ratio))
 	}
-	tmpSize, _ := variableFloat(r, "tmp_table_size")
-	heapSize, _ := variableFloat(r, "max_heap_table_size")
+	tmpSize, _ := reportutil.VariableFloat(r, "tmp_table_size")
+	heapSize, _ := reportutil.VariableFloat(r, "max_heap_table_size")
 	return Finding{
 		ID:        "tmp.disk_ratio",
 		Subsystem: "Temp Tables",
@@ -45,7 +46,7 @@ func ruleTmpDiskRatio(r *model.Report) Finding {
 			"High spill ratios indicate queries returning or sorting datasets larger than the configured in-memory limit.",
 		FormulaText: "disk_ratio = Created_tmp_disk_tables / Created_tmp_tables",
 		FormulaComputed: fmt.Sprintf("%s / %s = %s",
-			formatNum(disk), formatNum(total), formatPercent(ratio)),
+			reportutil.FormatNum(disk), reportutil.FormatNum(total), formatPercent(ratio)),
 		Metrics: []MetricRef{
 			{Name: "Created_tmp_disk_tables", Value: disk, Unit: "count"},
 			{Name: "Created_tmp_tables", Value: total, Unit: "count"},

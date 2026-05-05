@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // ruleConfigMaxConnectionsHigh flags `max_connections` settings that
@@ -32,11 +33,11 @@ func ruleConfigMaxConnectionsHigh(r *model.Report) Finding {
 		bytesPer1000W = 1024.0 * 1024.0 * 1024.0 // 1 GiB / 1k connections
 		bytesPer1000C = 256.0 * 1024.0 * 1024.0  // 256 MiB / 1k connections
 	)
-	maxConns, ok := variableFloat(r, "max_connections")
+	maxConns, ok := reportutil.VariableFloat(r, "max_connections")
 	if !ok || maxConns <= threshold {
 		return Finding{Severity: SeveritySkip}
 	}
-	bpSize, ok := variableFloat(r, "innodb_buffer_pool_size")
+	bpSize, ok := reportutil.VariableFloat(r, "innodb_buffer_pool_size")
 	if !ok || bpSize <= 0 {
 		return Finding{Severity: SeveritySkip}
 	}
@@ -44,16 +45,16 @@ func ruleConfigMaxConnectionsHigh(r *model.Report) Finding {
 
 	sev := SeverityOK
 	summary := fmt.Sprintf("max_connections = %s with %s per 1k slots — within the 1 GiB-per-1k headroom band.",
-		formatNum(maxConns), humanBytes(perThousand))
+		reportutil.FormatNum(maxConns), reportutil.HumanBytes(perThousand))
 	switch {
 	case perThousand < bytesPer1000C:
 		sev = SeverityCrit
 		summary = fmt.Sprintf("max_connections = %s but innodb_buffer_pool_size is only %s (%s per 1k slots) — concurrent thread overhead will starve the pool under load.",
-			formatNum(maxConns), humanBytes(bpSize), humanBytes(perThousand))
+			reportutil.FormatNum(maxConns), reportutil.HumanBytes(bpSize), reportutil.HumanBytes(perThousand))
 	case perThousand < bytesPer1000W:
 		sev = SeverityWarn
 		summary = fmt.Sprintf("max_connections = %s with %s buffer pool — that's only %s per 1k slots, well below the 1 GiB headroom guideline.",
-			formatNum(maxConns), humanBytes(bpSize), humanBytes(perThousand))
+			reportutil.FormatNum(maxConns), reportutil.HumanBytes(bpSize), reportutil.HumanBytes(perThousand))
 	}
 	threadsRunning, hasRun := gaugeMax(r, "Threads_running")
 	metrics := []MetricRef{
@@ -76,7 +77,7 @@ func ruleConfigMaxConnectionsHigh(r *model.Report) Finding {
 			"data. The 1 GiB-per-1000-slots heuristic leaves room for ~4-12 MiB per thread plus stable buffer-pool capacity.",
 		FormulaText: "max_connections > 5000  AND  innodb_buffer_pool_size / (max_connections / 1000) < {1 GiB warn, 256 MiB crit}",
 		FormulaComputed: fmt.Sprintf("max_connections=%s, innodb_buffer_pool_size=%s, ratio=%s/1k",
-			formatNum(maxConns), humanBytes(bpSize), humanBytes(perThousand)),
+			reportutil.FormatNum(maxConns), reportutil.HumanBytes(bpSize), reportutil.HumanBytes(perThousand)),
 		Metrics: metrics,
 		Recommendations: []string{
 			"Lower max_connections to a value that reflects real concurrency (typical OLTP fleets sit at 200-2000).",
@@ -102,7 +103,7 @@ func ruleConfigMaxConnectionsHigh(r *model.Report) Finding {
 // False negatives are safer than false positives: the WARN tier
 // still flags a mis-set sync_binlog independently.
 func ruleConfigSyncBinlogNotOne(r *model.Report) Finding {
-	logBinRaw, hasLogBin := variableRaw(r, "log_bin")
+	logBinRaw, hasLogBin := reportutil.VariableRaw(r, "log_bin")
 	if hasLogBin {
 		logBin := strings.ToUpper(strings.TrimSpace(logBinRaw))
 		if logBin == "OFF" || logBin == "0" {
@@ -130,7 +131,7 @@ func ruleConfigSyncBinlogNotOne(r *model.Report) Finding {
 		}
 	}
 
-	syncBL, ok := variableFloat(r, "sync_binlog")
+	syncBL, ok := reportutil.VariableFloat(r, "sync_binlog")
 	if !ok {
 		return Finding{Severity: SeveritySkip}
 	}
@@ -152,7 +153,7 @@ func ruleConfigSyncBinlogNotOne(r *model.Report) Finding {
 				"On a primary serving replicas, a crash can leave replicas with events that no longer exist on the primary's disk, " +
 				"breaking replication and risking data loss. The canonical safe value on any replication-active primary is 1.",
 			FormulaText:     "sync_binlog = 0  AND  (server_id != 0  AND  binlog/gtid configured)",
-			FormulaComputed: fmt.Sprintf("sync_binlog = %s, replication_configured = true", formatNum(syncBL)),
+			FormulaComputed: fmt.Sprintf("sync_binlog = %s, replication_configured = true", reportutil.FormatNum(syncBL)),
 			Metrics: []MetricRef{
 				{Name: "sync_binlog", Value: syncBL, Unit: "count"},
 			},
@@ -173,7 +174,7 @@ func ruleConfigSyncBinlogNotOne(r *model.Report) Finding {
 			Explanation: "Even without replication, sync_binlog = 0 makes the binary log unreliable for point-in-time recovery: " +
 				"after a crash, the on-disk binlog may not contain the last group of committed transactions.",
 			FormulaText:     "sync_binlog = 0",
-			FormulaComputed: fmt.Sprintf("sync_binlog = %s", formatNum(syncBL)),
+			FormulaComputed: fmt.Sprintf("sync_binlog = %s", reportutil.FormatNum(syncBL)),
 			Metrics: []MetricRef{
 				{Name: "sync_binlog", Value: syncBL, Unit: "count"},
 			},
@@ -191,12 +192,12 @@ func ruleConfigSyncBinlogNotOne(r *model.Report) Finding {
 			Subsystem: "Configuration",
 			Title:     "sync_binlog > 1",
 			Severity:  SeverityWarn,
-			Summary:   fmt.Sprintf("sync_binlog = %s — up to %s transactions can be lost on crash.", formatNum(syncBL), formatNum(syncBL-1)),
+			Summary:   fmt.Sprintf("sync_binlog = %s — up to %s transactions can be lost on crash.", reportutil.FormatNum(syncBL), reportutil.FormatNum(syncBL-1)),
 			Explanation: "sync_binlog > 1 fsyncs the binary log only every Nth group commit. On a crash the most recent N-1 " +
 				"transactions may be missing from the binlog, breaking PITR and (on a primary) potentially making replicas " +
 				"diverge. The safe value is 1.",
 			FormulaText:     "sync_binlog > 1",
-			FormulaComputed: fmt.Sprintf("sync_binlog = %s", formatNum(syncBL)),
+			FormulaComputed: fmt.Sprintf("sync_binlog = %s", reportutil.FormatNum(syncBL)),
 			Metrics: []MetricRef{
 				{Name: "sync_binlog", Value: syncBL, Unit: "count"},
 			},
@@ -238,11 +239,11 @@ func ruleConfigSyncBinlogNotOne(r *model.Report) Finding {
 // standalone 8.0 instance (binlog_format=ROW is the default) as a
 // replica.
 func isReplicationConfigured(r *model.Report) bool {
-	serverID, ok := variableFloat(r, "server_id")
+	serverID, ok := reportutil.VariableFloat(r, "server_id")
 	if !ok || serverID == 0 {
 		return false
 	}
-	g, ok := variableRaw(r, "gtid_mode")
+	g, ok := reportutil.VariableRaw(r, "gtid_mode")
 	if !ok {
 		return false
 	}

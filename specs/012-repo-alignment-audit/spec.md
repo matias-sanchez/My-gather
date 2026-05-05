@@ -2,7 +2,7 @@
 
 **Feature Branch**: `012-repo-alignment-audit`
 **Created**: 2026-05-04
-**Status**: In progress
+**Status**: Ready for review
 **Input**: User description: "Run a full repository synchronization audit using multi-agent orchestration, remediate confirmed findings minimally, validate the repository, and open a PR."
 
 ## User Scenarios & Testing *(mandatory)*
@@ -38,8 +38,8 @@ findings.
 1. **Given** an issue can be fixed with a small direct edit, **When** the branch
    is prepared, **Then** the fix is applied in the canonical implementation path.
 2. **Given** an issue requires a larger source refactor or policy decision,
-   **When** the branch is prepared, **Then** it is left as a named follow-up
-   rather than partially implemented.
+   **When** it cannot be fixed minimally in this branch, **Then** it is left as
+   a named follow-up rather than partially implemented.
 
 ## Requirements *(mandatory)*
 
@@ -53,8 +53,8 @@ findings.
   implementation paths and avoid fallback-style behavior.
 - **FR-005**: Validation MUST include the full Go suite, Worker suite,
   constitution guard, and Spec Kit analysis for this feature.
-- **FR-006**: Remaining larger follow-ups MUST be documented instead of silently
-  expanding this branch.
+- **FR-006**: Remaining larger follow-ups, if any, MUST be documented instead
+  of silently expanding this branch.
 
 ### Canonical Path Expectations
 

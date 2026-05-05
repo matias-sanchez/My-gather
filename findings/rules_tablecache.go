@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // ruleTableCacheUsage flags a table cache that is approaching or at
@@ -17,8 +18,8 @@ func ruleTableCacheUsage(r *model.Report) Finding {
 		warnAbove = 0.80
 		critAbove = 0.95
 	)
-	size, ok1 := variableFloat(r, "table_open_cache")
-	open, ok2 := gaugeLast(r, "Open_tables")
+	size, ok1 := reportutil.VariableFloat(r, "table_open_cache")
+	open, ok2 := reportutil.GaugeLast(r, "Open_tables")
 	if !ok1 || !ok2 || size <= 0 {
 		return Finding{Severity: SeveritySkip}
 	}
@@ -53,7 +54,7 @@ func ruleTableCacheUsage(r *model.Report) Finding {
 			"the new one — adding latency to the query that triggered it.",
 		FormulaText: "usage = Open_tables / table_open_cache",
 		FormulaComputed: fmt.Sprintf("%s / %s = %s",
-			formatNum(open), formatNum(size), formatPercent(ratio)),
+			reportutil.FormatNum(open), reportutil.FormatNum(size), formatPercent(ratio)),
 		Metrics: []MetricRef{
 			{Name: "Open_tables", Value: open, Unit: "entries", Note: "last sample"},
 			{Name: "table_open_cache", Value: size, Unit: "entries"},
@@ -83,18 +84,18 @@ func ruleTableCacheOverflows(r *model.Report) Finding {
 	if rate > 5 {
 		sev = SeverityCrit
 	}
-	size, _ := variableFloat(r, "table_open_cache")
-	instances, _ := variableFloat(r, "table_open_cache_instances")
+	size, _ := reportutil.VariableFloat(r, "table_open_cache")
+	instances, _ := reportutil.VariableFloat(r, "table_open_cache_instances")
 	return Finding{
 		ID:        "tablecache.overflows",
 		Subsystem: "Table Open Cache",
 		Title:     "Table open cache overflows",
 		Severity:  sev,
-		Summary:   fmt.Sprintf("Table_open_cache_overflows is incrementing at %s/s — the table cache is evicting entries.", formatNum(rate)),
+		Summary:   fmt.Sprintf("Table_open_cache_overflows is incrementing at %s/s — the table cache is evicting entries.", reportutil.FormatNum(rate)),
 		Explanation: "An overflow occurs when a table-cache instance temporarily grows past its share of table_open_cache to accept a new entry. " +
 			"Repeated overflows mean the configured size (possibly divided across too many instances) is insufficient for the workload.",
 		FormulaText:     "Table_open_cache_overflows/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", reportutil.FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Table_open_cache_overflows/s", Value: rate, Unit: "/s"},
 			{Name: "table_open_cache", Value: size, Unit: "entries"},
@@ -150,7 +151,7 @@ func ruleTableCacheMissRatio(r *model.Report) Finding {
 			"Frequent misses mean table_open_cache isn't large enough to hold the active working set.",
 		FormulaText: "miss_ratio = Table_open_cache_misses / (Table_open_cache_hits + Table_open_cache_misses)",
 		FormulaComputed: fmt.Sprintf("%s / (%s + %s) = %s",
-			formatNum(misses), formatNum(hits), formatNum(misses), formatPercent(ratio)),
+			reportutil.FormatNum(misses), reportutil.FormatNum(hits), reportutil.FormatNum(misses), formatPercent(ratio)),
 		Metrics: []MetricRef{
 			{Name: "Table_open_cache_misses", Value: misses, Unit: "count"},
 			{Name: "Table_open_cache_hits", Value: hits, Unit: "count"},

@@ -89,7 +89,7 @@ func governedSourceFiles(t *testing.T, root string) []string {
 }
 
 func gitTrackedSourceFiles(root string) ([]string, bool) {
-	cmd := exec.Command("git", "ls-files")
+	cmd := exec.Command("git", "ls-files", "--cached", "--others", "--exclude-standard")
 	cmd.Dir = root
 	out, err := cmd.Output()
 	if err != nil {
@@ -103,6 +103,12 @@ func gitTrackedSourceFiles(root string) ([]string, bool) {
 	var paths []string
 	for _, path := range lines {
 		if isGovernedSourcePath(path) {
+			if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(path))); err != nil {
+				if os.IsNotExist(err) {
+					continue
+				}
+				return nil, false
+			}
 			paths = append(paths, path)
 		}
 	}

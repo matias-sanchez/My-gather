@@ -34,6 +34,10 @@ contracts.
 - [x] T010 Update stale spec/docs/template metadata found by the audit.
 - [x] T011 Document larger source refactors as follow-ups instead of partially
   implementing them.
+- [x] T017 Resolve helper duplication with one canonical `reportutil` package.
+- [x] T018 Resolve feedback contract duplication with canonical contract JSON.
+- [x] T019 Make confirmed parser compatibility fallbacks observable with
+  structured diagnostics.
 
 ## Phase 4: Validation And PR
 
@@ -41,4 +45,4 @@ contracts.
 - [x] T013 Run `cd feedback-worker && npm run typecheck && npm test`.
 - [x] T014 Run `scripts/hooks/pre-push-constitution-guard.sh`.
 - [x] T015 Run Spec Kit analysis for this feature.
-- [ ] T016 Commit, push, and open PR.
+- [x] T016 Commit, push, and open PR.

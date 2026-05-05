@@ -5,13 +5,11 @@ Audit date: 2026-05-04
 
 ## Overall Status
 
-PARTIAL.
+COMPLIANT.
 
-The repository is materially aligned with the latest constitution after the
-minimal fixes in this branch, and all validation commands listed below pass.
-The status remains PARTIAL because the audit confirmed broader Principle XIII
-canonical-path concerns that require a dedicated source refactor and should not
-be partially solved in this governance branch.
+The repository is aligned with the latest constitution after the minimal fixes
+in this branch, including the previously identified Principle XIII follow-ups.
+All validation commands listed below pass.
 
 ## Confirmed Violations Fixed In This Branch
 
@@ -29,14 +27,17 @@ be partially solved in this governance branch.
 | C10 | LOW | Enforcement coverage | Import lint did not include the first-party `findings` package. | Added `findings` to the linted package set. |
 | C11 | MEDIUM | Principle XII | `go.mod` did not match the current repository toolchain. | Updated the Go line to `1.26`. |
 | C12 | MEDIUM | Enforcement portability | CI exposed that the guard's English-only array loop was not portable to Bash 3 on macOS under `set -u`. | Appended English-only violations directly to the shared violation list instead of iterating an empty array. |
+| C13 | HIGH | Principle XIII | Formatting and report-value helpers were duplicated across `render` and `findings`. | Added canonical `reportutil` helpers and removed duplicate render/findings implementations. |
+| C14 | MEDIUM | Principle XIII / contracts | Feedback endpoints, categories, and validation limits were represented separately in Go, browser JS, Worker TypeScript, and tests. | Added canonical `render/assets/feedback-contract.json`, made Go/browser/Worker consume it, removed legacy per-URL dialog attributes, and updated feature-003 docs. |
+| C15 | MEDIUM | Principle III / XIII | Parser compatibility fallbacks for netstat and environment meminfo were not consistently observable. | Added structured diagnostics for no-TS netstat compatibility, ambiguous state-first `ESTAB`, and env-meminfo partial-sample fallback; Discover now attaches env-meminfo sidecar diagnostics. |
 
-## Confirmed Follow-Ups Deferred
+## Confirmed Follow-Ups Resolved In This Branch
 
-| ID | Severity | Area | Finding | Reason Deferred |
+| ID | Severity | Area | Finding | Resolution |
 |----|----------|------|---------|-----------------|
-| F01 | HIGH | Principle XIII | Formatting and metric helper behavior is duplicated across `render` and `findings` (`formatNum`/`humanInt`, `gaugeLast`/`variableFloat`, byte formatting). | Requires a designed package-boundary refactor so one helper owner becomes canonical without creating an import cycle or a partial parallel path. |
-| F02 | MEDIUM | Principle XIII / contracts | Feedback payload and response semantics are represented in separate Go templates, browser JavaScript, TypeScript validation, and tests. | A machine-readable contract or generation step needs a dedicated design; this branch only fixed direct drift. |
-| F03 | MEDIUM | Principle III / XIII | Some parser degradation paths, especially netstat and memory fallbacks, are broad compatibility branches with limited diagnostics. | Needs parser-specific behavior and fixture review; changing it here risks altering report semantics beyond the audit scope. |
+| F01 | HIGH | Principle XIII | Formatting and metric helper behavior was duplicated across `render` and `findings` (`formatNum`/`humanInt`, `gaugeLast`/`variableFloat`, byte formatting). | Resolved by canonical `reportutil` package with focused tests. No wrapper shims or duplicate old helper implementations remain. |
+| F02 | MEDIUM | Principle XIII / contracts | Feedback payload and response semantics were represented in separate Go templates, browser JavaScript, TypeScript validation, and tests. | Resolved by canonical feedback contract JSON consumed by Go, browser JS, and Worker validation/request-size gates. |
+| F03 | MEDIUM | Principle III / XIII | Some parser degradation paths, especially netstat and memory fallbacks, were broad compatibility branches with limited diagnostics. | Resolved for the confirmed paths by emitting structured diagnostics while preserving compatibility behavior. |
 
 ## Risks And Ambiguities
 
@@ -44,9 +45,9 @@ be partially solved in this governance branch.
 |----|----------|------|---------|----------|
 | R01 | LOW | External degradation | Feedback Worker label resolution can skip missing remote GitHub labels. | Accepted as an external-service degradation risk for now; should be covered by a future Worker contract hardening pass. |
 | R02 | LOW | Historical governance text | The constitution contains historical references to the older 8-gate model inside prior sync-impact history. | Accepted as historical record, not live policy. Live gates list uses the current 9-gate model. |
-| R03 | LOW | Report compatibility | The browser client still has an explicit no-Worker fallback when old reports are generated without `WORKER_URL`. | Accepted as visible external degradation, not a duplicate implementation for the Worker path. |
+| R03 | LOW | External degradation | The browser client still falls back to GitHub when `fetch` is unavailable or the Worker/network fails. | Accepted as visible external degradation, not a duplicate implementation for the Worker path. |
 | R04 | LOW | UI contract wording | Historical feature 002 popup-blocked fallback wording is narrower than the current feature 003 Worker-first submit flow. | Accepted as historical wording; feature 003 owns current submit behavior. |
-| R05 | LOW | Feedback URL construction | Legacy fallback URL construction appends a query string manually instead of using `URL.searchParams.set()`. | Accepted as low risk because the base URL has a controlled query shape; can be cleaned up in a future feedback refactor. |
+| R05 | LOW | Feedback URL construction | Fallback URL construction appends encoded query parameters manually. | Accepted as low risk because the canonical base URL has a controlled query shape and all dynamic values are encoded. |
 | R06 | LOW | Golden enforcement comments | A test comment still describes future/soft golden coverage even though hooks and golden tests now provide coverage. | Documentation cleanup only; not a live enforcement bypass. |
 | R07 | LOW | English-only exemptions | Two exemptions are currently file:line based, which is brittle after edits. | The current guard passes; future guard hardening should switch to stable content/context matching. |
 
@@ -68,9 +69,9 @@ for feature 012.
 | FR-001 consolidated audit report | T004, T005 | This file is the canonical report. |
 | FR-002 severity classification | T005 | Findings are classified as HIGH / MEDIUM / LOW. |
 | FR-003 separated confirmed, risk, false positive groups | T005 | Sections are separated above. |
-| FR-004 minimal canonical fixes | T006-T011 | Larger refactors are deferred instead of partially implemented. |
+| FR-004 minimal canonical fixes | T006-T011, T017-T019 | Confirmed canonical-path follow-ups were resolved without adding parallel implementations. |
 | FR-005 validation | T012-T015 | Validation commands passed. |
-| FR-006 documented follow-ups | T011 | Deferred follow-ups are listed above. |
+| FR-006 documented follow-ups | T011, T017-T019 | Previously deferred follow-ups are resolved above. |
 
 ## Validation Results
 
@@ -90,7 +91,6 @@ for feature 012.
 
 ## Final Compliance Decision
 
-PARTIAL until F01-F03 are resolved. The current branch is reviewable and
-validation-clean, but the repository is not yet fully 100% aligned with the
-canonical-path direction because at least one confirmed source helper
-duplication remains by design.
+COMPLIANT. The confirmed source helper duplication, feedback contract
+duplication, and parser fallback observability findings are resolved in this
+branch, and validation is clean.

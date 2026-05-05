@@ -107,11 +107,11 @@ See `feedback-worker/src/idempotency.ts`.
 
 ## R7: Where does the Worker URL live?
 
-**Decision**: a Go `const feedbackWorkerURL` in `render/feedback.go`. The deployed value is `https://my-gather-feedback.mati-orfeo.workers.dev/feedback`. The URL is a public endpoint, picked at GitHub-App setup time by the project owner.
+**Decision**: the Worker URL lives in the canonical feedback contract at `render/assets/feedback-contract.json`. The deployed value is `https://my-gather-feedback.mati-orfeo.workers.dev/feedback`. The URL is a public endpoint, picked at GitHub-App setup time by the project owner. This supersedes the original Go-const decision so the browser, Go renderer, Worker validation, and tests share one source of truth.
 
 **Rationale**:
-- Build-time constant → Principle IV determinism preserved.
-- One place to change if we redeploy the Worker (which is rare).
+- Build-time contract data preserves Principle IV determinism.
+- One place to change if we redeploy the Worker or adjust feedback limits.
 
 **Alternatives considered**:
 - `-ldflags -X` at build time: more flexible but complicates dev builds. The URL is effectively permanent; a constant is simpler.

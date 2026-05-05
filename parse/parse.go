@@ -482,6 +482,10 @@ func loadEnvSidecars(rootPath string) (map[string]string, map[string]time.Time, 
 			}
 			out[suf] = string(data)
 			timestamps[suf] = ts
+			if suf == "meminfo" {
+				_, memDiags := ParseEnvMeminfoWithDiagnostics(string(data), path)
+				diagnostics = append(diagnostics, memDiags...)
+			}
 			if len(skippedNewer) > 0 {
 				diagnostics = append(diagnostics, model.Diagnostic{
 					SourceFile: path,

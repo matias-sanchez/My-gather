@@ -5,8 +5,10 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/matias-sanchez/My-gather/model"
 	"github.com/matias-sanchez/My-gather/parse"
 	"github.com/matias-sanchez/My-gather/tests/goldens"
 )
@@ -89,7 +91,7 @@ func TestEnvSidecarFallbackEmitsDiagnostic(t *testing.T) {
 	// render layer (or CLI verbose mode) can surface the degradation.
 	found := false
 	for _, d := range c.Diagnostics {
-		if d.Severity == 1 /* SeverityWarning */ &&
+		if d.Severity == model.SeverityWarning &&
 			filepath.Base(d.SourceFile) == "2026_04_21_16_51_41-hostname" {
 			found = true
 			break
@@ -97,6 +99,49 @@ func TestEnvSidecarFallbackEmitsDiagnostic(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("expected a warning diagnostic naming the older fallback file, got: %+v", c.Diagnostics)
+	}
+}
+
+// TestEnvMeminfoSidecarFallbackEmitsDiagnostic verifies that
+// Discover surfaces env-meminfo compatibility fallbacks in the actual
+// report pipeline instead of leaving them visible only to direct
+// parser callers.
+func TestEnvMeminfoSidecarFallbackEmitsDiagnostic(t *testing.T) {
+	dir := t.TempDir()
+	must := func(path string, content string) {
+		if err := os.WriteFile(filepath.Join(dir, path), []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	must("pt-summary.out", "# pt-summary\n")
+	must("2026_04_21_16_51_41-meminfo", `TS 1769702259.004572779 2026-01-29 15:57:39
+MemTotal:       32654396 kB
+MemFree:        11634540 kB
+MemAvailable:   28222432 kB
+Buffers:           13864 kB
+Cached:         16704284 kB
+SwapTotal:      33554428 kB
+SwapFree:       33554428 kB
+TS 1769702289.004572779 2026-01-29 15:58:09
+MemTotal:       32654396 kB
+MemFree:        11000000 kB
+`)
+
+	c, err := parse.Discover(context.Background(), dir, parse.DiscoverOptions{})
+	if err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	found := false
+	for _, d := range c.Diagnostics {
+		if filepath.Base(d.SourceFile) == "2026_04_21_16_51_41-meminfo" &&
+			d.Severity == model.SeverityWarning &&
+			strings.Contains(d.Message, "newest sample is incomplete") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected env meminfo fallback diagnostic on Collection, got %+v", c.Diagnostics)
 	}
 }
 

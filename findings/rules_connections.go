@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // ruleConnectionsSaturation flags connection pressure: either
@@ -23,7 +24,7 @@ func ruleConnectionsSaturation(r *model.Report) Finding {
 	if !okC && !okR {
 		return Finding{Severity: SeveritySkip}
 	}
-	maxConns, okM := variableFloat(r, "max_connections")
+	maxConns, okM := reportutil.VariableFloat(r, "max_connections")
 	canEvalUtil := okC && okM && maxConns > 0
 	// If we can evaluate neither the utilization ratio nor a meaningful
 	// Threads_running ceiling, we have no signal — emit Skip instead of
@@ -42,11 +43,11 @@ func ruleConnectionsSaturation(r *model.Report) Finding {
 		case util >= critUtil:
 			sev = SeverityCrit
 			summary = fmt.Sprintf("Threads_connected peaked at %s of %s (%.0f %% of max_connections) — server is near its connection ceiling.",
-				formatNum(connected), formatNum(maxConns), util*100)
+				reportutil.FormatNum(connected), reportutil.FormatNum(maxConns), util*100)
 		case util >= warnUtil:
 			sev = SeverityWarn
 			summary = fmt.Sprintf("Threads_connected peaked at %s (%.0f %% of max_connections = %s) — connection pool is stretched.",
-				formatNum(connected), util*100, formatNum(maxConns))
+				reportutil.FormatNum(connected), util*100, reportutil.FormatNum(maxConns))
 		}
 	} else {
 		// Utilization ratio unavailable — rely only on the running-
@@ -59,10 +60,10 @@ func ruleConnectionsSaturation(r *model.Report) Finding {
 		switch {
 		case running >= critRunning && sev < SeverityCrit:
 			sev = SeverityCrit
-			summary = fmt.Sprintf("Threads_running peaked at %s — very high active-thread concurrency starves CPU and contends on latches.", formatNum(running))
+			summary = fmt.Sprintf("Threads_running peaked at %s — very high active-thread concurrency starves CPU and contends on latches.", reportutil.FormatNum(running))
 		case running >= warnRunning && sev < SeverityWarn:
 			sev = SeverityWarn
-			summary = fmt.Sprintf("Threads_running peaked at %s — above the comfort band for typical OLTP workloads.", formatNum(running))
+			summary = fmt.Sprintf("Threads_running peaked at %s — above the comfort band for typical OLTP workloads.", reportutil.FormatNum(running))
 		}
 	}
 	metrics := []MetricRef{}
@@ -78,7 +79,7 @@ func ruleConnectionsSaturation(r *model.Report) Finding {
 	formulaText := "Threads_connected / max_connections  and  Threads_running (max)"
 	formulaComputed := "(n/a)"
 	if okC && okM && maxConns > 0 {
-		formulaComputed = fmt.Sprintf("%s / %s = %.0f %%", formatNum(connected), formatNum(maxConns), util*100)
+		formulaComputed = fmt.Sprintf("%s / %s = %.0f %%", reportutil.FormatNum(connected), reportutil.FormatNum(maxConns), util*100)
 	}
 	return Finding{
 		ID:        "connections.saturation",
@@ -114,14 +115,14 @@ func ruleAbortedConnectsRate(r *model.Report) Finding {
 		return Finding{Severity: SeveritySkip}
 	}
 	sev := SeverityOK
-	summary := fmt.Sprintf("Aborted_connects rate is %s/s — normal background noise.", formatNum(rate))
+	summary := fmt.Sprintf("Aborted_connects rate is %s/s — normal background noise.", reportutil.FormatNum(rate))
 	switch {
 	case rate > critAbove:
 		sev = SeverityCrit
-		summary = fmt.Sprintf("Aborted_connects rate is very high at %s/s — possible DoS, auth failures, or misbehaving client.", formatNum(rate))
+		summary = fmt.Sprintf("Aborted_connects rate is very high at %s/s — possible DoS, auth failures, or misbehaving client.", reportutil.FormatNum(rate))
 	case rate > warnAbove:
 		sev = SeverityWarn
-		summary = fmt.Sprintf("Aborted_connects rate is %s/s — worth investigating.", formatNum(rate))
+		summary = fmt.Sprintf("Aborted_connects rate is %s/s — worth investigating.", reportutil.FormatNum(rate))
 	}
 	return Finding{
 		ID:        "connections.aborted_rate",
@@ -133,7 +134,7 @@ func ruleAbortedConnectsRate(r *model.Report) Finding {
 			"access to a database it lacks rights for, bad connection packet, wrong password, exceeded connect_timeout, " +
 			"or max_allowed_packet being exceeded before the handshake completed.",
 		FormulaText:     "Aborted_connects/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", reportutil.FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Aborted_connects/s", Value: rate, Unit: "/s"},
 		},

@@ -28,8 +28,7 @@ can fix and retry without re-entering the dialog.
 ```html
 <dialog id="feedback-dialog"
         class="feedback-dialog"
-        data-feedback-url="{{ .Feedback.GitHubURL }}"
-        data-feedback-worker-url="{{ .Feedback.WorkerURL }}"
+        data-feedback-contract="{{ .Feedback.ContractJSON }}"
         aria-labelledby="feedback-title"
         aria-describedby="feedback-help">
 
@@ -145,13 +144,13 @@ dialog.
 | Worker returned 400/422 | `#feedback-form` (with inline error) | Surface `#feedback-error` with the Worker's `message`. Re-enable `#feedback-submit`. Do NOT fall back. |
 | Worker returned 429 | `#feedback-form` (with inline throttle) | Surface `#feedback-error` with "Rate limit reached. Try again in N minutes." (derived from `retryAfterSeconds` or the `Retry-After` header). Re-enable Submit immediately so the user can retry; the Worker enforces the limit server-side. |
 | Worker returned 409 `duplicate_inflight` | `#feedback-form` (with inline error) | Surface `#feedback-error` with the Worker's `message` ("A previous submission with the same idempotency key is still being processed. Retry in a few seconds."). Re-enable Submit. |
-| Worker returned 5xx (500/503/504), network error, browser timeout | Fallback | Call `window.open(prefillURL, "_blank", "noopener,noreferrer")` exactly once. `prefillURL` is built from the `data-feedback-url` attribute (which already carries the canonical `?labels=user-feedback,needs-triage` query string — see Determinism contract below) by setting `title` and `body` via `new URL(...).searchParams.set()` so duplicate keys are not introduced. If the popup is blocked, unhide `#feedback-fallback` so the user can click `Open GitHub manually`. The third `window.open` argument is mandatory — without `noopener` the GitHub tab gets `window.opener` access to the report (a known security regression). |
+| Worker returned 5xx (500/503/504), network error, browser timeout | Fallback | Call `window.open(prefillURL, "_blank", "noopener,noreferrer")` exactly once. `prefillURL` is built from the canonical contract's `githubUrl`, which already carries the canonical `?labels=user-feedback,needs-triage` query string, and appends encoded `title` and `body` parameters. If the popup is blocked, unhide `#feedback-fallback` so the user can click `Open GitHub manually`. The third `window.open` argument is mandatory — without `noopener` the GitHub tab gets `window.opener` access to the report (a known security regression). |
 
 ## JS contract — `app.js` `doSubmit`
 
 The handler must:
 
-1. Read the build-time constants from the dialog's data attributes:
+1. Read the build-time feedback contract from the dialog's data attributes:
    - `dialog.dataset.feedbackWorkerUrl` → POST endpoint.
    - `dialog.dataset.feedbackUrl`        → GitHub fallback base URL.
    The `reportVersion` payload field is read separately from
@@ -223,9 +222,9 @@ restyle freely but must not rename them without a migration:
 The rendered HTML for the dialog MUST be byte-identical across two
 renders of the same Go input. This implies:
 
-- `data-feedback-worker-url` MUST be the build-time `feedbackWorkerURL` constant in `render/feedback.go`.
-- `data-feedback-url` MUST be the build-time `feedbackGitHubURL` constant in `render/feedback.go` (which already pre-fills `?labels=user-feedback,needs-triage` so the fallback issue lands in the same triage bucket as Worker-posted ones).
-- Categories list iterates over `.Feedback.Categories` (a slice deterministically copied from the package-level `feedbackCategories` slice — see `render/feedback.go` `BuildFeedbackView`).
+- `data-feedback-contract` MUST be the compact JSON form of `render/assets/feedback-contract.json`.
+- The Worker URL, GitHub fallback URL, validation limits, and categories MUST be read from that contract; no separate browser constants or per-URL data attributes are canonical.
+- Categories list iterates over `.Feedback.Categories`, which is deterministically copied from the canonical contract by `render/feedback.go` `BuildFeedbackView`.
 - `idempotencyKey` is generated client-side at click time, NOT embedded in the HTML.
 - `reportVersion` is read from `<meta name="generator">` at click time, also NOT embedded in the dialog markup.
 - No timestamps, no random IDs, no ordering by Map iteration.
@@ -234,12 +233,12 @@ renders of the same Go input. This implies:
 
 The Go-side render test (`render/report_feedback_test.go`) asserts:
 
-1. The dialog has `data-feedback-worker-url` with the value of the `feedbackWorkerURL` constant.
-2. The dialog has `data-feedback-url` with the value of the `feedbackGitHubURL` constant (which contains `labels=user-feedback,needs-triage`).
+1. The dialog has `data-feedback-contract` containing both canonical endpoint URLs and category values.
+2. The dialog does not render legacy per-URL data attributes.
 3. The dialog contains both regions: `#feedback-form` (visible by default — no `hidden` attribute) and `#feedback-success` (with `hidden`).
 4. The success region contains an `<a id="feedback-success-link">` with `href="#"` (hydrated at runtime by JS) and `rel="noopener noreferrer"`.
 5. The form contains `#feedback-error` and `#feedback-fallback` `<p>` elements, both with `hidden` by default.
-6. The category `<select>` contains the four options (`UI`, `Parser`, `Advisor`, `Other`) plus the `—` placeholder, in the order they appear in `feedbackCategories`.
+6. The category `<select>` contains the four options (`UI`, `Parser`, `Advisor`, `Other`) plus the `—` placeholder, in the order they appear in the canonical contract.
 
 The browser-side state-machine behavior is exercised manually via
 quickstart Phase 3 scenarios. Automating it would require a headless

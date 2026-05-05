@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // ruleBinlogCacheDiskUse flags binlog cache spill-to-disk events —
@@ -22,17 +23,17 @@ func ruleBinlogCacheDiskUse(r *model.Report) Finding {
 	if rate > 1 {
 		sev = SeverityCrit
 	}
-	cacheSize, _ := variableFloat(r, "binlog_cache_size")
+	cacheSize, _ := reportutil.VariableFloat(r, "binlog_cache_size")
 	return Finding{
 		ID:        "binlog.cache_disk_use",
 		Subsystem: "Binlog Cache",
 		Title:     "Binlog cache overflowing to disk",
 		Severity:  sev,
-		Summary:   fmt.Sprintf("%s transactions/s exceeded binlog_cache_size and spilled to disk.", formatNum(rate)),
+		Summary:   fmt.Sprintf("%s transactions/s exceeded binlog_cache_size and spilled to disk.", reportutil.FormatNum(rate)),
 		Explanation: "Binlog_cache_disk_use counts transactions whose cached binlog data exceeded binlog_cache_size and " +
 			"had to be written to a temporary file. A steady increase indicates binlog_cache_size should be raised.",
 		FormulaText:     "Binlog_cache_disk_use/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", reportutil.FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Binlog_cache_disk_use/s", Value: rate, Unit: "/s"},
 			{Name: "binlog_cache_size", Value: cacheSize, Unit: "bytes"},
@@ -60,17 +61,17 @@ func ruleBinlogStmtCacheDiskUse(r *model.Report) Finding {
 	if rate > 1 {
 		sev = SeverityCrit
 	}
-	stmtSize, _ := variableFloat(r, "binlog_stmt_cache_size")
+	stmtSize, _ := reportutil.VariableFloat(r, "binlog_stmt_cache_size")
 	return Finding{
 		ID:        "binlog.stmt_cache_disk_use",
 		Subsystem: "Binlog Cache",
 		Title:     "Binlog statement cache overflowing to disk",
 		Severity:  sev,
-		Summary:   fmt.Sprintf("%s statements/s exceeded binlog_stmt_cache_size and spilled to disk.", formatNum(rate)),
+		Summary:   fmt.Sprintf("%s statements/s exceeded binlog_stmt_cache_size and spilled to disk.", reportutil.FormatNum(rate)),
 		Explanation: "Binlog_stmt_cache_disk_use counts non-transactional statements whose binlog data exceeded " +
 			"binlog_stmt_cache_size and had to be written to a temporary file.",
 		FormulaText:     "Binlog_stmt_cache_disk_use/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", reportutil.FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Binlog_stmt_cache_disk_use/s", Value: rate, Unit: "/s"},
 			{Name: "binlog_stmt_cache_size", Value: stmtSize, Unit: "bytes"},

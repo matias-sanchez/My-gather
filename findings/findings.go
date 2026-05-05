@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // Severity classifies a Finding. The three "visible" levels drive the
@@ -408,7 +409,7 @@ func evidenceFromMetrics(metrics []MetricRef) []EvidenceRef {
 	for _, m := range metrics {
 		out = append(out, EvidenceRef{
 			Name:     m.Name,
-			Value:    formatNum(m.Value),
+			Value:    reportutil.FormatNum(m.Value),
 			Unit:     m.Unit,
 			Kind:     evidenceKindForMetric(m),
 			Strength: evidenceStrengthForMetric(m),
