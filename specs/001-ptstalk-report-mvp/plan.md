@@ -6,10 +6,13 @@
 ## Summary
 
 Ship the first vertical slice of My-gather: a Go CLI that reads a pt-stalk
-output directory and writes one self-contained HTML diagnostic report with
-three sections — OS Usage, Variables, Database Usage — sourced from
+output directory and writes one self-contained HTML diagnostic report. The
+original MVP centered on OS Usage, Variables, and Database Usage; the current
+shipped report has five top-level sections — Environment, OS Usage, Variables,
+Database Usage, and Advisor — sourced from
 `-iostat`, `-top`, `-variables`, `-vmstat`, `-innodbstatus1`, `-mysqladmin`,
-and `-processlist` files. Implementation honours the twelve constitution
+and `-processlist` files plus environment sidecars. Implementation honours the
+current fifteen constitution
 principles: one statically-linked binary, stdlib-first, golden-tested
 parsers, byte-deterministic HTML with embedded chart JS, graceful
 degradation when inputs are missing. The MVP supports Percona Toolkit
@@ -18,10 +21,8 @@ degradation when inputs are missing. The MVP supports Percona Toolkit
 
 ## Technical Context
 
-**Language/Version**: Go (current stable at implementation time; minimum
-`go 1.24` required for the embed and `slices` stdlib features used).
-Version is pinned in `go.mod` and verified in CI per Constitution
-Principle XII.
+**Language/Version**: Go version pinned in `go.mod` and verified in CI per
+Constitution Principle XII. The live repository currently pins Go 1.26.
 
 **Primary Dependencies**:
 
@@ -93,7 +94,7 @@ byte-identical output (spec SC-003).
   14 fixture sets under `testdata/` (one per version where the format
   differs; shared fixture where it does not).
 - ~3 internal Go packages + 1 CLI entry point.
-- ~3 rendered sections with ~9 distinct views total.
+- Five rendered top-level sections with their current subviews.
 
 ## Constitution Check
 
@@ -114,7 +115,7 @@ Evaluated against `.specify/memory/constitution.md` v1.0.1.
 | IX | Zero Network | ✅ PASS | `net/http`, `net`, and `net/url` (except `url.PathEscape`-style stdlib helpers) are banned in shipped code via a `go vet`-style linter check in CI. |
 | X | Minimal Dependencies | ✅ PASS | Zero direct Go module dependencies. One vendored JavaScript asset, justified in `research.md`. |
 | XI | Human Pressure Optimization | ✅ PASS | Current report order is Environment → OS Usage → Variables → Database Usage → Advisor (spec FR-005 / FR-042). Diagnostics are emitted through the parser diagnostic surfaces instead of a navigation subview. FR-038–FR-041 concretise this principle as no-duplication, consistent visual hierarchy, robust rendering across the data envelope, and a committed audit gate (SC-011, research R13). |
-| XII | Pinned Go Version | ✅ PASS | `go.mod` pins `go 1.24`; CI matrix uses exactly that version. |
+| XII | Pinned Go Version | ✅ PASS | `go.mod` pins the repository Go version; CI uses `go-version-file: go.mod`. |
 
 **Pre-design gate: PASS.** No violations requiring Complexity Tracking.
 
@@ -320,8 +321,8 @@ Re-evaluated after completing Phase 1 artifacts (see `data-model.md`,
 | VIII | Reference Fixtures & Golden Tests | ✅ PASS (design) / ⚠ partial (shipped) | `testdata/example{1,2}/` structure locked in Project Structure; `testdata/example2/` committed; `testdata/example1/` reserved for the preceding pt-stalk version (tasks.md T019). Golden tests per collector; `testdata_coverage_test.go` guard documented in tasks. Goldens under `testdata/golden/` are generated incrementally as per-collector tests land (tasks.md T043–T070). |
 | IX | Zero Network | ✅ PASS | CI linter will reject any import of `net/http`, `net/rpc`, etc. in shipped packages. |
 | X | Minimal Dependencies | ✅ PASS | `go.mod` has zero direct non-stdlib dependencies. The one vendored JS asset is justified in `research.md` with size and license. |
-| XI | Human Pressure Optimization | ✅ PASS | Template order locked; Parser Diagnostics rendered as a collapsible `<details>` section at the bottom, not between primary views. FR-038–FR-041 + SC-011 + research R13 layer a structured audit gate on top: every release cut produces a dated checklist record under `specs/001-ptstalk-report-mvp/ux-audits/` enforcing no-duplication, consistent visual hierarchy, and robust rendering across the data envelope. |
-| XII | Pinned Go Version | ✅ PASS | `go 1.24` directive in `go.mod`; CI uses matching version. |
+| XI | Human Pressure Optimization | ✅ PASS | Current report order is Environment → OS Usage → Variables → Database Usage → Advisor. The historical Parser Diagnostics panel was removed; diagnostics now surface through model diagnostics and the stderr mirror rules. FR-038–FR-041 + SC-011 + research R13 layer a structured audit gate on top: every release cut produces a dated checklist record under `specs/001-ptstalk-report-mvp/ux-audits/` enforcing no-duplication, consistent visual hierarchy, and robust rendering across the data envelope. |
+| XII | Pinned Go Version | ✅ PASS | `go.mod` pins the repository Go version; CI uses `go-version-file: go.mod`. |
 
 **Post-design gate: PASS.** Ready to emit Phase 2 tasks via
 `/speckit.tasks`.

@@ -1,18 +1,19 @@
 <!-- SPECKIT START -->
 No active feature.
 
-The latest shipped feature is **013-full-compliance-fixes**. For reference,
+The latest shipped feature is **014-reconciliation-cleanup**. For reference,
 its implementation artifacts remain available here:
 
-- Plan: `specs/013-full-compliance-fixes/plan.md`
-- Spec: `specs/013-full-compliance-fixes/spec.md`
-- Research: `specs/013-full-compliance-fixes/research.md`
-- Contracts: `specs/013-full-compliance-fixes/contracts/audit.md`
-- Quickstart: `specs/013-full-compliance-fixes/quickstart.md`
-- Tasks: `specs/013-full-compliance-fixes/tasks.md`
+- Plan: `specs/014-reconciliation-cleanup/plan.md`
+- Spec: `specs/014-reconciliation-cleanup/spec.md`
+- Research: `specs/014-reconciliation-cleanup/research.md`
+- Contracts: `specs/014-reconciliation-cleanup/contracts/audit.md`
+- Quickstart: `specs/014-reconciliation-cleanup/quickstart.md`
+- Tasks: `specs/014-reconciliation-cleanup/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
+- **014-reconciliation-cleanup** - `specs/014-reconciliation-cleanup/plan.md`
 - **013-full-compliance-fixes** - `specs/013-full-compliance-fixes/plan.md`
 - **012-repo-alignment-audit** - `specs/012-repo-alignment-audit/plan.md`
 - **011-constitution-canonical-path-alignment** - constitution-only change; no `specs/011-*` directory

@@ -132,7 +132,7 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 		if line == "" {
 			continue
 		}
-		if m := reTimestampLine.FindStringSubmatch(line); m != nil {
+		if m := reAnyTimestampLine.FindStringSubmatch(line); m != nil {
 			flush()
 			sawTS = true
 			var ok bool
