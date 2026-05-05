@@ -31,6 +31,12 @@ const maxScanTokenBytes = 32 << 20
 // format change gets a single edit site.
 var reTimestampLine = regexp.MustCompile(`^TS\s+(\d+(?:\.\d+)?)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})`)
 
+// reAnyTimestampLine matches the same TS-delimited collector boundary as
+// reTimestampLine but accepts any non-space epoch token. Parsers that need to
+// diagnose malformed boundaries use this broader shape, then validate the
+// token with their canonical timestamp parser.
+var reAnyTimestampLine = regexp.MustCompile(`^TS\s+(\S+)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})`)
+
 // newLineScanner returns a bufio.Scanner configured with the standard
 // line-buffer sizes used by every parser in this package. All callers
 // route through this helper so the buffer cap is enforced in one

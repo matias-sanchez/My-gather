@@ -469,10 +469,9 @@ Diagnostics panel, which is closed. Works without JavaScript because
   reopening a regenerated report retains the viewer's collapse
   choices, and moving the pt-stalk dump to a different path on the
   engineer's laptop does NOT reset state (F21 resolution).
-- **Parser Diagnostics collapsed by default** follows Principle XI
+- **Parser Diagnostics removed by default** follows Principle XI
   ("prioritise signal over clutter"): most reports have zero or one
-  diagnostics; showing an empty expanded panel adds noise for no
-  signal.
+  diagnostics; showing an empty panel added noise for no signal.
 - **Graceful degradation** (Principle III spirit): with JS disabled
   the `<details>` elements open/close, just without persisted state.
   Nav rail degrades to an anchor list at the top of the document via
@@ -671,7 +670,7 @@ ad-hoc review to guarantee the report's visual, compositional, and
 robustness quality. The checklist lives at
 `specs/001-ptstalk-report-mvp/checklists/ux-quality.md` and is
 structured section-by-section (Global · Header · Navigation · OS
-Usage · Variables · Database Usage · Parser Diagnostics · Print ·
+Usage · Variables · Database Usage · Diagnostics Surfaces · Print ·
 Robustness · No-duplication). Each audit run is committed as a
 dated Markdown file under
 `specs/001-ptstalk-report-mvp/ux-audits/` with one row per

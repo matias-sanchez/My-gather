@@ -1,8 +1,8 @@
 #!/usr/bin/env pwsh
 # Git extension: create-new-feature.ps1
 # Adapted from core scripts/powershell/create-new-feature.ps1 for extension layout.
-# Sources common.ps1 from the project's installed scripts, falling back to
-# git-common.ps1 for minimal git helpers.
+# Sources git-common.ps1 as the canonical PowerShell helper path for this
+# extension.
 [CmdletBinding()]
 param(
     [switch]$Json,
@@ -149,11 +149,9 @@ function ConvertTo-CleanBranchName {
 }
 
 # ---------------------------------------------------------------------------
-# Source common.ps1 from the project's installed scripts.
-# Search locations in priority order:
-#  1. .specify/scripts/powershell/common.ps1 under the project root
-#  2. scripts/powershell/common.ps1 under the project root (source checkout)
-#  3. git-common.ps1 next to this script (minimal fallback)
+# Source the extension PowerShell helper. This repository does not install a
+# core PowerShell common script, so git-common.ps1 is the canonical helper owner
+# for PowerShell git-extension behavior.
 # ---------------------------------------------------------------------------
 function Find-ProjectRoot {
     param([string]$StartDir)
@@ -171,53 +169,20 @@ function Find-ProjectRoot {
 }
 
 $projectRoot = Find-ProjectRoot -StartDir $PSScriptRoot
-$commonLoaded = $false
-
-if ($projectRoot) {
-    $candidates = @(
-        (Join-Path $projectRoot ".specify/scripts/powershell/common.ps1"),
-        (Join-Path $projectRoot "scripts/powershell/common.ps1")
-    )
-    foreach ($candidate in $candidates) {
-        if (Test-Path $candidate) {
-            . $candidate
-            $commonLoaded = $true
-            break
-        }
-    }
+if (-not (Test-Path "$PSScriptRoot/git-common.ps1")) {
+    throw "Unable to locate git-common.ps1. Please ensure the Specify git extension is installed."
 }
-
-if (-not $commonLoaded -and (Test-Path "$PSScriptRoot/git-common.ps1")) {
-    . "$PSScriptRoot/git-common.ps1"
-    $commonLoaded = $true
-}
-
-if (-not $commonLoaded) {
-    throw "Unable to locate common script file. Please ensure the Specify core scripts are installed."
-}
+. "$PSScriptRoot/git-common.ps1"
 
 # Resolve repository root
-if (Get-Command Get-RepoRoot -ErrorAction SilentlyContinue) {
-    $repoRoot = Get-RepoRoot
-} elseif ($projectRoot) {
+if ($projectRoot) {
     $repoRoot = $projectRoot
 } else {
     throw "Could not determine repository root."
 }
 
 # Check if git is available
-if (Get-Command Test-HasGit -ErrorAction SilentlyContinue) {
-    # Call without parameters for compatibility with core common.ps1 (no -RepoRoot param)
-    # and git-common.ps1 (has -RepoRoot param with default).
-    $hasGit = Test-HasGit
-} else {
-    try {
-        git -C $repoRoot rev-parse --is-inside-work-tree 2>$null | Out-Null
-        $hasGit = ($LASTEXITCODE -eq 0)
-    } catch {
-        $hasGit = $false
-    }
-}
+$hasGit = Test-HasGit -RepoRoot $repoRoot
 
 Set-Location $repoRoot
 

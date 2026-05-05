@@ -118,10 +118,9 @@ const (
 	ParseUnsupported
 )
 
-// Severity classifies a Diagnostic. Info-severity diagnostics surface
-// only in the report's Parser Diagnostics panel. Warning and Error
-// additionally mirror to the tool's stderr as they are recorded
-// (spec FR-027).
+// Severity classifies a Diagnostic. Info-severity diagnostics remain
+// model-only. Warning and Error additionally mirror to the tool's
+// stderr as they are recorded (spec FR-027).
 type Severity int
 
 const (
@@ -271,7 +270,7 @@ type VariableEntry struct {
 // Diagnostic is a parser-level warning or error. Every Diagnostic with
 // Severity >= SeverityWarning is mirrored to stderr by cmd/my-gather
 // at the moment it is recorded (spec FR-027). Info-severity
-// diagnostics surface only in the report's Parser Diagnostics panel.
+// diagnostics remain model-only.
 type Diagnostic struct {
 	// SourceFile is the absolute path, or "" for collection-wide
 	// diagnostics (e.g., an unreadable subdir).

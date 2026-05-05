@@ -1,7 +1,6 @@
 #!/usr/bin/env pwsh
-# Git-specific common functions for the git extension.
-# Extracted from scripts/powershell/common.ps1 — contains only git-specific
-# branch validation and detection logic.
+# Canonical PowerShell helper for the git extension. Contains only
+# git-specific branch validation and detection logic.
 
 function Test-HasGit {
     param([string]$RepoRoot = (Get-Location))

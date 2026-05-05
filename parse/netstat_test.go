@@ -157,18 +157,31 @@ udp        0      0 0.0.0.0:53     0.0.0.0:*
 
 func TestParseNetstat_MalformedTSEmitsDiagnostic(t *testing.T) {
 	snapshotStart := netstatSnapshotStart()
-	input := `TS 9223372036854775808.0 2026-04-21 16:51:43
+	tests := []struct {
+		name   string
+		header string
+	}{
+		{name: "non-numeric", header: "TS abc 2026-04-21 16:51:43"},
+		{name: "negative", header: "TS -1 2026-04-21 16:51:43"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			input := tt.header + `
 tcp 0 0 127.0.0.1:3306 127.0.0.1:50000 ESTABLISHED 123/mysqld
+TS 1769702260.004572779 2026-04-21 16:51:44
+tcp 0 0 127.0.0.1:3307 127.0.0.1:50001 LISTEN 123/mysqld
 `
-	samples, diags := parseNetstat(strings.NewReader(input), snapshotStart, "test-netstat")
-	if len(samples) != 1 {
-		t.Fatalf("samples: want 1, got %d", len(samples))
-	}
-	if !samples[0].Timestamp.Equal(snapshotStart) {
-		t.Fatalf("timestamp: want snapshot start, got %s", samples[0].Timestamp)
-	}
-	if !hasDiagnostic(diags, model.SeverityWarning, "malformed TS epoch") {
-		t.Fatalf("expected malformed TS diagnostic, got %+v", diags)
+			samples, diags := parseNetstat(strings.NewReader(input), snapshotStart, "test-netstat")
+			if len(samples) != 2 {
+				t.Fatalf("samples: want 2, got %d", len(samples))
+			}
+			if !samples[0].Timestamp.Equal(snapshotStart) {
+				t.Fatalf("timestamp: want snapshot start, got %s", samples[0].Timestamp)
+			}
+			if !hasDiagnostic(diags, model.SeverityWarning, "malformed TS epoch") {
+				t.Fatalf("expected malformed TS diagnostic, got %+v", diags)
+			}
+		})
 	}
 }
 
@@ -476,19 +489,33 @@ func TestParseNetstatS_NoTSFallsBackToSnapshotStart(t *testing.T) {
 
 func TestParseNetstatS_MalformedTSEmitsDiagnostic(t *testing.T) {
 	snapshotStart := netstatSnapshotStart()
-	input := `TS 9223372036854775808.0 2026-04-21 16:51:43
+	tests := []struct {
+		name   string
+		header string
+	}{
+		{name: "non-numeric", header: "TS abc 2026-04-21 16:51:43"},
+		{name: "negative", header: "TS -1 2026-04-21 16:51:43"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			input := tt.header + `
 Tcp:
     10 active connection openings
+TS 1769702260.004572779 2026-04-21 16:51:44
+Tcp:
+    11 active connection openings
 `
-	samples, diags := parseNetstatS(strings.NewReader(input), snapshotStart, "test-netstat_s")
-	if len(samples) != 1 {
-		t.Fatalf("samples: want 1, got %d", len(samples))
-	}
-	if !samples[0].Timestamp.Equal(snapshotStart) {
-		t.Fatalf("timestamp: want snapshot start, got %s", samples[0].Timestamp)
-	}
-	if !hasDiagnostic(diags, model.SeverityWarning, "malformed TS epoch") {
-		t.Fatalf("expected malformed TS diagnostic, got %+v", diags)
+			samples, diags := parseNetstatS(strings.NewReader(input), snapshotStart, "test-netstat_s")
+			if len(samples) != 2 {
+				t.Fatalf("samples: want 2, got %d", len(samples))
+			}
+			if !samples[0].Timestamp.Equal(snapshotStart) {
+				t.Fatalf("timestamp: want snapshot start, got %s", samples[0].Timestamp)
+			}
+			if !hasDiagnostic(diags, model.SeverityWarning, "malformed TS epoch") {
+				t.Fatalf("expected malformed TS diagnostic, got %+v", diags)
+			}
+		})
 	}
 }
 

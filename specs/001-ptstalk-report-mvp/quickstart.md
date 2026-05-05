@@ -4,7 +4,7 @@ Developer path from a freshly-cloned repo to a rendered report.
 
 ## Prerequisites
 
-- Go (current stable; `go 1.24` or newer).
+- Go version pinned in the repository `go.mod` file.
 - `git`.
 - A recent browser (Chromium-, Firefox-, or Safari-class, released in
   the last three years).
@@ -17,7 +17,7 @@ interpreter.
 ```bash
 git clone git@github.com:matias-sanchez/My-gather.git
 cd My-gather
-go version   # verify Go >= 1.24
+go version   # verify it matches go.mod
 ```
 
 ## Run the test suite
@@ -85,8 +85,8 @@ Always put flags before the positional `<input-dir>` — the Go stdlib
 open /tmp/report.html      # macOS; on Linux use: xdg-open /tmp/report.html
 ```
 
-The report should open with three sections (OS Usage, Variables,
-Database Usage) and all graphs rendered. Disconnect your laptop from
+The report should open with five top-level sections (Environment, OS Usage,
+Variables, Database Usage, Advisor) and all graphs rendered. Disconnect your laptop from
 the network and reload — the report must continue to render
 identically.
 
@@ -128,7 +128,7 @@ regression (Principle IV) and must be fixed before merging.
   `scripts/anonymise-fixtures.sh <example-dir>`.
 - `specs/001-ptstalk-report-mvp/` — this feature's spec, plan,
   research, data model, contracts.
-- `.specify/memory/constitution.md` — the 12 principles the
+- `.specify/memory/constitution.md` — the 15 principles the
   implementation is measured against.
 
 ## Adding a new parser (for future features)
@@ -143,7 +143,9 @@ and a golden file. Checklist:
    `(*model.FooData, []model.Diagnostic)`.
 4. Add fixtures under `testdata/example*/…-foo` (at least one per
    supported pt-stalk version).
-5. Add a golden file under `testdata/golden/` via `go test -update`.
+5. Add a golden file under `testdata/golden/` via the scoped
+   package command that owns the golden, for example
+   `go test ./parse/... -update` or `go test ./render/... -update`.
 6. Add a render section or extend an existing one in `render/`.
 7. Run `go test ./...` and verify the determinism test passes.
 

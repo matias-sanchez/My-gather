@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Git extension: create-new-feature.sh
 # Adapted from core scripts/bash/create-new-feature.sh for extension layout.
-# Sources common.sh from the project's installed scripts, falling back to
-# git-common.sh for minimal git helpers.
+# Sources the installed project common.sh as the canonical helper path.
 
 set -e
 
@@ -194,11 +193,8 @@ clean_branch_name() {
 
 # ---------------------------------------------------------------------------
 # Source common.sh for resolve_template, json_escape, get_repo_root, has_git.
-#
-# Search locations in priority order:
-#  1. .specify/scripts/bash/common.sh under the project root (installed project)
-#  2. scripts/bash/common.sh under the project root (source checkout fallback)
-#  3. git-common.sh next to this script (minimal fallback — lacks resolve_template)
+# The installed project common.sh is the canonical helper owner for Bash Spec
+# Kit workflows in this repository.
 # ---------------------------------------------------------------------------
 SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -221,39 +217,18 @@ _PROJECT_ROOT=$(_find_project_root "$SCRIPT_DIR") || true
 if [ -n "$_PROJECT_ROOT" ] && [ -f "$_PROJECT_ROOT/.specify/scripts/bash/common.sh" ]; then
     source "$_PROJECT_ROOT/.specify/scripts/bash/common.sh"
     _common_loaded=true
-elif [ -n "$_PROJECT_ROOT" ] && [ -f "$_PROJECT_ROOT/scripts/bash/common.sh" ]; then
-    source "$_PROJECT_ROOT/scripts/bash/common.sh"
-    _common_loaded=true
-elif [ -f "$SCRIPT_DIR/git-common.sh" ]; then
-    source "$SCRIPT_DIR/git-common.sh"
-    _common_loaded=true
 fi
 
 if [ "$_common_loaded" != "true" ]; then
-    echo "Error: Could not locate common.sh or git-common.sh. Please ensure the Specify core scripts are installed." >&2
+    echo "Error: Could not locate .specify/scripts/bash/common.sh. Please ensure the Specify core scripts are installed." >&2
     exit 1
 fi
 
 # Resolve repository root
-if type get_repo_root >/dev/null 2>&1; then
-    REPO_ROOT=$(get_repo_root)
-elif git rev-parse --show-toplevel >/dev/null 2>&1; then
-    REPO_ROOT=$(git rev-parse --show-toplevel)
-elif [ -n "$_PROJECT_ROOT" ]; then
-    REPO_ROOT="$_PROJECT_ROOT"
-else
-    echo "Error: Could not determine repository root." >&2
-    exit 1
-fi
+REPO_ROOT=$(get_repo_root)
 
 # Check if git is available at this repo root
-if type has_git >/dev/null 2>&1; then
-    if has_git "$REPO_ROOT"; then
-        HAS_GIT=true
-    else
-        HAS_GIT=false
-    fi
-elif git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+if has_git "$REPO_ROOT"; then
     HAS_GIT=true
 else
     HAS_GIT=false

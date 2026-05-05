@@ -176,22 +176,19 @@ Applies to every rendered surface, independent of section.
       FR-030, T054).
 - [ ] **DB-6** No DB-Usage widget re-plots OS-Usage data (FR-038).
 
-## 6. Parser Diagnostics panel
+## 6. Diagnostics surfaces
 
-- [ ] **PD-1** Collapsed by default (FR-032, Principle XI).
-- [ ] **PD-2** Each diagnostic row carries: file basename,
-      location (line or byte when known, otherwise `—`), severity
-      (one of `Info` / `Warning` / `Error`), and a single-line
-      message.
-- [ ] **PD-3** `SeverityInfo` diagnostics appear here and only here
-      (never on stderr, per FR-027 / FR-030). Snapshot-boundary
-      info from R8 improvement D is the canonical example and MUST
-      appear in this panel for any multi-Snapshot `-mysqladmin`
-      input.
-- [ ] **PD-4** Warnings / Errors are colour-coded AND prefixed with
-      a word (`[warning]` / `[error]`) — not colour-only (G-7).
-- [ ] **PD-5** No diagnostic is duplicated from a subview banner
-      (FR-038).
+- [ ] **PD-1** Warning / Error diagnostics are mirrored to stderr per
+      FR-027.
+- [ ] **PD-2** Each diagnostic carries source file, location when
+      known, severity (`Info` / `Warning` / `Error`), and a single-line
+      message in the model.
+- [ ] **PD-3** `SeverityInfo` diagnostics remain model-only and never
+      surface on stderr, per FR-027 / FR-030.
+- [ ] **PD-4** Warnings / Errors are prefixed with a word
+      (`[warning]` / `[error]`) in stderr output.
+- [ ] **PD-5** No diagnostic duplicates data already represented by a
+      subview banner (FR-038).
 
 ## 7. Print layout (FR-037)
 
@@ -238,8 +235,7 @@ Run the full audit against each of these fixture classes.
       top, vmstat, variables, innodbstatus, mysqladmin, processlist)
       has exactly one home view. Spot-check: grep the rendered HTML
       for key values (e.g., a distinctive variable name, a specific
-      PID) and confirm each appears in only one subview outside of
-      the Parser Diagnostics panel.
+      PID) and confirm each appears in only one subview.
 - [ ] **D-2** No section introduces a summary or overview widget that
       re-plots or re-tabulates data already present in another
       section's canonical subview (confirm by scanning the rendered

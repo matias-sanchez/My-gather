@@ -3,7 +3,7 @@
 **Feature Branch**: `001-ptstalk-report-mvp`
 **Created**: 2026-04-21
 **Status**: Draft
-**Input**: User description: "Parse a pt-stalk output directory and emit a minimal self-contained HTML report. Exercises parse/, model/, render/ end-to-end, proves determinism and the embedded-assets pipeline, and gives every subsequent parser a golden-test home to plug into. The report should have 3 sections: OS usage (CPU/DISK/MEMORY), Variables, and Database usage. Source files: -iostat, -top, -variables, -vmstat, -innodbstatus1, -mysqladmin, -processlist."
+**Input**: User description: "Parse a pt-stalk output directory and emit a minimal self-contained HTML report. Exercises parse/, model/, render/ end-to-end, proves determinism and the embedded-assets pipeline, and gives every subsequent parser a golden-test home to plug into. The original MVP requested OS usage, Variables, and Database usage; the current shipped report has five top-level sections: Environment, OS Usage, Variables, Database Usage, and Advisor. Source files: -iostat, -top, -variables, -vmstat, -innodbstatus1, -mysqladmin, -processlist."
 
 ## Clarifications
 
@@ -12,7 +12,7 @@
 - Q: Which pt-stalk release formats must the parsers accept? → A: The current/latest Percona Toolkit `pt-stalk` stable release plus the immediately preceding minor release within the same major version line (MAJOR.MINOR.PATCH versioning; see FR-024 for the normative wording). Each supported version ships its own fixture under `testdata/` and its own golden file, per Principle VIII.
 - Q: What is the upper bound on input size the tool must survive? → A: ≤ 1 GB total collection size; any single source file up to 200 MB. Streaming parsing where cheap, buffered where simpler. Beyond 1 GB is out of scope for the MVP.
 - Q: Does the MVP redact sensitive data (hostnames, IPs, query text, user names) from the rendered HTML? → A: No. The report passes pt-stalk content through verbatim; redaction is the engineer's responsibility before sharing. Documented in the README and in a visible banner on the report.
-- Q: What does the tool write to stderr during a run? → A: On a clean success (no diagnostics, no verbose) stderr is empty. Parser diagnostics of `Severity=Warning` or `Severity=Error` are always mirrored to stderr as one-line entries at the moment they are emitted, including on otherwise-successful runs (exit 0). `-v` / `--verbose` additionally streams per-file progress lines. Structural errors (bad input path, size-bound exceeded, unrecognised directory) always go to stderr. `Severity=Info` diagnostics never surface on stderr — they live only in the report's Parser Diagnostics panel. See FR-027 for the normative rule.
+- Q: What does the tool write to stderr during a run? → A: On a clean success (no diagnostics, no verbose) stderr is empty. Parser diagnostics of `Severity=Warning` or `Severity=Error` are always mirrored to stderr as one-line entries at the moment they are emitted, including on otherwise-successful runs (exit 0). `-v` / `--verbose` additionally streams per-file progress lines. Structural errors (bad input path, size-bound exceeded, unrecognised directory) always go to stderr. `Severity=Info` diagnostics never surface on stderr; after the in-report Parser Diagnostics panel was removed, they remain model diagnostics only. See FR-027 for the normative rule.
 - Q: Does the MVP emit any machine-readable side-car output (JSON, CSV) alongside the HTML? → A: No. HTML is the only CLI output in this feature; no `--json`, no side-car files. The `model/` package remains importable (required by Principle VI) but is not advertised, stabilised, or documented for third-party consumers in v1.
 - Q: What is the normative algorithm for computing `-mysqladmin` deltas between samples? → A: The algorithm is **ported to native Go** inside `parse/mysqladmin.go`. The C++ reference at `_references/pt-mext/pt-mext-improved.cpp` is retained as the *behavioural specification source*: the worked example in its tail comments (input table lines 146–177 → expected output lines 181–189) is committed verbatim as a test fixture and golden file under `testdata/pt-mext/`. The Go implementation MUST reproduce that expected output for counter variables. Non-counter variables (e.g., `Threads_running`, `Uptime`) are classified as gauges and stored as raw values, not deltas — this is a deliberate improvement over the C++ reference, which treats everything as a counter.
 
@@ -40,8 +40,8 @@ parser will plug into.
 
 **Independent Test**: Point the CLI at `_references/examples/example2/`
 (or any real pt-stalk dump), run it, open the resulting HTML in any
-browser while disconnected from the internet, and confirm the four
-top-level sections (OS Usage, Variables, Database Usage, Advisor) are
+browser while disconnected from the internet, and confirm the five
+top-level sections (Environment, OS Usage, Variables, Database Usage, Advisor) are
 all present and the document renders with working charts.
 
 **Acceptance Scenarios**:
@@ -51,7 +51,7 @@ all present and the document renders with working charts.
    `-mysqladmin`, `-processlist`), **When** the engineer runs the tool
    against that directory, **Then** the tool writes one self-contained
    `.html` file to the path the engineer specifies, and opening it in a
-   browser with no network access shows the three sections with all
+  browser with no network access shows the five top-level sections with all
    graphs and tables rendered.
 2. **Given** a pt-stalk output directory where some of the seven source
    files are missing or empty, **When** the engineer runs the tool,
@@ -115,10 +115,10 @@ changed? does it match what the customer said?" without opening the raw
 file.
 
 **Why this priority**: Variables are a high-value but low-complexity
-section — a single table, no graphs, no per-session noise. It is the
-simplest of the three sections and gives the engineer a reference they
-will consult throughout the investigation. Ranks below OS because it is
-less time-critical during live triage.
+captured-data section — a single table, no graphs, no per-session
+noise. It gives the engineer a reference they will consult throughout
+the investigation. Ranks below OS because it is less time-critical
+during live triage.
 
 **Independent Test**: Given only a `-variables` file, the Variables
 section renders a complete table matching a committed golden fixture.
@@ -195,8 +195,8 @@ matching their respective golden files.
   collection" from "not a pt-stalk dir at all.")
 - A source file is truncated mid-sample (process killed during
   collection) → the parser returns usable data from the complete samples
-  and records a diagnostic entry in the report's "Parser Diagnostics"
-  panel naming the file, the byte offset, and the nature of the
+  and records a diagnostic entry on the affected source file naming
+  the file, the byte offset, and the nature of the
   truncation.
 - A source file contains bytes that are not valid UTF-8 → parser decodes
   lossily, the rendered text flags replacement characters where they
@@ -212,8 +212,8 @@ matching their respective golden files.
 - Output path already exists → tool refuses to overwrite unless the
   engineer passes an explicit "overwrite" flag; otherwise exits non-zero
   with a clear message.
-- Browser is opened offline and has JavaScript disabled → the three
-  section headers, the Variables table, and all "data not available"
+- Browser is opened offline and has JavaScript disabled → the five
+  top-level section headers, the Variables table, and all "data not available"
   banners are still visible and readable; graphs show a static
   "JavaScript required for charts" placeholder in place of the canvas.
 
@@ -412,8 +412,8 @@ matching their respective golden files.
   discontinuity.
 
 - **FR-031**: The rendered report MUST include a navigation index
-  listing every top-level section (OS Usage, Variables, Database
-  Usage, Advisor) and every named subview within each section (e.g.,
+  listing every top-level section (Environment, OS Usage, Variables,
+  Database Usage, Advisor) and every named subview within each section (e.g.,
   "Disk utilization", "Top CPU processes", "vmstat saturation",
   "Counter deltas", "InnoDB status", "Thread states"). The historical
   "Parser Diagnostics" entry was removed along with the in-report
@@ -504,7 +504,8 @@ matching their respective golden files.
   Usage → InnoDB status; `-mysqladmin` deltas → Database Usage →
   Counter deltas; `-processlist` thread-state samples → Database
   Usage → Thread states; and every `Diagnostic` record → the
-  Parser Diagnostics panel. Any summary or overview widget
+  source/collection diagnostic model and stderr mirror rules in
+  FR-027. Any summary or overview widget
   introduced by a future feature MUST source from and link to
   its canonical subview rather than re-plot or re-tabulate the
   underlying data.
