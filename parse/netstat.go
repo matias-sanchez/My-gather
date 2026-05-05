@@ -321,8 +321,8 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 // false when the supplied default was used.
 func epochToTime(epoch string, fallback time.Time) (time.Time, bool) {
 	v, err := strconv.ParseFloat(epoch, 64)
-	const maxUnixSeconds = float64(1<<63 - 1)
-	if err != nil || math.IsNaN(v) || math.IsInf(v, 0) || v < 0 || v > maxUnixSeconds {
+	const maxSafeUnixSeconds = float64(1 << 53)
+	if err != nil || math.IsNaN(v) || math.IsInf(v, 0) || v < 0 || v >= maxSafeUnixSeconds {
 		return fallback, false
 	}
 	secs := int64(math.Floor(v))

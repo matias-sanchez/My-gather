@@ -2,7 +2,7 @@
 
 **Feature Branch**: `013-full-compliance-fixes`  
 **Created**: 2026-05-05  
-**Status**: Draft  
+**Status**: Complete
 **Input**: User description: "fix em all, reach 100% all"
 
 ## User Scenarios & Testing *(mandatory)*

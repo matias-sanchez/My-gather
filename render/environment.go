@@ -13,10 +13,10 @@ import (
 )
 
 // buildEnvironmentSection constructs the render-ready EnvironmentSection
-// from a Collection. Consumes Collection.RawEnvSidecars — a map of
-// suffix → raw file contents populated once at parse.Discover time — so
-// the render layer is a pure function of the in-memory model (no
-// filesystem reads here; determinism contract preserved).
+// from a Collection. Consumes Collection.RawEnvSidecars and typed sidecar
+// fields populated once at parse.Discover time so the render layer is a pure
+// function of the in-memory model (no filesystem reads here; determinism
+// contract preserved).
 //
 // Host panel is nil when no host-side sidecar produced any signal; MySQL
 // panel is nil when no -variables snapshot parsed. Both nil means the
@@ -138,15 +138,9 @@ func buildEnvironmentSection(c *model.Collection) *model.EnvironmentSection {
 			populated = true
 		}
 	}
-	if s := contents["meminfo"]; s != "" {
-		// parse.Discover is the canonical owner for attaching meminfo
-		// diagnostics to the collection; render reuses the same parser
-		// path here to build the view model without keeping a quiet
-		// duplicate entry point.
-		if m, _ := parse.ParseEnvMeminfoWithDiagnostics(s, ""); m != nil {
-			host.Meminfo = m
-			populated = true
-		}
+	if c.EnvMeminfo != nil {
+		host.Meminfo = c.EnvMeminfo
+		populated = true
 	}
 	if s := contents["df"]; s != "" {
 		if fs := parse.ParseDFSnapshot(s, 5); len(fs) > 0 {

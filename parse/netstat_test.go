@@ -157,7 +157,7 @@ udp        0      0 0.0.0.0:53     0.0.0.0:*
 
 func TestParseNetstat_MalformedTSEmitsDiagnostic(t *testing.T) {
 	snapshotStart := netstatSnapshotStart()
-	input := `TS 999999999999999999999999999999999999999999999999999999999999.0 2026-04-21 16:51:43
+	input := `TS 9223372036854775808.0 2026-04-21 16:51:43
 tcp 0 0 127.0.0.1:3306 127.0.0.1:50000 ESTABLISHED 123/mysqld
 `
 	samples, diags := parseNetstat(strings.NewReader(input), snapshotStart, "test-netstat")
@@ -476,7 +476,7 @@ func TestParseNetstatS_NoTSFallsBackToSnapshotStart(t *testing.T) {
 
 func TestParseNetstatS_MalformedTSEmitsDiagnostic(t *testing.T) {
 	snapshotStart := netstatSnapshotStart()
-	input := `TS 999999999999999999999999999999999999999999999999999999999999.0 2026-04-21 16:51:43
+	input := `TS 9223372036854775808.0 2026-04-21 16:51:43
 Tcp:
     10 active connection openings
 `

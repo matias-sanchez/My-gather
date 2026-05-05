@@ -78,6 +78,10 @@ async function withPrefixLock<T>(prefix: string, fn: () => Promise<T>): Promise<
   prefixLocks.set(prefix, pending);
   await previous;
   try {
+    // KV calls are expected to settle under the Worker request lifetime. If a
+    // same-prefix KV call stalls, later same-prefix requests in this isolate
+    // queue behind it until the platform terminates the isolate and clears this
+    // in-memory lock map; cross-isolate requests are unaffected.
     return await fn();
   } finally {
     release();

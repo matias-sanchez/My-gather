@@ -58,6 +58,7 @@ func keepOnly(c *model.Collection, keep ...model.Suffix) *model.Collection {
 		// it through so per-section goldens that touch the Environment
 		// section still have the host facts they need.
 		RawEnvSidecars:       c.RawEnvSidecars,
+		EnvMeminfo:           c.EnvMeminfo,
 		EnvSidecarTimestamps: c.EnvSidecarTimestamps,
 	}
 	for _, s := range c.Snapshots {

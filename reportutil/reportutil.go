@@ -41,10 +41,12 @@ func FormatNum(v float64) string {
 // HumanInt renders a signed integer with comma group separators.
 func HumanInt(n int64) string {
 	neg := n < 0
+	var s string
 	if neg {
-		n = -n
+		s = strconv.FormatUint(uint64(-(n+1))+1, 10)
+	} else {
+		s = strconv.FormatInt(n, 10)
 	}
-	s := strconv.FormatInt(n, 10)
 	if len(s) <= 3 {
 		if neg {
 			return "-" + s

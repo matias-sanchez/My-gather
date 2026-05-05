@@ -8,6 +8,9 @@ Run from repository root.
 .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
 ```
 
+Run the repo-local `/speckit-analyze` workflow against the active feature
+artifacts and confirm it reports no blocking contradictions.
+
 ## Go
 
 ```bash

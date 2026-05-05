@@ -380,13 +380,14 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 	// Invoke per-collector parsers for every SourceFile. Each parser is
 	// self-contained and captures its own diagnostics on the SourceFile;
 	// the overall Discover call still returns err==nil.
-	sidecarContents, sidecarTimestamps, sidecarDiags := loadEnvSidecars(absRoot)
+	sidecarContents, envMeminfo, sidecarTimestamps, sidecarDiags := loadEnvSidecars(absRoot)
 	collection := &model.Collection{
 		RootPath:             absRoot,
 		Hostname:             hostname,
 		PtStalkSize:          totalBytes,
 		Snapshots:            snapshots,
 		RawEnvSidecars:       sidecarContents,
+		EnvMeminfo:           envMeminfo,
 		EnvSidecarTimestamps: sidecarTimestamps,
 	}
 	for _, d := range sidecarDiags {
@@ -437,12 +438,13 @@ var envSidecarSuffixes = []string{
 // list (SeverityWarning) emitted when the loader falls back past a
 // newer empty/unreadable file to an older readable one, so the
 // degraded path is never silent.
-func loadEnvSidecars(rootPath string) (map[string]string, map[string]time.Time, []model.Diagnostic) {
+func loadEnvSidecars(rootPath string) (map[string]string, *model.EnvMeminfo, map[string]time.Time, []model.Diagnostic) {
 	if rootPath == "" {
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 	out := make(map[string]string, len(envSidecarSuffixes))
 	timestamps := make(map[string]time.Time, len(envSidecarSuffixes))
+	var envMeminfo *model.EnvMeminfo
 	var diagnostics []model.Diagnostic
 	for _, suf := range envSidecarSuffixes {
 		matches, err := filepath.Glob(filepath.Join(rootPath, "*-"+suf))
@@ -483,7 +485,8 @@ func loadEnvSidecars(rootPath string) (map[string]string, map[string]time.Time, 
 			out[suf] = string(data)
 			timestamps[suf] = ts
 			if suf == "meminfo" {
-				_, memDiags := ParseEnvMeminfoWithDiagnostics(string(data), path)
+				mem, memDiags := ParseEnvMeminfoWithDiagnostics(string(data), path)
+				envMeminfo = mem
 				diagnostics = append(diagnostics, memDiags...)
 			}
 			if len(skippedNewer) > 0 {
@@ -499,7 +502,7 @@ func loadEnvSidecars(rootPath string) (map[string]string, map[string]time.Time, 
 			break
 		}
 	}
-	return out, timestamps, diagnostics
+	return out, envMeminfo, timestamps, diagnostics
 }
 
 // runParsers iterates every SourceFile in every Snapshot and invokes

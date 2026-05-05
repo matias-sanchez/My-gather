@@ -63,6 +63,7 @@ func TestHumanIntOrDash(t *testing.T) {
 		{"small", 42, "42"},
 		{"large", 34679, "34,679"},
 		{"negative", -1234, "-1,234"},
+		{"min_int64", math.MinInt64, "-9,223,372,036,854,775,808"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

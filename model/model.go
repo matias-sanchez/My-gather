@@ -174,6 +174,11 @@ type Collection struct {
 	// underlying files are later modified or removed.
 	RawEnvSidecars map[string]string
 
+	// EnvMeminfo is the typed view of the selected -meminfo sidecar.
+	// parse.Discover populates it while collecting diagnostics so render
+	// does not re-parse the same raw sidecar content.
+	EnvMeminfo *EnvMeminfo
+
 	// EnvSidecarTimestamps records the timestamp parsed from the
 	// prefix of the sidecar file selected for each suffix in
 	// RawEnvSidecars. Keyed by the same suffix. Used by the
