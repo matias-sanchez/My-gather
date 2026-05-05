@@ -61,6 +61,11 @@ jobs:
             && [ "$PUSH_BEFORE" != "0000000000000000000000000000000000000000" ] \
             && git rev-parse --verify "$PUSH_BEFORE^{commit}" >/dev/null 2>&1; then
             RANGE="$PUSH_BEFORE..HEAD"
+          elif git rev-parse --verify origin/main^{commit} >/dev/null 2>&1 \
+            && BASE_COMMIT="$(git merge-base origin/main HEAD)" \
+            && [ -n "$BASE_COMMIT" ] \
+            && [ "$BASE_COMMIT" != "$(git rev-parse HEAD)" ]; then
+            RANGE="$BASE_COMMIT..HEAD"
           elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
             RANGE="HEAD^..HEAD"
           else
