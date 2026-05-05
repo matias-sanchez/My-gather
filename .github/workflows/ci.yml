@@ -66,8 +66,15 @@ jobs:
             && [ -n "$BASE_COMMIT" ] \
             && [ "$BASE_COMMIT" != "$(git rev-parse HEAD)" ]; then
             RANGE="$BASE_COMMIT..HEAD"
-          elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-            RANGE="HEAD^..HEAD"
+          elif git rev-parse --verify origin/main^{commit} >/dev/null 2>&1; then
+            RANGE="origin/main..HEAD"
+          elif git fetch origin main:refs/remotes/origin/main --depth=1 >/dev/null 2>&1 \
+            && git rev-parse --verify origin/main^{commit} >/dev/null 2>&1; then
+            RANGE="origin/main..HEAD"
+          elif ROOT_COMMIT="$(git rev-list --max-parents=0 HEAD | tail -n1)" \
+            && [ -n "$ROOT_COMMIT" ] \
+            && [ "$ROOT_COMMIT" != "$(git rev-parse HEAD)" ]; then
+            RANGE="$ROOT_COMMIT..HEAD"
           else
             echo "Skipping constitution guard: no comparable push range."
             exit 0
