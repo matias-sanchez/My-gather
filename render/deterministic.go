@@ -68,9 +68,13 @@ func formatFloat(v float64, precision int) string {
 }
 
 // formatTimestamp renders a time as RFC-3339 in UTC with nanosecond
-// precision stripped to seconds. All rendered timestamps flow through
-// this helper.
+// precision stripped to seconds. A zero timestamp is rendered as an
+// explicit unknown marker so summary-only captures do not display a
+// misleading fabricated date.
 func formatTimestamp(t time.Time) string {
+	if t.IsZero() {
+		return "unknown"
+	}
 	return t.UTC().Format(time.RFC3339)
 }
 
@@ -102,8 +106,8 @@ func (g *ordinalIDGenerator) Next(tag string) string {
 //
 // Excluded from the hash (per F21 / research R9):
 //   - Collection.RootPath: moving the dump should not reset state.
-//   - Report.GeneratedAt: re-rendering the same input produces the
-//     same ReportID.
+//   - Report.GeneratedAt: this is render metadata, not part of the
+//     input identity.
 //
 // Included in the hash:
 //   - Collection.Hostname

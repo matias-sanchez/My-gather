@@ -24,5 +24,12 @@
       }
     }
   ],
-  "diagnostics": null
+  "diagnostics": [
+    {
+      "SourceFile": "testdata/example2/2026_04_21_16_51_41-netstat_s",
+      "Location": "line 9",
+      "Severity": 0,
+      "Message": "netstat_s: no TS marker found; using snapshot start for single-sample compatibility"
+    }
+  ]
 }

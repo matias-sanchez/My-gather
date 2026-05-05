@@ -433,7 +433,7 @@ type Report struct {
     BuiltAt          string       // build timestamp, ISO-8601 UTC; injected via -ldflags
     Title            string       // human-readable title (hostname + snapshot count);
                                   // derived from Collection by render.collectionTitle
-    GeneratedAt      time.Time    // the ONLY non-deterministic field (Principle IV)
+    GeneratedAt      time.Time    // derived from input data or explicit RenderOptions override (Principle IV)
     Collection       *Collection  // original, unmodified
     EnvironmentSection *EnvironmentSection // post-MVP (commit 0790e17); rendered first per FR-005
     OSSection          *OSSection

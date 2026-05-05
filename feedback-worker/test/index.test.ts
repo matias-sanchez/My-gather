@@ -108,6 +108,21 @@ function feedbackRequest(
   });
 }
 
+describe("feedback Worker shared response headers", () => {
+  it("returns no-store on CORS preflight responses", async () => {
+    const res = await worker.fetch(
+      new Request("https://worker.test/feedback", { method: "OPTIONS" }),
+      mkEnv(new FakeR2()),
+    );
+
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
+    expect(res.headers.get("Access-Control-Max-Age")).toBe("0");
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    expect(res.headers.get("Vary")).toBe("Origin");
+  });
+});
+
 describe("feedback Worker attachment cleanup", () => {
   it("deletes newly-created R2 attachments when GitHub pre-create fails", async () => {
     const r2 = new FakeR2();

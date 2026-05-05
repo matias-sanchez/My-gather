@@ -15,7 +15,8 @@ DIST := dist
 # Version metadata injected via -ldflags at link time.
 VERSION  ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "v0.0.0-dev")
 COMMIT   ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-BUILDAT  ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+SOURCE_DATE_EPOCH ?= $(shell git show -s --format=%ct HEAD 2>/dev/null || echo 0)
+BUILDAT  ?= $(shell python3 -c 'import datetime; print(datetime.datetime.fromtimestamp(int("$(SOURCE_DATE_EPOCH)"), datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))' 2>/dev/null || echo "1970-01-01T00:00:00Z")
 LDFLAGS  := -s -w \
             -X main.version=$(VERSION) \
             -X main.commit=$(COMMIT) \
@@ -26,6 +27,7 @@ TARGETS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
 # Prefer sha256sum (GNU coreutils, Linux CI default); fall back to
 # `shasum -a 256` on macOS where sha256sum is usually absent.
 SHA256 := $(shell command -v sha256sum 2>/dev/null || echo "shasum -a 256")
+TAR_REPRO_FLAGS := $(shell tar --version 2>/dev/null | grep -q GNU && echo "--sort=name --owner=0 --group=0 --numeric-owner --mtime=@$(SOURCE_DATE_EPOCH)")
 
 .PHONY: all build test vet lint release clean help
 
@@ -75,7 +77,7 @@ release: $(DIST)
 	    $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o "$$stage/$(BIN_NAME)" ./cmd/$(BIN_NAME) \
 	    || exit 1; \
 	  cp README.md CHANGELOG.md "$$stage/" 2>/dev/null || true; \
-	  ( cd $(DIST) && tar -czf "my-gather_$(VERSION)_$${os}_$${arch}.tar.gz" "my-gather_$(VERSION)_$${os}_$${arch}" ) || exit 1; \
+		  ( cd $(DIST) && tar $(TAR_REPRO_FLAGS) -czf "my-gather_$(VERSION)_$${os}_$${arch}.tar.gz" "my-gather_$(VERSION)_$${os}_$${arch}" ) || exit 1; \
 	  cp "$$stage/$(BIN_NAME)" "$(DIST)/$(BIN_NAME)-$${os}-$${arch}"; \
 	  chmod +x "$(DIST)/$(BIN_NAME)-$${os}-$${arch}"; \
 	  rm -rf "$$stage"; \

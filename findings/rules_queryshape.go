@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 const observedSlowQueryWarnSeconds = 60.0
@@ -26,11 +27,11 @@ func ruleFullScanSelectScan(r *model.Report) Finding {
 		Subsystem: "Query Shape",
 		Title:     "Full table scans on the first join input",
 		Severity:  sev,
-		Summary:   fmt.Sprintf("Select_scan is incrementing at %s/s — queries are fully scanning their first table.", formatNum(rate)),
+		Summary:   fmt.Sprintf("Select_scan is incrementing at %s/s — queries are fully scanning their first table.", reportutil.FormatNum(rate)),
 		Explanation: "Select_scan counts SELECTs that had to scan the entire first table in their plan, usually because the " +
 			"relevant column is not indexed (or the planner could not use the index). Deltas from this should be 0 in a healthy OLTP workload.",
 		FormulaText:     "Select_scan/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", reportutil.FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Select_scan/s", Value: rate, Unit: "/s"},
 		},
@@ -123,12 +124,12 @@ func ruleObservedSlowProcesslistQuery(r *model.Report) Finding {
 	ageSeconds := top.MaxTimeMS / 1000
 	sev := SeverityWarn
 	summary := fmt.Sprintf("Observed query %s ran for %s s across %s sightings.",
-		top.Fingerprint, formatNum(ageSeconds), formatNum(float64(top.SeenSamples)))
+		top.Fingerprint, reportutil.FormatNum(ageSeconds), reportutil.FormatNum(float64(top.SeenSamples)))
 	stateLower := strings.ToLower(top.State)
 	if strings.Contains(stateLower, "metadata lock") {
 		sev = SeverityCrit
 		summary = fmt.Sprintf("Observed query %s waited on metadata lock for %s s across %s sightings.",
-			top.Fingerprint, formatNum(ageSeconds), formatNum(float64(top.SeenSamples)))
+			top.Fingerprint, reportutil.FormatNum(ageSeconds), reportutil.FormatNum(float64(top.SeenSamples)))
 	}
 
 	explanation := fmt.Sprintf(
@@ -144,7 +145,7 @@ func ruleObservedSlowProcesslistQuery(r *model.Report) Finding {
 		Explanation: explanation,
 		FormulaText: "max observed processlist query age >= 60s",
 		FormulaComputed: fmt.Sprintf("%s s >= %s s  (fingerprint %s, user %s, db %s, state %s)",
-			formatNum(ageSeconds), formatNum(observedSlowQueryWarnSeconds), top.Fingerprint, top.User, top.DB, top.State),
+			reportutil.FormatNum(ageSeconds), reportutil.FormatNum(observedSlowQueryWarnSeconds), top.Fingerprint, top.User, top.DB, top.State),
 		Metrics: []MetricRef{
 			{Name: "max observed age", Value: ageSeconds, Unit: "s"},
 			{Name: "sightings", Value: float64(top.SeenSamples), Unit: "count"},
@@ -177,11 +178,11 @@ func ruleFullScanSelectFullJoin(r *model.Report) Finding {
 		Subsystem: "Query Shape",
 		Title:     "Joins without usable indexes",
 		Severity:  sev,
-		Summary:   fmt.Sprintf("Select_full_join is incrementing at %s/s — joins are running without a usable index.", formatNum(rate)),
+		Summary:   fmt.Sprintf("Select_full_join is incrementing at %s/s — joins are running without a usable index.", reportutil.FormatNum(rate)),
 		Explanation: "Select_full_join counts the number of joins that performed full scans because no suitable index could be used. " +
 			"Even a low non-zero rate is cause for investigation — each full join multiplies the work across the join's cardinality.",
 		FormulaText:     "Select_full_join/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", reportutil.FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Select_full_join/s", Value: rate, Unit: "/s"},
 		},
@@ -226,23 +227,23 @@ func ruleFullScanHandlerRndNext(r *model.Report) Finding {
 	}
 	applyRatio := haveRatio && selRate >= minSelectsPs
 	sev := SeverityOK
-	summary := fmt.Sprintf("Handler_read_rnd_next is %s/s — normal for this workload.", formatNum(rate))
+	summary := fmt.Sprintf("Handler_read_rnd_next is %s/s — normal for this workload.", reportutil.FormatNum(rate))
 	// Evaluate ratio first (more sensitive); then absolute rate as a fallback.
 	switch {
 	case applyRatio && perSelect > critPerSel:
 		sev = SeverityCrit
 		summary = fmt.Sprintf("Handler_read_rnd_next averages %s rows per SELECT (%s rows/s over %s SELECTs/s) — almost certainly unindexed scans dominating the workload.",
-			formatNum(perSelect), formatNum(rate), formatNum(selRate))
+			reportutil.FormatNum(perSelect), reportutil.FormatNum(rate), reportutil.FormatNum(selRate))
 	case applyRatio && perSelect > warnPerSel:
 		sev = SeverityWarn
 		summary = fmt.Sprintf("Handler_read_rnd_next averages %s rows per SELECT (%s rows/s over %s SELECTs/s) — high scan-per-query ratio.",
-			formatNum(perSelect), formatNum(rate), formatNum(selRate))
+			reportutil.FormatNum(perSelect), reportutil.FormatNum(rate), reportutil.FormatNum(selRate))
 	case rate > critRate:
 		sev = SeverityCrit
-		summary = fmt.Sprintf("Handler_read_rnd_next at %s/s is very high — likely unindexed scans.", formatNum(rate))
+		summary = fmt.Sprintf("Handler_read_rnd_next at %s/s is very high — likely unindexed scans.", reportutil.FormatNum(rate))
 	case rate > warnRate:
 		sev = SeverityWarn
-		summary = fmt.Sprintf("Handler_read_rnd_next at %s/s is high — investigate for unindexed scans.", formatNum(rate))
+		summary = fmt.Sprintf("Handler_read_rnd_next at %s/s is high — investigate for unindexed scans.", reportutil.FormatNum(rate))
 	}
 	metrics := []MetricRef{
 		{Name: "Handler_read_rnd_next/s", Value: rate, Unit: "/s"},
@@ -265,9 +266,9 @@ func ruleFullScanHandlerRndNext(r *model.Report) Finding {
 		FormulaText: "Handler_read_rnd_next/s  and  Handler_read_rnd_next / Com_select",
 		FormulaComputed: func() string {
 			if haveRatio {
-				return fmt.Sprintf("%s /s  and  %s rows/SELECT", formatNum(rate), formatNum(perSelect))
+				return fmt.Sprintf("%s /s  and  %s rows/SELECT", reportutil.FormatNum(rate), reportutil.FormatNum(perSelect))
 			}
-			return fmt.Sprintf("%s /s  (no Com_select activity — ratio n/a)", formatNum(rate))
+			return fmt.Sprintf("%s /s  (no Com_select activity — ratio n/a)", reportutil.FormatNum(rate))
 		}(),
 		Metrics: metrics,
 		Recommendations: []string{
@@ -299,14 +300,14 @@ func ruleProcesslistAbuse(r *model.Report) Finding {
 		return Finding{Severity: SeveritySkip}
 	}
 	sev := SeverityInfo
-	summary := fmt.Sprintf("information_schema.PROCESSLIST is being queried at %s calls/s.", formatNum(rate))
+	summary := fmt.Sprintf("information_schema.PROCESSLIST is being queried at %s calls/s.", reportutil.FormatNum(rate))
 	switch {
 	case rate > critRate:
 		sev = SeverityCrit
-		summary = fmt.Sprintf("information_schema.PROCESSLIST is being hit %s times/s — this scans every open thread on every call and burns CPU at high connection counts.", formatNum(rate))
+		summary = fmt.Sprintf("information_schema.PROCESSLIST is being hit %s times/s — this scans every open thread on every call and burns CPU at high connection counts.", reportutil.FormatNum(rate))
 	case rate > warnRate:
 		sev = SeverityWarn
-		summary = fmt.Sprintf("information_schema.PROCESSLIST is being queried %s times/s — deprecated on 8.0+, noticeable overhead at high connection counts.", formatNum(rate))
+		summary = fmt.Sprintf("information_schema.PROCESSLIST is being queried %s times/s — deprecated on 8.0+, noticeable overhead at high connection counts.", reportutil.FormatNum(rate))
 	}
 	return Finding{
 		ID:        "queryshape.is_processlist",
@@ -318,7 +319,7 @@ func ruleProcesslistAbuse(r *model.Report) Finding {
 			"Monitoring tools that poll it frequently pay a real CPU cost proportional to Threads_connected. " +
 			"performance_schema.processlist is the drop-in replacement and is non-blocking.",
 		FormulaText:     "Deprecated_use_i_s_processlist_count/s",
-		FormulaComputed: fmt.Sprintf("%s /s", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s", reportutil.FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Deprecated_use_i_s_processlist_count/s", Value: rate, Unit: "/s"},
 		},

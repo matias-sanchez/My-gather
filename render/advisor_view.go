@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/matias-sanchez/My-gather/findings"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // --- Advisor / findings view helpers --------------------------------
@@ -18,7 +19,7 @@ func buildFindingViews(fs []findings.Finding) []findingView {
 		for _, m := range f.Metrics {
 			metrics = append(metrics, findingMetricView{
 				Name:  m.Name,
-				Value: formatNum(m.Value),
+				Value: reportutil.FormatNum(m.Value),
 				Unit:  m.Unit,
 				Note:  m.Note,
 			})

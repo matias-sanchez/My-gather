@@ -1,7 +1,9 @@
 package render
 
 import (
+	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -15,17 +17,15 @@ func TestBuildFeedbackViewIsDeterministic(t *testing.T) {
 
 func TestFeedbackViewShape(t *testing.T) {
 	v := BuildFeedbackView()
-	wantURL := "https://github.com/matias-sanchez/My-gather/issues/new?labels=user-feedback,needs-triage"
-	if v.GitHubURL != wantURL {
-		t.Errorf("GitHubURL: got %q, want %q", v.GitHubURL, wantURL)
+	if !reflect.DeepEqual(v.Categories, canonicalFeedbackContract.Categories) {
+		t.Errorf("Categories: got %#v, want %#v", v.Categories, canonicalFeedbackContract.Categories)
 	}
-	wantWorker := "https://my-gather-feedback.mati-orfeo.workers.dev/feedback"
-	if v.WorkerURL != wantWorker {
-		t.Errorf("WorkerURL: got %q, want %q", v.WorkerURL, wantWorker)
+	var parsed feedbackContract
+	if err := json.Unmarshal([]byte(v.ContractJSON), &parsed); err != nil {
+		t.Fatalf("ContractJSON is not valid JSON: %v", err)
 	}
-	wantCats := []string{"UI", "Parser", "Advisor", "Other"}
-	if !reflect.DeepEqual(v.Categories, wantCats) {
-		t.Errorf("Categories: got %#v, want %#v", v.Categories, wantCats)
+	if !reflect.DeepEqual(parsed, canonicalFeedbackContract) {
+		t.Errorf("ContractJSON: got %#v, want %#v", parsed, canonicalFeedbackContract)
 	}
 }
 
@@ -33,7 +33,23 @@ func TestFeedbackViewCategoriesAreIsolated(t *testing.T) {
 	a := BuildFeedbackView()
 	a.Categories[0] = "TAMPERED"
 	b := BuildFeedbackView()
-	if b.Categories[0] != "UI" {
+	if b.Categories[0] != canonicalFeedbackContract.Categories[0] {
 		t.Errorf("mutating one view's Categories leaked to another: got %q", b.Categories[0])
+	}
+}
+
+func TestFeedbackClientReadsCanonicalContract(t *testing.T) {
+	wantSnippets := []string{
+		"dialog.dataset.feedbackContract",
+		"LIMITS.titleMaxChars",
+		"LIMITS.bodyMaxBytes",
+		"LIMITS.reportVersionMaxChars",
+		"LIMITS.legacyUrlMaxChars",
+		"LIMITS.workerTimeoutMs",
+	}
+	for _, snippet := range wantSnippets {
+		if !strings.Contains(embeddedAppJS, snippet) {
+			t.Errorf("embedded app JS does not consume feedback contract snippet %q", snippet)
+		}
 	}
 }

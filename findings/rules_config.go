@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // ruleSlowLogDisabled flags slow_query_log = OFF on a busy instance.
@@ -12,7 +13,7 @@ import (
 // to diagnose high Select_scan / Handler_read_rnd_next rates isn't
 // being collected.
 func ruleSlowLogDisabled(r *model.Report) Finding {
-	raw, ok := variableRaw(r, "slow_query_log")
+	raw, ok := reportutil.VariableRaw(r, "slow_query_log")
 	if !ok {
 		return Finding{Severity: SeveritySkip}
 	}
@@ -26,18 +27,18 @@ func ruleSlowLogDisabled(r *model.Report) Finding {
 		// Idle instance — no point recommending the slow log.
 		return Finding{Severity: SeveritySkip}
 	}
-	longQT, _ := variableFloat(r, "long_query_time")
+	longQT, _ := reportutil.VariableFloat(r, "long_query_time")
 	return Finding{
 		ID:        "config.slow_log_disabled",
 		Subsystem: "Configuration",
 		Title:     "Slow query log is disabled",
 		Severity:  SeverityWarn,
-		Summary:   fmt.Sprintf("slow_query_log = OFF while the server is handling %s questions/s — you have no record of what's slow.", formatNum(qps)),
+		Summary:   fmt.Sprintf("slow_query_log = OFF while the server is handling %s questions/s — you have no record of what's slow.", reportutil.FormatNum(qps)),
 		Explanation: "The slow query log (along with performance_schema) is the primary way to identify which queries are " +
 			"driving CPU and IO load. Leaving it off means that when symptoms appear — high Select_scan, Handler_read_rnd_next, " +
 			"or Threads_running — you can't tell which queries are to blame.",
 		FormulaText:     "slow_query_log = OFF  AND  Questions/s > 0",
-		FormulaComputed: fmt.Sprintf("slow_query_log = %s  AND  Questions/s = %s", raw, formatNum(qps)),
+		FormulaComputed: fmt.Sprintf("slow_query_log = %s  AND  Questions/s = %s", raw, reportutil.FormatNum(qps)),
 		Metrics: []MetricRef{
 			{Name: "slow_query_log", Value: 0, Unit: "bool", Note: fmt.Sprintf("raw value: %s", raw)},
 			{Name: "Questions/s", Value: qps, Unit: "/s"},

@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { feedbackContract } from "../src/feedback-contract";
 import { validatePayload } from "../src/validate";
 
 const UUID = "550e8400-e29b-41d4-a716-446655440000";
+const limits = feedbackContract.limits;
 
 function base64Of(bytes: number[]): string {
   let bin = "";
@@ -59,21 +61,20 @@ describe("validatePayload", () => {
     if (!res.ok) expect(res.error).toBe("title_required");
   });
 
-  it("rejects title longer than 200 chars as title_too_long", () => {
-    const res = validatePayload(goodPayload({ title: "x".repeat(201) }));
+  it("rejects title longer than the canonical cap as title_too_long", () => {
+    const res = validatePayload(goodPayload({ title: "x".repeat(limits.titleMaxChars + 1) }));
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toBe("title_too_long");
   });
 
-  it("rejects body over 10240 UTF-8 bytes as body_too_long", () => {
-    // "é" is 2 bytes UTF-8 → 5121 copies = 10242 bytes.
-    const res = validatePayload(goodPayload({ body: "é".repeat(5121) }));
+  it("rejects body over the canonical UTF-8 byte cap as body_too_long", () => {
+    const res = validatePayload(goodPayload({ body: "x".repeat(limits.bodyMaxBytes + 1) }));
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toBe("body_too_long");
   });
 
-  it("accepts a body right at 10240 bytes", () => {
-    const res = validatePayload(goodPayload({ body: "a".repeat(10240) }));
+  it("accepts a body right at the canonical byte cap", () => {
+    const res = validatePayload(goodPayload({ body: "a".repeat(limits.bodyMaxBytes) }));
     expect(res.ok).toBe(true);
   });
 
@@ -89,14 +90,16 @@ describe("validatePayload", () => {
     if (!res.ok) expect(res.error).toBe("malformed_payload");
   });
 
-  it("accepts a valid category", () => {
-    const res = validatePayload(goodPayload({ category: "UI" }));
-    expect(res.ok).toBe(true);
-    if (res.ok) expect(res.data.category).toBe("UI");
+  it("accepts every canonical category", () => {
+    for (const category of feedbackContract.categories) {
+      const res = validatePayload(goodPayload({ category }));
+      expect(res.ok, `expected ${category} to be accepted`).toBe(true);
+      if (res.ok) expect(res.data.category).toBe(category);
+    }
   });
 
   it("rejects an unknown category as category_invalid", () => {
-    const res = validatePayload(goodPayload({ category: "ui" }));
+    const res = validatePayload(goodPayload({ category: `${feedbackContract.categories[0]}-invalid` }));
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toBe("category_invalid");
   });
@@ -111,24 +114,24 @@ describe("validatePayload", () => {
     if (!res.ok) expect(res.error).toBe("image_bad_mime");
   });
 
-  it("rejects an image over 5MB decoded as image_too_large", () => {
+  it("rejects an image over the canonical cap decoded as image_too_large", () => {
     const res = validatePayload(
       goodPayload({
-        image: { mime: "image/png", base64: bigBase64(5_242_881) },
+        image: { mime: "image/png", base64: bigBase64(limits.imageMaxBytes + 1) },
       }),
     );
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toBe("image_too_large");
   });
 
-  it("accepts an image at exactly 5MB", () => {
+  it("accepts an image at exactly the canonical cap", () => {
     const res = validatePayload(
       goodPayload({
-        image: { mime: "image/png", base64: bigBase64(5_242_880) },
+        image: { mime: "image/png", base64: bigBase64(limits.imageMaxBytes) },
       }),
     );
     expect(res.ok).toBe(true);
-    if (res.ok) expect(res.data.image?.bytes.byteLength).toBe(5_242_880);
+    if (res.ok) expect(res.data.image?.bytes.byteLength).toBe(limits.imageMaxBytes);
   });
 
   it("rejects a voice with disallowed mime as voice_bad_mime", () => {
@@ -151,10 +154,10 @@ describe("validatePayload", () => {
     if (res.ok) expect(res.data.voice?.mime).toBe("audio/webm;codecs=opus");
   });
 
-  it("rejects a voice over 15MB decoded as voice_too_large", () => {
+  it("rejects a voice over the canonical cap decoded as voice_too_large", () => {
     const res = validatePayload(
       goodPayload({
-        voice: { mime: "audio/mp4", base64: bigBase64(15_728_641) },
+        voice: { mime: "audio/mp4", base64: bigBase64(limits.voiceMaxBytes + 1) },
       }),
     );
     expect(res.ok).toBe(false);
@@ -212,8 +215,8 @@ describe("validatePayload", () => {
     if (!res.ok) expect(res.error).toBe("report_version_invalid");
   });
 
-  it("rejects reportVersion longer than 64 chars as report_version_invalid", () => {
-    const res = validatePayload(goodPayload({ reportVersion: "x".repeat(65) }));
+  it("rejects reportVersion longer than the canonical cap as report_version_invalid", () => {
+    const res = validatePayload(goodPayload({ reportVersion: "x".repeat(limits.reportVersionMaxChars + 1) }));
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toBe("report_version_invalid");
   });

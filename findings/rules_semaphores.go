@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // ruleSemaphoreWaits flags InnoDB SEMAPHORES-section contention —
@@ -61,10 +62,10 @@ func ruleSemaphoreWaits(r *model.Report) Finding {
 	}
 
 	sev := SeverityWarn
-	head := fmt.Sprintf("InnoDB semaphore contention — peak %s waiting threads in one snapshot.", formatNum(float64(peakCount)))
+	head := fmt.Sprintf("InnoDB semaphore contention — peak %s waiting threads in one snapshot.", reportutil.FormatNum(float64(peakCount)))
 	if peakCount >= critAbove {
 		sev = SeverityCrit
-		head = fmt.Sprintf("Critical InnoDB semaphore contention — peak %s waiting threads in one snapshot.", formatNum(float64(peakCount)))
+		head = fmt.Sprintf("Critical InnoDB semaphore contention — peak %s waiting threads in one snapshot.", reportutil.FormatNum(float64(peakCount)))
 	}
 
 	// Top-3 hot sites from the peak snapshot — give the operator a

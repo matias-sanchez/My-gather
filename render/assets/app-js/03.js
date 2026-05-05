@@ -620,19 +620,34 @@
     var successLink = document.getElementById("feedback-success-link");
     var successCloseBtn = document.getElementById("feedback-success-close");
 
-    // Single source of truth for both URLs: rendered onto the
-    // <dialog> by the Go template from FeedbackView.GitHubURL and
-    // FeedbackView.WorkerURL (Principle XIII — no duplicate constant
-    // in JS).
-    var BASE_URL = dialog.dataset.feedbackUrl;
-    var WORKER_URL = dialog.dataset.feedbackWorkerUrl;
-    if (!BASE_URL) return; // template didn't render the attr → abort init
-    var URL_MAX = 7500;
-    // 15s is deliberately large: base64-encoding a 5 MB image + voice
-    // note in the fetch body takes real time on slow uplinks. Short
-    // enough that a dead Worker still surfaces a fallback within the
-    // user's attention window.
-    var WORKER_TIMEOUT_MS = 15000;
+    function parseFeedbackContract(raw) {
+      if (!raw) return null;
+      try {
+        var contract = JSON.parse(raw);
+        var limits = contract && contract.limits;
+        if (!contract.githubUrl || !contract.workerUrl || !limits) return null;
+        if (!Array.isArray(contract.categories) || !contract.categories.length) return null;
+        if (typeof limits.titleMaxChars !== "number" ||
+            typeof limits.bodyMaxBytes !== "number" ||
+            typeof limits.reportVersionMaxChars !== "number" ||
+            typeof limits.legacyUrlMaxChars !== "number" ||
+            typeof limits.workerTimeoutMs !== "number") return null;
+        return contract;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // Single source of truth for URLs and validation limits: rendered
+    // onto the <dialog> by the Go template from the canonical feedback
+    // contract JSON (Principle XIII).
+    var CONTRACT = parseFeedbackContract(dialog.dataset.feedbackContract);
+    if (!CONTRACT) return;
+    var LIMITS = CONTRACT.limits;
+    var BASE_URL = CONTRACT.githubUrl;
+    var WORKER_URL = CONTRACT.workerUrl;
+    var URL_MAX = LIMITS.legacyUrlMaxChars;
+    var WORKER_TIMEOUT_MS = LIMITS.workerTimeoutMs;
 
     var imgBlob = null, imgURL = null;
     var voiceBlob = null, voiceURL = null;
@@ -726,19 +741,6 @@
         "&body=" + encodeURIComponent(maybePrefixBody());
     }
     function refreshHint() {
-      // With the Worker path the attachments travel as part of the
-      // POST body — nothing for the user to paste or drag. We only
-      // surface the legacy clipboard/download copy if the Worker URL
-      // wasn't emitted by the template (very old reports), because
-      // that's the one case where doLegacyFallback does the handoff.
-      if (!WORKER_URL) {
-        var parts = [];
-        if (imgBlob) parts.push("Image will be on your clipboard — paste into GitHub's body.");
-        if (voiceBlob) parts.push("Voice note will be downloaded — drag it into GitHub's body.");
-        if (!parts.length) { hint.textContent = ""; hide(hint); return; }
-        hint.textContent = parts.join(" "); show(hint);
-        return;
-      }
       // Worker path: the hint doubles as a small "attachments will be
       // uploaded" reassurance so the user knows the media is part of
       // the submission and not lost in clipboard limbo.
@@ -760,20 +762,16 @@
       // paragraphs, code blocks, etc). Gate by the runtime path.
       var titleLen = titleInput.value.trim().length;
       if (titleLen === 0) { submitBtn.disabled = true; return; }
-      if (WORKER_URL) {
-        // Worker path — cap by the backend's real limits from
-        // feedback-worker/src/validate.ts:
-        //   title  ≤ 200 chars (TITLE_MAX)
-        //   body   ≤ 10_240 UTF-8 bytes (BODY_MAX_BYTES)
-        // Leaving the button enabled past 200 chars would let the
-        // user submit a payload the Worker immediately rejects with
-        // 400 `title_too_long` — not a silent failure, but a broken
-        // invariant: the gate is supposed to mirror the contract.
+      if (typeof window.fetch === "function") {
+        // Worker path: cap by the backend's real limits from the
+        // canonical feedback contract. Leaving the button enabled
+        // past the shared caps would let the user submit a payload
+        // the Worker immediately rejects with 400 validation errors.
         // Use TextEncoder for exact UTF-8 size (multi-byte glyphs
         // don't collapse to .length).
-        var titleOK = titleInput.value.length <= 200;
+        var titleOK = titleInput.value.length <= LIMITS.titleMaxChars;
         var bodyBytes = new TextEncoder().encode(bodyInput.value).byteLength;
-        submitBtn.disabled = !(titleOK && bodyBytes <= 10240);
+        submitBtn.disabled = !(titleOK && bodyBytes <= LIMITS.bodyMaxBytes);
       } else {
         // Legacy fallback path — gate by GitHub URL length.
         submitBtn.disabled = buildURL().length > URL_MAX;

@@ -2,7 +2,17 @@
 
 All notable changes to my-gather are tracked here. Dates are UTC.
 
-## v0.2.0 (unreleased)
+## v0.3.1 (2026-04-23)
+
+Patch release for the feedback Worker path and report integration.
+
+## v0.3.0 (2026-04-23)
+
+Feedback Worker release: report submissions can create GitHub issues through
+the project-controlled Cloudflare Worker, with the existing manual GitHub flow
+preserved as the visible fallback path.
+
+## v0.2.0 (2026-04-22)
 
 Advisor engine + OS/DB enhancements pass on top of the v0.1.0 MVP.
 

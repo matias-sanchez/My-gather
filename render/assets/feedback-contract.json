@@ -1,0 +1,15 @@
+{
+  "githubUrl": "https://github.com/matias-sanchez/My-gather/issues/new?labels=user-feedback,needs-triage",
+  "workerUrl": "https://my-gather-feedback.mati-orfeo.workers.dev/feedback",
+  "categories": ["UI", "Parser", "Advisor", "Other"],
+  "limits": {
+    "titleMaxChars": 200,
+    "bodyMaxBytes": 10240,
+    "imageMaxBytes": 5242880,
+    "voiceMaxBytes": 15728640,
+    "reportVersionMaxChars": 64,
+    "legacyUrlMaxChars": 7500,
+    "workerTimeoutMs": 15000,
+    "requestMaxBytes": 30000000
+  }
+}

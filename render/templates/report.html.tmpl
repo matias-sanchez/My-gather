@@ -141,8 +141,7 @@
        specs/002-report-feedback-button/contracts/ui.md. */}}
 <dialog id="feedback-dialog"
         class="feedback-dialog"
-        data-feedback-url="{{ .Feedback.GitHubURL }}"
-        data-feedback-worker-url="{{ .Feedback.WorkerURL }}"
+        data-feedback-contract="{{ .Feedback.ContractJSON }}"
         aria-labelledby="feedback-title"
         aria-describedby="feedback-help">
   <form id="feedback-form" method="dialog">
@@ -198,7 +197,7 @@
     <div class="feedback-success-icon" aria-hidden="true">✓</div>
     <h2>Feedback posted</h2>
     <p>Your issue has been created on GitHub.</p>
-    <a id="feedback-success-link" class="feedback-success-link" href="#" target="_blank" rel="noopener noreferrer">View issue on GitHub →</a>
+    <a id="feedback-success-link" class="feedback-success-link" href="#" target="_blank" rel="noopener noreferrer">View issue on GitHub</a>
     <button type="button" class="feedback-success-close" id="feedback-success-close">Close</button>
   </div>
 </dialog>

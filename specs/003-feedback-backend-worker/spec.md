@@ -9,12 +9,12 @@
 
 Resolved before starting this spec via interactive conversation:
 
-- **Transport**: the report POSTs JSON to a Cloudflare Worker controlled by the project. The Worker holds a GitHub App credential and calls GitHub's REST API to create the issue. The token never reaches the browser.
+- **Transport**: the report POSTs JSON to a Cloudflare Worker controlled by the project. The Worker holds a GitHub App credential, exchanges it through GitHub's App REST endpoint, and calls GitHub's GraphQL `createIssue` mutation to create the issue. The token never reaches the browser.
 - **Backend**: Cloudflare Workers (free tier). Chosen over Lambda/Vercel/others because: (a) no cold-start at the scale expected, (b) no credit card required, (c) Durable Objects / KV provide simple rate-limiting primitives, (d) familiar TypeScript surface.
 - **GitHub credential**: a GitHub App installed in `matias-sanchez/My-gather` with `Issues: write` permission. Preferred over a PAT because: (a) Apps can be revoked per-installation, (b) tokens are short-lived (1h) and generated per-request, (c) audit trail on GitHub shows the App author on each issue.
 - **Attachments**: image + voice inline in the issue body via GitHub's markdown (images as base64 data URIs are rejected by GitHub; we upload to a Worker-managed R2 bucket and link). See `research.md` R2 for the rejected alternatives.
 - **Fallback when Worker is down**: the report silently falls back to the current `window.open` pre-fill URL flow from feature 002. No user-visible error states about "backend unavailable" — just a degraded path that still delivers value.
-- **Constitution impact**: introduces runtime network from the report. The Principle IX named exception that authorises this was ratified in constitution v1.3.0 (2026-04-24, already on main) — the implementation PR only needs to verify the constitution is at v1.3.0, not amend it.
+- **Constitution impact**: introduces runtime network from the report. The Principle IX named exception that authorises this was ratified in constitution v1.3.0 (2026-04-24, already on main) and remains present in the current constitution.
 
 ## Clarifications (2026-04-26)
 
@@ -41,7 +41,7 @@ A support engineer opens the rendered report, clicks "Report feedback", types ti
 
 ### User Story 2 — Image and voice attachments land in the issue body (Priority: P2)
 
-A support engineer pastes a screenshot (image on clipboard) and records a 10-second voice note. Submit. The resulting issue on GitHub contains both: the image rendered inline, the voice note as a clearly-labelled clickable link to the audio file.
+A support engineer pastes a screenshot (image on clipboard) and records a 10-second voice note. Submit. The resulting issue on GitHub contains both: the image rendered inline, and a clearly labelled voice-note section with the audio URL on its own line.
 
 **Why this priority**: text-only Submit already delivers real value (P1). Attachments are the "much better" that justifies building this backend.
 
@@ -73,7 +73,7 @@ The Worker enforces a rate limit: maximum 5 Submit requests per IP address per h
 
 ### User Story 4 — Oversized or malformed payloads are rejected at the Worker (Priority: P3)
 
-The Worker validates every incoming payload: title non-empty (≤ 200 chars), body ≤ 10 KB of text, image ≤ 5 MB, voice ≤ 15 MB (decoded — the 15 MB cap fits ~10 min of Opus at the browser's default bitrate with margin; matches `feedback-worker/src/validate.ts` `VOICE_MAX_BYTES = 15_728_640`). Over-limit or malformed requests return HTTP 400 with a structured error. (Spam/abuse content per se is not filtered at the Worker — the rate limit + the GitHub App's auditable identity carry the abuse story; a profanity filter would be a separate, opt-in feature with its own spec.)
+The Worker validates every incoming payload using the canonical feedback contract at `render/assets/feedback-contract.json`: title non-empty (≤ 200 chars), body ≤ 10 KB of text, image ≤ 5 MB, voice ≤ 15 MB decoded (the 15 MB cap fits ~10 min of Opus at the browser's default bitrate with margin). Over-limit or malformed requests return HTTP 400 with a structured error. (Spam/abuse content per se is not filtered at the Worker — the rate limit + the GitHub App's auditable identity carry the abuse story; a profanity filter would be a separate, opt-in feature with its own spec.)
 
 **Why this priority**: enhances robustness but isn't core to the user story.
 
@@ -93,7 +93,7 @@ The Worker validates every incoming payload: title non-empty (≤ 200 chars), bo
 - **Rate-limit cache eviction**: Cloudflare KV is eventually consistent (~1 min to propagate globally). Under extreme burst, a user could briefly exceed the limit. Accept.
 - **GitHub App installation removed**: `POST /feedback` returns 503 with a clear error. Dialog falls back to the feature-002 pre-fill URL path.
 - **GitHub API rate-limit hit by the App**: 5000 req/hr per installation. We are many orders of magnitude under that. If exceeded, fallback.
-- **Multiple simultaneous Submits**: each gets its own Worker invocation. No ordering guarantees on GitHub. Idempotency is not guaranteed (a network retry could create a duplicate issue). See data-model for the idempotency-key approach.
+- **Multiple simultaneous Submits**: each gets its own Worker invocation. The idempotency-key cache prevents sequential same-key retries within five minutes, but Cloudflare KV is eventually consistent, so the very first racing pair can still create a duplicate issue before either response is cached. See data-model for the idempotency-key approach and residual race boundary.
 - **Browser timeout vs Worker timeout asymmetry**: the browser fetch aborts at 15s (FR-008), the Worker's per-GitHub-call timeout is 10s (FR-014). The 15s browser budget brackets the 10s Worker timeout (with ~5s buffer for KV writes, R2 uploads, and the final response), so a slow GitHub call surfaces as a clean Worker-side 504 within the browser's window — the dialog falls back to `window.open` based on the 504, not on a browser timeout. A genuine browser-side 15s timeout only fires if the Worker itself is unreachable or stuck; in that case the `window.open` fallback may post a duplicate after a slow Worker eventually creates the issue too, but the idempotency-key replay (5-minute KV cache) catches sequential same-key retries on the Worker side so only the very first racing pair of calls can produce the duplicate.
 - **Report opened from `file://`**: CORS treats file:// origin as `null`. Worker must accept `Origin: null` (or lack of Origin header) for the same-binary scenario.
 - **Old reports (pre-Worker)**: old reports keep calling `window.open` — they don't know the Worker exists. No regression.

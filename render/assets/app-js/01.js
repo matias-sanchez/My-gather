@@ -618,7 +618,6 @@
     var nextChartNum = 0;
 
     var LAYOUT_KEY = "mygather:" + REPORT_ID + ":mysqladmin:charts";
-    var LEGACY_KEY = mysqladminSelectionKey();
 
     function getActive() { return charts.get(activeChartId); }
 

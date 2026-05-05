@@ -1,6 +1,11 @@
 package parse
 
-import "testing"
+import (
+	"strings"
+	"testing"
+
+	"github.com/matias-sanchez/My-gather/model"
+)
 
 func TestParseEnvMeminfo_PicksLastSampleValues(t *testing.T) {
 	input := `TS 1769702259.004572779 2026-01-29 15:57:39
@@ -109,6 +114,48 @@ MemFree:        11000000 kB
 	}
 }
 
+func TestParseEnvMeminfoWithDiagnostics_TruncatedFallbackIsObservable(t *testing.T) {
+	input := `TS 1769702259.004572779 2026-01-29 15:57:39
+MemTotal:       32654396 kB
+MemFree:        11634540 kB
+MemAvailable:   28222432 kB
+Buffers:           13864 kB
+Cached:         16704284 kB
+SwapTotal:      33554428 kB
+SwapFree:       33554428 kB
+TS 1769702289.004572779 2026-01-29 15:58:09
+MemTotal:       32654396 kB
+MemFree:        11000000 kB
+`
+	got, diags := ParseEnvMeminfoWithDiagnostics(input, "test-env-meminfo")
+	if got == nil {
+		t.Fatalf("ParseEnvMeminfoWithDiagnostics returned nil")
+	}
+	if got.MemFreeKB != 11634540 {
+		t.Fatalf("MemFreeKB must come from the older complete sample; got %d", got.MemFreeKB)
+	}
+	if !hasEnvMeminfoDiagnostic(diags, "newest sample is incomplete") {
+		t.Fatalf("expected incomplete-sample fallback diagnostic, got %+v", diags)
+	}
+}
+
+func TestParseEnvMeminfoWithDiagnostics_PartialMemTotalFallbackIsObservable(t *testing.T) {
+	input := `TS 1769702289.004572779 2026-01-29 15:58:09
+MemTotal:       32654396 kB
+MemFree:        11000000 kB
+`
+	got, diags := ParseEnvMeminfoWithDiagnostics(input, "test-env-meminfo")
+	if got == nil {
+		t.Fatalf("ParseEnvMeminfoWithDiagnostics returned nil")
+	}
+	if got.MemTotalKB != 32654396 {
+		t.Fatalf("MemTotalKB: want 32654396, got %d", got.MemTotalKB)
+	}
+	if !hasEnvMeminfoDiagnostic(diags, "no complete sample found") {
+		t.Fatalf("expected partial MemTotal fallback diagnostic, got %+v", diags)
+	}
+}
+
 func TestParseEnvMeminfo_SwaplessHostStillComplete(t *testing.T) {
 	// A swapless host legitimately emits SwapTotal: 0 kB. The core
 	// "seen" bitmask must not confuse zero with missing.
@@ -133,4 +180,13 @@ AnonHugePages:   1000000 kB
 	if got.SwapTotalKB != 0 {
 		t.Errorf("SwapTotalKB: want 0 (swapless), got %d", got.SwapTotalKB)
 	}
+}
+
+func hasEnvMeminfoDiagnostic(diags []model.Diagnostic, substr string) bool {
+	for _, d := range diags {
+		if d.Severity == model.SeverityWarning && strings.Contains(d.Message, substr) {
+			return true
+		}
+	}
+	return false
 }

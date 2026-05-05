@@ -37,11 +37,11 @@ import (
 func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*model.NetstatSocketsSample, []model.Diagnostic) {
 	scanner := newLineScanner(r)
 	var diagnostics []model.Diagnostic
-	addDiag := func(line int, msg string) {
+	addDiag := func(line int, sev model.Severity, msg string) {
 		diagnostics = append(diagnostics, model.Diagnostic{
 			SourceFile: sourcePath,
 			Location:   fmt.Sprintf("line %d", line),
-			Severity:   model.SeverityWarning,
+			Severity:   sev,
 			Message:    msg,
 		})
 	}
@@ -85,7 +85,23 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 		// file we can classify all deferred ESTAB rows accordingly.
 		fileSawUNCONN  bool
 		fileSawTCPOnly bool
+
+		sawTS                  bool
+		usedImplicitSampleTime bool
+		pendingESTABRows       int
+		firstPendingESTABLine  int
 	)
+	ensureSample := func(line int) {
+		if curStates == nil {
+			curStates = map[string]int{}
+			curTS = snapshotStart
+			if !sawTS && !usedImplicitSampleTime {
+				addDiag(line, model.SeverityInfo,
+					"netstat: no TS marker found; using snapshot start for single-sample compatibility")
+				usedImplicitSampleTime = true
+			}
+		}
+	}
 	flush := func() {
 		if curStates == nil && pendingESTAB == 0 {
 			return
@@ -118,6 +134,7 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 		}
 		if m := reTimestampLine.FindStringSubmatch(line); m != nil {
 			flush()
+			sawTS = true
 			curTS = epochToTime(m[1], snapshotStart)
 			curStates = map[string]int{}
 			continue
@@ -181,10 +198,7 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 			// ss -uan (connected UDP). Record queue-flag evidence now
 			// so the flush-time bucketing still gets it.
 			if first == "ESTAB" || first == "ESTABLISHED" {
-				if curStates == nil {
-					curStates = map[string]int{}
-					curTS = snapshotStart
-				}
+				ensureSample(lineNum)
 				if len(fields) > sendQIdx {
 					if fields[recvQIdx] != "0" {
 						pendingESTABRecvNZ = true
@@ -194,6 +208,10 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 					}
 				}
 				pendingESTAB++
+				pendingESTABRows++
+				if firstPendingESTABLine == 0 {
+					firstPendingESTABLine = lineNum
+				}
 				continue
 			}
 			// Track file-flavour evidence for ESTAB disambiguation.
@@ -211,13 +229,10 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 		// No TS seen yet — treat the whole file as one sample
 		// timestamped at snapshotStart. Keeps backward compat with
 		// single-poll fixtures that omit the TS header.
-		if curStates == nil {
-			curStates = map[string]int{}
-			curTS = snapshotStart
-		}
+		ensureSample(lineNum)
 
 		if len(fields) <= sendQIdx {
-			addDiag(lineNum, fmt.Sprintf("netstat row missing Recv-Q/Send-Q: %q", line))
+			addDiag(lineNum, model.SeverityWarning, fmt.Sprintf("netstat row missing Recv-Q/Send-Q: %q", line))
 			continue
 		}
 		if fields[recvQIdx] != "0" {
@@ -227,7 +242,7 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 			curSendNZ = true
 		}
 		if tcpRowNoState {
-			addDiag(lineNum, fmt.Sprintf("tcp row missing state column: %q", line))
+			addDiag(lineNum, model.SeverityWarning, fmt.Sprintf("tcp row missing state column: %q", line))
 			continue
 		}
 		if state == "" {
@@ -256,6 +271,10 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 	estabBucket := "ESTABLISHED"
 	if fileSawUNCONN && !fileSawTCPOnly {
 		estabBucket = "UDP"
+	}
+	if pendingESTABRows > 0 && !fileSawUNCONN && !fileSawTCPOnly {
+		addDiag(firstPendingESTABLine, model.SeverityWarning,
+			fmt.Sprintf("netstat: %d state-first ESTAB row(s) could not be disambiguated as tcp or udp; defaulted to ESTABLISHED for compatibility", pendingESTABRows))
 	}
 	samples := make([]*model.NetstatSocketsSample, 0, len(pending))
 	for _, p := range pending {

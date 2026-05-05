@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // ruleInnoDBFlushing surfaces InnoDB page-flushing back-pressure by
@@ -92,16 +93,16 @@ func ruleInnoDBFlushing(r *model.Report) Finding {
 	}
 
 	sev := SeverityWarn
-	head := fmt.Sprintf("InnoDB flushing backlog observed — peak %s pending writes.", formatNum(float64(peakWrites)))
+	head := fmt.Sprintf("InnoDB flushing backlog observed — peak %s pending writes.", reportutil.FormatNum(float64(peakWrites)))
 	if anySingle || anyFsyncLog {
 		sev = SeverityCrit
 		switch {
 		case anySingle && anyFsyncLog:
 			head = "InnoDB is stalling — single-page flushes AND pending log fsyncs were both observed."
 		case anySingle:
-			head = fmt.Sprintf("InnoDB single-page flushes observed (peak %s) — user threads are stalling on clean pages.", formatNum(float64(peakSP)))
+			head = fmt.Sprintf("InnoDB single-page flushes observed (peak %s) — user threads are stalling on clean pages.", reportutil.FormatNum(float64(peakSP)))
 		default:
-			head = fmt.Sprintf("InnoDB pending log fsyncs peaked at %s — commits are stalling on disk.", formatNum(float64(peakFsyncLog)))
+			head = fmt.Sprintf("InnoDB pending log fsyncs peaked at %s — commits are stalling on disk.", reportutil.FormatNum(float64(peakFsyncLog)))
 		}
 	}
 

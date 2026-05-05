@@ -3,7 +3,6 @@ package findings
 import (
 	"fmt"
 	"math"
-	"strconv"
 	"strings"
 
 	"github.com/matias-sanchez/My-gather/model"
@@ -68,31 +67,6 @@ func counterRatePerSec(r *model.Report, name string) (float64, bool) {
 		return 0, false
 	}
 	return total / secs, true
-}
-
-// gaugeLast returns the most recent observed value for a gauge
-// variable. Returns ok=false when the variable is absent or
-// classified as a counter.
-func gaugeLast(r *model.Report, name string) (float64, bool) {
-	m := mysqladmin(r)
-	if m == nil {
-		return 0, false
-	}
-	if m.IsCounter[name] {
-		return 0, false
-	}
-	arr, ok := m.Deltas[name]
-	if !ok || len(arr) == 0 {
-		return 0, false
-	}
-	// Walk back from the tail until we find a non-NaN value.
-	for i := len(arr) - 1; i >= 0; i-- {
-		v := arr[i]
-		if !math.IsNaN(v) && !math.IsInf(v, 0) {
-			return v, true
-		}
-	}
-	return 0, false
 }
 
 // gaugeMax returns the maximum observed value for a gauge variable
@@ -171,49 +145,6 @@ func captureSeconds(r *model.Report) float64 {
 	return total
 }
 
-// variableFloat resolves a SHOW GLOBAL VARIABLES entry to a float.
-// Picks the last snapshot's value (pt-stalk may capture variables
-// per-snapshot; the final value is the most representative of
-// steady-state configuration). Returns ok=false when the variable is
-// absent or not numeric.
-func variableFloat(r *model.Report, name string) (float64, bool) {
-	v, ok := variableRaw(r, name)
-	if !ok {
-		return 0, false
-	}
-	v = strings.TrimSpace(v)
-	if v == "" || v == "NULL" {
-		return 0, false
-	}
-	f, err := strconv.ParseFloat(v, 64)
-	if err != nil {
-		return 0, false
-	}
-	return f, true
-}
-
-// variableRaw returns the raw string value of a SHOW GLOBAL VARIABLES
-// entry. Comparison is case-insensitive.
-func variableRaw(r *model.Report, name string) (string, bool) {
-	if r == nil || r.VariablesSection == nil {
-		return "", false
-	}
-	// Walk snapshots in reverse; last one wins.
-	snaps := r.VariablesSection.PerSnapshot
-	for i := len(snaps) - 1; i >= 0; i-- {
-		data := snaps[i].Data
-		if data == nil {
-			continue
-		}
-		for _, e := range data.Entries {
-			if strings.EqualFold(e.Name, name) {
-				return e.Value, true
-			}
-		}
-	}
-	return "", false
-}
-
 // missingInputEvidence records unavailable inputs as low-strength
 // context. It is intentionally not used by rules that skip outright:
 // missing inputs must not create or escalate a warning.
@@ -225,72 +156,6 @@ func missingInputEvidence(names ...string) EvidenceRef {
 		Strength: EvidenceWeak,
 		Note:     "not used to escalate severity",
 	}
-}
-
-// formatNum renders a float with a sensible precision for display in
-// the FormulaComputed line. Integers print without decimals;
-// fractions get up to 2 decimal places; very small fractions use
-// scientific notation. Used internally by findings rules; display
-// formatting for the render layer lives in render/format.go.
-func formatNum(v float64) string {
-	if math.IsNaN(v) {
-		return "NaN"
-	}
-	if math.IsInf(v, 0) {
-		if v > 0 {
-			return "∞"
-		}
-		return "-∞"
-	}
-	if v == 0 {
-		return "0"
-	}
-	abs := math.Abs(v)
-	if abs >= 1 && math.Abs(v-math.Round(v)) < 1e-9 {
-		return humanInt(int64(math.Round(v)))
-	}
-	if abs >= 1 {
-		return fmt.Sprintf("%.2f", v)
-	}
-	if abs >= 0.001 {
-		return fmt.Sprintf("%.4f", v)
-	}
-	return fmt.Sprintf("%.2e", v)
-}
-
-// humanInt prints a signed integer with thousand-separator commas.
-// Used internally by formatNum.
-func humanInt(n int64) string {
-	neg := n < 0
-	if neg {
-		n = -n
-	}
-	s := strconv.FormatInt(n, 10)
-	// Insert commas every 3 digits from the right.
-	if len(s) <= 3 {
-		if neg {
-			return "-" + s
-		}
-		return s
-	}
-	var out strings.Builder
-	first := len(s) % 3
-	if first > 0 {
-		out.WriteString(s[:first])
-		if len(s) > first {
-			out.WriteByte(',')
-		}
-	}
-	for i := first; i < len(s); i += 3 {
-		out.WriteString(s[i : i+3])
-		if i+3 < len(s) {
-			out.WriteByte(',')
-		}
-	}
-	if neg {
-		return "-" + out.String()
-	}
-	return out.String()
 }
 
 // formatPercent renders a ratio 0..1 as "99.88 %".

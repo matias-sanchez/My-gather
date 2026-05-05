@@ -41,7 +41,7 @@ description: "Task list for Feedback Backend Worker implementation"
 
 **Purpose**: implement the Worker handler with validation, rate-limit, idempotency, GitHub App auth, and the GraphQL `createIssue` mutation. Exhaustive unit tests. The shipped Worker source inventory is 9 modules (`index.ts`, `env.ts`, `github-app.ts`, `idempotency.ts`, `log.ts`, `r2-upload.ts`, `ratelimit.ts`, `validate.ts`, `body.ts`) and 4 test files (`body.test.ts`, `github-app.test.ts`, `ratelimit.test.ts`, `validate.test.ts`).
 
-- [x] T010 [P] [US1] Implement `feedback-worker/src/validate.ts`: payload schema validation per `contracts/api.md`. Returns typed errors including `report_version_invalid`. Voice cap is 15 728 640 bytes (15 MB).
+- [x] T010 [P] [US1] Implement `feedback-worker/src/validate.ts`: payload schema validation per `contracts/api.md` and, as of feature 012, `render/assets/feedback-contract.json`. Returns typed errors including `report_version_invalid`. Voice cap is 15 728 640 bytes (15 MB).
 - [x] T011 [P] [US3] Implement `feedback-worker/src/ratelimit.ts`: fixed UTC-hour window keyed `rl:<ipHash>:<UTC-hour>:<random>` (unique key per request, counted via `KV.list({prefix}).keys.length`). App ID is the salt. Returns `{allowed, retryAfterSeconds}`.
 - [x] T012 [P] [US1] Implement `feedback-worker/src/idempotency.ts`: two-state reservation pattern under `idem:<uuid>` — `{status:"inflight"}` with 60 s TTL (Cloudflare KV minimum), upgraded to `{status:"done", issueUrl, issueNumber}` with 300 s TTL after success. No release helper (KV has no compare-and-delete).
 - [x] T013 [P] [US1] Implement `feedback-worker/src/github-app.ts`: `jose`-based RS256 JWT signing (PKCS#8 `BEGIN PRIVATE KEY`), installation-token exchange (`POST /app/installations/{id}/access_tokens`), GraphQL `createIssue` mutation, and `repository.labels` paginated lookup (KV-cached 24 h). Returns `{issueUrl, issueNumber, issueId}` on success. The FR-014 `AbortController` 10 000 ms timeout per GitHub fetch (with `GitHubTimeoutError` → HTTP 504 `github_timeout` in `index.ts`) was wired up post-deploy in commit `b168a71` on this branch — see also Phase 7 / T041.
@@ -59,19 +59,19 @@ description: "Task list for Feedback Backend Worker implementation"
 
 **Purpose**: rewire `doSubmit` to call the Worker, handle all response paths, keep the feature-002 fallback. The deployed shape diverges from the original task list in two places — the planned `ReportVersion` Go field was not added; instead `app.js` reads `reportVersion` from the document's `<meta name="generator">` tag.
 
-- [x] T021 [US1] Extend `FeedbackView` in `render/feedback.go`. **Deviation**: the deployed `FeedbackView` carries `WorkerURL`, `GitHubURL`, and `Categories`. `ReportVersion` was NOT added as a Go field — `app.js` reads `reportVersion` from `<meta name="generator">` instead, which keeps the dialog and the binary in lockstep without a new field.
-- [x] T022 [US1] Add `data-feedback-worker-url` to the dialog. **Deviations**: the deployed template renders `data-feedback-worker-url` and the fallback URL `data-feedback-url`. `data-feedback-report-version` was NOT added (per the T021 deviation above — the version is read from the `<meta name="generator">` tag, not a dialog data-attr).
+- [x] T021 [US1] Extend `FeedbackView` in `render/feedback.go`. **Current reconciled shape**: `FeedbackView` carries `ContractJSON` and `Categories`, both derived from `render/assets/feedback-contract.json`. `ReportVersion` was NOT added as a Go field — `app.js` reads `reportVersion` from `<meta name="generator">` instead, which keeps the dialog and the binary in lockstep without a new field.
+- [x] T022 [US1] Add `data-feedback-contract` to the dialog. **Current reconciled shape**: the deployed template renders one canonical contract attribute rather than separate Worker and fallback URL attributes. `data-feedback-report-version` was NOT added (per the T021 deviation above — the version is read from the `<meta name="generator">` tag, not a dialog data-attr).
 - [x] T023 [US1] In `render/assets/app.js` → `doSubmit`:
   - Builds JSON payload via the `buildPayload()` helper (base64-encode blobs via `FileReader.readAsDataURL`).
   - Mints `idempotencyKey` from `crypto.randomUUID()` once per Submit-click.
-  - `fetch(workerURL, …)` with `AbortController` 15 s timeout.
+  - `fetch(workerUrl, ...)` using the canonical contract's Worker URL and timeout.
   - On 200: renders success state (success message + link to `issueUrl`, label text `#<issueNumber>`). Does NOT auto-close.
   - On 429: shows throttle message with countdown from `retryAfterSeconds`. Does not fall back.
   - On 400: shows field-specific error; does not fall back.
   - On 5xx / network error / timeout: falls back to feature-002 `window.open` flow, with a small inline note "Backend unavailable — opened GitHub".
 - [x] T024 [US1] Dialog regions in the deployed template: two regions (`<form id="feedback-form">` and `<div id="feedback-success">`) plus inline transient blocks `#feedback-error` and `#feedback-fallback`. The original task asked for `#feedback-submitting` and `#feedback-throttle` as separate regions; the deployed shape collapses transient states into inline blocks instead — see `contracts/ui.md` for the reconciled list.
-- [x] T025 [P] [US1] `render/feedback_test.go`: asserts `WorkerURL` field is the documented constant.
-- [x] T026 [P] [US1] `render/report_feedback_test.go`: asserts `data-feedback-worker-url` and `data-feedback-url` are rendered with their documented constants; asserts the deployed regions (`feedback-form`, `feedback-success`, `feedback-error`, `feedback-fallback`) per the reconciled `contracts/ui.md`. The `data-feedback-report-version` assertion from the original task is dropped per T021/T022 deviation.
+- [x] T025 [P] [US1] `render/feedback_test.go`: asserts `ContractJSON` and categories match the canonical contract.
+- [x] T026 [P] [US1] `render/report_feedback_test.go`: asserts `data-feedback-contract` is rendered, legacy per-URL attrs are absent, and the deployed regions (`feedback-form`, `feedback-success`, `feedback-error`, `feedback-fallback`) match the reconciled `contracts/ui.md`. The `data-feedback-report-version` assertion from the original task is dropped per T021/T022 deviation.
 
 ---
 
@@ -80,7 +80,7 @@ description: "Task list for Feedback Backend Worker implementation"
 - [x] T027 `feedback-worker/wrangler.toml` ships as a concrete file (no `.template`) with the deployed KV / R2 IDs, the `nodejs_compat` flag, and `[observability] enabled = true`. No `[vars]` block — label names live in `feedback-worker/src/index.ts`.
 - [x] T028 `wrangler secret put` ran for the 5 secrets actually needed by the deployed Worker: `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_REPO_ID` (GraphQL `createIssue` needs the repository node ID), `R2_PUBLIC_URL_PREFIX`. The original task's `GITHUB_REPO` / `FEEDBACK_LABEL` / `AREA_LABEL_PREFIX` `[vars]` were obsolete by deploy time.
 - [x] T029 `cd feedback-worker && npm install && npm test && npm run deploy` — shipped as commit 636a332. Worker URL recorded. **Caveat**: the formal `wrangler tail --format=json` cpuTime sampling for the SC-004 gate has not been captured into a commit message; smoke test issues #25 and #26 indicate normal free-tier operation (no CPU-exhaustion errors) over several days. If a future change pushes cpuTime above 9 ms median, the research R9 mitigation ladder (KV-cached installation token, then paid tier) still applies.
-- [x] T030 `render/feedback.go`'s `feedbackWorkerURL` constant set to `https://my-gather-feedback.mati-orfeo.workers.dev/feedback`. Goldens regenerated.
+- [x] T030 `render/assets/feedback-contract.json` records `https://my-gather-feedback.mati-orfeo.workers.dev/feedback` as the Worker URL. Goldens regenerated where needed.
 - [x] T031 The 5 Quickstart scenarios were walked manually in a browser before merging PR #29. The dialog state machine in `contracts/ui.md` (form / success / error / fallback transitions, focus moves, AbortController timeout, ARIA roles) was exercised in that walkthrough.
 
 ---

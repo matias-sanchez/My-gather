@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // ruleThreadMaxQueueDepth is a time-series rule: it scans every
@@ -32,7 +33,7 @@ func ruleThreadMaxQueueDepth(r *model.Report) Finding {
 	if !ok || peak <= 0 {
 		return Finding{Severity: SeveritySkip}
 	}
-	maxConns, hasMax := variableFloat(r, "max_connections")
+	maxConns, hasMax := reportutil.VariableFloat(r, "max_connections")
 	var (
 		warnAt, critAt float64
 		floorReason    string
@@ -40,7 +41,7 @@ func ruleThreadMaxQueueDepth(r *model.Report) Finding {
 	if hasMax && maxConns > 0 {
 		warnAt = maxConns / 2
 		critAt = maxConns * 0.9
-		floorReason = fmt.Sprintf("vs max_connections=%s", formatNum(maxConns))
+		floorReason = fmt.Sprintf("vs max_connections=%s", reportutil.FormatNum(maxConns))
 	} else {
 		warnAt = 50
 		critAt = 200
@@ -49,25 +50,25 @@ func ruleThreadMaxQueueDepth(r *model.Report) Finding {
 
 	sev := SeverityOK
 	summary := fmt.Sprintf("Threads_running peak was %s — concurrency well below the %s warn threshold (%s).",
-		formatNum(peak), floorReason, formatNum(warnAt))
+		reportutil.FormatNum(peak), floorReason, reportutil.FormatNum(warnAt))
 	switch {
 	case peak >= critAt:
 		sev = SeverityCrit
 		if hasMax && maxConns > 0 {
 			summary = fmt.Sprintf("Threads_running peaked at %s — concurrency saturated (>=%s of max_connections=%s).",
-				formatNum(peak), formatNum(critAt), formatNum(maxConns))
+				reportutil.FormatNum(peak), reportutil.FormatNum(critAt), reportutil.FormatNum(maxConns))
 		} else {
 			summary = fmt.Sprintf("Threads_running peaked at %s — concurrency saturated at or beyond the fixed CRIT threshold (%s; %s).",
-				formatNum(peak), formatNum(critAt), floorReason)
+				reportutil.FormatNum(peak), reportutil.FormatNum(critAt), floorReason)
 		}
 	case peak >= warnAt:
 		sev = SeverityWarn
 		if hasMax && maxConns > 0 {
 			summary = fmt.Sprintf("Threads_running peaked at %s — at or beyond half of max_connections (%s); queries are starting to queue.",
-				formatNum(peak), formatNum(warnAt))
+				reportutil.FormatNum(peak), reportutil.FormatNum(warnAt))
 		} else {
 			summary = fmt.Sprintf("Threads_running peaked at %s — at or beyond the fixed WARN threshold (%s; %s); queries are starting to queue.",
-				formatNum(peak), formatNum(warnAt), floorReason)
+				reportutil.FormatNum(peak), reportutil.FormatNum(warnAt), floorReason)
 		}
 	}
 	metrics := []MetricRef{
@@ -91,7 +92,7 @@ func ruleThreadMaxQueueDepth(r *model.Report) Finding {
 			"steady-state load from a brief spike.",
 		FormulaText: "max(Threads_running) across capture  vs  {max_connections/2 warn, max_connections*0.9 crit}",
 		FormulaComputed: fmt.Sprintf("peak Threads_running = %s; warn=%s, crit=%s (%s)",
-			formatNum(peak), formatNum(warnAt), formatNum(critAt), floorReason),
+			reportutil.FormatNum(peak), reportutil.FormatNum(warnAt), reportutil.FormatNum(critAt), floorReason),
 		Metrics: metrics,
 		Recommendations: []string{
 			"Cross-reference with the processlist capture to see which queries were running at the peak.",

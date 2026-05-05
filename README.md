@@ -150,6 +150,7 @@ tests/                    Integration, coverage, performance tests
 scripts/                  Install script + dev helpers (fixture anonymisation, hooks)
 specs/                    Spec-driven feature packages (spec + plan + tasks)
 .specify/                 Constitution + speckit templates
+.agents/                  Codex-visible repo-local skills
 .claude/                  Local Claude Code agents, skills, and hooks
 docs/                     Project documentation assets (logo, etc.)
 _references/              Source material (real pt-stalk dumps, pt-mext reference)

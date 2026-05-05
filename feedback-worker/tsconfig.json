@@ -16,6 +16,7 @@
     "allowImportingTsExtensions": false,
     "esModuleInterop": true,
     "isolatedModules": true,
+    "resolveJsonModule": true,
     "noEmit": true
   },
   "include": ["src/**/*.ts", "test/**/*.ts"]

@@ -59,15 +59,15 @@ type SnapshotInnoDB struct {
 // to callers of render.Render — the template pipeline consumes it and
 // then it's discarded.
 //
-// GeneratedAt is the sole explicitly non-deterministic field the
-// rendered HTML is permitted to contain (Constitution Principle IV,
-// spec FR-006).
+// GeneratedAt is derived from input data or an explicit RenderOptions
+// override so rendered HTML remains deterministic (Constitution
+// Principle IV, spec FR-006).
 type Report struct {
 	Title       string
 	Version     string    // tool semver, e.g., "v0.1.0"
 	GitCommit   string    // short git SHA; "" when not injected
 	BuiltAt     string    // build timestamp, from -ldflags
-	GeneratedAt time.Time // filled per-render; the only non-deterministic field
+	GeneratedAt time.Time // filled per-render from input data or explicit options
 
 	// Collection is the input, retained by pointer. Never mutated by
 	// render.

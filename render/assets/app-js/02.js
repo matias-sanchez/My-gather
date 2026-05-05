@@ -693,12 +693,6 @@
       try {
         storageSet(LAYOUT_KEY, JSON.stringify(arr));
       } catch (_) {}
-      // Keep the legacy single-selection key in sync with chart #0
-      // so anything still reading the old key (or migration paths)
-      // sees a sensible value.
-      if (arr.length > 0) {
-        storageSet(LEGACY_KEY, arr[0].selected.join("\n"));
-      }
     }
 
     function loadInitialCharts() {
@@ -719,10 +713,8 @@
           }
         } catch (_) {}
       }
-      // Legacy fallback: single selection in the old key.
-      var legacy = storageGet(LEGACY_KEY);
       var defaults = Array.isArray(data.defaultVisible) ? data.defaultVisible : data.variables.slice(0, 5);
-      var initial = legacy ? legacy.split("\n").filter(Boolean) : defaults;
+      var initial = defaults;
       initial = initial.filter(function (n) { return data.variables.indexOf(n) >= 0; });
       if (initial.length === 0) initial = defaults;
       var cs = createChart({ title: "Chart 1", selection: initial });

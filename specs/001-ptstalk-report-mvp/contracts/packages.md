@@ -274,8 +274,7 @@ independently importable via `Render`.
 // resulting file makes zero network requests at view-time.
 //
 // Render is deterministic: given the same Collection and the same
-// RenderOptions (with the same GeneratedAt), two invocations MUST
-// write byte-identical output to w.
+// RenderOptions, two invocations MUST write byte-identical output to w.
 //
 // Render returns an error only for I/O failures against w. Rendering
 // of a Collection with missing or failed sections never returns an
@@ -285,11 +284,13 @@ func Render(w io.Writer, c *model.Collection, opts RenderOptions) error
 
 ```go
 // RenderOptions controls optional aspects of rendering. Zero value is
-// valid and uses tool defaults (current UTC time, empty Version/GitCommit/BuiltAt).
+// valid and derives GeneratedAt from the input Collection, with empty
+// Version/GitCommit/BuiltAt.
 type RenderOptions struct {
-    // GeneratedAt is rendered into the report header as the sole
-    // explicitly non-deterministic field. Tests pass a fixed value to
-    // make golden comparisons stable.
+    // GeneratedAt is rendered into the report header. When omitted,
+    // Render derives it from the first non-zero Snapshot timestamp in
+    // the input. If no snapshot timestamp is known, the header renders
+    // an explicit "unknown" marker instead of a fabricated date.
     GeneratedAt time.Time
 
     // Version is the tool's reported version string (semver).

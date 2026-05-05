@@ -6,7 +6,7 @@ End-to-end walkthrough to deploy the Worker, wire the report, and verify.
 
 - Cloudflare account (free tier — no credit card needed).
 - GitHub account that owns `matias-sanchez/My-gather`.
-- Node.js 20.x and `npm`.
+- Node.js 22.x and `npm`.
 - The `wrangler` CLI: `npm install -g wrangler` (or use the npx form).
 
 ## Phase 1 — One-time setup (human intervention required)
@@ -93,7 +93,7 @@ bucket_name = "feedback-attachments"
 enabled = true
 ```
 
-A fork that repoints to its own repo edits `index.ts` (label names) and `feedback.go` (Worker URL constant), then re-runs Steps 1.3 + 1.4 to provision its own KV / R2 / secrets — there is no `[vars]` shortcut.
+A fork that repoints to its own repo edits `index.ts` (label names) and `render/assets/feedback-contract.json` (Worker URL and GitHub fallback URL), then re-runs Steps 1.3 + 1.4 to provision its own KV / R2 / secrets — there is no `[vars]` shortcut.
 
 ### Step 1.6 — First deploy
 
@@ -104,13 +104,13 @@ npm run test        # unit tests pass
 npm run deploy      # wrangler deploy, prints the Worker URL
 ```
 
-Record the Worker URL (e.g., `https://my-gather-feedback.<account>.workers.dev`). This is the value that goes into `render/feedback.go` as `feedbackWorkerURL`.
+Record the Worker URL (e.g., `https://my-gather-feedback.<account>.workers.dev`). This is the value that goes into `render/assets/feedback-contract.json` as `workerUrl`.
 
 ## Phase 2 — Wire the report
 
-1. Update `render/feedback.go` → `feedbackWorkerURL = "<Worker URL>"`.
+1. Update `render/assets/feedback-contract.json` → `workerUrl = "<Worker URL>"`.
 2. Rebuild: `make build`.
-3. Regenerate goldens if needed: `go test ./render/... -update` (review the diff — should be one line: the new `data-feedback-worker-url` attribute).
+3. Regenerate goldens if needed: `go test ./render/... -update` (review the diff — it should only reflect the embedded `data-feedback-contract` value).
 
 ## Phase 3 — End-to-end verification
 
@@ -125,7 +125,7 @@ Record the Worker URL (e.g., `https://my-gather-feedback.<account>.workers.dev`)
 
 ### Scenario 2 — With image + voice
 
-Same as 1 but paste a screenshot and record 5 seconds of audio before Submit. Verify the issue on GitHub shows the image inline and a labelled clickable link to the audio file (e.g. `🔊 Voice note (audio/webm)`) — in-page playback is NOT expected, GitHub strips `<audio>` tags from issue bodies (see spec.md US2 acceptance scenario 2 + research R2 chosen flow).
+Same as 1 but paste a screenshot and record 5 seconds of audio before Submit. Verify the issue on GitHub shows the image inline and a `### Attached voice note` section with the bare R2 audio URL on its own line. GitHub renders that URL as an inline player when the rendering surface supports it; otherwise the URL remains clickable (see spec.md US2 acceptance scenario 2 + research R2 chosen flow).
 
 ### Scenario 3 — Worker down (fallback)
 
@@ -149,7 +149,7 @@ Requests 1–5: `{"ok": true, ...}`. Request 6: `{"ok": false, "error": "rate_li
 POST with `title: ""` → 400 `title_required`.
 POST with a 20 MB image (base64 of garbage) → 400 `image_too_large`.
 POST with `image.mime: "image/bmp"` → 400 `image_bad_mime`.
-POST with a 30 MB voice blob (base64 of garbage) → 400 `voice_too_large` (the deployed cap is 15 728 640 bytes / 15 MB).
+POST with a 16 MB decoded voice blob (base64 of garbage) → 400 `voice_too_large` (the deployed cap is 15 728 640 bytes / 15 MB).
 POST with `voice.mime: "audio/midi"` → 400 `voice_bad_mime`.
 POST with `category: "Networking"` (not in the enum) → 400 `category_invalid`.
 POST with `idempotencyKey: "not-a-uuid"` → 400 `idempotency_key_invalid`.
@@ -162,7 +162,7 @@ POST with malformed JSON → 400 `malformed_payload`.
 1. Delete the Worker: `wrangler delete my-gather-feedback`.
 2. Delete KV namespaces + R2 bucket in the Cloudflare dashboard.
 3. Uninstall the GitHub App from the repo.
-4. Revert the Go-side changes that point at the Worker URL.
+4. Revert the feedback contract changes that point at the Worker URL.
 
 ## Operational tasks (steady-state)
 

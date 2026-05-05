@@ -1,6 +1,6 @@
 // Package coverage_test (godoc) enforces Constitution Principle VI:
 // every exported identifier in the shipped packages (parse, model,
-// render, findings) has a non-empty doc comment.
+// render, findings, reportutil) has a non-empty doc comment.
 //
 // CI invokes this test directly via
 // `go test ./tests/coverage/... -run TestGodocCoverage` and the
@@ -22,7 +22,7 @@ import (
 	"github.com/matias-sanchez/My-gather/tests/goldens"
 )
 
-var godocCheckedPackages = []string{"parse", "model", "render", "findings"}
+var godocCheckedPackages = []string{"parse", "model", "render", "findings", "reportutil"}
 
 // TestGodocCoverage is the canonical entry point invoked by CI and
 // the pre-push hook. It delegates to the table-driven sub-tests in

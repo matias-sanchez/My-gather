@@ -2,8 +2,9 @@
 # Pre-push constitution guard for My-gather.
 #
 # Fast mechanical checks that run before `git push` via Claude Code's
-# PreToolUse hook. This catches the highest-signal constitution violations
-# locally so the codex-review loop converges in 1-2 rounds instead of 8.
+# PreToolUse hook and in CI. This catches the highest-signal constitution
+# violations locally and makes the same diff-scoped gate observable to
+# non-Claude contributors.
 #
 # Scope is intentionally narrow: only rules that are cheap, deterministic,
 # and low-false-positive at the diff level. Semantic review lives in the
@@ -11,8 +12,9 @@
 #
 # Contract:
 #   stdin:   Claude Code hook JSON (ignored; we compute the diff ourselves)
-#   stdout:  empty on pass, or a JSON PreToolUse decision blocking the push
-#   exit:    always 0 (Claude Code reads the decision from stdout JSON)
+#   stdout:  empty on pass, JSON PreToolUse denial for Claude, or text in CI
+#   exit:    0 for Claude JSON mode; nonzero on violations when
+#            CONSTITUTION_GUARD_CI=1
 #
 # Requires: git, jq.
 
@@ -29,7 +31,9 @@ mkdir -p "$(dirname "$LOG")"
 
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
 UPSTREAM="$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)"
-if [ -n "$UPSTREAM" ]; then
+if [ -n "${CONSTITUTION_GUARD_RANGE:-}" ]; then
+  RANGE="$CONSTITUTION_GUARD_RANGE"
+elif [ -n "$UPSTREAM" ]; then
   RANGE="$UPSTREAM..HEAD"
 else
   RANGE="origin/main..HEAD"
@@ -111,11 +115,11 @@ if [ -n "$CGO_HITS" ]; then
 fi
 
 # Rule 4 (Principle VI, gate 5): every exported identifier under
-# parse/, model/, render/, findings/ has a godoc comment. Delegated
+# parse/, model/, render/, findings/, reportutil/ has a godoc comment. Delegated
 # to the AST-walking test under tests/coverage/. Runs only when Go
 # files in the watched packages are touched in this push, so the
 # common case (docs-only or spec-only push) stays cheap.
-WATCHED_GO_CHANGED="$(printf '%s\n' "$CHANGED" | grep -E '^(parse|model|render|findings)/.*\.go$' || true)"
+WATCHED_GO_CHANGED="$(printf '%s\n' "$CHANGED" | grep -E '^(parse|model|render|findings|reportutil)/.*\.go$' || true)"
 if [ -n "$WATCHED_GO_CHANGED" ] && command -v go >/dev/null 2>&1; then
   GODOC_OUT="$(CGO_ENABLED=0 go test ./tests/coverage/... -run TestGodocCoverage -count=1 2>&1)"
   GODOC_RC=$?
@@ -174,7 +178,6 @@ else
   VIOLATIONS+=("XIV: PCRE-capable grep not found on this host — gate 8 (Principle XIV English-only) cannot be enforced. Install GNU grep (brew install grep on macOS) and shim into PATH, then re-push.")
   GREP_BIN=grep  # unused below because VIOLATIONS already set; placeholder to keep subsequent code syntactically valid
 fi
-ENGLISH_HITS=()
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   case "$f" in
@@ -191,12 +194,9 @@ while IFS= read -r f; do
       feedback-worker/test/validate.test.ts:69) continue ;;
       feedback-worker/test/validate.test.ts:70) continue ;;
     esac
-    ENGLISH_HITS+=("$f:$line_num")
+    VIOLATIONS+=("XIV: non-English Latin-script letter at $f:$line_num (Principle XIV requires English-only artifacts; testdata/ and _references/ are exempt; math/typography/emoji pass)")
   done < <("$GREP_BIN" -InP "$ENGLISH_PATTERN" "$f" 2>/dev/null || true)
 done < <(printf '%s\n' "$CHANGED")
-for hit in "${ENGLISH_HITS[@]}"; do
-  VIOLATIONS+=("XIV: non-English Latin-script letter at $hit (Principle XIV requires English-only artifacts; testdata/ and _references/ are exempt; math/typography/emoji pass)")
-done
 
 # Rule 6 (Principle XII / Principle I): suspicious build tags on
 # non-test .go files. `// +build ...` (legacy syntax) is a smell.
@@ -232,7 +232,7 @@ fi
 # Rule 7 (Principle IX): no outbound network in the Go release path.
 # The feedback-worker (TypeScript) is the only sanctioned outbound
 # path; the Go binary stays offline. We grep added lines under
-# parse/, model/, render/, findings/, and cmd/ for a `net/http`
+# parse/, model/, render/, findings/, reportutil/, and cmd/ for a `net/http`
 # import or net.Dial-style construct. _test.go files are excluded
 # because tests may legitimately exercise an httptest server.
 #
@@ -250,7 +250,7 @@ fi
 # do NOT contain `"net"` as a substring (the closing quote is in a
 # different position), so legitimate sub-package imports are not
 # flagged.
-NET_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'model/*.go' 'render/*.go' 'findings/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/dev/null | awk '
+NET_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'model/*.go' 'render/*.go' 'findings/*.go' 'reportutil/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/dev/null | awk '
   /^\+\+\+ b\// { file = substr($0, 7); next }
   /^\+.*"net\/http"/                                 { print file ": import \"net/http\" added (any form: block, single-line, aliased, dot, blank)" }
   /^\+.*"net"/                                       { print file ": import \"net\" added (any form: block, single-line, aliased, dot, blank — alias may hide net.Dial/Listen/Lookup/ResolveAddr)" }
@@ -346,6 +346,11 @@ done
 REASON_LINES+=("")
 REASON_LINES+=("Fix the above, or invoke @agent-pre-review-constitution-guard for a full LLM review.")
 REASON="$(printf '%s\n' "${REASON_LINES[@]}")"
+
+if [ "${CONSTITUTION_GUARD_CI:-}" = "1" ]; then
+  printf '%s\n' "$REASON" >&2
+  exit 1
+fi
 
 if command -v jq >/dev/null 2>&1; then
   jq -n --arg reason "$REASON" '{

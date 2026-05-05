@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // ruleBPUndersized flags a suspiciously small innodb_buffer_pool_size
@@ -23,27 +24,27 @@ func ruleBPUndersized(r *model.Report) Finding {
 		minThreads = 50.0
 		minUptimeS = 3600.0
 	)
-	size, ok := variableFloat(r, "innodb_buffer_pool_size")
+	size, ok := reportutil.VariableFloat(r, "innodb_buffer_pool_size")
 	if !ok || size <= 0 {
 		return Finding{Severity: SeveritySkip}
 	}
 	connected, _ := gaugeMax(r, "Threads_connected")
-	uptime, _ := gaugeLast(r, "Uptime")
+	uptime, _ := reportutil.GaugeLast(r, "Uptime")
 	if connected < minThreads || uptime < minUptimeS {
 		// Dev/idle instance — size heuristic doesn't apply. Skip.
 		return Finding{Severity: SeveritySkip}
 	}
 	sev := SeverityOK
-	summary := fmt.Sprintf("innodb_buffer_pool_size is %s — sized for the observed workload.", humanBytes(size))
+	summary := fmt.Sprintf("innodb_buffer_pool_size is %s — sized for the observed workload.", reportutil.HumanBytes(size))
 	switch {
 	case size < critBytes:
 		sev = SeverityCrit
 		summary = fmt.Sprintf("innodb_buffer_pool_size is %s on an instance with %s connections — far too small for a production workload.",
-			humanBytes(size), formatNum(connected))
+			reportutil.HumanBytes(size), reportutil.FormatNum(connected))
 	case size < warnBytes:
 		sev = SeverityWarn
 		summary = fmt.Sprintf("innodb_buffer_pool_size is only %s — likely under-provisioned; current hit ratio may only be healthy because the workload is quiet.",
-			humanBytes(size))
+			reportutil.HumanBytes(size))
 	}
 	return Finding{
 		ID:        "bp.undersized",
@@ -55,7 +56,7 @@ func ruleBPUndersized(r *model.Report) Finding {
 			"once the workload pushes past a quiet window, even if the current hit ratio looks healthy. On a production instance with " +
 			"dozens of active connections, 1 GiB is the floor for most deployments; 25-70 % of system RAM is the usual target.",
 		FormulaText:     "innodb_buffer_pool_size  vs  {≥1 GiB warn floor, ≥256 MiB crit floor}  (gated on Threads_connected ≥ 50 and Uptime ≥ 1h)",
-		FormulaComputed: fmt.Sprintf("innodb_buffer_pool_size = %s  (Threads_connected peak = %s, Uptime = %s s)", humanBytes(size), formatNum(connected), formatNum(uptime)),
+		FormulaComputed: fmt.Sprintf("innodb_buffer_pool_size = %s  (Threads_connected peak = %s, Uptime = %s s)", reportutil.HumanBytes(size), reportutil.FormatNum(connected), reportutil.FormatNum(uptime)),
 		Metrics: []MetricRef{
 			{Name: "innodb_buffer_pool_size", Value: size, Unit: "bytes"},
 			{Name: "Threads_connected (max)", Value: connected, Unit: "count"},
@@ -67,28 +68,6 @@ func ruleBPUndersized(r *model.Report) Finding {
 			"On MySQL 8.0.14+, the pool is dynamically resizable — no restart required.",
 		},
 		Source: "Rosetta Stone — Buffer Pool §Utilization (capacity)",
-	}
-}
-
-// humanBytes formats a byte count as "128 MiB" / "2.5 GiB" / "900 KiB".
-func humanBytes(v float64) string {
-	const (
-		KiB = 1024.0
-		MiB = KiB * 1024
-		GiB = MiB * 1024
-		TiB = GiB * 1024
-	)
-	switch {
-	case v >= TiB:
-		return fmt.Sprintf("%.2f TiB", v/TiB)
-	case v >= GiB:
-		return fmt.Sprintf("%.2f GiB", v/GiB)
-	case v >= MiB:
-		return fmt.Sprintf("%.0f MiB", v/MiB)
-	case v >= KiB:
-		return fmt.Sprintf("%.0f KiB", v/KiB)
-	default:
-		return fmt.Sprintf("%.0f B", v)
 	}
 }
 
@@ -130,7 +109,7 @@ func ruleBPHitRatio(r *model.Report) Finding {
 			"increasingly wait on disk I/O.",
 		FormulaText: "hit_ratio = 1 − Innodb_buffer_pool_reads / Innodb_buffer_pool_read_requests",
 		FormulaComputed: fmt.Sprintf("1 − %s / %s = %s",
-			formatNum(reads), formatNum(reqs), formatPercent(ratio)),
+			reportutil.FormatNum(reads), reportutil.FormatNum(reqs), formatPercent(ratio)),
 		Metrics: []MetricRef{
 			{Name: "Innodb_buffer_pool_reads", Value: reads, Unit: "count", Note: "physical reads during capture"},
 			{Name: "Innodb_buffer_pool_read_requests", Value: reqs, Unit: "count", Note: "logical reads during capture"},
@@ -148,9 +127,9 @@ func ruleBPHitRatio(r *model.Report) Finding {
 // drop below the LRU scan depth × instances AND physical reads > 0.
 // See Rosetta Stone — Buffer Pool §Saturation (capacity).
 func ruleBPFreePagesLow(r *model.Report) Finding {
-	free, ok1 := gaugeLast(r, "Innodb_buffer_pool_pages_free")
-	scanDepth, ok2 := variableFloat(r, "innodb_lru_scan_depth")
-	instances, ok3 := variableFloat(r, "innodb_buffer_pool_instances")
+	free, ok1 := reportutil.GaugeLast(r, "Innodb_buffer_pool_pages_free")
+	scanDepth, ok2 := reportutil.VariableFloat(r, "innodb_lru_scan_depth")
+	instances, ok3 := reportutil.VariableFloat(r, "innodb_buffer_pool_instances")
 	readsRate, ok4 := counterRatePerSec(r, "Innodb_buffer_pool_reads")
 	if !ok1 || !ok2 || !ok3 || !ok4 {
 		return Finding{Severity: SeveritySkip}
@@ -172,10 +151,10 @@ func ruleBPFreePagesLow(r *model.Report) Finding {
 			Subsystem:   "Buffer Pool",
 			Title:       "Buffer pool free pages headroom",
 			Severity:    SeverityOK,
-			Summary:     fmt.Sprintf("Free pages (%s) comfortably above the LRU-scan-depth threshold (%s).", formatNum(free), formatNum(threshold)),
+			Summary:     fmt.Sprintf("Free pages (%s) comfortably above the LRU-scan-depth threshold (%s).", reportutil.FormatNum(free), reportutil.FormatNum(threshold)),
 			FormulaText: "free_pages > innodb_lru_scan_depth × innodb_buffer_pool_instances",
 			FormulaComputed: fmt.Sprintf("%s > %s × %s = %s",
-				formatNum(free), formatNum(scanDepth), formatNum(instances), formatNum(threshold)),
+				reportutil.FormatNum(free), reportutil.FormatNum(scanDepth), reportutil.FormatNum(instances), reportutil.FormatNum(threshold)),
 			Metrics: []MetricRef{
 				{Name: "Innodb_buffer_pool_pages_free", Value: free, Unit: "pages", Note: "last sample"},
 				{Name: "innodb_lru_scan_depth", Value: scanDepth, Unit: "pages"},
@@ -187,7 +166,7 @@ func ruleBPFreePagesLow(r *model.Report) Finding {
 	}
 	sev := SeverityWarn
 	summary := fmt.Sprintf("Free pages (%s) have fallen below scan_depth × instances (%s) while physical reads continue at %s/s.",
-		formatNum(free), formatNum(threshold), formatNum(readsRate))
+		reportutil.FormatNum(free), reportutil.FormatNum(threshold), reportutil.FormatNum(readsRate))
 	// Strong signal if we're also actively flushing via LRU
 	if v, ok := counterRatePerSec(r, "Innodb_buffer_pool_pages_LRU_flushed"); ok && v > 0 {
 		sev = SeverityCrit
@@ -203,7 +182,7 @@ func ruleBPFreePagesLow(r *model.Report) Finding {
 			"incoming read requests will stall waiting for a free page, and the page cleaner has to flush synchronously on the query path.",
 		FormulaText: "free_pages <= innodb_lru_scan_depth × innodb_buffer_pool_instances  AND  Innodb_buffer_pool_reads/s > 0",
 		FormulaComputed: fmt.Sprintf("%s <= %s × %s = %s  AND  %s /s > 0",
-			formatNum(free), formatNum(scanDepth), formatNum(instances), formatNum(threshold), formatNum(readsRate)),
+			reportutil.FormatNum(free), reportutil.FormatNum(scanDepth), reportutil.FormatNum(instances), reportutil.FormatNum(threshold), reportutil.FormatNum(readsRate)),
 		Metrics: []MetricRef{
 			{Name: "Innodb_buffer_pool_pages_free", Value: free, Unit: "pages", Note: "last sample"},
 			{Name: "innodb_lru_scan_depth", Value: scanDepth, Unit: "pages"},
@@ -236,12 +215,12 @@ func ruleBPLRUFlushing(r *model.Report) Finding {
 		Subsystem: "Buffer Pool",
 		Title:     "LRU flushing active",
 		Severity:  SeverityWarn,
-		Summary:   fmt.Sprintf("Background LRU flushing observed at %s pages/s — the free list is not keeping up with demand.", formatNum(rate)),
+		Summary:   fmt.Sprintf("Background LRU flushing observed at %s pages/s — the free list is not keeping up with demand.", reportutil.FormatNum(rate)),
 		Explanation: "LRU flushing is a secondary path the page cleaner takes when the free list is short: " +
 			"it evicts dirty pages from the LRU tail to replenish free pages. Regular activity here indicates " +
 			"the buffer pool is under steady-state pressure.",
 		FormulaText:     "Innodb_buffer_pool_pages_LRU_flushed/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", reportutil.FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Innodb_buffer_pool_pages_LRU_flushed/s", Value: rate, Unit: "/s"},
 		},
@@ -269,11 +248,11 @@ func ruleBPWaitFree(r *model.Report) Finding {
 		Subsystem: "Buffer Pool",
 		Title:     "Query threads waiting for free buffer pool pages",
 		Severity:  SeverityCrit,
-		Summary:   fmt.Sprintf("Innodb_buffer_pool_wait_free is incrementing at %s/s — user queries are stalling on buffer pool exhaustion.", formatNum(rate)),
+		Summary:   fmt.Sprintf("Innodb_buffer_pool_wait_free is incrementing at %s/s — user queries are stalling on buffer pool exhaustion.", reportutil.FormatNum(rate)),
 		Explanation: "This counter increments every time a thread could not find a clean page in the buffer pool " +
 			"and had to wait for the page cleaner to produce one. Any non-zero rate is a red flag.",
 		FormulaText:     "Innodb_buffer_pool_wait_free/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", reportutil.FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Innodb_buffer_pool_wait_free/s", Value: rate, Unit: "/s"},
 		},
@@ -293,8 +272,8 @@ func ruleBPWaitFree(r *model.Report) Finding {
 // See Rosetta Stone — Buffer Pool §Saturation (capacity).
 func ruleBPDirtyPct(r *model.Report) Finding {
 	dirty, ok1 := gaugeMax(r, "Innodb_buffer_pool_pages_dirty")
-	total, ok2 := gaugeLast(r, "Innodb_buffer_pool_pages_total")
-	limit, ok3 := variableFloat(r, "innodb_max_dirty_pages_pct")
+	total, ok2 := reportutil.GaugeLast(r, "Innodb_buffer_pool_pages_total")
+	limit, ok3 := reportutil.VariableFloat(r, "innodb_max_dirty_pages_pct")
 	if !ok1 || !ok2 || !ok3 || total <= 0 {
 		return Finding{Severity: SeveritySkip}
 	}
@@ -320,7 +299,7 @@ func ruleBPDirtyPct(r *model.Report) Finding {
 			"At that point the page cleaner consumes IO that would otherwise serve user queries, which can look like a latency spike.",
 		FormulaText: "dirty_pct = Innodb_buffer_pool_pages_dirty / Innodb_buffer_pool_pages_total × 100  vs  innodb_max_dirty_pages_pct",
 		FormulaComputed: fmt.Sprintf("%s / %s × 100 = %.2f %%  vs  %.0f %%",
-			formatNum(dirty), formatNum(total), pct, limit),
+			reportutil.FormatNum(dirty), reportutil.FormatNum(total), pct, limit),
 		Metrics: []MetricRef{
 			{Name: "Innodb_buffer_pool_pages_dirty (max)", Value: dirty, Unit: "pages"},
 			{Name: "Innodb_buffer_pool_pages_total", Value: total, Unit: "pages"},

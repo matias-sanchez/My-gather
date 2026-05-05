@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // ruleRedoCheckpointAge evaluates checkpoint_age / checkpoint_max_age.
@@ -16,7 +17,7 @@ func ruleRedoCheckpointAge(r *model.Report) Finding {
 		critThreshold = 0.8
 	)
 	age, ok1 := gaugeMax(r, "Innodb_checkpoint_age")
-	max, ok2 := gaugeLast(r, "Innodb_checkpoint_max_age")
+	max, ok2 := reportutil.GaugeLast(r, "Innodb_checkpoint_max_age")
 	if !ok1 || !ok2 || max <= 0 {
 		return Finding{Severity: SeveritySkip}
 	}
@@ -41,7 +42,7 @@ func ruleRedoCheckpointAge(r *model.Report) Finding {
 			"When checkpoint_age approaches checkpoint_max_age (~7/8 of redo log size), InnoDB throttles writes " +
 			"to force a checkpoint, which appears as a latency stall.",
 		FormulaText:     "checkpoint_age / checkpoint_max_age",
-		FormulaComputed: fmt.Sprintf("%s / %s = %.2f %%", formatNum(age), formatNum(max), ratio*100),
+		FormulaComputed: fmt.Sprintf("%s / %s = %.2f %%", reportutil.FormatNum(age), reportutil.FormatNum(max), ratio*100),
 		Metrics: []MetricRef{
 			{Name: "Innodb_checkpoint_age (max)", Value: age, Unit: "bytes"},
 			{Name: "Innodb_checkpoint_max_age", Value: max, Unit: "bytes"},
@@ -71,11 +72,11 @@ func ruleRedoPendingWrites(r *model.Report) Finding {
 		Subsystem: "Redo Log",
 		Title:     "Redo log pending writes",
 		Severity:  SeverityCrit,
-		Summary:   fmt.Sprintf("Innodb_os_log_pending_writes peaked at %s — the storage cannot keep up with the redo write rate.", formatNum(peak)),
+		Summary:   fmt.Sprintf("Innodb_os_log_pending_writes peaked at %s — the storage cannot keep up with the redo write rate.", reportutil.FormatNum(peak)),
 		Explanation: "This gauge counts redo writes queued at the OS level waiting for the disk to accept them. " +
 			"Sustained non-zero values mean the storage layer is the bottleneck for commits.",
 		FormulaText:     "max(Innodb_os_log_pending_writes) > 0",
-		FormulaComputed: fmt.Sprintf("max = %s > 0", formatNum(peak)),
+		FormulaComputed: fmt.Sprintf("max = %s > 0", reportutil.FormatNum(peak)),
 		Metrics: []MetricRef{
 			{Name: "Innodb_os_log_pending_writes (max)", Value: peak, Unit: "count"},
 		},
@@ -102,11 +103,11 @@ func ruleRedoPendingFsyncs(r *model.Report) Finding {
 		Subsystem: "Redo Log",
 		Title:     "Redo log pending fsyncs",
 		Severity:  SeverityCrit,
-		Summary:   fmt.Sprintf("Innodb_os_log_pending_fsyncs peaked at %s — fsync latency is the bottleneck for commits.", formatNum(peak)),
+		Summary:   fmt.Sprintf("Innodb_os_log_pending_fsyncs peaked at %s — fsync latency is the bottleneck for commits.", reportutil.FormatNum(peak)),
 		Explanation: "Pending fsyncs on the redo log mean commits are serialised behind the storage's fsync latency. " +
 			"Any sustained non-zero value here is felt directly as commit latency.",
 		FormulaText:     "max(Innodb_os_log_pending_fsyncs) > 0",
-		FormulaComputed: fmt.Sprintf("max = %s > 0", formatNum(peak)),
+		FormulaComputed: fmt.Sprintf("max = %s > 0", reportutil.FormatNum(peak)),
 		Metrics: []MetricRef{
 			{Name: "Innodb_os_log_pending_fsyncs (max)", Value: peak, Unit: "count"},
 		},
@@ -139,11 +140,11 @@ func ruleRedoLogWaits(r *model.Report) Finding {
 		Subsystem: "Redo Log",
 		Title:     "Redo log buffer waits",
 		Severity:  sev,
-		Summary:   fmt.Sprintf("Innodb_log_waits is incrementing at %s/s — the redo log buffer is undersized.", formatNum(rate)),
+		Summary:   fmt.Sprintf("Innodb_log_waits is incrementing at %s/s — the redo log buffer is undersized.", reportutil.FormatNum(rate)),
 		Explanation: "When a transaction needs to write to the log buffer but the buffer is full, it must wait for a flush. " +
 			"Any non-zero rate is a signal to raise innodb_log_buffer_size.",
 		FormulaText:     "Innodb_log_waits/s > 0",
-		FormulaComputed: fmt.Sprintf("%s /s > 0", formatNum(rate)),
+		FormulaComputed: fmt.Sprintf("%s /s > 0", reportutil.FormatNum(rate)),
 		Metrics: []MetricRef{
 			{Name: "Innodb_log_waits/s", Value: rate, Unit: "/s"},
 		},
