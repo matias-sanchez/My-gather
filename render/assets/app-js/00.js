@@ -58,10 +58,6 @@
     // reports of the same capture so the new default is honoured.
     return "mygather:v2:" + REPORT_ID + ":collapse:" + sectionId;
   }
-  function mysqladminSelectionKey() {
-    return "mygather:" + REPORT_ID + ":mysqladmin:selected";
-  }
-
   // --- 1. Collapse persistence ------------------------------------
 
   function initCollapsePersistence() {

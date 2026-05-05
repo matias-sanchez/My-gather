@@ -17,11 +17,11 @@ import (
 var ErrNilCollection = errors.New("render: nil Collection")
 
 // RenderOptions controls optional aspects of rendering. The zero value
-// is valid and uses the current UTC time and empty Version/GitCommit.
+// is valid and derives GeneratedAt from the input Collection so report
+// output remains deterministic.
 type RenderOptions struct {
-	// GeneratedAt is the single explicitly non-deterministic field in
-	// the rendered HTML (Constitution Principle IV, spec FR-006).
-	// Tests pass a fixed value to make golden comparisons stable.
+	// GeneratedAt is the report timestamp. When omitted, Render derives
+	// it from the first non-zero Snapshot timestamp in the input.
 	GeneratedAt time.Time
 
 	// Version is the tool's semver string ("v0.1.0").
@@ -40,9 +40,9 @@ type RenderOptions struct {
 // makes zero network requests at view time (Constitution Principle V,
 // spec FR-004).
 //
-// Render is deterministic: given the same Collection and RenderOptions
-// (including GeneratedAt), two invocations MUST write byte-identical
-// output to w (Constitution Principle IV, spec FR-006).
+// Render is deterministic: given the same Collection and RenderOptions,
+// two invocations MUST write byte-identical output to w (Constitution
+// Principle IV, spec FR-006).
 //
 // Render returns an error only for I/O failures against w or for
 // fatal template parsing errors. A Collection with missing or failed
@@ -53,7 +53,7 @@ func Render(w io.Writer, c *model.Collection, opts RenderOptions) error {
 		return ErrNilCollection
 	}
 	if opts.GeneratedAt.IsZero() {
-		opts.GeneratedAt = time.Now().UTC()
+		opts.GeneratedAt = deterministicGeneratedAt(c)
 	}
 
 	report, sigs := buildReport(c, opts)
@@ -77,6 +77,15 @@ func Render(w io.Writer, c *model.Collection, opts RenderOptions) error {
 		return fmt.Errorf("render: write output: %w", err)
 	}
 	return nil
+}
+
+func deterministicGeneratedAt(c *model.Collection) time.Time {
+	for _, snap := range c.Snapshots {
+		if snap != nil && !snap.Timestamp.IsZero() {
+			return snap.Timestamp.UTC()
+		}
+	}
+	return time.Unix(0, 0).UTC()
 }
 
 // --- Internal view construction ---------------------------------------------

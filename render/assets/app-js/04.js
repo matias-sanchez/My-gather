@@ -189,7 +189,7 @@
 
     // renderSuccess hides the form and reveals the post-submit panel
     // with a link to the freshly-created GitHub issue.
-    function renderSuccess(issueUrl) {
+    function renderSuccess(issueUrl, issueNumber) {
       if (!successEl || !successLink) return;
       // Definitive success — the next Submit (after a form reset or
       // dialog close) is a new logical attempt and deserves a fresh
@@ -197,8 +197,14 @@
       // doSubmit mints a new one.
       idempotencyKey = null;
       successLink.href = issueUrl;
+      if (typeof issueNumber === "number" && isFinite(issueNumber) && issueNumber > 0) {
+        successLink.textContent = "View issue #" + issueNumber + " on GitHub";
+      } else {
+        successLink.textContent = "View issue on GitHub";
+      }
       form.hidden = true;
       show(successEl);
+      try { successLink.focus(); } catch (_) {}
     }
 
     // doLegacyFallback is the feature-002 submit path: open GitHub's
@@ -337,8 +343,9 @@
             mode: "cors"
           }).then(function (res) {
             clearTimeout(timer);
-            return res.json().then(function (data) { return { res: res, data: data }; },
-              function () { return { res: res, data: null }; });
+            return res.json().then(function (data) {
+              return { res: res, data: data, retryAfter: res.headers.get("Retry-After") };
+            }, function () { return { res: res, data: null, retryAfter: res.headers.get("Retry-After") }; });
           }, function (err) {
             clearTimeout(timer);
             throw err;
@@ -347,7 +354,7 @@
       }).then(function (r) {
         var res = r.res, data = r.data || {};
         if (res.status === 200 && data && data.ok && data.issueUrl) {
-          renderSuccess(data.issueUrl);
+          renderSuccess(data.issueUrl, data.issueNumber);
           return;
         }
         if (res.status === 400) {
@@ -357,7 +364,8 @@
           return;
         }
         if (res.status === 429) {
-          var retry = (data && typeof data.retryAfterSeconds === "number") ? data.retryAfterSeconds : 0;
+          var headerRetry = r.retryAfter ? parseInt(r.retryAfter, 10) : 0;
+          var retry = headerRetry > 0 ? headerRetry : ((data && typeof data.retryAfterSeconds === "number") ? data.retryAfterSeconds : 0);
           var base = (data && data.message) || "Rate limit reached.";
           var suffix = retry > 0 ? " Try again in " + Math.ceil(retry / 60) + " minute(s)." : "";
           setErr(base + suffix);

@@ -37,6 +37,13 @@ function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(body), { ...init, headers });
 }
 
+function emptyResponse(init: ResponseInit = {}): Response {
+  const headers = new Headers(init.headers);
+  headers.set("Cache-Control", "no-store");
+  for (const [k, v] of Object.entries(CORS_HEADERS)) headers.set(k, v);
+  return new Response(null, { ...init, headers });
+}
+
 function errorResponse(
   status: number,
   error: string,
@@ -439,7 +446,7 @@ export default {
     const url = new URL(req.url);
 
     if (req.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return emptyResponse({ status: 204 });
     }
 
     if (req.method === "GET" && url.pathname === "/health") {

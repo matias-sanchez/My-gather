@@ -256,8 +256,8 @@ func TestAdvisorLowConfidenceInfoRenders(t *testing.T) {
 	}
 }
 
-// TestDeterminism: FR-006 / SC-003 — two renders with the same
-// GeneratedAt MUST produce byte-identical output.
+// TestDeterminism: FR-006 / SC-003 — two renders with the same input
+// and options MUST produce byte-identical output.
 func TestDeterminism(t *testing.T) {
 	c := minimalCollection()
 	opts := render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}
@@ -274,8 +274,26 @@ func TestDeterminism(t *testing.T) {
 	}
 }
 
-// TestGeneratedAtIsOnlyDiff: FR-006 — two renders with different
-// GeneratedAt values differ only in the Report generated at line.
+func TestZeroGeneratedAtIsDeterministic(t *testing.T) {
+	c := minimalCollection()
+
+	var a, b bytes.Buffer
+	if err := render.Render(&a, c, render.RenderOptions{Version: "v0.0.1-test"}); err != nil {
+		t.Fatalf("render a: %v", err)
+	}
+	if err := render.Render(&b, c, render.RenderOptions{Version: "v0.0.1-test"}); err != nil {
+		t.Fatalf("render b: %v", err)
+	}
+	if !bytes.Equal(a.Bytes(), b.Bytes()) {
+		t.Fatalf("zero GeneratedAt render is not deterministic (len %d vs %d)", a.Len(), b.Len())
+	}
+	if !strings.Contains(a.String(), "2026-04-21T16:52:11Z") {
+		t.Fatalf("zero GeneratedAt render did not derive timestamp from input snapshot")
+	}
+}
+
+// TestGeneratedAtIsOnlyDiff: FR-006 — explicit different GeneratedAt
+// values differ only in the Report generated at line.
 func TestGeneratedAtIsOnlyDiff(t *testing.T) {
 	c := minimalCollection()
 	t1 := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)

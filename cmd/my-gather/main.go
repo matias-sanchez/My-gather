@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/matias-sanchez/My-gather/model"
 	"github.com/matias-sanchez/My-gather/parse"
@@ -259,10 +258,9 @@ func writeAtomic(outPath string, c *model.Collection, overwrite bool) error {
 	}()
 
 	opts := render.RenderOptions{
-		GeneratedAt: time.Now().UTC(),
-		Version:     version,
-		GitCommit:   commit,
-		BuiltAt:     builtAt,
+		Version:   version,
+		GitCommit: commit,
+		BuiltAt:   builtAt,
 	}
 	if err := render.Render(tmp, c, opts); err != nil {
 		cleanup()

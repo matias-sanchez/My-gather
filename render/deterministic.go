@@ -102,8 +102,8 @@ func (g *ordinalIDGenerator) Next(tag string) string {
 //
 // Excluded from the hash (per F21 / research R9):
 //   - Collection.RootPath: moving the dump should not reset state.
-//   - Report.GeneratedAt: re-rendering the same input produces the
-//     same ReportID.
+//   - Report.GeneratedAt: this is render metadata, not part of the
+//     input identity.
 //
 // Included in the hash:
 //   - Collection.Hostname

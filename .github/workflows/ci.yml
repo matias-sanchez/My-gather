@@ -41,6 +41,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: constitution guard
+        env:
+          BASE_REF: ${{ github.base_ref || 'main' }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$BASE_REF" --depth=1
+          CONSTITUTION_GUARD_CI=1 \
+          CONSTITUTION_GUARD_RANGE="origin/$BASE_REF..HEAD" \
+            scripts/hooks/pre-push-constitution-guard.sh
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
@@ -105,21 +116,7 @@ jobs:
           if [ -d testdata/example2 ]; then
             ./bin/my-gather --out /tmp/a.html --overwrite testdata/example2
             ./bin/my-gather --out /tmp/b.html --overwrite testdata/example2
-            # The ONLY legal diff is the GeneratedAt timestamp line:
-            # - `diff_lines == 0` when both runs land in the same wall-clock
-            #   second (the timestamp byte-equals and there's no diff at all).
-            # - `diff_lines == 2` when the second run crosses a second boundary
-            #   and the single `<generated ... />` line swaps, producing one
-            #   `<` line and one `>` line.
-            # Anything else (1, 3, 4+) means a non-timestamp byte differs
-            # between runs — a determinism regression.
-            diff_lines=$(diff /tmp/a.html /tmp/b.html | grep -cE '^[<>]' || true)
-            echo "diff lines: $diff_lines"
-            if [ "$diff_lines" -ne 0 ] && [ "$diff_lines" -ne 2 ]; then
-              echo "DETERMINISM FAILURE: diff_lines=$diff_lines (expected 0 or 2)" >&2
-              diff /tmp/a.html /tmp/b.html | head -50 >&2
-              exit 1
-            fi
+            diff -u /tmp/a.html /tmp/b.html
           else
             echo "SKIP: testdata/example2 not yet committed."
           fi
@@ -171,6 +168,12 @@ jobs:
           cache: true
       - name: make release
         run: make release
+      - name: verify release reproducibility
+        run: |
+          set -euo pipefail
+          cp dist/SHA256SUMS /tmp/SHA256SUMS.first
+          make release
+          diff -u /tmp/SHA256SUMS.first dist/SHA256SUMS
       - name: Smoke-test native release binary
         run: ./dist/my-gather-linux-amd64 --version
       - uses: actions/upload-artifact@v4

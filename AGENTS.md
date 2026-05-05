@@ -1,19 +1,20 @@
 <!-- SPECKIT START -->
-Active feature: **010-file-size-constitution**
+Active feature: **012-repo-alignment-audit**
 
 For technologies, project structure, constitution gates, data model,
 contracts, and shell commands, read the current plan:
 
-- Plan: `specs/010-file-size-constitution/plan.md`
-- Spec: `specs/010-file-size-constitution/spec.md`
-- Research: `specs/010-file-size-constitution/research.md`
-- Data model: `specs/010-file-size-constitution/data-model.md`
-- Contracts: `specs/010-file-size-constitution/contracts/file-size.md`
-- Quickstart: `specs/010-file-size-constitution/quickstart.md`
-- Tasks: `specs/010-file-size-constitution/tasks.md`
+- Plan: `specs/012-repo-alignment-audit/plan.md`
+- Spec: `specs/012-repo-alignment-audit/spec.md`
+- Research: `specs/012-repo-alignment-audit/research.md`
+- Data model: `specs/012-repo-alignment-audit/data-model.md`
+- Contracts: `specs/012-repo-alignment-audit/contracts/audit.md`
+- Quickstart: `specs/012-repo-alignment-audit/quickstart.md`
+- Tasks: `specs/012-repo-alignment-audit/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
+- **010-file-size-constitution** - `specs/010-file-size-constitution/plan.md`
 - **009-spec-code-reconciliation** - `specs/009-spec-code-reconciliation/plan.md`
 - **008-archive-input** - `specs/008-archive-input/plan.md`
 - **007-advisor-intelligence** - `specs/007-advisor-intelligence/plan.md`

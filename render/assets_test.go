@@ -1,6 +1,9 @@
 package render
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // TestLoadMySQLDefaultsVersioned asserts the embedded JSON is parsed
 // into the versioned shape with every column listed in `versions`
@@ -131,6 +134,29 @@ func TestMajorVersionMultiDigit(t *testing.T) {
 	for _, c := range cases {
 		if got := majorVersion(c.in); got != c.want {
 			t.Errorf("majorVersion(%q) = %q; want %q", c.in, got, c.want)
+		}
+	}
+}
+
+func TestFeedbackWorkerClientContract(t *testing.T) {
+	app := embeddedAppJS
+	for _, forbidden := range []string{
+		"mysqladmin:selected",
+		"mysqladminSelectionKey",
+		"LEGACY_KEY",
+	} {
+		if strings.Contains(app, forbidden) {
+			t.Fatalf("app JS still carries legacy mysqladmin persistence path %q", forbidden)
+		}
+	}
+	for _, want := range []string{
+		`renderSuccess(data.issueUrl, data.issueNumber)`,
+		`successLink.focus()`,
+		`res.headers.get("Retry-After")`,
+		`View issue #`,
+	} {
+		if !strings.Contains(app, want) {
+			t.Fatalf("app JS missing feedback Worker contract marker %q", want)
 		}
 	}
 }

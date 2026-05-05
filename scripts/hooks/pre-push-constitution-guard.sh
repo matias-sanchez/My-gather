@@ -2,8 +2,9 @@
 # Pre-push constitution guard for My-gather.
 #
 # Fast mechanical checks that run before `git push` via Claude Code's
-# PreToolUse hook. This catches the highest-signal constitution violations
-# locally so the codex-review loop converges in 1-2 rounds instead of 8.
+# PreToolUse hook and in CI. This catches the highest-signal constitution
+# violations locally and makes the same diff-scoped gate observable to
+# non-Claude contributors.
 #
 # Scope is intentionally narrow: only rules that are cheap, deterministic,
 # and low-false-positive at the diff level. Semantic review lives in the
@@ -11,8 +12,9 @@
 #
 # Contract:
 #   stdin:   Claude Code hook JSON (ignored; we compute the diff ourselves)
-#   stdout:  empty on pass, or a JSON PreToolUse decision blocking the push
-#   exit:    always 0 (Claude Code reads the decision from stdout JSON)
+#   stdout:  empty on pass, JSON PreToolUse denial for Claude, or text in CI
+#   exit:    0 for Claude JSON mode; nonzero on violations when
+#            CONSTITUTION_GUARD_CI=1
 #
 # Requires: git, jq.
 
@@ -29,7 +31,9 @@ mkdir -p "$(dirname "$LOG")"
 
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
 UPSTREAM="$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)"
-if [ -n "$UPSTREAM" ]; then
+if [ -n "${CONSTITUTION_GUARD_RANGE:-}" ]; then
+  RANGE="$CONSTITUTION_GUARD_RANGE"
+elif [ -n "$UPSTREAM" ]; then
   RANGE="$UPSTREAM..HEAD"
 else
   RANGE="origin/main..HEAD"
@@ -346,6 +350,11 @@ done
 REASON_LINES+=("")
 REASON_LINES+=("Fix the above, or invoke @agent-pre-review-constitution-guard for a full LLM review.")
 REASON="$(printf '%s\n' "${REASON_LINES[@]}")"
+
+if [ "${CONSTITUTION_GUARD_CI:-}" = "1" ]; then
+  printf '%s\n' "$REASON" >&2
+  exit 1
+fi
 
 if command -v jq >/dev/null 2>&1; then
   jq -n --arg reason "$REASON" '{

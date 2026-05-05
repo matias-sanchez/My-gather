@@ -100,7 +100,7 @@ My-gather has no HTTP or CLI interface for this feature, but it does expose a **
 <!-- When recording is in progress: -->
 <div class="feedback-attachment feedback-attachment--recording">
   <span class="feedback-recording-dot" aria-hidden="true"></span>
-  <span class="feedback-recording-time">0:07 / 2:00</span>
+  <span class="feedback-recording-time">0:07 / 10:00</span>
   <button type="button" class="feedback-record-stop">Stop</button>
 </div>
 ```

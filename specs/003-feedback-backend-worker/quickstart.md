@@ -6,7 +6,7 @@ End-to-end walkthrough to deploy the Worker, wire the report, and verify.
 
 - Cloudflare account (free tier — no credit card needed).
 - GitHub account that owns `matias-sanchez/My-gather`.
-- Node.js 20.x and `npm`.
+- Node.js 22.x and `npm`.
 - The `wrangler` CLI: `npm install -g wrangler` (or use the npx form).
 
 ## Phase 1 — One-time setup (human intervention required)

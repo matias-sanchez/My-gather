@@ -148,7 +148,7 @@ This is a Go library-first project. Paths are rooted at the repo root (`/Users/m
 
 ## Phase 7: User Story 5 — Voice note recording (Priority: P3)
 
-**Goal**: Record up to 120s of voice inside the dialog; Submit triggers a download of the recording.
+**Goal**: Record up to 10 minutes of voice inside the dialog; Submit triggers a download of the recording.
 
 **Independent Test**: Quickstart Scenario D on Firefox.
 

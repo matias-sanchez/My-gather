@@ -6,15 +6,26 @@
 
 A Cloudflare Worker receives the report's feedback payload via HTTPS POST and creates a GitHub Issue on the user's behalf, authenticated as a GitHub App with `Issues: write` scope. The Worker has been live since 2026-04-24 (commit 636a332) at https://my-gather-feedback.mati-orfeo.workers.dev. Each issue is tagged with `user-feedback` + `needs-triage` (always) and `area/<lower(category)>` (only when the user picked a category). The report's Submit button calls `fetch(workerURL, …)` instead of opening GitHub in a new tab. On success the dialog shows an inline success state with a link. On failure the dialog falls back to feature-002's `window.open` flow, so we never regress below the current experience.
 
-This is a dual-repo change. Most work lives in the `feedback-worker/` directory deployed to Cloudflare (its artifact is a live URL, not a binary). A small JS change lives in `render/assets/app.js`. The constitution's Principle IX named exception for this endpoint is already on main at v1.3.0.
+This is a dual-repo change. Most work lives in the `feedback-worker/` directory deployed to Cloudflare (its artifact is a live URL, not a binary). A small JS change lives in the embedded report app asset. The constitution's Principle IX named exception for this endpoint is already on main.
 
 ## Technical Context
 
-**Language/Version**: Go 1.22 (unchanged). TypeScript 5.x + Wrangler 3.x for the Worker. Browser JS ES2017+ (unchanged).
+**Language/Version**: Go version per current `go.mod` (unchanged by this feature). TypeScript 5.x + Wrangler 4.x for the Worker. Browser JS ES2017+ (unchanged).
 **Primary Dependencies**:
 - Go stdlib only (unchanged).
 - Worker: `@cloudflare/workers-types` and a hand-rolled GitHub GraphQL client (decision R1 — `createIssue` mutation + `repository.labels` paginated lookup + token exchange). One runtime JWT library (`jose` — ~8 KB) for signing App JWTs.
 - Browser: native `fetch` API only. No polyfill.
+
+Worker direct dependency justification:
+
+| Dependency | Scope | Justification | Transitive footprint |
+|------------|-------|---------------|----------------------|
+| `jose` | runtime | Signs GitHub App JWTs in the Worker without hand-rolling crypto primitives. | Small pure JS dependency tree; no browser/report dependency. |
+| `@cloudflare/workers-types` | dev | Type definitions for Cloudflare Workers bindings and runtime APIs. | Type-only; not bundled into the Worker. |
+| `typescript` | dev | Type-checks Worker source before deploy. | Build-time only. |
+| `vitest` | dev | Worker unit test runner. | Test-only. |
+| `@cloudflare/vitest-pool-workers` | dev | Runs Vitest against a Workers-compatible runtime. | Test-only; mirrors Cloudflare runtime behavior. |
+| `wrangler` | dev/deploy | Cloudflare deployment CLI for the Worker. | Deploy-time only; not part of the report or Go binary. |
 **Storage**: Cloudflare KV namespace `FEEDBACK_RATELIMIT` (rate-limit counters) and `FEEDBACK_IDEMP` (idempotency cache). No persistent storage of user content.
 **Testing**:
 - Go side: add one test asserting the Worker URL is embedded in the rendered HTML and the JS reads it. Reuse feature-002's determinism test — the Worker URL is a constant, so determinism holds.
@@ -29,7 +40,7 @@ This is a dual-repo change. Most work lives in the `feedback-worker/` directory 
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Re-read the constitution at `.specify/memory/constitution.md` (currently v1.3.0). Relevant principles:
+Re-read the constitution at `.specify/memory/constitution.md`. Relevant principles:
 
 | Principle | Verdict | Rationale / Mitigation |
 |---|---|---|
