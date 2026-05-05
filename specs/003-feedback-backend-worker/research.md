@@ -33,7 +33,7 @@
 
 1. Worker receives payload with base64 image + voice.
 2. Worker decodes; puts each blob into R2 under a content-hashed key `attachments/<sha256>.<ext>`. Idempotent by content — same image posted twice hits the same R2 key.
-3. Worker builds the issue body markdown with `![image](https://feedback-assets.cf/attachments/<hash>.png)` for images and `🔊 Voice note ([audio/webm](https://feedback-assets.cf/attachments/<hash>.webm))` for audio. (`<audio>` tags are stripped by GitHub's issue-body HTML sanitizer; a plain Markdown link is the most that survives. The reader clicks through and the browser plays the file natively.)
+3. Worker builds the issue body markdown with `![image](https://feedback-assets.cf/attachments/<hash>.png)` for images and a bare audio URL on its own line under `### Attached voice note`. GitHub renders bare audio URLs as inline players when the rendering surface supports it; otherwise the URL remains a clickable link.
 4. Worker creates the issue via the GraphQL `createIssue` mutation with `labelIds` resolved from the names `["user-feedback", "needs-triage"]` plus `area/<lower(category)>` (the third label only if `category` is set).
 5. If steps 2-3 succeeded but step 4 fails before an issue exists, Worker deletes only R2 objects it created during this request. It leaves pre-existing content-hash objects in place because another issue may already reference them.
 
@@ -125,7 +125,7 @@ See `feedback-worker/src/idempotency.ts`.
 - HTTP 5xx response.
 - HTTP 4xx that is NOT a validation error that the user can fix (422, 429).
 
-The fallback URL is the static constant `https://github.com/matias-sanchez/My-gather/issues/new?labels=user-feedback,needs-triage`. The `?labels=…` query string is part of the constant itself, not appended at click time, so the fallback issue still lands in the same triage bucket as Worker-created issues.
+The fallback URL is the canonical contract value `https://github.com/matias-sanchez/My-gather/issues/new?labels=user-feedback,needs-triage`. The `?labels=…` query string is part of that contract value, not appended at click time, so the fallback issue still lands in the same triage bucket as Worker-created issues.
 
 For 429 (rate-limit), show the throttle message; don't fall back — the user will retry after the cooldown.
 For 400 (validation error), show the field-specific error inline; the user fixes it and retries.

@@ -1,9 +1,9 @@
 // Package lint_test enforces Constitution Principle IX (zero network
 // at runtime) and Principle X (minimal dependencies) via a stdlib-only
 // import-graph audit. It walks every .go file under the shipped
-// packages (cmd/, parse/, model/, render/, findings/) and fails the build if any
-// of them imports a network-capable stdlib package or an unjustified
-// third-party module.
+// packages (cmd/, parse/, model/, render/, findings/, reportutil/) and
+// fails the build if any of them imports a network-capable stdlib package
+// or an unjustified third-party module.
 //
 // Test-only files (*_test.go) and the tests/ tree itself are exempt.
 package lint_test
@@ -36,7 +36,7 @@ const repoModule = "github.com/matias-sanchez/My-gather"
 
 // shippedDirs are the top-level directories whose import graph must be
 // clean. Test files under any directory are skipped.
-var shippedDirs = []string{"cmd", "parse", "model", "render", "findings"}
+var shippedDirs = []string{"cmd", "parse", "model", "render", "findings", "reportutil"}
 
 func TestNoForbiddenImports(t *testing.T) {
 	// Walk from repo root. The test binary's CWD is the package dir,

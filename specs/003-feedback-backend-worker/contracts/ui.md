@@ -151,14 +151,14 @@ dialog.
 The handler must:
 
 1. Read the build-time feedback contract from the dialog's data attributes:
-   - `dialog.dataset.feedbackWorkerUrl` → POST endpoint.
-   - `dialog.dataset.feedbackUrl`        → GitHub fallback base URL.
+   - `dialog.dataset.feedbackContract` -> JSON contract containing the Worker
+     POST endpoint, GitHub fallback base URL, categories, and validation limits.
    The `reportVersion` payload field is read separately from
    `<meta name="generator">` in the document head, sliced to 64
    chars (the existing report-wide convention; the dialog does not
    carry its own copy).
-2. Validate the form client-side (HTML5 validity + length caps from
-   `contracts/api.md`). If invalid, stay in `form` with field-level
+2. Validate the form client-side (HTML5 validity + length caps from the
+   canonical feedback contract). If invalid, stay in `form` with field-level
    ARIA hints. Do not call the Worker.
 3. Build the JSON payload:
    - `title`, `body`, `category` from the form,
