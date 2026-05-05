@@ -117,6 +117,7 @@ describe("feedback Worker shared response headers", () => {
 
     expect(res.status).toBe(204);
     expect(res.headers.get("Cache-Control")).toBe("no-store");
+    expect(res.headers.get("Access-Control-Max-Age")).toBe("0");
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Vary")).toBe("Origin");
   });

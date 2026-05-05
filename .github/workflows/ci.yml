@@ -43,6 +43,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          check-latest: false
+          cache: true
       - name: constitution guard
         env:
           BASE_REF: ${{ github.base_ref || 'main' }}
@@ -52,11 +57,6 @@ jobs:
           CONSTITUTION_GUARD_CI=1 \
           CONSTITUTION_GUARD_RANGE="origin/$BASE_REF..HEAD" \
             scripts/hooks/pre-push-constitution-guard.sh
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          check-latest: false
-          cache: true
       - name: go vet
         run: go vet ./...
       - name: go test (incl. tests/coverage gates)

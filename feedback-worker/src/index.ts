@@ -39,8 +39,9 @@ function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
 
 function emptyResponse(init: ResponseInit = {}): Response {
   const headers = new Headers(init.headers);
-  headers.set("Cache-Control", "no-store");
   for (const [k, v] of Object.entries(CORS_HEADERS)) headers.set(k, v);
+  headers.set("Cache-Control", "no-store");
+  headers.set("Access-Control-Max-Age", "0");
   return new Response(null, { ...init, headers });
 }
 

@@ -94,7 +94,7 @@ can fix and retry without re-entering the dialog.
     <h2>Feedback posted</h2>
     <p>Your issue has been created on GitHub.</p>
     <a id="feedback-success-link" class="feedback-success-link"
-       href="#" target="_blank" rel="noopener noreferrer">View issue on GitHub →</a>
+       href="#" target="_blank" rel="noopener noreferrer">View issue on GitHub</a>
     <button type="button" class="feedback-success-close" id="feedback-success-close">Close</button>
   </div>
 
