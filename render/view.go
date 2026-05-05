@@ -34,6 +34,9 @@ type reportView struct {
 	// Feedback carries the static values for the "Report feedback"
 	// header control and its dialog. See render/feedback.go.
 	Feedback FeedbackView
+	// Unsupported maps collector suffixes (for example "-iostat") to the
+	// source file that had an unsupported pt-stalk version.
+	Unsupported map[string]string
 
 	// Environment section payload (Host + MySQL panels).
 	HasEnvironment bool
@@ -89,9 +92,10 @@ type variableSnapshotView struct {
 	// (e.g. "Identical values seen in snapshots #2–#10"). Empty for
 	// unique snapshots. Derived from rangeLo/rangeHi; do not mutate
 	// directly.
-	RangeNote     string
-	Count         int
-	ModifiedCount int
+	RangeNote         string
+	UnsupportedSource string
+	Count             int
+	ModifiedCount     int
 	// ChangedCount is the number of rows flagged .Changed — useful
 	// for showing a "N changed" hint on panels that aren't the first.
 	ChangedCount int

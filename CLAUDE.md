@@ -1,18 +1,19 @@
 <!-- SPECKIT START -->
-No active feature.
+Active feature: **015-compliance-closure**
 
-The latest shipped feature is **014-reconciliation-cleanup**. For reference,
-its implementation artifacts remain available here:
+For technologies, project structure, constitution gates, data model,
+contracts, and shell commands, read the current plan:
 
-- Plan: `specs/014-reconciliation-cleanup/plan.md`
-- Spec: `specs/014-reconciliation-cleanup/spec.md`
-- Research: `specs/014-reconciliation-cleanup/research.md`
-- Contracts: `specs/014-reconciliation-cleanup/contracts/audit.md`
-- Quickstart: `specs/014-reconciliation-cleanup/quickstart.md`
-- Tasks: `specs/014-reconciliation-cleanup/tasks.md`
+- Plan: `specs/015-compliance-closure/plan.md`
+- Spec: `specs/015-compliance-closure/spec.md`
+- Research: `specs/015-compliance-closure/research.md`
+- Contracts: `specs/015-compliance-closure/contracts/audit.md`
+- Quickstart: `specs/015-compliance-closure/quickstart.md`
+- Tasks: `specs/015-compliance-closure/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
+- **014-reconciliation-cleanup** - `specs/014-reconciliation-cleanup/plan.md`
 - **013-full-compliance-fixes** - `specs/013-full-compliance-fixes/plan.md`
 - **012-repo-alignment-audit** - `specs/012-repo-alignment-audit/plan.md`
 - **011-constitution-canonical-path-alignment** - constitution-only change; no `specs/011-*` directory

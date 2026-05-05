@@ -123,10 +123,10 @@ Specific rules:
    host's local TZ — we capture the offset from the file header when
    present and convert to UTC; when absent, we label the value as
    "host-local").
-6. **The only non-deterministic field**: `GeneratedAt` in the report
-   header, explicitly labelled. A determinism test runs the render
-   twice and asserts that diffing the two outputs produces exactly
-   one differing line, matching the `GeneratedAt` marker.
+6. **Report timestamp handling**: default `GeneratedAt` is derived
+   deterministically from input data. Tests that pass different explicit
+   `RenderOptions.GeneratedAt` values may differ only on the labelled
+   "Report generated at" line.
 
 **Rationale**: Principle IV and spec SC-003 require byte equality. A
 single helper module is cheaper to audit than audits scattered across
@@ -196,8 +196,9 @@ browser would duplicate the allowlist and could drift.
 **Decision**: A directory is recognised as pt-stalk iff it contains
 **at least one file matching the pattern**
 `YYYY_MM_DD_HH_MM_SS-<suffix>` where `<suffix>` is in the set of
-known pt-stalk collectors (a superset of the seven we parse — includes
-`-hostname`, `-pt-summary.out`, `-trigger`, etc.) **OR** it contains
+known pt-stalk collector or sidecar suffixes (a broader recognition set than
+`model.KnownSuffixes`, including `-hostname`, `-pt-summary.out`, `-trigger`,
+etc.) **OR** it contains
 the files `pt-summary.out` or `pt-mysql-summary.out` at the root.
 
 Discovery precedence inside `parse.Discover`:
@@ -209,8 +210,8 @@ Discovery precedence inside `parse.Discover`:
    `pt-mysql-summary.out` is present, return `ErrNotAPtStalkDir`. The
    CLI maps this to exit code 4 and writes nothing.
 4. **Otherwise** (snapshots exist OR a summary file is present), the
-   directory is recognised as pt-stalk even if none of the seven
-   supported collectors are among the timestamped files. `Discover`
+   directory is recognised as pt-stalk even if none of the supported
+   model collectors are among the timestamped files. `Discover`
    returns a populated `Collection` anyway (possibly with no typed
    payload for any SourceFile). The renderer then emits a report in
    which every section shows its "data not available" banner, and the

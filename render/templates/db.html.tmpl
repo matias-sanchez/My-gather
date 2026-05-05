@@ -168,6 +168,8 @@
       </div>
       {{- end }}
     </div>
+    {{- else if index .Unsupported "-innodbstatus1" }}
+    <p class="banner missing">Unsupported pt-stalk version — <code>{{index .Unsupported "-innodbstatus1"}}</code> could not be parsed as a supported <code>-innodbstatus1</code> format.</p>
     {{- else }}
     <p class="banner missing">Data not available — no <code>-innodbstatus1</code> files were present in this collection.</p>
     {{- end }}
@@ -184,6 +186,8 @@
       <p class="banner">Charts and interactive filtering require JavaScript. Raw mysqladmin data
       for {{.MysqladminCount}} variables is embedded in the page as a JSON payload.</p>
     </noscript>
+    {{- else if index .Unsupported "-mysqladmin" }}
+    <p class="banner missing">Unsupported pt-stalk version — <code>{{index .Unsupported "-mysqladmin"}}</code> could not be parsed as a supported <code>-mysqladmin</code> format.</p>
     {{- else }}
     <p class="banner missing">Data not available — no <code>-mysqladmin</code> files were present in this collection.</p>
     {{- end }}
@@ -281,6 +285,8 @@
       <p class="banner missing">No active query text was observed in processlist rows.</p>
       {{- end }}
     </details>
+    {{- else if index .Unsupported "-processlist" }}
+    <p class="banner missing">Unsupported pt-stalk version — <code>{{index .Unsupported "-processlist"}}</code> could not be parsed as a supported <code>-processlist</code> format.</p>
     {{- else }}
     <p class="banner missing">Data not available — no <code>-processlist</code> files were present in this collection.</p>
     {{- end }}

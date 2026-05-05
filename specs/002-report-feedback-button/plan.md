@@ -5,7 +5,7 @@
 
 ## Summary
 
-Add a small "Report feedback" button in the top-right of the report header. Clicking it opens a self-contained native `<dialog>` with title + body + category selector, and attachment capture (clipboard-pasted image, MediaRecorder voice note). On submit:
+Add a small "Report feedback" button in the top-right of the report header. Clicking it opens a self-contained native `<dialog>` with title + body + category selector, and attachment capture (clipboard-pasted image, MediaRecorder voice note). This plan is historical for the original feature 002 submit path: feature 003 superseded the happy path with a Worker-backed GitHub Issue POST, while feature 002 remains authoritative for dialog, attachment, keyboard, and fallback behavior. On the original 002 submit path:
 
 1. Open a new tab to `https://github.com/matias-sanchez/My-gather/discussions/new?category=ideas&title=<enc>&body=<enc>` (user-initiated navigation; passes popup-blocker heuristics).
 2. If an image is attached, best-effort copy it to the OS clipboard as `image/png`. On failure, render an inline download link.
@@ -21,8 +21,8 @@ All markup and behaviour ship as embedded assets (`//go:embed`). Go-side footpri
 **Testing**: `go test ./...`, golden diff on `testdata/golden/*` (new markup in header), deterministic render test (two builds → byte-identical HTML), manual browser-based acceptance runs (one Chromium family, one Firefox family, on macOS + Linux — tracked in `quickstart.md`).
 **Target Platform**: Browser-rendered HTML. Report is served over `file://` or any static HTTP. Binary runs on `linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64` (unchanged from Principle I).
 **Project Type**: Go CLI that emits a self-contained HTML report (library-first architecture under `parse/`, `model/`, `render/`).
-**Performance Goals**: Feature adds ≤ 3 KB gzipped to the shipped binary's embedded assets. Dialog open latency ≤ 50 ms on a mid-range laptop. Voice recording cap 120 s; expected recorded blob ≤ 2 MB at 64 kbps opus.
-**Constraints**: Byte-identical HTML output across runs on the same input (Principle IV). No CDN, no external font, no runtime fetch from report (Principle V, IX). Existing reports must keep rendering identically until the feature is enabled — i.e., the feature is additive, not a rewrite of the header.
+**Performance Goals**: Feature adds ≤ 3 KB gzipped to the shipped binary's embedded assets. Dialog open latency ≤ 50 ms on a mid-range laptop. Voice recording cap 10 minutes; expected recorded blob stays under the feature-003 Worker voice-size cap.
+**Constraints**: Byte-identical HTML output across runs on the same input (Principle IV). No CDN and no external font. The live submit happy path is feature 003's explicit Worker POST exception; this feature's `window.open` path remains the observable fallback. Existing reports must keep rendering identically until the feature is enabled — i.e., the feature is additive, not a rewrite of the header.
 **Scale/Scope**: Single feature, touching 3–5 files in `render/` and its embedded assets, plus one golden update.
 
 ## Constitution Check
@@ -39,7 +39,7 @@ All markup and behaviour ship as embedded assets (`//go:embed`). Go-side footpri
 | VI. Library-First Architecture | PASS | `render/feedback.go` is a tiny view builder. `cmd/my-gather` gains no new flag. All new exported identifiers receive godoc. |
 | VII. Typed Errors | PASS | No new Go error paths — the button is pure template output. (Client-side JS error handling uses DOM-event conventions, not Go errors.) |
 | VIII. Reference Fixtures & Golden Tests | PASS | No new parser. Render golden for the full-report test updates by one line (the header additions). No new fixture needed. |
-| IX. Zero Network at Runtime | PASS | Binary performs zero network I/O. Browser-side: Submit triggers user-initiated navigation; no `fetch`/`XMLHttpRequest` from the report's runtime code paths. |
+| IX. Zero Network at Runtime | PASS | Binary performs zero network I/O. Browser-side: the original feature 002 submit path triggered user-initiated navigation only; feature 003 superseded the happy path with the ratified Worker POST exception and keeps this path as fallback. |
 | X. Minimal Dependencies | PASS | No new `go.mod require`. All browser APIs are native primitives, not bundled polyfills. |
 | XI. Reports Optimized for Humans Under Pressure | PASS | Control is a single small icon-plus-label in the header margin; dialog only materialises on demand. Does not displace or resize the triage-critical sections. |
 | XII. Pinned Go Version | PASS | No change to `go.mod` `go` directive. |

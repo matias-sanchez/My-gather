@@ -43,7 +43,7 @@ Resolves the handful of browser-API questions the feature surfaces, with decisio
 
 ## R4: How to record voice?
 
-**Decision**: Use `navigator.mediaDevices.getUserMedia({ audio: true })` + `MediaRecorder`. Start/stop buttons update a single recording state machine. Collect `dataavailable` chunks into an array, concatenate on stop into a single Blob. Recording cap at 120 seconds enforced by `setTimeout` triggering the stop logic. Elapsed-time counter driven by `requestAnimationFrame` (monotonic, not `setInterval`).
+**Decision**: Use `navigator.mediaDevices.getUserMedia({ audio: true })` + `MediaRecorder`. Start/stop buttons update a single recording state machine. Collect `dataavailable` chunks into an array, concatenate on stop into a single Blob. Recording cap is 10 minutes, enforced by `setTimeout` triggering the stop logic. Elapsed-time counter driven by `requestAnimationFrame` (monotonic, not `setInterval`).
 
 **Format**: accept whatever `MediaRecorder` default produces — `audio/webm;codecs=opus` on Chromium/Firefox, `audio/mp4` on Safari. Don't pass a `mimeType` option; trust the default. The download filename extension matches the recorder's `mimeType` (`.webm` or `.mp4`).
 

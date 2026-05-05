@@ -5,7 +5,7 @@ argument-hint: "Optional task generation constraints"
 compatibility: "Requires spec-kit project structure with .specify/ directory"
 metadata:
   author: "github-spec-kit"
-  source: "templates/commands/tasks.md"
+  source: "repo-local-speckit-skill/tasks"
 user-invocable: true
 disable-model-invocation: false
 ---

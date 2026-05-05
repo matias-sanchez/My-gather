@@ -5,7 +5,7 @@ argument-hint: "Optional guidance for the planning phase"
 compatibility: "Requires spec-kit project structure with .specify/ directory"
 metadata:
   author: "github-spec-kit"
-  source: "templates/commands/plan.md"
+  source: "repo-local-speckit-skill/plan"
 user-invocable: true
 disable-model-invocation: false
 ---
@@ -142,9 +142,9 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Skip if project is purely internal (build scripts, one-off tools, etc.)
 
 3. **Agent context update**:
-   - Update the plan reference between the `<!-- SPECKIT START -->` and `<!-- SPECKIT END -->` markers in `CLAUDE.md` to point to the plan file created in step 1 (the IMPL_PLAN path)
+   - Update the feature references between the `<!-- SPECKIT START -->` and `<!-- SPECKIT END -->` markers in both `AGENTS.md` and `CLAUDE.md` to point to the plan file created in step 1 (the IMPL_PLAN path), and keep `.specify/feature.json` aligned with the same feature directory.
 
-**Output**: data-model.md, /contracts/*, quickstart.md, updated agent context file
+**Output**: data-model.md, /contracts/*, quickstart.md, updated agent context files and `.specify/feature.json`
 
 ## Key rules
 

@@ -80,8 +80,9 @@ byte-identical output (spec SC-003).
 
 **Constraints**:
 
-- Byte-deterministic HTML output except for the one explicit
-  "Report generated at" timestamp (spec FR-006, SC-003).
+- Byte-deterministic HTML output; the default "Report generated at" value is
+  derived from input data unless a library caller supplies an explicit render
+  option (spec FR-006, SC-003).
 - Zero network I/O at runtime (Principle IX, spec FR-022).
 - No writes inside the input directory (Principle II, spec FR-003).
 - Single output file — no side-cars (spec FR-002 post-clarification).
@@ -107,7 +108,7 @@ Evaluated against `.specify/memory/constitution.md` v1.0.1.
 | I | Single Static Binary | ✅ PASS | `CGO_ENABLED=0`, Go-only, cross-compiled for four targets. |
 | II | Read-Only Inputs | ✅ PASS | All input access via `os.Open` read-only; no tempfiles inside input tree; output path explicit via `-o`. |
 | III | Graceful Degradation (NON-NEGOTIABLE) | ✅ PASS | Per-collector parsers isolated; each captures errors as `model.Diagnostic` rather than returning fatal; missing files → "data not available" banner (FR-007). `recover()` at the top of each collector parse ensures a panic there does not kill the whole report (but panics remain unusual — they're not expected paths). |
-| IV | Deterministic Output | ✅ PASS | Golden-test determinism gate (FR-006, SC-003). Map iteration replaced with sorted keys at render boundary; float formatting via `strconv.FormatFloat` with fixed precision; IDs deterministic via ordinal counters; `GeneratedAt` is the sole declared non-deterministic field. |
+| IV | Deterministic Output | ✅ PASS | Golden-test determinism gate (FR-006, SC-003). Map iteration replaced with sorted keys at render boundary; float formatting via `strconv.FormatFloat` with fixed precision; IDs deterministic via ordinal counters; default `GeneratedAt` is derived from input data. |
 | V | Self-Contained HTML | ✅ PASS | Chart JS library + CSS + fonts inlined via `//go:embed` and rendered into a single `<script>` / `<style>` block. Data payload embedded as JSON in a `<script type="application/json">`. No CDN references. |
 | VI | Library-First | ✅ PASS | `parse/`, `model/`, `render/` are top-level packages with no `main` coupling. `cmd/my-gather/` is a thin orchestrator. Each package will carry godoc on every exported identifier per FR-024-era test. |
 | VII | Typed Errors | ✅ PASS | Sentinels `ErrNotAPtStalkDir`, `ErrSizeBoundExceeded`, `ErrOutputExists` in `parse/` and `render/`; `ParseError` struct with `File`, `Location`, `Underlying error` for branchable parser failures (spec Diagnostic entity maps 1:1). |

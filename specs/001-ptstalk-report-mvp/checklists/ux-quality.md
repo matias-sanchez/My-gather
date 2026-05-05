@@ -87,8 +87,8 @@ Applies to every rendered surface, independent of section.
       the fold at 1440×900 for a 2-section-minimum report.
 - [ ] **H-2** Report title (hostname + snapshot count) is
       immediately scannable.
-- [ ] **H-3** `GeneratedAt` timestamp is labelled as the sole
-      non-deterministic field and rendered via the shared formatter.
+- [ ] **H-3** `GeneratedAt` timestamp is derived deterministically by default
+      and rendered via the shared formatter.
 - [ ] **H-4** Tool version (`my-gather <semver>`) + short commit
       visible in the header or footer (`render/templates/report.html.tmpl`;
       no standalone FR — FR-023 governs the CLI counterpart).
@@ -231,8 +231,8 @@ Run the full audit against each of these fixture classes.
 
 ## 9. No-duplication invariant (FR-038)
 
-- [ ] **D-1** Each of the seven canonical data surfaces (iostat,
-      top, vmstat, variables, innodbstatus, mysqladmin, processlist)
+- [ ] **D-1** Each canonical data surface (iostat, top, vmstat, meminfo,
+      variables, innodbstatus, mysqladmin, processlist, netstat, netstat_s)
       has exactly one home view. Spot-check: grep the rendered HTML
       for key values (e.g., a distinctive variable name, a specific
       PID) and confirm each appears in only one subview.

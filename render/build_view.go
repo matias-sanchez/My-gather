@@ -32,6 +32,7 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 		LogoDataURI:        template.URL("data:image/png;base64," + base64.StdEncoding.EncodeToString(embeddedLogoPNG)),
 		MysqladminSelectID: "mysqladmin-select",
 		Feedback:           BuildFeedbackView(),
+		Unsupported:        unsupportedSources(c),
 	}
 
 	if r.EnvironmentSection != nil {
@@ -83,6 +84,7 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 		totalSnaps = len(r.VariablesSection.PerSnapshot)
 		defaults, supportedVersions := loadMySQLDefaults()
 		haveAny := false
+		haveUnsupported := false
 		// keptVariableRuns is the single source of truth for dedup;
 		// navigation and this body iterate the same runs so they can
 		// never disagree on which snapshots were collapsed.
@@ -90,10 +92,15 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 		for _, run := range keptVariableRuns(r.VariablesSection, sigs) {
 			startSV := r.VariablesSection.PerSnapshot[run.StartIdx]
 			if run.NilData {
+				unsupported := unsupportedSnapshotSource(c, run.StartIdx, model.SuffixVariables)
+				if unsupported != "" {
+					haveUnsupported = true
+				}
 				v.VariableSnapshots = append(v.VariableSnapshots, variableSnapshotView{
-					DetailsID: variablesSnapshotID(run.StartIdx),
-					Title:     fmt.Sprintf("Snapshot %s", startSV.SnapshotPrefix),
-					Badge:     fmt.Sprintf("snap #%d", run.StartIdx+1),
+					DetailsID:         variablesSnapshotID(run.StartIdx),
+					Title:             fmt.Sprintf("Snapshot %s", startSV.SnapshotPrefix),
+					Badge:             fmt.Sprintf("snap #%d", run.StartIdx+1),
+					UnsupportedSource: unsupported,
 				})
 				lastKeptMap = nil
 				continue
@@ -158,7 +165,7 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 				lastKeptMap[e.Name] = e.Value
 			}
 		}
-		v.HasVariables = haveAny
+		v.HasVariables = haveAny || haveUnsupported
 		// Derive the presentation RangeNote once per kept panel.
 		// Single-snapshot runs and nil-Data entries leave it empty.
 		for idx := range v.VariableSnapshots {
@@ -219,4 +226,32 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 	v.DataPayload = template.JS(payload)
 
 	return v, nil
+}
+
+func unsupportedSources(c *model.Collection) map[string]string {
+	out := make(map[string]string)
+	for _, snap := range c.Snapshots {
+		for _, suffix := range model.KnownSuffixes {
+			sf, ok := snap.SourceFiles[suffix]
+			if !ok || sf == nil || sf.Status != model.ParseUnsupported {
+				continue
+			}
+			key := "-" + string(suffix)
+			if _, exists := out[key]; !exists {
+				out[key] = sf.Path
+			}
+		}
+	}
+	return out
+}
+
+func unsupportedSnapshotSource(c *model.Collection, idx int, suffix model.Suffix) string {
+	if idx < 0 || idx >= len(c.Snapshots) {
+		return ""
+	}
+	sf, ok := c.Snapshots[idx].SourceFiles[suffix]
+	if !ok || sf == nil || sf.Status != model.ParseUnsupported {
+		return ""
+	}
+	return sf.Path
 }

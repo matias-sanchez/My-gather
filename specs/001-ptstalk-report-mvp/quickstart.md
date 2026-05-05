@@ -34,8 +34,8 @@ All tests must pass. This exercises:
   version, per FR-024, is a reserved slot — see tasks.md T019).
 - Golden-file round-trips (parse → model → render → compare to
   `testdata/golden/*.html` byte-for-byte).
-- A determinism test that renders twice and asserts the outputs
-  differ only on the `GeneratedAt` line.
+- A determinism test that renders twice and asserts byte-identical
+  outputs.
 - The forbidden-import linter (Principle IX) checks that no
   shipped package imports `net/http`, `net/rpc`, etc.
 
@@ -112,8 +112,8 @@ With `-v` for progress:
 diff /tmp/a.html /tmp/b.html
 ```
 
-The diff should show exactly one line of difference — the
-"Report generated at" timestamp. Any other diff is a determinism
+The reports should be byte-identical. The "Report generated at" value is
+derived deterministically from the input collection. Any diff is a determinism
 regression (Principle IV) and must be fixed before merging.
 
 ## Where things live

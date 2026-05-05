@@ -15,6 +15,8 @@
     {{- end }}
     <div class="chart" id="chart-iostat" data-chart="iostat" aria-label="Per-device iostat utilization over time"></div>
     <noscript><p class="banner">Charts require JavaScript. Raw iostat data is embedded in the page.</p></noscript>
+    {{- else if index .Unsupported "-iostat" }}
+    <p class="banner missing">Unsupported pt-stalk version — <code>{{index .Unsupported "-iostat"}}</code> could not be parsed as a supported <code>-iostat</code> format.</p>
     {{- else }}
     <p class="banner missing">Data not available — <code>-iostat</code> was missing or unparseable in this collection.</p>
     {{- end }}
@@ -36,6 +38,8 @@
     {{- end }}
     <div class="chart" id="chart-top" data-chart="top" aria-label="Top 3 CPU-consuming processes over time"></div>
     <noscript><p class="banner">Charts require JavaScript. Raw top data is embedded in the page.</p></noscript>
+    {{- else if index .Unsupported "-top" }}
+    <p class="banner missing">Unsupported pt-stalk version — <code>{{index .Unsupported "-top"}}</code> could not be parsed as a supported <code>-top</code> format.</p>
     {{- else }}
     <p class="banner missing">Data not available — <code>-top</code> was missing or unparseable in this collection.</p>
     {{- end }}
@@ -62,6 +66,8 @@
     </div>
     <div class="chart" id="chart-vmstat" data-chart="vmstat" aria-label="System resource saturation over time"></div>
     <noscript><p class="banner">Charts require JavaScript. Raw vmstat data is embedded in the page.</p></noscript>
+    {{- else if index .Unsupported "-vmstat" }}
+    <p class="banner missing">Unsupported pt-stalk version — <code>{{index .Unsupported "-vmstat"}}</code> could not be parsed as a supported <code>-vmstat</code> format.</p>
     {{- else }}
     <p class="banner missing">Data not available — <code>-vmstat</code> was missing or unparseable in this collection.</p>
     {{- end }}
@@ -83,6 +89,8 @@
     {{- end }}
     <div class="chart" id="chart-meminfo" data-chart="meminfo" aria-label="Memory usage over time"></div>
     <noscript><p class="banner">Charts require JavaScript. Raw meminfo data is embedded in the page.</p></noscript>
+    {{- else if index .Unsupported "-meminfo" }}
+    <p class="banner missing">Unsupported pt-stalk version — <code>{{index .Unsupported "-meminfo"}}</code> could not be parsed as a supported <code>-meminfo</code> format.</p>
     {{- else }}
     <p class="banner missing">Data not available — <code>-meminfo</code> was missing or unparseable in this collection.</p>
     {{- end }}
@@ -111,6 +119,10 @@
     <div class="chart" id="chart-network-sockets" data-chart="network-sockets" aria-label="Socket state counts over time"></div>
     {{- end }}
     <noscript><p class="banner">Charts require JavaScript. Raw netstat data is embedded in the page.</p></noscript>
+    {{- else if index .Unsupported "-netstat" }}
+    <p class="banner missing">Unsupported pt-stalk version — <code>{{index .Unsupported "-netstat"}}</code> could not be parsed as a supported <code>-netstat</code> format.</p>
+    {{- else if index .Unsupported "-netstat_s" }}
+    <p class="banner missing">Unsupported pt-stalk version — <code>{{index .Unsupported "-netstat_s"}}</code> could not be parsed as a supported <code>-netstat_s</code> format.</p>
     {{- else }}
     <p class="banner missing">Data not available — <code>-netstat</code> and <code>-netstat_s</code> were missing or unparseable in this collection.</p>
     {{- end }}
