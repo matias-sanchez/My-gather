@@ -178,7 +178,6 @@ else
   VIOLATIONS+=("XIV: PCRE-capable grep not found on this host — gate 8 (Principle XIV English-only) cannot be enforced. Install GNU grep (brew install grep on macOS) and shim into PATH, then re-push.")
   GREP_BIN=grep  # unused below because VIOLATIONS already set; placeholder to keep subsequent code syntactically valid
 fi
-ENGLISH_HITS=()
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   case "$f" in
@@ -195,12 +194,9 @@ while IFS= read -r f; do
       feedback-worker/test/validate.test.ts:69) continue ;;
       feedback-worker/test/validate.test.ts:70) continue ;;
     esac
-    ENGLISH_HITS+=("$f:$line_num")
+    VIOLATIONS+=("XIV: non-English Latin-script letter at $f:$line_num (Principle XIV requires English-only artifacts; testdata/ and _references/ are exempt; math/typography/emoji pass)")
   done < <("$GREP_BIN" -InP "$ENGLISH_PATTERN" "$f" 2>/dev/null || true)
 done < <(printf '%s\n' "$CHANGED")
-for hit in "${ENGLISH_HITS[@]}"; do
-  VIOLATIONS+=("XIV: non-English Latin-script letter at $hit (Principle XIV requires English-only artifacts; testdata/ and _references/ are exempt; math/typography/emoji pass)")
-done
 
 # Rule 6 (Principle XII / Principle I): suspicious build tags on
 # non-test .go files. `// +build ...` (legacy syntax) is a smell.

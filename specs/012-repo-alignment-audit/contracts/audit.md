@@ -28,6 +28,7 @@ be partially solved in this governance branch.
 | C09 | LOW | Documentation drift | README omitted `.agents/`, and the changelog omitted shipped version headings. | Added the missing repository layout entry and changelog version headings. |
 | C10 | LOW | Enforcement coverage | Import lint did not include the first-party `findings` package. | Added `findings` to the linted package set. |
 | C11 | MEDIUM | Principle XII | `go.mod` did not match the current repository toolchain. | Updated the Go line to `1.26`. |
+| C12 | MEDIUM | Enforcement portability | CI exposed that the guard's English-only array loop was not portable to Bash 3 on macOS under `set -u`. | Appended English-only violations directly to the shared violation list instead of iterating an empty array. |
 
 ## Confirmed Follow-Ups Deferred
 
