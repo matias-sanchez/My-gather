@@ -115,11 +115,11 @@ if [ -n "$CGO_HITS" ]; then
 fi
 
 # Rule 4 (Principle VI, gate 5): every exported identifier under
-# parse/, model/, render/, findings/ has a godoc comment. Delegated
+# parse/, model/, render/, findings/, reportutil/ has a godoc comment. Delegated
 # to the AST-walking test under tests/coverage/. Runs only when Go
 # files in the watched packages are touched in this push, so the
 # common case (docs-only or spec-only push) stays cheap.
-WATCHED_GO_CHANGED="$(printf '%s\n' "$CHANGED" | grep -E '^(parse|model|render|findings)/.*\.go$' || true)"
+WATCHED_GO_CHANGED="$(printf '%s\n' "$CHANGED" | grep -E '^(parse|model|render|findings|reportutil)/.*\.go$' || true)"
 if [ -n "$WATCHED_GO_CHANGED" ] && command -v go >/dev/null 2>&1; then
   GODOC_OUT="$(CGO_ENABLED=0 go test ./tests/coverage/... -run TestGodocCoverage -count=1 2>&1)"
   GODOC_RC=$?
@@ -232,7 +232,7 @@ fi
 # Rule 7 (Principle IX): no outbound network in the Go release path.
 # The feedback-worker (TypeScript) is the only sanctioned outbound
 # path; the Go binary stays offline. We grep added lines under
-# parse/, model/, render/, findings/, and cmd/ for a `net/http`
+# parse/, model/, render/, findings/, reportutil/, and cmd/ for a `net/http`
 # import or net.Dial-style construct. _test.go files are excluded
 # because tests may legitimately exercise an httptest server.
 #
@@ -250,7 +250,7 @@ fi
 # do NOT contain `"net"` as a substring (the closing quote is in a
 # different position), so legitimate sub-package imports are not
 # flagged.
-NET_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'model/*.go' 'render/*.go' 'findings/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/dev/null | awk '
+NET_HITS="$(git diff "$RANGE" -- 'parse/*.go' 'model/*.go' 'render/*.go' 'findings/*.go' 'reportutil/*.go' 'cmd/**/*.go' ':!*_test.go' 2>/dev/null | awk '
   /^\+\+\+ b\// { file = substr($0, 7); next }
   /^\+.*"net\/http"/                                 { print file ": import \"net/http\" added (any form: block, single-line, aliased, dot, blank)" }
   /^\+.*"net"/                                       { print file ": import \"net\" added (any form: block, single-line, aliased, dot, blank — alias may hide net.Dial/Listen/Lookup/ResolveAddr)" }

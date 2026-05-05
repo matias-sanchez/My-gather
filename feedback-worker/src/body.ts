@@ -1,6 +1,6 @@
 // Build the GitHub Issue markdown body from a validated payload.
-// Shape matches the "Issue body markdown composition" block in the Agent W
-// task prompt (which supersedes data-model.md's older Discussion shape).
+// Shape matches specs/003-feedback-backend-worker/data-model.md
+// "Issue body markdown composition".
 
 import type { ValidatedPayload } from "./validate";
 
