@@ -1,17 +1,13 @@
 // Fixed-window per-IP rate limit backed by Cloudflare KV.
 // Each request writes its own unique key under the per-IP/per-hour
 // prefix so the count is the number of keys returned by KV.list().
-// The prior read-modify-write counter pattern was racy under bursts —
+// The prior read-modify-write counter pattern was racy under bursts:
 // concurrent requests could read the same value and overwrite each
 // other with the same next count, silently allowing more than LIMIT
-// submissions per window. The unique-key scheme avoids overwrites
-// entirely: even perfectly-concurrent requests each write distinct
-// keys, so once N concurrent submissions complete their PUT the
-// (N+1)th request's list() sees N entries. KV list is eventually
-// consistent, so a short burst still has a small leak window, but
-// the stale-overwrite failure mode is gone. Full linearizability
-// would require Durable Objects — not worth the architectural move
-// for a 5/hour limit.
+// submissions per window. The unique-key scheme avoids overwrites, and
+// a per-isolate prefix lock serializes list/put decisions inside one
+// Worker isolate. KV is still eventually consistent across isolates;
+// full cross-isolate linearizability would require Durable Objects.
 //
 // Key format: rl:<ip-hash>:<UTC-hour>:<random-suffix>
 // Value:      "1" (the count is the number of matching keys).
@@ -23,6 +19,7 @@ import type { Env } from "./env";
 
 const LIMIT = 5;
 const WINDOW_SECONDS = 3600;
+const prefixLocks = new Map<string, Promise<void>>();
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -71,6 +68,29 @@ export interface RateLimitDeps {
   suffix?: () => string;
 }
 
+async function withPrefixLock<T>(prefix: string, fn: () => Promise<T>): Promise<T> {
+  const previous = prefixLocks.get(prefix) ?? Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const pending = previous.then(() => current);
+  prefixLocks.set(prefix, pending);
+  await previous;
+  try {
+    // KV calls are expected to settle under the Worker request lifetime. If a
+    // same-prefix KV call stalls, later same-prefix requests in this isolate
+    // queue behind it until the platform terminates the isolate and clears this
+    // in-memory lock map; cross-isolate requests are unaffected.
+    return await fn();
+  } finally {
+    release();
+    if (prefixLocks.get(prefix) === pending) {
+      prefixLocks.delete(prefix);
+    }
+  }
+}
+
 export async function checkRateLimit(
   env: Env,
   ip: string,
@@ -82,25 +102,27 @@ export async function checkRateLimit(
   const ipHash = await hashIp(ip, salt);
   const prefix = `rl:${ipHash}:${currentHourKey(now)}:`;
 
-  // Count existing keys under the bucket prefix. KV.list caps per-page
-  // results at 1000; LIMIT is 5 so one page is always enough.
-  const listed = await env.FEEDBACK_RATELIMIT.list({ prefix, limit: LIMIT + 1 });
-  const existing = listed.keys.length;
+  return withPrefixLock(prefix, async () => {
+    // Count existing keys under the bucket prefix. KV.list caps per-page
+    // results at 1000; LIMIT is 5 so one page is always enough.
+    const listed = await env.FEEDBACK_RATELIMIT.list({ prefix, limit: LIMIT + 1 });
+    const existing = listed.keys.length;
 
-  if (existing >= LIMIT) {
-    return {
-      allowed: false,
-      count: existing,
-      retryAfterSeconds: secondsToNextHour(now),
-    };
-  }
+    if (existing >= LIMIT) {
+      return {
+        allowed: false,
+        count: existing,
+        retryAfterSeconds: secondsToNextHour(now),
+      };
+    }
 
-  // Write our own unique key — no overwrite of other concurrent
-  // requests' keys, so the count is always monotonic per bucket.
-  const suffix = deps.suffix ? deps.suffix() : randomSuffix();
-  await env.FEEDBACK_RATELIMIT.put(prefix + suffix, "1", {
-    expirationTtl: WINDOW_SECONDS,
+    // Write our own unique key; no overwrite of other concurrent
+    // requests' keys, so the count is monotonic per bucket.
+    const suffix = deps.suffix ? deps.suffix() : randomSuffix();
+    await env.FEEDBACK_RATELIMIT.put(prefix + suffix, "1", {
+      expirationTtl: WINDOW_SECONDS,
+    });
+
+    return { allowed: true, count: existing + 1 };
   });
-
-  return { allowed: true, count: existing + 1 };
 }

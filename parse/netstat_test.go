@@ -155,6 +155,23 @@ udp        0      0 0.0.0.0:53     0.0.0.0:*
 	}
 }
 
+func TestParseNetstat_MalformedTSEmitsDiagnostic(t *testing.T) {
+	snapshotStart := netstatSnapshotStart()
+	input := `TS 9223372036854775808.0 2026-04-21 16:51:43
+tcp 0 0 127.0.0.1:3306 127.0.0.1:50000 ESTABLISHED 123/mysqld
+`
+	samples, diags := parseNetstat(strings.NewReader(input), snapshotStart, "test-netstat")
+	if len(samples) != 1 {
+		t.Fatalf("samples: want 1, got %d", len(samples))
+	}
+	if !samples[0].Timestamp.Equal(snapshotStart) {
+		t.Fatalf("timestamp: want snapshot start, got %s", samples[0].Timestamp)
+	}
+	if !hasDiagnostic(diags, model.SeverityWarning, "malformed TS epoch") {
+		t.Fatalf("expected malformed TS diagnostic, got %+v", diags)
+	}
+}
+
 func TestParseNetstat_AmbiguousStateFirstESTABEmitsDiagnostic(t *testing.T) {
 	input := `State      Recv-Q Send-Q Local Address:Port         Peer Address:Port
 ESTAB      0      0      10.0.0.1:5678              10.0.0.2:80
@@ -454,6 +471,24 @@ func TestParseNetstatS_NoTSFallsBackToSnapshotStart(t *testing.T) {
 	}
 	if !hasDiagnostic(diags, model.SeverityInfo, "no TS marker") {
 		t.Fatalf("expected no-TS compatibility diagnostic, got %+v", diags)
+	}
+}
+
+func TestParseNetstatS_MalformedTSEmitsDiagnostic(t *testing.T) {
+	snapshotStart := netstatSnapshotStart()
+	input := `TS 9223372036854775808.0 2026-04-21 16:51:43
+Tcp:
+    10 active connection openings
+`
+	samples, diags := parseNetstatS(strings.NewReader(input), snapshotStart, "test-netstat_s")
+	if len(samples) != 1 {
+		t.Fatalf("samples: want 1, got %d", len(samples))
+	}
+	if !samples[0].Timestamp.Equal(snapshotStart) {
+		t.Fatalf("timestamp: want snapshot start, got %s", samples[0].Timestamp)
+	}
+	if !hasDiagnostic(diags, model.SeverityWarning, "malformed TS epoch") {
+		t.Fatalf("expected malformed TS diagnostic, got %+v", diags)
 	}
 }
 

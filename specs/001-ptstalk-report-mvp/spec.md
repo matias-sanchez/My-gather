@@ -242,7 +242,7 @@ matching their respective golden files.
   MVP shipped with four sections; the section now appears first
   because trigger context (host, kernel, MySQL version, key
   runtime variables, time-stamped) is the highest-signal slice
-  for a support engineer opening a fresh capture under pressure
+  for a support engineer opening a fresh capture under pressure.
   (Principle XI).
 - **FR-006**: For a given input directory, two consecutive runs of the
   tool MUST produce byte-identical output files, except for a single
@@ -556,7 +556,7 @@ matching their respective golden files.
   not a replacement for — the Constitution Check (Principle XI) and
   the existing test suite.
 
-- **FR-042**: The report MUST include a fourth top-level section,
+- **FR-042**: The report MUST include a fifth top-level section,
   "Advisor", that surfaces rule-based interpretive findings derived
   from the parsed Collection. The Advisor is a pure, deterministic
   function of `model.Report` (see `findings/`): same input, same
@@ -646,8 +646,7 @@ matching their respective golden files.
   laptop without exceeding 2 GB of resident memory and without being
   killed by the OS out-of-memory handler.
 - **SC-009**: Every rendered named subview in the report (OS-Usage
-  subviews, Variables, every Database-Usage subview, and the Parser
-  Diagnostics panel) MUST be reachable in a single click from the
+  subviews, Variables, and every Database-Usage subview) MUST be reachable in a single click from the
   navigation index, with the target subview scrolled into view. An
   automated test asserts that every `NavEntry.ID` in `Report.Navigation`
   has a matching anchor target in the rendered HTML and that the

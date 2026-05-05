@@ -1,6 +1,36 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.6.1 → 1.6.2
+Bump rationale: PATCH-level alignment of quality-gate wording with
+  current enforcement. No forbidden or required behaviours change; the
+  text now reflects strict determinism diffing, reportutil coverage,
+  parser golden hard failures, and the expanded source-size extension
+  set.
+
+Added principles: none.
+
+Modified principles: none.
+
+Modified sections:
+  - Development Workflow & Quality Gates → gate 2 names the hard parser
+    fixture/golden coverage test; gate 3 describes the current strict
+    byte-identical CI determinism check; gates 5 and 6 include
+    reportutil in shipped Go enforcement scope; gate 9 notes that the
+    source-size test covers PowerShell and HTML implementation files.
+
+Templates requiring updates:
+  - .specify/templates/*                          compatible
+  - .claude/agents/pre-review-constitution-guard.md compatible
+  - .claude/skills/pr-review-*-my-gather/         compatible
+  - AGENTS.md                                     updated
+  - CLAUDE.md                                     updated
+  - README.md                                     compatible
+
+Deferred items / follow-up TODOs: none.
+
+Prior Sync Impact Report (1.6.1) follows for history:
+-----------------------------------------------------
 Version change: 1.6.0 → 1.6.1
 Bump rationale: PATCH-level wording clarification for Principle XV. The
   source-size exemption for bundled third-party minified assets outside
@@ -639,14 +669,15 @@ is the only line of defence:
 2. **[MECHANICAL]** Every new or modified parser ships with its fixture
    and golden file (Principle VIII). New collector parsers are caught by
    `scripts/hooks/pre-push-constitution-guard.sh` (the `COLLECTOR_PARSERS`
-   list); behavioural changes to existing parsers are mechanically caught
-   by CI when their golden tests fail unless the golden is updated, with
-   review covering the remaining governance expectation (intentional
-   vs. accidental output drift, fixture-coverage of new code paths).
+   list); `tests/coverage/testdata_coverage_test.go` hard-fails when an
+   advertised collector suffix lacks a fixture or parser golden; and
+   behavioural changes to existing parsers are mechanically caught by CI
+   when their golden tests fail unless the golden is updated, with review
+   covering intentional vs. accidental output drift.
 3. **[MECHANICAL]** Determinism check: a test re-runs report generation
    twice on the same fixture set and asserts byte-identical output
-   (Principle IV). The CI determinism job allows up to two diff lines —
-   the `Report generated at` timestamp is the only legal drift.
+   (Principle IV). The CI determinism job runs a strict `diff -u` between
+   the two generated reports; any byte drift is a failure.
 4. **[MECHANICAL]** No new direct dependency is added without a
    justification entry in the corresponding `plan.md` (Principle X). The
    pre-push hook scans new `go.mod require` entries for a matching
@@ -655,7 +686,8 @@ is the only line of defence:
    comments describing their contract (Principle VI). Enforced by
    `tests/coverage/godoc_coverage_test.go`, an AST-walking test that
    asserts every exported identifier under `parse/`, `model/`,
-   `render/`, and `findings/` carries a non-empty doc comment. CI
+   `render/`, `findings/`, and `reportutil/` carries a non-empty doc
+   comment. CI
    invokes it via `go test ./tests/coverage/... -run TestGodocCoverage`
    in the matrix `test` job, and `scripts/hooks/pre-push-constitution-
    guard.sh` runs the same target locally when the push touches Go
@@ -664,8 +696,8 @@ is the only line of defence:
    pre-push hook scans for `import "C"` and for `//go:build cgo`),
    no new `net/http`, `net.Dial`, or `http.Get` / `http.Post` /
    `http.NewRequest` / `http.Client{}` lands in `cmd/`, `parse/`,
-   `model/`, `render/`, or `findings/` (Principle IX, pre-push hook
-   greps the diff), and no `os.Create` / `os.Mkdir` / `os.MkdirAll` /
+   `model/`, `render/`, `findings/`, or `reportutil/` (Principle IX,
+   pre-push hook greps the diff), and no `os.Create` / `os.Mkdir` / `os.MkdirAll` /
    `os.Rename` / `os.Remove` / `os.RemoveAll` / `os.WriteFile` /
    `ioutil.WriteFile` lands in `parse/` or `cmd/` (Principle II,
    pre-push hook greps the diff). All three halves now block the
@@ -698,7 +730,8 @@ is the only line of defence:
 9. **[MECHANICAL]** No governed first-party source-code file exceeds
    1000 lines (Principle XV). Enforced by
    `tests/coverage/file_size_test.go`, which scans tracked source files
-   and fails with every offending path and line count. Raw fixtures,
+   including Go, JavaScript, TypeScript, CSS, shell, PowerShell, and HTML
+   implementation files, and fails with every offending path and line count. Raw fixtures,
    references, specs, docs, JSON data, generated dependency lockfiles,
    golden snapshots, vendored third-party/minified assets under vendor-style
    directories, and explicitly allowlisted bundled third-party minified
@@ -707,7 +740,7 @@ is the only line of defence:
 
 The MECHANICAL / REVIEW split documents what the repo enforces with code
 today, not the strictness of each gate — every gate is equally
-non-negotiable for a merge. As of v1.6.1 only gate 7 (Principle XIII
+non-negotiable for a merge. As of v1.6.2 only gate 7 (Principle XIII
 canonical code path) remains [REVIEW]; a future amendment may convert
 it once a duplicate-implementation scan is designed. The constitution
 does not require that conversion, but the absence of mechanical teeth
@@ -745,4 +778,4 @@ invocation via the Constitution Check gate. Runtime development guidance
 and feature-local `plan.md` / `quickstart.md` files and MUST defer to this
 constitution when conflicts arise.
 
-**Version**: 1.6.1 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-05-04
+**Version**: 1.6.2 | **Ratified**: 2026-04-21 | **Last Amended**: 2026-05-05

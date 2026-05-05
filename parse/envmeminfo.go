@@ -23,34 +23,17 @@ const (
 	mCoreAll = (1 << 7) - 1
 )
 
-// ParseEnvMeminfo extracts the scalar fields used by the Environment
-// panel from a raw -meminfo file contents string.
-//
-// The file is the concatenation of one or more /proc/meminfo dumps
-// separated by `TS <epoch> …` boundary lines. Each sample is scanned
-// INDEPENDENTLY; keys from different samples are never mixed.
-//
-// Selection (newest-first):
-//  1. Prefer a sample where every core /proc/meminfo field (MemTotal,
-//     MemFree, MemAvailable, Buffers, Cached, SwapTotal, SwapFree)
-//     was observed, regardless of its value. This guards against a
-//     last sample truncated shortly after MemTotal — otherwise
-//     missing-past-truncation fields would read as 0 and the render
-//     would confidently misreport e.g. a machine as swapless.
-//  2. Otherwise, fall back to the newest sample with MemTotal set.
-//  3. Otherwise, return the newest sample with any tracked key, or
-//     nil when the input contains nothing usable.
-//
-// Never returns an error: malformed or empty input yields nil, which
-// the template renders as "—".
-func ParseEnvMeminfo(content string) *model.EnvMeminfo {
-	data, _ := ParseEnvMeminfoWithDiagnostics(content, "")
-	return data
-}
-
 // ParseEnvMeminfoWithDiagnostics extracts environment meminfo fields
 // and reports every compatibility fallback used while selecting a
-// sample. The returned EnvMeminfo matches ParseEnvMeminfo exactly.
+// sample.
+//
+// The file is the concatenation of one or more /proc/meminfo dumps
+// separated by `TS <epoch> ...` boundary lines. Each sample is scanned
+// independently; keys from different samples are never mixed.
+//
+// Selection is newest-first: prefer a complete core sample, otherwise
+// use the newest partial sample with MemTotal, otherwise use the
+// newest sample with any tracked key. Empty input returns nil.
 func ParseEnvMeminfoWithDiagnostics(content string, sourcePath string) (*model.EnvMeminfo, []model.Diagnostic) {
 	type sample struct {
 		data *model.EnvMeminfo

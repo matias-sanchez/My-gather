@@ -36,11 +36,11 @@ func TestAgentContextFeaturePointersStayAligned(t *testing.T) {
 	for name, text := range map[string]string{"AGENTS.md": agents, "CLAUDE.md": claude} {
 		block := speckitBlock(t, text)
 		if strings.Contains(block, "No active feature.") {
-			if pointer.FeatureDirectory != "specs/003-feedback-backend-worker" {
-				t.Fatalf("%s says no active feature but .specify/feature.json = %q, want specs/003-feedback-backend-worker", name, pointer.FeatureDirectory)
+			if pointer.FeatureDirectory != "specs/013-full-compliance-fixes" {
+				t.Fatalf("%s says no active feature but .specify/feature.json = %q, want specs/013-full-compliance-fixes", name, pointer.FeatureDirectory)
 			}
-			if !strings.Contains(block, "latest shipped feature is **003-feedback-backend-worker**") {
-				t.Fatalf("%s no-active block must name 003-feedback-backend-worker as latest shipped", name)
+			if !strings.Contains(block, "latest shipped feature is **013-full-compliance-fixes**") {
+				t.Fatalf("%s no-active block must name 013-full-compliance-fixes as latest shipped", name)
 			}
 			continue
 		}

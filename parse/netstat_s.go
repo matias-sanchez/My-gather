@@ -93,7 +93,12 @@ func parseNetstatS(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*
 		if m := reTimestampLine.FindStringSubmatch(line); m != nil {
 			flush()
 			sawTS = true
-			curTS = epochToTime(m[1], snapshotStart)
+			var ok bool
+			curTS, ok = epochToTime(m[1], snapshotStart)
+			if !ok {
+				addDiag(lineNum, model.SeverityWarning,
+					"netstat_s: malformed TS epoch; using snapshot start")
+			}
 			curVals = map[string]float64{}
 			continue
 		}

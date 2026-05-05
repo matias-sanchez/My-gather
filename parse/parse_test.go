@@ -143,6 +143,12 @@ MemFree:        11000000 kB
 	if !found {
 		t.Fatalf("expected env meminfo fallback diagnostic on Collection, got %+v", c.Diagnostics)
 	}
+	if c.EnvMeminfo == nil {
+		t.Fatal("expected Discover to populate typed EnvMeminfo")
+	}
+	if c.EnvMeminfo.MemAvailableKB != 28222432 {
+		t.Fatalf("EnvMeminfo.MemAvailableKB = %d, want 28222432", c.EnvMeminfo.MemAvailableKB)
+	}
 }
 
 // TestSizeBoundTotalExceeded — FR-025: collection total exceeds limit.
