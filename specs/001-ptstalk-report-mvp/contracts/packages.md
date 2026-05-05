@@ -289,7 +289,8 @@ func Render(w io.Writer, c *model.Collection, opts RenderOptions) error
 type RenderOptions struct {
     // GeneratedAt is rendered into the report header. When omitted,
     // Render derives it from the first non-zero Snapshot timestamp in
-    // the input, falling back to the Unix epoch for an empty collection.
+    // the input. If no snapshot timestamp is known, the header renders
+    // an explicit "unknown" marker instead of a fabricated date.
     GeneratedAt time.Time
 
     // Version is the tool's reported version string (semver).

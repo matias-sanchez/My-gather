@@ -85,7 +85,7 @@ func deterministicGeneratedAt(c *model.Collection) time.Time {
 			return snap.Timestamp.UTC()
 		}
 	}
-	return time.Unix(0, 0).UTC()
+	return time.Time{}
 }
 
 // --- Internal view construction ---------------------------------------------

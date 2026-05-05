@@ -68,9 +68,13 @@ func formatFloat(v float64, precision int) string {
 }
 
 // formatTimestamp renders a time as RFC-3339 in UTC with nanosecond
-// precision stripped to seconds. All rendered timestamps flow through
-// this helper.
+// precision stripped to seconds. A zero timestamp is rendered as an
+// explicit unknown marker so summary-only captures do not display a
+// misleading fabricated date.
 func formatTimestamp(t time.Time) string {
+	if t.IsZero() {
+		return "unknown"
+	}
 	return t.UTC().Format(time.RFC3339)
 }
 

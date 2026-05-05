@@ -292,6 +292,30 @@ func TestZeroGeneratedAtIsDeterministic(t *testing.T) {
 	}
 }
 
+func TestZeroGeneratedAtWithNoSnapshotTimestampRendersUnknown(t *testing.T) {
+	c := &model.Collection{
+		RootPath: "/tmp/summary-only",
+		Snapshots: []*model.Snapshot{
+			{
+				Prefix:      "unknown",
+				SourceFiles: map[model.Suffix]*model.SourceFile{},
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := render.Render(&buf, c, render.RenderOptions{Version: "v0.0.1-test"}); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, `<span class="k">generated</span> <span class="v">unknown</span>`) {
+		t.Fatalf("zero GeneratedAt without snapshot timestamp did not render unknown marker")
+	}
+	if strings.Contains(out, "1970-01-01") {
+		t.Fatalf("zero GeneratedAt rendered misleading Unix epoch")
+	}
+}
+
 // TestGeneratedAtIsOnlyDiff: FR-006 — explicit different GeneratedAt
 // values differ only in the Report generated at line.
 func TestGeneratedAtIsOnlyDiff(t *testing.T) {
