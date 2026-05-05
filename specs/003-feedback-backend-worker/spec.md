@@ -41,7 +41,7 @@ A support engineer opens the rendered report, clicks "Report feedback", types ti
 
 ### User Story 2 — Image and voice attachments land in the issue body (Priority: P2)
 
-A support engineer pastes a screenshot (image on clipboard) and records a 10-second voice note. Submit. The resulting issue on GitHub contains both: the image rendered inline, the voice note as a clearly-labelled clickable link to the audio file.
+A support engineer pastes a screenshot (image on clipboard) and records a 10-second voice note. Submit. The resulting issue on GitHub contains both: the image rendered inline, and a clearly labelled voice-note section with the audio URL on its own line.
 
 **Why this priority**: text-only Submit already delivers real value (P1). Attachments are the "much better" that justifies building this backend.
 
