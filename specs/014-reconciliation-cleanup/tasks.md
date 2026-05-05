@@ -50,5 +50,5 @@
 - [x] T016 Run the constitution guard in CI mode.
 - [x] T017 Run canonical-path and source-size searches and summarize results in
   `contracts/audit.md`.
-- [ ] T018 Commit, push, open PR, trigger review, fix review findings, and leave
+- [x] T018 Commit, push, open PR, trigger review, fix review findings, and leave
   PR ready.

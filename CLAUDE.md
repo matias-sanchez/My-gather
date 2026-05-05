@@ -13,7 +13,6 @@ its implementation artifacts remain available here:
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
-- **014-reconciliation-cleanup** - `specs/014-reconciliation-cleanup/plan.md`
 - **013-full-compliance-fixes** - `specs/013-full-compliance-fixes/plan.md`
 - **012-repo-alignment-audit** - `specs/012-repo-alignment-audit/plan.md`
 - **011-constitution-canonical-path-alignment** - constitution-only change; no `specs/011-*` directory
