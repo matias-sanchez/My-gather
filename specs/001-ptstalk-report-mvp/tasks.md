@@ -199,7 +199,7 @@ All tasks write paths relative to the repository root.
 - [x] T076 [US4] Implement the mysqladmin interactive toggle in `render/assets/app.js` — multi-select change event toggles chart series visibility; persist selected-variables state via the same `Report.ReportID`-keyed `localStorage` scheme as collapse state (research R9).
 - [x] T077 [US4] Implement uPlot chart wiring for DB subviews in `render/assets/app.js` (extension of T053): processlist stacked chart, mysqladmin multi-series chart with boundary markers.
 
-**Checkpoint**: US1 + US2 + US3 + US4 complete. Every FR has an implementing task and a verifying test. A run against `testdata/example2/` produces a full-featured report.
+**Checkpoint**: US1 + US2 + US3 + US4 implementation is complete for the shipped report path. Later Phase 7/8 tasks below remain the canonical backlog for missing performance, memory, CLI, degradation, stderr, accessibility, UX-audit, and fixture/golden hardening.
 
 ---
 

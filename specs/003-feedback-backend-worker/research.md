@@ -41,10 +41,10 @@ R2 bucket is publicly readable. Privacy note: these assets *are* the user's feed
 
 ## R3: Rate-limiting — fixed window vs sliding window?
 
-**Decision**: **fixed window** keyed by `rl:<ipHash>:<UTC-hour>:<random>`. The deployed Worker writes a unique key per request under a per-IP / per-hour prefix and counts via `KV.list({prefix: "rl:<ipHash>:<UTC-hour>:"}).keys.length`. App ID is the salt for the IP hash. See `feedback-worker/src/ratelimit.ts`.
+**Decision**: **fixed window** keyed by `rl:<ipHash>:<UTC-hour>:<random>`. The deployed Worker writes a unique key per request under a per-IP / per-hour prefix, serializes same-prefix decisions inside the active Worker isolate, and counts via `KV.list({prefix: "rl:<ipHash>:<UTC-hour>:"}).keys.length`. App ID is the salt for the IP hash. See `feedback-worker/src/ratelimit.ts`.
 
 **Rationale**:
-- Sliding-window requires storing N timestamps per IP; fixed-window stores one counter — but a single shared counter would force read-modify-write under bursts, which KV does not serialize. Writing a unique random-suffixed key per request and counting via `list().keys.length` removes the read-modify-write race entirely.
+- Sliding-window requires storing N timestamps per IP; fixed-window stores one key per accepted request. A single shared counter would force read-modify-write under bursts, which KV does not serialize. Writing a unique random-suffixed key per request, serializing same-prefix local decisions, and counting via `list().keys.length` removes the local read-modify-write race entirely.
 - At our rate-limit threshold (5 / hour), the worst edge case of fixed-window is "a user gets 10 submits across a minute that spans :59 → :00". Not a problem for actual attack scenarios.
 - Each per-request key has a TTL just past the end of the current UTC hour, so KV self-cleans without an explicit sweep.
 

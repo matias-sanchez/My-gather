@@ -53,6 +53,26 @@ func TestHumanBytes(t *testing.T) {
 	}
 }
 
+func TestHumanIntOrDash(t *testing.T) {
+	cases := []struct {
+		name string
+		in   int64
+		want string
+	}{
+		{"zero", 0, "\u2013"},
+		{"small", 42, "42"},
+		{"large", 34679, "34,679"},
+		{"negative", -1234, "-1,234"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := HumanIntOrDash(tc.in); got != tc.want {
+				t.Fatalf("HumanIntOrDash(%d) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestReportLookups(t *testing.T) {
 	r := &model.Report{
 		DBSection: &model.DBSection{

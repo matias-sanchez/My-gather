@@ -135,7 +135,12 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 		if m := reTimestampLine.FindStringSubmatch(line); m != nil {
 			flush()
 			sawTS = true
-			curTS = epochToTime(m[1], snapshotStart)
+			var ok bool
+			curTS, ok = epochToTime(m[1], snapshotStart)
+			if !ok {
+				addDiag(lineNum, model.SeverityWarning,
+					"netstat: malformed TS epoch; using snapshot start")
+			}
 			curStates = map[string]int{}
 			continue
 		}
@@ -312,17 +317,21 @@ func parseNetstat(r io.Reader, snapshotStart time.Time, sourcePath string) ([]*m
 }
 
 // epochToTime parses a pt-stalk TS-line epoch token (e.g.
-// "1769702259.004572779") into a UTC time.Time. Falls back to the
-// supplied default on parse failure so callers can anchor a block
-// that carried a malformed header without losing the whole capture.
-func epochToTime(epoch string, fallback time.Time) time.Time {
+// "1769702259.004572779") into a UTC time.Time. The boolean return is
+// false when the supplied default was used.
+func epochToTime(epoch string, fallback time.Time) (time.Time, bool) {
 	v, err := strconv.ParseFloat(epoch, 64)
-	if err != nil {
-		return fallback
+	const maxUnixSeconds = float64(1<<63 - 1)
+	if err != nil || math.IsNaN(v) || math.IsInf(v, 0) || v < 0 || v > maxUnixSeconds {
+		return fallback, false
 	}
 	secs := int64(math.Floor(v))
 	ns := int64(math.Round((v - float64(secs)) * 1e9))
-	return time.Unix(secs, ns).UTC()
+	if ns >= 1e9 {
+		secs++
+		ns -= 1e9
+	}
+	return time.Unix(secs, ns).UTC(), true
 }
 
 // normalizeSSState maps an `ss`-style state token (e.g. "ESTAB",

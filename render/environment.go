@@ -139,7 +139,11 @@ func buildEnvironmentSection(c *model.Collection) *model.EnvironmentSection {
 		}
 	}
 	if s := contents["meminfo"]; s != "" {
-		if m := parse.ParseEnvMeminfo(s); m != nil {
+		// parse.Discover is the canonical owner for attaching meminfo
+		// diagnostics to the collection; render reuses the same parser
+		// path here to build the view model without keeping a quiet
+		// duplicate entry point.
+		if m, _ := parse.ParseEnvMeminfoWithDiagnostics(s, ""); m != nil {
 			host.Meminfo = m
 			populated = true
 		}

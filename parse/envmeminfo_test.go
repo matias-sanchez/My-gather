@@ -29,7 +29,7 @@ SwapFree:       33554428 kB
 HugePages_Total:       2
 AnonHugePages:   1100000 kB
 `
-	got := ParseEnvMeminfo(input)
+	got, _ := ParseEnvMeminfoWithDiagnostics(input, "test-env-meminfo")
 	if got == nil {
 		t.Fatalf("ParseEnvMeminfo returned nil")
 	}
@@ -48,7 +48,7 @@ AnonHugePages:   1100000 kB
 }
 
 func TestParseEnvMeminfo_EmptyReturnsNil(t *testing.T) {
-	if got := ParseEnvMeminfo(""); got != nil {
+	if got, _ := ParseEnvMeminfoWithDiagnostics("", "test-env-meminfo"); got != nil {
 		t.Errorf("empty input should yield nil; got %+v", got)
 	}
 }
@@ -70,7 +70,7 @@ AnonHugePages:   1000000 kB
 TS 1769702289.004572779 2026-01-29 15:58:09
 MemFree:        99999999 kB
 `
-	got := ParseEnvMeminfo(input)
+	got, _ := ParseEnvMeminfoWithDiagnostics(input, "test-env-meminfo")
 	if got == nil {
 		t.Fatalf("ParseEnvMeminfo returned nil")
 	}
@@ -102,7 +102,7 @@ TS 1769702289.004572779 2026-01-29 15:58:09
 MemTotal:       32654396 kB
 MemFree:        11000000 kB
 `
-	got := ParseEnvMeminfo(input)
+	got, _ := ParseEnvMeminfoWithDiagnostics(input, "test-env-meminfo")
 	if got == nil {
 		t.Fatalf("ParseEnvMeminfo returned nil")
 	}
@@ -170,7 +170,7 @@ SwapFree:              0 kB
 HugePages_Total:       0
 AnonHugePages:   1000000 kB
 `
-	got := ParseEnvMeminfo(input)
+	got, _ := ParseEnvMeminfoWithDiagnostics(input, "test-env-meminfo")
 	if got == nil {
 		t.Fatalf("ParseEnvMeminfo returned nil")
 	}

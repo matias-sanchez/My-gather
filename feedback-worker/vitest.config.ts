@@ -1,10 +1,13 @@
-import { defineConfig } from "vitest/config";
+import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
 
-// Unit tests run in the default node pool — pure/ish validators,
-// hand-mocked KV / fetch. No Workers runtime needed.
-export default defineConfig({
+export default defineWorkersConfig({
   test: {
     include: ["test/**/*.test.ts"],
-    environment: "node",
+    pool: "@cloudflare/vitest-pool-workers",
+    poolOptions: {
+      workers: {
+        wrangler: { configPath: "./wrangler.toml" },
+      },
+    },
   },
 });

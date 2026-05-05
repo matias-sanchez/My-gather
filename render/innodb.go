@@ -1,9 +1,10 @@
 package render
 
 import (
-	"fmt"
+	"strconv"
 
 	"github.com/matias-sanchez/My-gather/model"
+	"github.com/matias-sanchez/My-gather/reportutil"
 )
 
 // aggregateInnoDBMetrics rolls every per-snapshot InnoDB scalar up
@@ -106,7 +107,7 @@ func buildAHIMetric(snaps []model.SnapshotInnoDB) innoDBMetricView {
 			Max:              "–",
 			AHIFormula:       true,
 			AHIFormulaText:   "hash / (hash + non-hash)",
-			AHIHashTableSize: formatThousands(hashTblSize),
+			AHIHashTableSize: reportutil.HumanIntOrDash(int64(hashTblSize)),
 			AHIHasHashTable:  hashTblSize > 0,
 			AHINoActivity:    true,
 		}
@@ -138,25 +139,9 @@ func buildAHIMetric(snaps []model.SnapshotInnoDB) innoDBMetricView {
 		AHIWorstHash:     formatFloat(worst.hash, 2),
 		AHIWorstNonHash:  formatFloat(worst.nonHash, 2),
 		AHIWorstRatio:    formatFloat(worst.ratio, 1),
-		AHIHashTableSize: formatThousands(hashTblSize),
+		AHIHashTableSize: reportutil.HumanIntOrDash(int64(hashTblSize)),
 		AHIHasHashTable:  hashTblSize > 0,
 	}
-}
-
-func formatThousands(n int) string {
-	if n == 0 {
-		return "–"
-	}
-	s := fmt.Sprintf("%d", n)
-	// Insert commas every 3 digits from the right.
-	var out []byte
-	for i, c := range []byte(s) {
-		if i > 0 && (len(s)-i)%3 == 0 {
-			out = append(out, ',')
-		}
-		out = append(out, c)
-	}
-	return string(out)
 }
 
 // attachSemaphoreBreakdown populates the Semaphores card with two
@@ -309,15 +294,15 @@ func attachPendingIOBreakdown(m *innoDBMetricView, snaps []model.SnapshotInnoDB)
 	}
 
 	m.PendingIO = &pendingIOView{
-		PeakReads:           formatThousands(peakReads),
-		PeakWrites:          formatThousands(peakWrites),
-		PeakFsyncs:          formatThousands(peakFsyncs),
-		PeakLRU:             formatThousands(peakLRU),
-		PeakFlushList:       formatThousands(peakFL),
-		PeakSinglePage:      formatThousands(peakSP),
-		PeakFsyncLog:        formatThousands(peakFsyncLog),
-		PeakFsyncBufferPool: formatThousands(peakFsyncBP),
-		PeakModifiedPages:   formatThousands(peakModified),
+		PeakReads:           reportutil.HumanIntOrDash(int64(peakReads)),
+		PeakWrites:          reportutil.HumanIntOrDash(int64(peakWrites)),
+		PeakFsyncs:          reportutil.HumanIntOrDash(int64(peakFsyncs)),
+		PeakLRU:             reportutil.HumanIntOrDash(int64(peakLRU)),
+		PeakFlushList:       reportutil.HumanIntOrDash(int64(peakFL)),
+		PeakSinglePage:      reportutil.HumanIntOrDash(int64(peakSP)),
+		PeakFsyncLog:        reportutil.HumanIntOrDash(int64(peakFsyncLog)),
+		PeakFsyncBufferPool: reportutil.HumanIntOrDash(int64(peakFsyncBP)),
+		PeakModifiedPages:   reportutil.HumanIntOrDash(int64(peakModified)),
 		PeakSnapshot:        peakWritesSnap,
 		HasLRU:              peakLRU > 0,
 		HasFlushList:        peakFL > 0,
@@ -361,9 +346,9 @@ func innoDBIntMetric(label, hint string, vals []int) innoDBMetricView {
 	return innoDBMetricView{
 		Label: label,
 		Hint:  hint,
-		Worst: fmt.Sprintf("%d", mx),
-		Min:   fmt.Sprintf("%d", mn),
+		Worst: strconv.Itoa(mx),
+		Min:   strconv.Itoa(mn),
 		Avg:   formatFloat(avg, 1),
-		Max:   fmt.Sprintf("%d", mx),
+		Max:   strconv.Itoa(mx),
 	}
 }

@@ -1,19 +1,21 @@
 <!-- SPECKIT START -->
-Active feature: **012-repo-alignment-audit**
+No active feature.
 
-For technologies, project structure, constitution gates, data model,
-contracts, and shell commands, read the current plan:
+The latest shipped feature is **013-full-compliance-fixes**. For reference,
+its implementation artifacts remain available here:
 
-- Plan: `specs/012-repo-alignment-audit/plan.md`
-- Spec: `specs/012-repo-alignment-audit/spec.md`
-- Research: `specs/012-repo-alignment-audit/research.md`
-- Data model: `specs/012-repo-alignment-audit/data-model.md`
-- Contracts: `specs/012-repo-alignment-audit/contracts/audit.md`
-- Quickstart: `specs/012-repo-alignment-audit/quickstart.md`
-- Tasks: `specs/012-repo-alignment-audit/tasks.md`
+- Plan: `specs/013-full-compliance-fixes/plan.md`
+- Spec: `specs/013-full-compliance-fixes/spec.md`
+- Research: `specs/013-full-compliance-fixes/research.md`
+- Contracts: `specs/013-full-compliance-fixes/contracts/audit.md`
+- Quickstart: `specs/013-full-compliance-fixes/quickstart.md`
+- Tasks: `specs/013-full-compliance-fixes/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
+- **013-full-compliance-fixes** - `specs/013-full-compliance-fixes/plan.md`
+- **012-repo-alignment-audit** - `specs/012-repo-alignment-audit/plan.md`
+- **011-constitution-canonical-path-alignment** - constitution-only change; no `specs/011-*` directory
 - **010-file-size-constitution** - `specs/010-file-size-constitution/plan.md`
 - **009-spec-code-reconciliation** - `specs/009-spec-code-reconciliation/plan.md`
 - **008-archive-input** - `specs/008-archive-input/plan.md`

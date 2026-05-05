@@ -67,7 +67,7 @@ The dialog picks its UI state (success, validation error, throttle, fallback) fr
 
 ### Cloudflare KV — `FEEDBACK_RATELIMIT`
 
-Each request writes its OWN unique key under a per-IP/per-hour prefix; the count is the number of keys returned by `KV.list({prefix})`. This avoids the read-modify-write race the prior counter pattern admitted (concurrent same-IP requests would read the same value and overwrite each other with the same `next`, silently allowing more than `LIMIT` submissions per window).
+Each request writes its OWN unique key under a per-IP/per-hour prefix; the count is the number of keys returned by `KV.list({prefix})`. Same-prefix decisions are serialized inside the active Worker isolate before the list/put pair runs. This avoids the read-modify-write race the prior counter pattern admitted (concurrent same-IP requests would read the same value and overwrite each other with the same `next`, silently allowing more than `LIMIT` submissions per window).
 
 Key format: `rl:<ipHash>:<UTC-hour>:<random-suffix>`
 - `<ipHash>` = `SHA-256(ip + GITHUB_APP_ID)` hex (32 bytes → 64 hex chars). The App ID is the per-deployment salt; never reveal IPs in logs.
@@ -82,7 +82,7 @@ Example: `rl:e3b0c44…:2026-04-26T08:7a91f3c2…` → `"1"`
 
 Limit: 5 entries per `<ipHash>:<hour>` prefix. The 6th request's `list()` sees 5 keys and returns `allowed: false` without writing a new entry.
 
-KV is eventually consistent (~100 ms global propagation); a short same-second burst can leak one or two extra writes before the count stabilises. Acceptable at a 5/hour limit; full linearisability would require Durable Objects (out of scope per Principle X — minimal infra surface).
+KV is eventually consistent (~100 ms global propagation); the in-isolate prefix lock covers concurrent submissions handled by one isolate, but a short same-second burst routed across multiple isolates can still leak one or two extra writes before the count stabilises. Acceptable at a 5/hour limit; full linearisability would require Durable Objects (out of scope per Principle X — minimal infra surface).
 
 ### Cloudflare KV — `FEEDBACK_IDEMP`
 

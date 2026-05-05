@@ -71,6 +71,15 @@ func HumanInt(n int64) string {
 	return out.String()
 }
 
+// HumanIntOrDash renders a signed integer with comma group separators,
+// or an en dash when the value is zero.
+func HumanIntOrDash(n int64) string {
+	if n == 0 {
+		return "\u2013"
+	}
+	return HumanInt(n)
+}
+
 // HumanBytes renders a byte count using binary units.
 func HumanBytes(v float64) string {
 	const (

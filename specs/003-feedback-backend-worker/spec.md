@@ -13,7 +13,7 @@ Resolved before starting this spec via interactive conversation:
 - **Backend**: Cloudflare Workers (free tier). Chosen over Lambda/Vercel/others because: (a) no cold-start at the scale expected, (b) no credit card required, (c) Durable Objects / KV provide simple rate-limiting primitives, (d) familiar TypeScript surface.
 - **GitHub credential**: a GitHub App installed in `matias-sanchez/My-gather` with `Issues: write` permission. Preferred over a PAT because: (a) Apps can be revoked per-installation, (b) tokens are short-lived (1h) and generated per-request, (c) audit trail on GitHub shows the App author on each issue.
 - **Attachments**: image + voice inline in the issue body via GitHub's markdown (images as base64 data URIs are rejected by GitHub; we upload to a Worker-managed R2 bucket and link). See `research.md` R2 for the rejected alternatives.
-- **Fallback when Worker is down**: the report silently falls back to the current `window.open` pre-fill URL flow from feature 002. No user-visible error states about "backend unavailable" — just a degraded path that still delivers value.
+- **Fallback when Worker is down**: the report falls back to the current `window.open` pre-fill URL flow from feature 002 and shows a small neutral fallback note. There is no blocking error state about "backend unavailable" — just a visible degraded path that still delivers value.
 - **Constitution impact**: introduces runtime network from the report. The Principle IX named exception that authorises this was ratified in constitution v1.3.0 (2026-04-24, already on main) and remains present in the current constitution.
 
 ## Clarifications (2026-04-26)
@@ -110,7 +110,7 @@ The Worker validates every incoming payload using the canonical feedback contrac
 - **FR-006**: On success, the Worker MUST return `{ok: true, issueUrl: "https://github.com/...", issueNumber: <number>}`. On failure, `{ok: false, error: "<code>", message: "<human-readable>"}`. Both `issueUrl` and `issueNumber` are required on success — the dialog uses `issueNumber` to render `#NN` in the success-state link, and the pair lets the maintainer correlate Tail logs (which carry `issue_number`) with the actual GitHub issue. The Worker-side idempotency KV cache is described in FR-012 + data-model.md and is server-only — `issueNumber` is not used to build it.
 - **FR-007**: The dialog MUST display a success state inline on `ok: true` response, containing the issue URL as a visible clickable link. It MUST NOT auto-close the dialog — the user dismisses it.
 - **FR-008**: On any non-OK response from the Worker (500, 503, 504, network error, timeout > 15s on the browser side), the dialog MUST fall back to the feature-002 `window.open(prefillURL, "_blank", "noopener,noreferrer")` flow with the same pre-fill URL (which itself includes `labels=user-feedback,needs-triage` so the fallback issue lands in the same triage bucket as Worker-posted ones), and surface a small neutral note about the fallback.
-- **FR-009**: The Worker MUST rate-limit by IP at 5 requests per fixed UTC-hour window. A sixth request returns HTTP 429 with `Retry-After` header. Implementation via Cloudflare KV with TTL keyed `rl:<ip>:<hour>` (see research R3 for the fixed-vs-sliding decision).
+- **FR-009**: The Worker MUST rate-limit by hashed IP at 5 requests per fixed UTC-hour window. A sixth request returns HTTP 429 with `Retry-After` header. Implementation via Cloudflare KV writes one bounded request key per accepted attempt under `rl:<ipHash>:<UTC-hour>:<random>`, serializes same-prefix decisions within the active Worker isolate, and counts keys by prefix (see research R3 for the fixed-vs-sliding decision).
 - **FR-010**: The Worker MUST validate payload limits: title ≤ 200 chars, body ≤ 10 KB UTF-8, image ≤ 5 MB, voice ≤ 15 MiB decoded (15,728,640 bytes). Violations return HTTP 400.
 - **FR-011**: CORS: the Worker MUST respond with `Access-Control-Allow-Origin: *` (or allowlist), `Access-Control-Allow-Methods: POST, OPTIONS, GET` (POST for `/feedback`, GET for `/health` cross-origin polling, OPTIONS for preflight), and handle `OPTIONS` preflight. Reports opened from `file://` have origin `null` — the Worker MUST accept this.
 - **FR-012**: The Worker MUST include an idempotency check: requests with the same `idempotencyKey` within 5 minutes that produced a successful issue return the cached `{ok: true, issueUrl, issueNumber}` response instead of creating a duplicate.
@@ -122,7 +122,7 @@ The Worker validates every incoming payload using the canonical feedback contrac
 ### Key Entities
 
 - **Feedback payload**: in-transit JSON `{title, body, category, image, voice, idempotencyKey, reportVersion}`. Never persisted.
-- **Rate-limit record**: KV entry `rl:<ip>:<hour>` → count. TTL 1 hour. Never contains user content. (Key shape matches FR-009 and data-model.md.)
+- **Rate-limit record**: KV entries under `rl:<ipHash>:<UTC-hour>:` with one random-suffixed key per request. Same-prefix list/put decisions are serialized inside the active Worker isolate. TTL 1 hour. Never contains user content. (Key shape matches FR-009 and data-model.md.)
 - **Idempotency record**: KV entry `idem:<idempotency-key>` → `{issueUrl, issueNumber}`. TTL 5 minutes. Contains only the resulting URL + number, not the original payload.
 - **GitHub App credentials**: App ID, Installation ID, and Private Key stored as Cloudflare Worker Secrets. Never in code, never in logs.
 
@@ -131,9 +131,9 @@ The Worker validates every incoming payload using the canonical feedback contrac
 ### Measurable Outcomes
 
 - **SC-001**: 95% of successful Submits complete within 3 seconds end-to-end (click to success-state-visible) on a broadband connection.
-- **SC-002**: With Worker down, 100% of Submits fall back to `window.open` cleanly (no error UI confusing the user; no data loss).
+- **SC-002**: With Worker down, 100% of Submits fall back to `window.open` cleanly with a small neutral fallback note and no data loss.
 - **SC-003**: Rate-limit rejection rate under normal usage (5 submits per user per hour budget) is < 1%. Under a simulated attack (100 submits/min from same IP), 100% of requests above the limit return HTTP 429 within 50ms.
-- **SC-004**: Monthly Cloudflare cost target is **$0** on the free tier. The Workers paid tier ($5/month) is acceptable iff (a) the deploy-time CPU measurement (research R9, tasks T029) shows >9 ms isolate CPU per request and (b) the KV-cached installation-token mitigation is also unable to bring it under budget; in that case the success criterion shifts to "≤ $5/month, documented in the deploy commit message". Monthly GitHub cost: $0. Any Cloudflare cost >$5 OR any GitHub cost >$0 raises an alarm in the dashboard.
+- **SC-004**: Monthly Cloudflare cost target is **$0** on the free tier. Smoke issues and Worker observability must show no CPU-exhaustion errors under normal use. If future `wrangler tail` sampling shows >9 ms median isolate CPU per request, apply the research R9 mitigation ladder before accepting paid-tier operation. Monthly GitHub cost: $0. Any Cloudflare cost >$5 OR any GitHub cost >$0 raises an alarm in the dashboard.
 - **SC-005**: Zero secrets in the shipped binary or generated HTML. Verified by grep of the release artifact for known patterns (`ghp_`, `github_pat_`, `ghs_`, PEM markers).
 - **SC-006**: First-click adoption: within the first month after ship, at least 50% of Submits succeed via the Worker path (not the fallback). Measures whether the feature is working in practice.
 
