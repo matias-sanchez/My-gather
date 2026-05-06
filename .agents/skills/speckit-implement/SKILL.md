@@ -5,7 +5,7 @@ argument-hint: "Optional implementation guidance or task filter"
 compatibility: "Requires spec-kit project structure with .specify/ directory"
 metadata:
   author: "github-spec-kit"
-  source: "templates/commands/implement.md"
+  source: "repo-local-speckit-skill/implement"
 user-invocable: true
 disable-model-invocation: false
 ---

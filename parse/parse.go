@@ -202,8 +202,7 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 		}
 		if entry.IsDir() {
 			// Sub-directories (e.g., "samples/") are not walked in v1;
-			// the seven supported collectors live at the root of a
-			// pt-stalk dump.
+			// the supported collectors live at the root of a pt-stalk dump.
 			continue
 		}
 		fi, err := entry.Info()
@@ -288,7 +287,7 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 
 	// Group matches by snapshot prefix. Only snapshots that contain at
 	// least one recognised Suffix contribute SourceFiles entries; the
-	// seven supported suffixes are defined in model.KnownSuffixes. Other
+	// supported suffixes are defined in model.KnownSuffixes. Other
 	// suffixes (hostname, disk-space, sysctl, …) are silently skipped
 	// in v1.
 	knownSuffixes := make(map[string]model.Suffix, len(model.KnownSuffixes))

@@ -64,6 +64,70 @@ func TestRenderEmptyReport(t *testing.T) {
 	}
 }
 
+func TestRenderUnsupportedCollectorStates(t *testing.T) {
+	c := minimalCollection()
+	snap := c.Snapshots[0]
+	snap.SourceFiles[model.SuffixIostat] = &model.SourceFile{
+		Suffix: model.SuffixIostat,
+		Path:   "/tmp/example/2026_04_21_16_52_11-iostat",
+		Status: model.ParseUnsupported,
+	}
+	snap.SourceFiles[model.SuffixVariables] = &model.SourceFile{
+		Suffix: model.SuffixVariables,
+		Path:   "/tmp/example/2026_04_21_16_52_11-variables",
+		Status: model.ParseUnsupported,
+	}
+	snap.SourceFiles[model.SuffixInnodbStatus] = &model.SourceFile{
+		Suffix: model.SuffixInnodbStatus,
+		Path:   "/tmp/example/2026_04_21_16_52_11-innodbstatus1",
+		Status: model.ParseUnsupported,
+	}
+
+	var buf bytes.Buffer
+	opts := render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}
+	if err := render.Render(&buf, c, opts); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	out := buf.String()
+	for _, want := range []string{
+		"Unsupported pt-stalk version",
+		"2026_04_21_16_52_11-iostat",
+		"2026_04_21_16_52_11-variables",
+		"2026_04_21_16_52_11-innodbstatus1",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("unsupported collector render missing %q", want)
+		}
+	}
+}
+
+func TestRenderInnoDBScalarCalloutsUseHumanIntFormatting(t *testing.T) {
+	c := minimalCollection()
+	snap := c.Snapshots[0]
+	snap.SourceFiles[model.SuffixInnodbStatus] = &model.SourceFile{
+		Suffix: model.SuffixInnodbStatus,
+		Path:   "/tmp/example/2026_04_21_16_52_11-innodbstatus1",
+		Status: model.ParseOK,
+		Parsed: &model.InnodbStatusData{
+			SemaphoreCount:    12345,
+			PendingReads:      23456,
+			HistoryListLength: 34567,
+		},
+	}
+
+	var buf bytes.Buffer
+	opts := render.RenderOptions{GeneratedAt: fixedTime(), Version: "v0.0.1-test"}
+	if err := render.Render(&buf, c, opts); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	out := buf.String()
+	for _, want := range []string{"12,345", "23,456", "34,567"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("InnoDB callout missing human-formatted value %q", want)
+		}
+	}
+}
+
 // TestAdvisorCardRenders exercises the end-to-end path from a
 // Collection containing mysqladmin data through the findings engine
 // and into the rendered HTML. It asserts that the severity-filter

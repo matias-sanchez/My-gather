@@ -5,7 +5,7 @@ argument-hint: "Optional focus areas for analysis"
 compatibility: "Requires spec-kit project structure with .specify/ directory"
 metadata:
   author: "github-spec-kit"
-  source: "templates/commands/analyze.md"
+  source: "repo-local-speckit-skill/analyze"
 user-invocable: true
 disable-model-invocation: false
 ---

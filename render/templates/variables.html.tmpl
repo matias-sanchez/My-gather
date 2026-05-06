@@ -41,6 +41,8 @@
       {{- end }}
       </tbody>
     </table>
+    {{- else if .UnsupportedSource }}
+    <p class="banner missing">Unsupported pt-stalk version — <code>{{.UnsupportedSource}}</code> could not be parsed as a supported <code>-variables</code> format.</p>
     {{- else }}
     <p class="banner missing">Data not available — <code>-variables</code> was missing or unparseable for this snapshot.</p>
     {{- end }}

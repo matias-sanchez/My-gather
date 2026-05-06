@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Env } from "../src/env";
+import { feedbackContract } from "../src/feedback-contract";
 import worker from "../src/index";
 
 class FakeKV {
@@ -107,6 +108,110 @@ function feedbackRequest(
     }),
   });
 }
+
+function minimalFeedbackRequest(idempotencyKey: string): Request {
+  return new Request("https://worker.test/feedback", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "CF-Connecting-IP": "203.0.113.9",
+    },
+    body: JSON.stringify({
+      title: "Parser feedback",
+      body: "Please inspect this sample.",
+      idempotencyKey,
+      reportVersion: "v0.3.1-test",
+    }),
+  });
+}
+
+describe("feedback Worker route handling", () => {
+  it("returns health metadata on /health", async () => {
+    const res = await worker.fetch(new Request("https://worker.test/health"), mkEnv(new FakeR2()));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ ok: true, version: "0.1.0" });
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("returns JSON 404 for unknown routes", async () => {
+    const res = await worker.fetch(new Request("https://worker.test/nope"), mkEnv(new FakeR2()));
+
+    expect(res.status).toBe(404);
+    expect(await res.json()).toMatchObject({ ok: false, error: "not_found" });
+  });
+
+  it("rejects malformed JSON through the /feedback fetch route", async () => {
+    const res = await worker.fetch(
+      new Request("https://worker.test/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{",
+      }),
+      mkEnv(new FakeR2()),
+    );
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ ok: false, error: "malformed_payload" });
+  });
+
+  it("rejects oversized requests before parsing JSON", async () => {
+    const res = await worker.fetch(
+      new Request("https://worker.test/feedback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": String(feedbackContract.limits.requestMaxBytes + 1),
+        },
+        body: "{}",
+      }),
+      mkEnv(new FakeR2()),
+    );
+
+    expect(res.status).toBe(413);
+    expect(await res.json()).toMatchObject({ ok: false, error: "payload_too_large" });
+  });
+
+  it("replays completed idempotency responses at the route level", async () => {
+    const env = mkEnv(new FakeR2());
+    await env.FEEDBACK_IDEMP.put(
+      "idem:33333333-3333-4333-8333-333333333333",
+      JSON.stringify({
+        status: "done",
+        issueUrl: "https://github.com/matias-sanchez/My-gather/issues/333",
+        issueNumber: 333,
+      }),
+    );
+
+    const res = await worker.fetch(
+      minimalFeedbackRequest("33333333-3333-4333-8333-333333333333"),
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      ok: true,
+      issueUrl: "https://github.com/matias-sanchez/My-gather/issues/333",
+      issueNumber: 333,
+    });
+  });
+
+  it("returns duplicate_inflight for reserved idempotency keys at the route level", async () => {
+    const env = mkEnv(new FakeR2());
+    await env.FEEDBACK_IDEMP.put(
+      "idem:44444444-4444-4444-8444-444444444444",
+      JSON.stringify({ status: "inflight" }),
+    );
+
+    const res = await worker.fetch(
+      minimalFeedbackRequest("44444444-4444-4444-8444-444444444444"),
+      env,
+    );
+
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ ok: false, error: "duplicate_inflight" });
+  });
+});
 
 describe("feedback Worker shared response headers", () => {
   it("returns no-store on CORS preflight responses", async () => {

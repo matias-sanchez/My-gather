@@ -19,7 +19,8 @@ Always, in this order:
    - If empty, use: `git diff origin/main...HEAD` (commits on the current branch not yet on `main`).
    - If still empty, use: `git diff HEAD` (unstaged working-tree changes).
    - Also run `git status --short` and `git log --oneline origin/main..HEAD` to understand the change's scope.
-3. Active feature context from `CLAUDE.md` (`Active feature:` line) and then:
+3. Active feature context from `.specify/feature.json`, cross-checked against
+   the SPECKIT block in `CLAUDE.md`, and then:
    - `specs/<active-feature>/plan.md`
    - `specs/<active-feature>/spec.md`
    - `specs/<active-feature>/tasks.md`
@@ -70,7 +71,7 @@ Produce exactly one report in this shape. Match the taxonomy used in recent comm
 
 **Scope:** <one line — what the change does>
 **Diff size:** <N files, +X / -Y lines>
-**Active feature:** <from CLAUDE.md>
+**Active feature:** <from .specify/feature.json and CLAUDE.md>
 
 ## P1 — blocks merge
 - <path>:<line> — <one-line finding>. Principle <roman>. Fix: <one-line fix>.
@@ -106,7 +107,7 @@ Produce exactly one report in this shape. Match the taxonomy used in recent comm
 - **No false P1s.** P1 is "blocks merge" and costs a full cycle. Reserve it for constitution violations you are confident about. Ambiguous ≠ P1; put ambiguous things in P2 and mark them as such.
 - **Do not rewrite the code.** Suggest the fix in one line. The user fixes; you review.
 - **Do not run destructive commands.** Read-only bash only (`git diff`, `git log`, `git status`, `go vet`, `go test`). Never `git push`, `git commit`, `git reset`, `go test -update`, or anything that touches goldens.
-- **Report meta-issues.** If the active feature in `CLAUDE.md` doesn't match the current branch name, or if `plan.md` references files that don't exist, call it out under "Meta" at the top of the report — it often explains downstream findings.
+- **Report meta-issues.** If `.specify/feature.json`, `CLAUDE.md`, and the current branch name do not agree on the active feature, or if `plan.md` references files that don't exist, call it out under "Meta" at the top of the report — it often explains downstream findings.
 - **Check Principle XIII explicitly.** Diff the change for deletions: if a function was replaced, confirm the old function is gone. Grep for the old identifier in the rest of the repo — if it still exists, that's a P1.
 - **When in doubt, ask the constitution, not your priors.** This repo is opinionated; other Go repos aren't. Don't port conventions from elsewhere.
 

@@ -1,8 +1,6 @@
 package render
 
 import (
-	"strconv"
-
 	"github.com/matias-sanchez/My-gather/model"
 	"github.com/matias-sanchez/My-gather/reportutil"
 )
@@ -346,9 +344,9 @@ func innoDBIntMetric(label, hint string, vals []int) innoDBMetricView {
 	return innoDBMetricView{
 		Label: label,
 		Hint:  hint,
-		Worst: strconv.Itoa(mx),
-		Min:   strconv.Itoa(mn),
+		Worst: reportutil.HumanInt(int64(mx)),
+		Min:   reportutil.HumanInt(int64(mn)),
 		Avg:   formatFloat(avg, 1),
-		Max:   strconv.Itoa(mx),
+		Max:   reportutil.HumanInt(int64(mx)),
 	}
 }

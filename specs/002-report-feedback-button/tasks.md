@@ -154,8 +154,8 @@ This is a Go library-first project. Paths are rooted at the repo root (`/Users/m
 
 ### Implementation for User Story 5
 
-- [ ] T029 [US5] In `render/assets/app.js`, add Record/Stop UI handlers. Record: `navigator.mediaDevices.getUserMedia({audio:true})`, `new MediaRecorder(stream)`, subscribe to `dataavailable`. On Stop or 120s cap, concatenate chunks, store as `draft.voiceBlob`, render an `<audio controls>` + Remove control. Revoke stream tracks (`track.stop()`).
-- [ ] T030 [US5] Elapsed-time counter: drive via `requestAnimationFrame`, not `setInterval`. Format as `M:SS / 2:00`.
+- [ ] T029 [US5] In `render/assets/app.js`, add Record/Stop UI handlers. Record: `navigator.mediaDevices.getUserMedia({audio:true})`, `new MediaRecorder(stream)`, subscribe to `dataavailable`. On Stop or 10-minute cap, concatenate chunks, store as `draft.voiceBlob`, render an `<audio controls>` + Remove control. Revoke stream tracks (`track.stop()`).
+- [ ] T030 [US5] Elapsed-time counter: drive via `requestAnimationFrame`, not `setInterval`. Format as `M:SS / 10:00`.
 - [ ] T031 [US5] Extend submit handler: if `draft.voiceBlob` is non-null, create `<a href="<object URL>" download="feedback-voice-<crypto.randomUUID().slice(0,8)>.<ext>">`, append to the document, `.click()`, `remove()`. Extension is `webm` or `mp4` based on `draft.voiceBlob.type`.
 - [ ] T032 [US5] Microphone-permission denial: catch the `getUserMedia` rejection, render an inline error in `.feedback-attachments`, re-enable the Record button so the user can retry after changing browser permission.
 - [ ] T033 [US5] Extend `.feedback-hint` logic from T027: when voice is attached, append "Voice note will be downloaded — drag it into GitHub's body." When both image and voice are attached, show both lines (FR-019).

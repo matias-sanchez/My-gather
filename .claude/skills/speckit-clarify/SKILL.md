@@ -5,7 +5,7 @@ argument-hint: "Optional areas to clarify in the spec"
 compatibility: "Requires spec-kit project structure with .specify/ directory"
 metadata:
   author: "github-spec-kit"
-  source: "templates/commands/clarify.md"
+  source: "repo-local-speckit-skill/clarify"
 user-invocable: true
 disable-model-invocation: false
 ---

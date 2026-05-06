@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-ptstalk-report-mvp`
 **Created**: 2026-04-21
-**Status**: Draft
+**Status**: Shipped with tracked backlog
 **Input**: User description: "Parse a pt-stalk output directory and emit a minimal self-contained HTML report. Exercises parse/, model/, render/ end-to-end, proves determinism and the embedded-assets pipeline, and gives every subsequent parser a golden-test home to plug into. The original MVP requested OS usage, Variables, and Database usage; the current shipped report has five top-level sections: Environment, OS Usage, Variables, Database Usage, and Advisor. Source files: -iostat, -top, -variables, -vmstat, -innodbstatus1, -mysqladmin, -processlist."
 
 ## Clarifications
@@ -46,22 +46,23 @@ all present and the document renders with working charts.
 
 **Acceptance Scenarios**:
 
-1. **Given** a pt-stalk output directory containing all seven source
-   files (`-iostat`, `-top`, `-variables`, `-vmstat`, `-innodbstatus1`,
-   `-mysqladmin`, `-processlist`), **When** the engineer runs the tool
+1. **Given** a pt-stalk output directory containing all supported source
+   files (`-iostat`, `-top`, `-variables`, `-vmstat`, `-meminfo`,
+   `-innodbstatus1`, `-mysqladmin`, `-processlist`, `-netstat`, and
+   `-netstat_s`), **When** the engineer runs the tool
    against that directory, **Then** the tool writes one self-contained
    `.html` file to the path the engineer specifies, and opening it in a
   browser with no network access shows the five top-level sections with all
    graphs and tables rendered.
-2. **Given** a pt-stalk output directory where some of the seven source
+2. **Given** a pt-stalk output directory where some supported source
    files are missing or empty, **When** the engineer runs the tool,
    **Then** the report still renders, each section corresponding to a
    missing input displays an explicit "data not available" banner naming
    the file that was missing, and the tool exits with a zero status code.
 3. **Given** the same input directory, **When** the engineer runs the
    tool twice in a row, **Then** both runs produce byte-identical HTML
-   output (modulo a single explicit "generated at" timestamp the report
-   itself labels as non-deterministic).
+   output. The default "Report generated at" timestamp is derived
+   deterministically from the input collection.
 
 ---
 
@@ -244,10 +245,11 @@ matching their respective golden files.
   runtime variables, time-stamped) is the highest-signal slice
   for a support engineer opening a fresh capture under pressure.
   (Principle XI).
-- **FR-006**: For a given input directory, two consecutive runs of the
-  tool MUST produce byte-identical output files, except for a single
-  "Report generated at" timestamp that the report explicitly labels as
-  non-deterministic.
+- **FR-006**: For a given input directory and the same render options, two
+  consecutive runs of the tool MUST produce byte-identical output files. The
+  default `Report generated at` value is derived deterministically from input
+  data; tests that pass different explicit `RenderOptions.GeneratedAt` values
+  may differ only on that labelled line.
 - **FR-007**: If any recognised source file is missing, empty, or
   unparseable, the corresponding subview MUST render a visible "data not
   available" banner naming the missing file; the tool MUST NOT abort
@@ -312,7 +314,7 @@ matching their respective golden files.
 - **FR-020**: If the input directory is recognised as a pt-stalk
   collection (contains at least one timestamped pt-stalk file OR a
   `pt-summary.out` / `pt-mysql-summary.out` file) but contains none of
-  the seven source files this feature parses, the tool MUST still
+  the supported source files this feature parses, the tool MUST still
   render a report — every section shows its "data not available"
   banner — and MUST exit 0. The "not recognised at all" case (no
   timestamped files AND no summary file) is covered by FR-019 /
@@ -605,8 +607,8 @@ matching their respective golden files.
   file, location (byte offset or line), severity, human-readable
   message.
 - **Report**: The top-level rendered document. Attributes: generated-at
-  timestamp (the only explicitly non-deterministic field), tool version,
-  Collection, list of rendered Sections.
+  timestamp (derived deterministically from input data unless an explicit render
+  option is supplied), tool version, Collection, list of rendered Sections.
 
 ## Success Criteria *(mandatory)*
 
@@ -718,8 +720,9 @@ matching their respective golden files.
 - "Interactive" in FR-015 means a chart whose variable selection is
   implemented in the embedded JavaScript bundled into the report; no
   server component ever runs at view-time.
-- The report's "Report generated at" timestamp is the only
-  non-deterministic field the rendered HTML is allowed to contain;
+- The report's "Report generated at" timestamp is deterministic in normal CLI
+  output and is the only rendered field allowed to vary when a test or library
+  caller supplies different explicit render options;
   anything else that could vary between runs (map iteration, goroutine
   ordering, float formatting, generated IDs) will be normalised at
   render boundaries.

@@ -92,7 +92,16 @@ done
 if printf '%s\n' "$CHANGED" | grep -qx 'go.mod'; then
   NEW_REQUIRES="$(git diff "$RANGE" -- go.mod 2>/dev/null | awk '/^\+[[:space:]]*[a-zA-Z0-9._\/-]+[[:space:]]+v[0-9]/ && !/^\+\+\+/')"
   if [ -n "$NEW_REQUIRES" ]; then
-    ACTIVE_FEATURE="$(grep -m1 '^Active feature:' CLAUDE.md 2>/dev/null | sed -E 's/.*\*\*([^*]+)\*\*.*/\1/' || true)"
+    ACTIVE_FEATURE=""
+    if [ -f .specify/feature.json ]; then
+      FEATURE_DIR="$(sed -n 's/.*"feature_directory"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' .specify/feature.json | head -1)"
+      if [ -n "$FEATURE_DIR" ]; then
+        ACTIVE_FEATURE="${FEATURE_DIR##*/}"
+      fi
+    fi
+    if [ -z "$ACTIVE_FEATURE" ]; then
+      ACTIVE_FEATURE="$(grep -m1 '^Active feature:' CLAUDE.md 2>/dev/null | sed -E 's/.*\*\*([^*]+)\*\*.*/\1/' || true)"
+    fi
     PLAN=""
     if [ -n "$ACTIVE_FEATURE" ]; then
       PLAN="specs/${ACTIVE_FEATURE}/plan.md"

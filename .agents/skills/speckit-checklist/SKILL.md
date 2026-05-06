@@ -5,7 +5,7 @@ argument-hint: "Domain or focus area for the checklist"
 compatibility: "Requires spec-kit project structure with .specify/ directory"
 metadata:
   author: "github-spec-kit"
-  source: "templates/commands/checklist.md"
+  source: "repo-local-speckit-skill/checklist"
 user-invocable: true
 disable-model-invocation: false
 ---

@@ -32,10 +32,10 @@
 ## Notes
 
 - Validation run 1 (2026-04-21): all items pass.
-- Scope is intentionally bounded to seven source-file suffixes (see
-  Assumptions). Additional pt-stalk collectors are deferred to later
-  features.
-- The only acceptable source of non-determinism in the rendered report is
-  the "Report generated at" timestamp (FR-006, Assumptions, SC-003).
+- Scope is intentionally bounded to the supported source-file suffixes
+  declared in the spec assumptions. Additional pt-stalk collectors are
+  deferred to later features.
+- The default "Report generated at" timestamp is deterministic in normal
+  rendering (FR-006, Assumptions, SC-003).
 - Items marked incomplete require spec updates before `/speckit.clarify`
   or `/speckit.plan`.
