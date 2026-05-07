@@ -2,6 +2,7 @@ package render
 
 import (
 	"bytes"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -179,7 +180,7 @@ func TestThemingLightSeriesAreDistinct(t *testing.T) {
 	}
 	seen := make(map[string]int, 16)
 	for slot := 1; slot <= 16; slot++ {
-		needle := "--series-" + itoa(slot) + ":"
+		needle := "--series-" + strconv.Itoa(slot) + ":"
 		idx := strings.Index(block, needle)
 		if idx < 0 {
 			t.Fatalf("--series-%d not present in light block", slot)
@@ -214,7 +215,7 @@ func TestThemingOkabeItoPalette(t *testing.T) {
 	// Positions 1-8 = Okabe-Ito; positions 9-16 = same colors cycled.
 	for slot := 1; slot <= 16; slot++ {
 		want := okabe[(slot-1)%len(okabe)]
-		needle := "--series-" + itoa(slot) + ":"
+		needle := "--series-" + strconv.Itoa(slot) + ":"
 		idx := strings.Index(block, needle)
 		if idx < 0 {
 			t.Errorf("--series-%d not present in colorblind block", slot)
@@ -232,22 +233,6 @@ func TestThemingOkabeItoPalette(t *testing.T) {
 			t.Errorf("colorblind --series-%d = %q; want %q (Okabe-Ito)", slot, val, want)
 		}
 	}
-}
-
-// itoa is a tiny dependency-free integer formatter. Using it keeps
-// this test from importing strconv just for two-digit decimals.
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	var buf [4]byte
-	i := len(buf)
-	for n > 0 {
-		i--
-		buf[i] = byte('0' + n%10)
-		n /= 10
-	}
-	return string(buf[i:])
 }
 
 // TestThemingSeriesColorsArrayRemoved — regression guard against
