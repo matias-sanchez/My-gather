@@ -279,6 +279,78 @@ func TestProcesslistStackedDimensionLegendStats(t *testing.T) {
 	}
 }
 
+// TestMountLegendStatsConditionalOnStatsSource is a regression guard for
+// PR #59 review finding (Copilot, 00.js:764): the legend rendering used
+// to unconditionally append the `series-pill-stats` markup defaulting to
+// "–", but `setStats()` is a no-op when `opts.statsSource` is omitted.
+// Result: charts that don't wire statsSource showed permanent em-dashes
+// in pill stat slots that would never get populated. The fix gates the
+// markup append on `statsSource` so non-numeric legends get a clean pill
+// and only stats-aware callers render the slot. This test asserts the
+// canonical guard is present inside `mountLegend`.
+func TestMountLegendStatsConditionalOnStatsSource(t *testing.T) {
+	app := embeddedAppJS
+	idx := strings.Index(app, "function mountLegend(")
+	if idx < 0 {
+		t.Fatalf("mountLegend not found in embedded app JS")
+	}
+	end := strings.Index(app[idx:], "\n  function ")
+	if end < 0 {
+		end = len(app) - idx
+	}
+	body := app[idx : idx+end]
+	// The pill stats markup must be gated by a `statsSource ?` ternary so
+	// it is omitted (not just empty) when the caller did not wire stats.
+	statsMarkupIdx := strings.Index(body, "series-pill-stats")
+	if statsMarkupIdx < 0 {
+		t.Fatalf("mountLegend body missing series-pill-stats markup")
+	}
+	// Look for the canonical guard `(statsSource\n          ?` immediately
+	// preceding the markup. Substring check for `statsSource` within a
+	// short window before the markup is sufficient to assert the guard
+	// without depending on exact whitespace.
+	prelude := body[:statsMarkupIdx]
+	lastGuard := strings.LastIndex(prelude, "statsSource")
+	if lastGuard < 0 || statsMarkupIdx-lastGuard > 200 {
+		t.Fatalf("series-pill-stats markup is not gated on statsSource within mountLegend (PR #59 Copilot regression: empty pills appear when statsSource is omitted)")
+	}
+	// The statsByIdx capture must also be gated so we don't allocate
+	// references to elements that don't exist.
+	if !strings.Contains(body, "if (statsSource) {\n        statsByIdx[String(i)] = {") {
+		t.Fatalf("statsByIdx capture is not gated on statsSource (PR #59 Copilot regression: querySelector against non-existent elements)")
+	}
+}
+
+// TestStackedChartStatsSourceUsesUnbucketedSeries is a regression guard
+// for PR #59 review finding (Codex P1, 01.js:201): buildStackedChart
+// built statsSeries from the bucketized `series` (length n_buckets) but
+// wired data.timestamps (length n_samples) into statsSource. The
+// computeWindowedStats helper indexes by timestamps, so once the user
+// zoomed beyond the first n_buckets indexes it read mostly undefined
+// values and Min/Avg/Max collapsed to "–". The fix iterates over
+// `data.series` (the un-bucketed raw values, aligned to data.timestamps)
+// per the chart-sync contract §1 (rawSeries semantics).
+func TestStackedChartStatsSourceUsesUnbucketedSeries(t *testing.T) {
+	app := embeddedAppJS
+	idx := strings.Index(app, "function buildStackedChart(")
+	if idx < 0 {
+		t.Fatalf("buildStackedChart not found in embedded app JS")
+	}
+	end := strings.Index(app[idx:], "\n  function ")
+	if end < 0 {
+		end = len(app) - idx
+	}
+	body := app[idx : idx+end]
+	// Canonical wiring: iterate over data.series (un-bucketed raw),
+	// matching data.timestamps.
+	if !strings.Contains(body, "for (var sk = data.series.length - 1; sk >= 0; sk--)") {
+		t.Fatalf("buildStackedChart statsSeries loop must iterate over data.series (un-bucketed) — PR #59 Codex P1 regression: bucketed series mis-aligned with data.timestamps")
+	}
+	if !strings.Contains(body, "data.series[sk].values") {
+		t.Fatalf("buildStackedChart statsSeries must pull values from data.series[sk] (un-bucketed) — PR #59 Codex P1 regression")
+	}
+}
+
 // TestHLLSparklineExemptFromSync preserves the canonical opt-out: the
 // HLL sparkline must NOT call registerChart, so it is never reached by
 // the chart-sync broadcaster or the windowed-stats subscriber.

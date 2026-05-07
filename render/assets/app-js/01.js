@@ -190,11 +190,13 @@
     plot.__rawData = plotRawByIdx; // consumed by updateTooltipOnCursor
     // Stats are computed against the un-stacked, un-bucketed RAW values
     // (data.series), not the cumulative `stacked[]` arrays uPlot
-    // draws. The pill order matches the REVERSE of `series`, so build
-    // an aligned source array in the same reverse order.
+    // draws — and not the bucketed `series` either, whose values array
+    // is shorter than `data.timestamps`. The pill order matches the
+    // REVERSE of `data.series`, so build an aligned source array in
+    // the same reverse order using the raw timeline.
     var statsSeries = [];
-    for (var sk = series.length - 1; sk >= 0; sk--) {
-      statsSeries.push({ label: series[sk].label, values: series[sk].values });
+    for (var sk = data.series.length - 1; sk >= 0; sk--) {
+      statsSeries.push({ label: data.series[sk].label, values: data.series[sk].values });
     }
     registerChart(plot, el, opts, {
       timestamps: data.timestamps,

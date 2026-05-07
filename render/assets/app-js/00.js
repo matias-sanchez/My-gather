@@ -753,9 +753,9 @@
   //   - opts.statsSource: { timestamps, series } — the data each pill's
   //     Min · Avg · Max stat is computed against. Stacked charts pass
   //     the un-stacked raw values here; line charts pass the same data
-  //     they plotted. When omitted no stats render (kept omitted only
-  //     by callers that have no per-series numeric data, e.g. would-be
-  //     decorative-only legends).
+  //     they plotted. When omitted the per-pill stats span is NOT
+  //     rendered, so non-numeric legends get a clean pill instead of
+  //     leftover "–" placeholders.
   //
   // Returns { setStats(win), destroy() } so the chart-sync subscriber
   // can recompute on every shared-store window change and the vmstat
@@ -799,19 +799,27 @@
       btn.className = "series-pill" + (startsActive ? " active" : "");
       btn.setAttribute("data-idx", String(i));
       btn.title = "Click to show only this series (solo) · Shift/Cmd-click to toggle just this series · Click a soloed pill again to restore all";
+      // The pill stats span is appended ONLY when statsSource is wired
+      // — empty "–" placeholders that setStats can never populate would
+      // look broken. Single canonical guard for the markup AND the
+      // statsByIdx capture below.
       btn.innerHTML =
         '<span class="swatch" style="background:' + s.stroke + '"></span>' +
         '<span class="lbl">' + escapeHTML(s.label) + '</span>' +
-        '<span class="series-pill-stats" data-stats="min-avg-max">' +
-          '<span class="series-pill-stat-min">–</span>' +
-          '<span class="series-pill-stat-avg">–</span>' +
-          '<span class="series-pill-stat-max">–</span>' +
-        '</span>';
-      statsByIdx[String(i)] = {
-        min: btn.querySelector(".series-pill-stat-min"),
-        avg: btn.querySelector(".series-pill-stat-avg"),
-        max: btn.querySelector(".series-pill-stat-max"),
-      };
+        (statsSource
+          ? '<span class="series-pill-stats" data-stats="min-avg-max">' +
+              '<span class="series-pill-stat-min">–</span>' +
+              '<span class="series-pill-stat-avg">–</span>' +
+              '<span class="series-pill-stat-max">–</span>' +
+            '</span>'
+          : '');
+      if (statsSource) {
+        statsByIdx[String(i)] = {
+          min: btn.querySelector(".series-pill-stat-min"),
+          avg: btn.querySelector(".series-pill-stat-avg"),
+          max: btn.querySelector(".series-pill-stat-max"),
+        };
+      }
       btn.addEventListener("click", function (ev) {
         var idx = Number(btn.getAttribute("data-idx"));
         var additive = ev.shiftKey || ev.metaKey || ev.ctrlKey;
