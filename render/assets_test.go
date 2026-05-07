@@ -365,29 +365,41 @@ func TestHLLSparklineExemptFromSync(t *testing.T) {
 		end = len(app) - idx
 	}
 	body := app[idx : idx+end]
-	if strings.Contains(body, "registerChart(") {
-		t.Fatalf("renderHLLSparkline must not call registerChart — that is the canonical opt-out from chart sync")
+	// Strip line comments so explanatory mentions of `registerChart()`
+	// in prose do not register as call sites. The check is for an
+	// actual call, not the literal substring.
+	for _, line := range strings.Split(body, "\n") {
+		code := line
+		if i := strings.Index(code, "//"); i >= 0 {
+			code = code[:i]
+		}
+		if strings.Contains(code, "registerChart(") {
+			t.Fatalf("renderHLLSparkline must not call registerChart — that is the canonical opt-out from chart sync")
+		}
 	}
 }
 
-// TestEmbeddedAppJSHasIIFEClosed asserts the outer IIFE that wraps
-// the embedded JS opens exactly once (in 00.js) and closes exactly
-// once (now at the bottom of 05.js). A missing close would leave the
-// browser parser unhappy; a duplicate close would mean a part landed
-// outside the IIFE.
+// TestEmbeddedAppJSHasIIFEClosed asserts every top-level IIFE in
+// the embedded JS opens and closes — opens-count must equal
+// closes-count, and the bundle must end with `})();`. The chart
+// helper IIFE (00.js → 05.js) and the theme module IIFE (06.js)
+// are independent top-level wrappers; both must be balanced.
 func TestEmbeddedAppJSHasIIFEClosed(t *testing.T) {
 	app := embeddedAppJS
-	if strings.Count(app, "(function () {\n  \"use strict\";") != 1 {
-		t.Fatalf("expected exactly one outer IIFE opener in embedded app JS")
-	}
-	// The outer IIFE close is the only `})();` at column 0 (no leading
-	// indent). Inner IIFEs (e.g. the chart-sync store factory) close
-	// with `  })();` (indented).
 	if !strings.HasSuffix(strings.TrimRight(app, "\n"), "\n})();") {
-		t.Fatalf("expected outer IIFE close `})();` at start of last non-blank line in embedded app JS")
+		t.Fatalf("expected an IIFE close `})();` at start of the last non-blank line in embedded app JS")
 	}
-	if strings.Count(app, "\n})();") != 1 {
-		t.Fatalf("expected exactly one outer (column-0) IIFE close in embedded app JS")
+	useStrictOpens := strings.Count(app, "(function () {\n  \"use strict\";")
+	if useStrictOpens < 1 {
+		t.Fatalf("expected at least one strict-mode IIFE opener in embedded app JS")
+	}
+	opens := strings.Count(app, "\n(function () {")
+	closes := strings.Count(app, "\n})();")
+	if opens != closes {
+		t.Fatalf("top-level IIFE opens (%d) and closes (%d) must match", opens, closes)
+	}
+	if opens < 1 {
+		t.Fatalf("expected at least one top-level IIFE in embedded app JS")
 	}
 }
 
