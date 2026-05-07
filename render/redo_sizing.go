@@ -236,6 +236,33 @@ type redoSampleBlock struct {
 	SkipFirst bool
 }
 
+// blockLeftBoundIdx returns the timestamp index that anchors the left
+// edge of the wall-clock interval covered by a block's included
+// deltas. This is the canonical span-derivation helper shared by both
+// the average-rate observed-seconds accumulator and the rolling-peak
+// fallback span; routing both call sites through it keeps the math
+// canonical (Principle XIII).
+//
+// For the first block (SkipFirst == true) the cold-start tally at
+// startIdx is excluded, so the first INCLUDED delta is at startIdx+1
+// and covers the interval (timestamps[startIdx], timestamps[startIdx+1]];
+// the block's left bound is therefore timestamps[startIdx].
+//
+// For every post-boundary block (SkipFirst == false) the raw tally was
+// already stripped by model.MergeMysqladminData (it appends a NaN
+// boundary slot and then src[1:]), so the first INCLUDED delta at
+// startIdx covers the interval (timestamps[startIdx-1], timestamps[startIdx]];
+// the block's left bound is therefore timestamps[startIdx-1]. By
+// construction such a block always has startIdx >= 1 because the NaN
+// boundary at startIdx-1 was inserted before src[1:] was appended; the
+// startIdx <= 0 clamp below is defensive insurance only.
+func blockLeftBoundIdx(b redoSampleBlock) int {
+	if b.SkipFirst || b.startIdx <= 0 {
+		return b.startIdx
+	}
+	return b.startIdx - 1
+}
+
 // readObservedRedoRate scans the Innodb_os_log_written counter
 // time-series in the captured mysqladmin data and returns:
 //
@@ -326,7 +353,7 @@ func readObservedRedoRate(m *model.MysqladminData) (
 			continue
 		}
 		anyData = true
-		span := m.Timestamps[b.endIdx-1].Sub(m.Timestamps[b.startIdx]).Seconds()
+		span := m.Timestamps[b.endIdx-1].Sub(m.Timestamps[blockLeftBoundIdx(b)]).Seconds()
 		if span <= 0 {
 			continue
 		}
@@ -390,7 +417,7 @@ func computeRollingPeak(
 		if b.endIdx-b.startIdx < 2 {
 			continue
 		}
-		span := timestamps[b.endIdx-1].Sub(timestamps[b.startIdx]).Seconds()
+		span := timestamps[b.endIdx-1].Sub(timestamps[blockLeftBoundIdx(b)]).Seconds()
 		if span > longest {
 			longest = span
 		}
@@ -430,7 +457,11 @@ func computeRollingPeak(
 		// the rolling sum; this matches the SkipFirst rule above and
 		// the per-block startIdx semantics for subsequent blocks
 		// (startIdx is the post-NaN index whose previous slot is the
-		// NaN boundary, never used as a window edge).
+		// NaN boundary, never used as a window edge). Note that the
+		// initial sumStart-1 here equals blockLeftBoundIdx(b) by
+		// construction (startI is startIdx+1 for SkipFirst blocks and
+		// startIdx otherwise); both paths express the same canonical
+		// span-derivation invariant.
 		sumStart := startI
 		sumBytes := 0.0
 		for i := startI; i < endI; i++ {

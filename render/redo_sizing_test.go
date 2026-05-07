@@ -558,3 +558,105 @@ func TestComputeRedoSizing_MultiBlock_PostBoundaryFirstSampleIncluded(t *testing
 			v.PeakRateBytesPerSec, wantPeak)
 	}
 }
+
+// TestComputeRedoSizing_MultiBlock_PostBoundarySpanLeftBound is the
+// regression test for the post-boundary span-derivation fix. The
+// average-rate observed-seconds accumulator and the rolling-peak
+// fallback span both anchor a post-boundary block's left edge at
+// timestamps[startIdx-1] (the snapshot-boundary timestamp) because
+// model.MergeMysqladminData's NaN+src[1:] append makes the included
+// delta at startIdx cover (timestamps[startIdx-1], timestamps[startIdx]].
+// A naive implementation that anchors at timestamps[startIdx] biases
+// both the observed-seconds denominator (under-counted) and the peak
+// fallback span (under-counted) downward, biasing both rates upward.
+//
+// Setup: a synthetic two-block series tuned so the post-boundary
+// block dominates and a one-step left-bound shift is a meaningful
+// fraction of total observed-seconds. Block A holds only the
+// cold-start tally plus one finite delta (1 MiB over 10 s). The NaN
+// boundary follows. Block B holds 6 finite deltas of 1 MiB each at
+// a 10 s step. With the correct math:
+//
+//   - Block A span = 10 s, contributes 1 MiB.
+//   - Block B span = ts[end-1] - ts[startIdx-1] = 6 * 10 = 60 s,
+//     contributes 6 MiB.
+//   - ObservedAvg = 7 MiB / 70 s = 104 857.6 B/s.
+//   - longest block = 60 s, window collapses to 60 s, label
+//     "available 60-second", peak walk over Block B yields
+//     6 MiB / 60 s = 104 857.6 B/s.
+//
+// A naive implementation that anchors Block B at ts[startIdx]
+// instead would compute span_B = 50 s, yielding ObservedAvg
+// ≈ 122 137 B/s and Peak (window collapsed to 50 s)
+// ≈ 104 857.6 B/s but with a "available 50-second" label. The peak
+// label and the observed-average value are both discriminating.
+func TestComputeRedoSizing_MultiBlock_PostBoundarySpanLeftBound(t *testing.T) {
+	const oneMiB = 1 << 20
+	const stepSeconds = 10
+	r := makeRedoReport(t, vars57(1<<30, 16), nil, 1)
+	if r.DBSection == nil {
+		t.Fatal("setup: expected DBSection")
+	}
+	// Total samples: 2 (Block A) + 1 (NaN boundary) + 6 (Block B) = 9.
+	const blockA = 2
+	const blockB = 6
+	n := blockA + 1 + blockB
+	ts := make([]time.Time, n)
+	base := time.Date(2026, 5, 7, 12, 0, 0, 0, time.UTC)
+	for i := 0; i < n; i++ {
+		ts[i] = base.Add(time.Duration(i*stepSeconds) * time.Second)
+	}
+	series := make([]float64, n)
+	// Block A: index 0 raw cold-start tally (skipped), index 1 a real
+	// 1 MiB delta covering ts[0]..ts[1] = 10 s.
+	series[0] = 999_999_999
+	series[1] = oneMiB
+	// NaN boundary at index 2.
+	series[2] = math.NaN()
+	// Block B: 6 real 1 MiB deltas at indices 3..8. The first one at
+	// index 3 covers (ts[2], ts[3]] per MergeMysqladminData's
+	// NaN+src[1:] convention; its left bound is ts[2].
+	for i := blockA + 1; i < n; i++ {
+		series[i] = oneMiB
+	}
+	r.DBSection.Mysqladmin = &model.MysqladminData{
+		SampleCount:        n,
+		Timestamps:         ts,
+		Deltas:             map[string][]float64{"Innodb_os_log_written": series},
+		IsCounter:          map[string]bool{"Innodb_os_log_written": true},
+		SnapshotBoundaries: []int{0, blockA + 1},
+		VariableNames:      []string{"Innodb_os_log_written"},
+	}
+
+	v := computeRedoSizing(r)
+	if v == nil {
+		t.Fatal("expected non-nil view")
+	}
+	if v.State != "ok" {
+		t.Fatalf("State = %q, want ok", v.State)
+	}
+	// Block A: 1 MiB over 10 s. Block B: 6 MiB over 60 s. Total
+	// 7 MiB over 70 s = 104 857.6 B/s.
+	const wantAvg = float64(oneMiB) * 7 / 70
+	if math.Abs(v.ObservedRateBytesPerSec-wantAvg) > wantAvg*0.001 {
+		t.Fatalf("ObservedRateBytesPerSec = %.4f, want %.4f "+
+			"(post-boundary block left bound must be timestamps[startIdx-1])",
+			v.ObservedRateBytesPerSec, wantAvg)
+	}
+	// Longest block is Block B at 60 s; window collapses to 60 s.
+	if math.Abs(v.PeakWindowSeconds-60.0) > 1e-9 {
+		t.Fatalf("PeakWindowSeconds = %.3f, want 60.000 "+
+			"(post-boundary block fallback span must be 60 s)",
+			v.PeakWindowSeconds)
+	}
+	if v.PeakWindowLabel != "available 60-second" {
+		t.Fatalf("PeakWindowLabel = %q, want %q",
+			v.PeakWindowLabel, "available 60-second")
+	}
+	// Peak = 6 MiB / 60 s = 104 857.6 B/s.
+	const wantPeak = float64(oneMiB) * 6 / 60
+	if math.Abs(v.PeakRateBytesPerSec-wantPeak) > wantPeak*0.001 {
+		t.Fatalf("PeakRateBytesPerSec = %.4f, want %.4f",
+			v.PeakRateBytesPerSec, wantPeak)
+	}
+}

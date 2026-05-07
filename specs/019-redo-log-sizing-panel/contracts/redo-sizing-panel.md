@@ -116,6 +116,19 @@ type redoSizingView struct {
      on the next sample. Negative deltas are clamped to 0 (a reset
      is not a write of negative bytes); this also defends against
      any other counter-reset scenario.
+
+   **Per-block observed-seconds left bound**: each block's
+   contribution to `observed_seconds` is `timestamps[endIdx-1] -
+   timestamps[leftBoundIdx]`, where `leftBoundIdx` is derived by the
+   canonical `blockLeftBoundIdx` helper. For the first block the
+   left bound is `timestamps[startIdx]` because the cold-start tally
+   at `startIdx` is excluded from the sum. For every post-boundary
+   block the left bound is `timestamps[startIdx-1]` (the
+   snapshot-boundary timestamp): `model.MergeMysqladminData`'s
+   `NaN+src[1:]` append makes the first INCLUDED delta at `startIdx`
+   cover the interval `(timestamps[startIdx-1], timestamps[startIdx]]`,
+   so the observed-seconds denominator MUST include that interval to
+   match the bytes counted into the numerator.
 5. **Rolling-window peak**: `PeakRateBytesPerSec` is the maximum, over
    every contiguous block of samples, of `bytes_in_window /
    actual_window_seconds` for windows whose `actual_window_seconds`
@@ -128,6 +141,18 @@ type redoSizingView struct {
    boundaries) split blocks; a window may not span a NaN slot.
    The cold-start tally skip and negative-delta clamp from item 4
    apply here as well.
+
+   **Fallback longest-block span**: when no block reaches the target
+   window, the rolling-window walk collapses to a single fixed
+   window equal in length to the longest block. The longest-block
+   span is measured as `timestamps[endIdx-1] -
+   timestamps[blockLeftBoundIdx(b)]`, the same canonical
+   span-derivation used by the observed-seconds accumulator in
+   item 4. For a post-boundary block this means the fallback span
+   anchors at `timestamps[startIdx-1]` (the snapshot-boundary
+   timestamp), not `timestamps[startIdx]`, so the wall-clock window
+   reflects the interval actually covered by the block's first
+   included delta.
 6. **Window collapse**: If the longest contiguous block is shorter than
    900 seconds, `PeakWindowSeconds` is set to the longest block's
    duration in seconds and `PeakWindowLabel` reflects the actual
