@@ -65,6 +65,37 @@ func TestOSSubviewAnchors(t *testing.T) {
 		"Report.Navigation missing href=\"#%s\"; SC-005 requires every OS subview anchor to be reachable from the nav rail")
 }
 
+// TestOSTopChartCaption asserts the clarifying caption above the
+// "Top CPU processes" chart renders when -top data is present and is
+// gated by the same `HasTop` condition as the chart container itself.
+//
+// The caption is the user-visible side of the mysqld pin in
+// render/concat.go::concatTop. If a future change drops the caption
+// the user can no longer learn from the report that mysqld is always
+// included; if a future change shows the caption when no chart
+// renders the caption becomes false advertising. This test pins both
+// halves.
+func TestOSTopChartCaption(t *testing.T) {
+	const captionText = "Showing the top 3 processes by average CPU. mysqld is always included, even when it is not in the top 3."
+
+	withTop := renderGolden(t, model.SuffixIostat, model.SuffixTop, model.SuffixVmstat,
+		model.SuffixNetstat, model.SuffixNetstatS)
+	osWithTop := extractDetailsSection(t, withTop, "sec-os")
+	if !strings.Contains(osWithTop, captionText) {
+		t.Errorf("OS section missing top-chart caption %q. The caption is the user-facing promise that mysqld is always included; without it the chart is silently confusing.", captionText)
+	}
+	if got := strings.Count(osWithTop, captionText); got != 1 {
+		t.Errorf("OS section contains caption %d times, want exactly 1 (caption must have a single canonical home)", got)
+	}
+
+	withoutTop := renderGolden(t, model.SuffixIostat, model.SuffixVmstat,
+		model.SuffixNetstat, model.SuffixNetstatS)
+	osWithoutTop := extractDetailsSection(t, withoutTop, "sec-os")
+	if strings.Contains(osWithoutTop, captionText) {
+		t.Errorf("OS section shows top-chart caption when -top data is absent; caption must share the chart's `HasTop` gate")
+	}
+}
+
 // assertAnchorsContained asserts that every anchor in `anchors`
 // appears inside `content` when formatted through `marker` (e.g.
 // `id="%s"` or `href="#%s"`). Extracted so both halves of

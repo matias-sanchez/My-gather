@@ -36,6 +36,7 @@
       <span class="stat"><span class="k">samples</span> <span class="v">{{.SampleCount}}</span></span>
     </div>
     {{- end }}
+    <p class="chart-caption">Showing the top 3 processes by average CPU. mysqld is always included, even when it is not in the top 3.</p>
     <div class="chart" id="chart-top" data-chart="top" aria-label="Top 3 CPU-consuming processes over time"></div>
     <noscript><p class="banner">Charts require JavaScript. Raw top data is embedded in the page.</p></noscript>
     {{- else if index .Unsupported "-top" }}
