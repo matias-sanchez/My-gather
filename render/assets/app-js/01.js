@@ -154,7 +154,12 @@
     var plotData = [bucketed.timestamps.slice()];
     var plotRawByIdx = [null];
     for (var k = series.length - 1; k >= 0; k--) {
-      var stroke = SERIES_COLORS[k % SERIES_COLORS.length];
+      // Series stroke flows from the canonical --series-N CSS tokens
+      // via the helper exported from app-js/00.js. __themeIdx +
+      // __themeFillBuilder let the runtime theme-change handler
+      // re-resolve this stack segment's stroke and matching alpha-tint
+      // fill without a full chart rebuild.
+      var stroke = seriesStrokeFor(k);
       plotSeries.push({
         label: series[k].label,
         stroke: stroke,
@@ -163,6 +168,8 @@
         paths: stackedPath,
         points: { show: false },
         value: function (u, v) { return v == null ? "–" : v.toLocaleString(); },
+        __themeIdx: k,
+        __themeFillBuilder: function (s) { return hexToRgba(s, 0.85); },
       });
       plotData.push(stacked[k]);
       plotRawByIdx.push(tooltipRaw[k]);
@@ -537,7 +544,12 @@
         return out;
       });
       for (var k = seriesData.length - 1; k >= 0; k--) {
-        var stroke = SERIES_COLORS[k % SERIES_COLORS.length];
+        // Series stroke flows from the canonical --series-N CSS
+        // tokens via the helper exported from app-js/00.js.
+        // __themeIdx + __themeFillBuilder let the runtime theme-
+        // change handler re-resolve this bar's stroke and matching
+        // alpha-tint fill on theme switch.
+        var stroke = seriesStrokeFor(k);
         plotSeries.push({
           label: seriesData[k].label,
           stroke: stroke,
@@ -546,6 +558,8 @@
           paths: barsPath,
           points: { show: false },
           value: function (u, v) { return v == null ? "–" : v.toLocaleString(); },
+          __themeIdx: k,
+          __themeFillBuilder: function (s) { return hexToRgba(s, 0.95); },
         });
         plotData.push(stacked[k]);
         plotRawByIdx.push(tooltipRaw[k]);

@@ -1,18 +1,19 @@
 <!-- SPECKIT START -->
-Active feature: **015-compliance-closure**
+Active feature: **020-report-theming**
 
 For technologies, project structure, constitution gates, data model,
 contracts, and shell commands, read the current plan:
 
-- Plan: `specs/015-compliance-closure/plan.md`
-- Spec: `specs/015-compliance-closure/spec.md`
-- Research: `specs/015-compliance-closure/research.md`
-- Contracts: `specs/015-compliance-closure/contracts/audit.md`
-- Quickstart: `specs/015-compliance-closure/quickstart.md`
-- Tasks: `specs/015-compliance-closure/tasks.md`
+- Plan: `specs/020-report-theming/plan.md`
+- Spec: `specs/020-report-theming/spec.md`
+- Research: `specs/020-report-theming/research.md`
+- Contracts: `specs/020-report-theming/contracts/theming.md`
+- Quickstart: `specs/020-report-theming/quickstart.md`
+- Tasks: `specs/020-report-theming/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
+- **015-compliance-closure** - `specs/015-compliance-closure/plan.md`
 - **014-reconciliation-cleanup** - `specs/014-reconciliation-cleanup/plan.md`
 - **013-full-compliance-fixes** - `specs/013-full-compliance-fixes/plan.md`
 - **012-repo-alignment-audit** - `specs/012-repo-alignment-audit/plan.md`
