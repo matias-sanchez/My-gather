@@ -271,6 +271,10 @@ func extractTarReader(reader *tar.Reader, archivePath, destDir string, written *
 }
 
 func extractGzipArchive(archivePath, destDir string, written *int64) error {
+	return extractGzipArchiveWithLimits(archivePath, destDir, written, maxArchiveExtractedBytes, maxArchiveFileBytes)
+}
+
+func extractGzipArchiveWithLimits(archivePath, destDir string, written *int64, maxTotal, maxFile int64) error {
 	file, err := os.Open(archivePath)
 	if err != nil {
 		return &parse.PathError{Op: "open", Path: archivePath, Err: err}
@@ -299,9 +303,19 @@ func extractGzipArchive(archivePath, destDir string, written *int64) error {
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		return fmt.Errorf("create archive parent %s: %w", filepath.Dir(target), err)
 	}
-	if err := writeExtractedFile(target, 0o600, buffered, written); err != nil {
+	if err := writeExtractedFileWithLimits(target, 0o600, buffered, written, maxTotal, maxFile); err != nil {
+		// Pass through size-bound errors unwrapped so
+		// mapInputPreparationError can route them to exitSizeBound.
+		// Both *parse.SizeError (per-file ceiling) and
+		// *archiveExtractedSizeError (total-extracted ceiling) are
+		// emitted by writeExtractedFileWithLimits and must reach the
+		// caller as their original type.
 		var sizeErr *parse.SizeError
 		if errors.As(err, &sizeErr) {
+			return err
+		}
+		var extractedSizeErr *archiveExtractedSizeError
+		if errors.As(err, &extractedSizeErr) {
 			return err
 		}
 		return newArchiveInputError(archivePath, name, err)

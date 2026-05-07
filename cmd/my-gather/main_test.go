@@ -297,6 +297,83 @@ func TestWriteExtractedFileEnforcesPerFileLimit(t *testing.T) {
 	}
 }
 
+// TestExtractGzipArchivePassesThroughExtractedSizeError guards the
+// canonical size-bound exit path for plain .gz inputs. Before the fix,
+// extractGzipArchive only recognised *parse.SizeError as a passthrough
+// and wrapped *archiveExtractedSizeError as an archiveInputError, which
+// made oversized plain .gz inputs exit through exitInputPath
+// ("invalid archive input") instead of exitSizeBound. Both extractors
+// (tar and gzip) must surface *archiveExtractedSizeError unwrapped so
+// mapInputPreparationError routes them to exitSizeBound.
+func TestExtractGzipArchivePassesThroughExtractedSizeError(t *testing.T) {
+	dir := t.TempDir()
+	archivePath := filepath.Join(dir, "oversized.gz")
+
+	// Build a small plain .gz payload (not a tar). looksLikeTarHeader
+	// requires "ustar" at offset 257; arbitrary bytes ensure the gzip
+	// extractor takes the single-file decompression branch.
+	file, err := os.Create(archivePath)
+	if err != nil {
+		t.Fatalf("create archive: %v", err)
+	}
+	gzw := gzip.NewWriter(file)
+	payload := bytes.Repeat([]byte("X"), 2048)
+	if _, err := gzw.Write(payload); err != nil {
+		t.Fatalf("write gzip payload: %v", err)
+	}
+	if err := gzw.Close(); err != nil {
+		t.Fatalf("close gzip: %v", err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatalf("close archive: %v", err)
+	}
+
+	destDir := t.TempDir()
+	// Force the total-extracted ceiling to bite by exercising the
+	// underlying writer with a maxTotal smaller than the payload. We
+	// drive the helper directly because the production
+	// maxArchiveExtractedBytes is 64 GiB; allocating that much in tests
+	// is infeasible. The boundary under test is the gzip extractor's
+	// error type discrimination, which is independent of the ceiling
+	// magnitude.
+	gzReader, err := os.Open(archivePath)
+	if err != nil {
+		t.Fatalf("open archive: %v", err)
+	}
+	defer gzReader.Close()
+	gzr, err := gzip.NewReader(gzReader)
+	if err != nil {
+		t.Fatalf("gzip reader: %v", err)
+	}
+	defer gzr.Close()
+
+	target := filepath.Join(destDir, "decompressed")
+	var written int64
+	writeErr := writeExtractedFileWithLimits(target, 0o600, gzr, &written, 100, 1<<20)
+	var extractedSizeErr *archiveExtractedSizeError
+	if !errors.As(writeErr, &extractedSizeErr) {
+		t.Fatalf("writeExtractedFileWithLimits error = %v, want *archiveExtractedSizeError", writeErr)
+	}
+
+	// Now exercise extractGzipArchive end-to-end with a small
+	// ceiling so we assert the error type surfaced for an oversize
+	// plain .gz. Production calls extractGzipArchive, which delegates
+	// to extractGzipArchiveWithLimits — the same canonical path.
+	var extractWritten int64
+	extractErr := extractGzipArchiveWithLimits(archivePath, t.TempDir(), &extractWritten, 100, 1<<20)
+	var sizeErr *archiveExtractedSizeError
+	if !errors.As(extractErr, &sizeErr) {
+		t.Fatalf("extractGzipArchive error type = %T (%v), want *archiveExtractedSizeError; "+
+			"oversized plain .gz inputs must reach mapInputPreparationError unwrapped so "+
+			"they route to exitSizeBound, not exitInputPath", extractErr, extractErr)
+	}
+	var wrapped *archiveInputError
+	if errors.As(extractErr, &wrapped) {
+		t.Fatalf("extractGzipArchive error = %v also matches *archiveInputError; "+
+			"size-bound errors must not be wrapped as invalid-input errors", extractErr)
+	}
+}
+
 func TestRunRejectsArchiveWithMultiplePtStalkRoots(t *testing.T) {
 	dir := t.TempDir()
 	archivePath := filepath.Join(dir, "multi.zip")
