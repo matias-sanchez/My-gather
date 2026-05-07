@@ -1,18 +1,20 @@
 <!-- SPECKIT START -->
-Active feature: **017-chart-zoom-sync-stats**
+Active feature: **022-changelog-release-pipeline**
 
 For technologies, project structure, constitution gates, data model,
 contracts, and shell commands, read the current plan:
 
-- Plan: `specs/017-chart-zoom-sync-stats/plan.md`
-- Spec: `specs/017-chart-zoom-sync-stats/spec.md`
-- Research: `specs/017-chart-zoom-sync-stats/research.md`
-- Contracts: `specs/017-chart-zoom-sync-stats/contracts/chart-sync.md`
-- Quickstart: `specs/017-chart-zoom-sync-stats/quickstart.md`
-- Tasks: `specs/017-chart-zoom-sync-stats/tasks.md`
+- Plan: `specs/022-changelog-release-pipeline/plan.md`
+- Spec: `specs/022-changelog-release-pipeline/spec.md`
+- Research: `specs/022-changelog-release-pipeline/research.md`
+- Contracts: `specs/022-changelog-release-pipeline/contracts/extract.md`
+- Quickstart: `specs/022-changelog-release-pipeline/quickstart.md`
+- Tasks: `specs/022-changelog-release-pipeline/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
+- **021-feedback-author-field** - `specs/021-feedback-author-field/plan.md`
+- **020-report-theming** - `specs/020-report-theming/plan.md`
 - **015-compliance-closure** - `specs/015-compliance-closure/plan.md`
 - **014-reconciliation-cleanup** - `specs/014-reconciliation-cleanup/plan.md`
 - **013-full-compliance-fixes** - `specs/013-full-compliance-fixes/plan.md`
