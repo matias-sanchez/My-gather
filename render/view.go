@@ -67,8 +67,8 @@ type reportView struct {
 	VariableSnapshots []variableSnapshotView
 
 	// DB section payload
-	HasInnoDB           bool
-	InnoDBMetrics       []innoDBMetricView
+	HasInnoDB     bool
+	InnoDBMetrics []innoDBMetricView
 	// RedoSizing carries the Redo log sizing panel payload rendered
 	// under the InnoDB Status subsection. A nil value means the panel
 	// is not rendered at all (no DBSection on the report); a non-nil

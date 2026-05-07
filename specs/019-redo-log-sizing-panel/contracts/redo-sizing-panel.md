@@ -101,20 +101,48 @@ type redoSizingView struct {
 4. **Rate computation**: The average rate (`ObservedRateBytesPerSec`)
    is `sum(deltas) / observed_seconds`, identical in spirit to
    `findings/inputs.go::counterRatePerSec` but computed locally so
-   the panel does not depend on the findings package.
+   the panel does not depend on the findings package. Two
+   per-sample normalisations apply before the sum:
+   - **Cold-start tally skip (first block only)**: pt-mext records
+     the cold-start counter value at index 0 of the first snapshot;
+     this is not a per-interval delta and is excluded from the sum.
+     `model.MergeMysqladminData` strips the equivalent raw tally
+     from every snapshot AFTER the first by replacing it with a NaN
+     boundary slot and appending `src[1:]`, so the first finite
+     sample of every post-boundary block IS a real per-interval
+     delta and is included.
+   - **Negative-delta clamp**: a server restart mid-capture
+     re-zeroes `Innodb_os_log_written`, producing a negative delta
+     on the next sample. Negative deltas are clamped to 0 (a reset
+     is not a write of negative bytes); this also defends against
+     any other counter-reset scenario.
 5. **Rolling-window peak**: `PeakRateBytesPerSec` is the maximum, over
-   every contiguous block of samples covering at least one full
-   `PeakWindowSeconds`-second window, of `bytes_in_window /
-   actual_window_seconds`. NaN slots (snapshot boundaries) split
-   blocks; a window may not span a NaN slot.
+   every contiguous block of samples, of `bytes_in_window /
+   actual_window_seconds` for windows whose `actual_window_seconds`
+   is at least `PeakWindowSeconds`. The walk uses a sliding window
+   that retains the SMALLEST window of length >= target ending at
+   each sample (so any larger window cannot dilute the rate).
+   Sub-window prefix spans at the start of each block are NOT
+   candidates: the contract requires a full target-length window
+   before a rate qualifies as a peak. NaN slots (snapshot
+   boundaries) split blocks; a window may not span a NaN slot.
+   The cold-start tally skip and negative-delta clamp from item 4
+   apply here as well.
 6. **Window collapse**: If the longest contiguous block is shorter than
    900 seconds, `PeakWindowSeconds` is set to the longest block's
    duration in seconds and `PeakWindowLabel` reflects the actual
-   window length (e.g. `"available 28-second"`). The peak in that
-   case is the rate over the longest contiguous block.
+   window length, computed as `math.Floor(window)` so the label
+   never overstates the observed window length (e.g. a 28.6s
+   longest block renders as `"available 28-second"`, never
+   `"available 29-second"`). The peak in that case is the rate
+   over the longest contiguous block.
 7. **Coverage**: `CoverageMinutes == ConfiguredBytes / PeakRateBytesPerSec / 60`.
    Rendered as the integer floor (rounded down) so a 7.8-minute
-   coverage reports as "7 minutes" and the warning fires.
+   coverage reports as "7 minutes" and the warning fires. The
+   `computeRedoSizing` helper guards `PeakRateBytesPerSec > 0`
+   before this division: degenerate timestamp inputs that yield a
+   zero peak rate while `rateOK` would otherwise be true are
+   reclassified as `rate_unavailable` rather than dividing by zero.
 8. **Recommended sizes**: `PeakRateBytesPerSec * 900` for 15 minutes,
    `PeakRateBytesPerSec * 3600` for 1 hour. Both rendered with
    `reportutil.HumanBytes`.

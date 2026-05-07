@@ -120,6 +120,17 @@ func computeRedoSizing(r *model.Report) *redoSizingView {
 	avgRate, peakRate, peakWindow, peakLabel, rateOK, anyWrites :=
 		readObservedRedoRate(r.DBSection.Mysqladmin)
 
+	// Defensive: rateOK == true with peakRate <= 0 should be
+	// impossible when anyWrites is true, because clampNonNegative
+	// keeps the sum non-negative and at least one positive delta
+	// landed in some window. It can still arise from degenerate
+	// timestamps (zero spans) where the rolling-window walk never
+	// picks up a positive rate. Treat it as rate_unavailable rather
+	// than dividing by zero in the coverage computation below.
+	if rateOK && anyWrites && !(peakRate > 0) {
+		rateOK = false
+	}
+
 	switch {
 	case !rateOK:
 		v.State = "rate_unavailable"
@@ -212,9 +223,17 @@ func readConfiguredRedoSpace(r *model.Report) (float64, string) {
 // snapshot boundaries by model.MergeMysqladminData; the rolling-window
 // peak walk treats each block independently so a single peak window
 // never spans a cross-snapshot gap.
+//
+// SkipFirst is true only for the very first block of the merged series.
+// pt-mext stores the cold-start tally at index 0 of the first snapshot,
+// which is not a real per-interval delta. model.MergeMysqladminData
+// drops this raw tally for every snapshot after the first (it inserts a
+// NaN at the boundary and appends src[1:]), so post-boundary blocks'
+// first finite samples ARE genuine deltas and must be included.
 type redoSampleBlock struct {
-	startIdx int
-	endIdx   int
+	startIdx  int
+	endIdx    int
+	SkipFirst bool
 }
 
 // readObservedRedoRate scans the Innodb_os_log_written counter
@@ -257,17 +276,24 @@ func readObservedRedoRate(m *model.MysqladminData) (
 
 	// Build contiguous blocks separated by NaN slots. Each block is a
 	// half-open index range [start, end) of indices i such that
-	// deltas[i] is finite. We skip index 0 within each block because
-	// pt-mext stores the bogus initial tally at the start of every
-	// snapshot (the same convention used by findings.counterTotal),
-	// which manifests as a non-NaN value at the first index of each
-	// block.
+	// deltas[i] is finite. Only the FIRST block carries the raw
+	// initial tally at its start index (pt-mext writes the cold-start
+	// counter value there, the same convention used by
+	// findings.counterTotal); model.MergeMysqladminData strips that
+	// raw tally from every snapshot after the first by appending
+	// src[1:] after the NaN boundary slot, so post-boundary blocks'
+	// first finite samples are genuine per-interval deltas and MUST
+	// be included in both the average and the rolling-window peak.
 	var blocks []redoSampleBlock
 	startIdx := -1
 	for i, d := range deltas {
 		if math.IsNaN(d) || math.IsInf(d, 0) {
 			if startIdx >= 0 {
-				blocks = append(blocks, redoSampleBlock{startIdx, i})
+				blocks = append(blocks, redoSampleBlock{
+					startIdx:  startIdx,
+					endIdx:    i,
+					SkipFirst: len(blocks) == 0,
+				})
 				startIdx = -1
 			}
 			continue
@@ -277,13 +303,22 @@ func readObservedRedoRate(m *model.MysqladminData) (
 		}
 	}
 	if startIdx >= 0 {
-		blocks = append(blocks, redoSampleBlock{startIdx, len(deltas)})
+		blocks = append(blocks, redoSampleBlock{
+			startIdx:  startIdx,
+			endIdx:    len(deltas),
+			SkipFirst: len(blocks) == 0,
+		})
 	}
 
-	// Sum totals and accumulate observed seconds across blocks. Skip
-	// the first index of each block (the bogus initial tally) when
-	// summing values, but include its timestamp as the block's start
-	// boundary.
+	// Sum totals and accumulate observed seconds across blocks. For
+	// the first block we skip its first index (the cold-start tally)
+	// but include its timestamp as the block's start boundary. For
+	// subsequent blocks we include every finite sample because
+	// MergeMysqladminData has already stripped the raw tally at the
+	// snapshot boundary. Negative deltas are clamped to 0 to absorb
+	// counter resets (server restart mid-capture re-zeroes
+	// Innodb_os_log_written, producing a negative delta on the next
+	// sample); a counter reset is not a write of negative bytes.
 	var totalBytes, totalSeconds float64
 	var anyData bool
 	for _, b := range blocks {
@@ -296,8 +331,12 @@ func readObservedRedoRate(m *model.MysqladminData) (
 			continue
 		}
 		totalSeconds += span
-		for i := b.startIdx + 1; i < b.endIdx; i++ {
-			d := deltas[i]
+		i0 := b.startIdx
+		if b.SkipFirst {
+			i0 = b.startIdx + 1
+		}
+		for i := i0; i < b.endIdx; i++ {
+			d := clampNonNegative(deltas[i])
 			totalBytes += d
 			if d > 0 {
 				anyWrites = true
@@ -318,15 +357,25 @@ func readObservedRedoRate(m *model.MysqladminData) (
 	return avgRate, peakRate, peakWindow, peakLabel, true, anyWrites
 }
 
-// computeRollingPeak returns the peak per-second rate observed over
-// any contiguous window of length at least targetWindow seconds in
-// the supplied blocks. If no block is long enough, the function
-// collapses the window to the longest block's wall-clock duration and
-// reports the rate over that block.
+// computeRollingPeak returns the peak per-second rate observed over a
+// sliding window whose length is at least targetWindow seconds, taken
+// over the supplied blocks. When no block reaches targetWindow the
+// function collapses the window to the longest block's wall-clock
+// duration and reports the rate over that block (a single fixed
+// window equal in length to the longest block).
 //
-// The returned label is "15-minute" when the actual window matches
-// targetWindow == 900s, otherwise "available N-second" where N is the
-// integer wall-clock seconds of the actual window.
+// The returned label is "15-minute" when the chosen window equals
+// targetWindow == 900s, otherwise "available N-second" where N is
+// math.Floor(window) so the label never overstates the observed
+// window length (28.6s renders as "28-second", never "29-second").
+//
+// Negative deltas are clamped to 0 inside the sum to absorb
+// Innodb_os_log_written counter resets without depressing the peak.
+//
+// Per the contract, a candidate window is only considered when its
+// actualSpan >= window. This excludes sub-window prefix spans at the
+// start of each block, which would otherwise let an early burst be
+// reported as the 15-minute peak.
 func computeRollingPeak(
 	blocks []redoSampleBlock,
 	deltas []float64,
@@ -352,38 +401,65 @@ func computeRollingPeak(
 	window := targetWindow
 	if longest < targetWindow {
 		window = longest
-		peakLabel = fmt.Sprintf("available %d-second", int(math.Round(longest)))
+		peakLabel = fmt.Sprintf("available %d-second", int(math.Floor(window)))
 	} else {
 		peakLabel = "15-minute"
 	}
 
 	for _, b := range blocks {
 		// We slide a window over the per-sample deltas within this
-		// block. Skip the first index per the bogus-initial-tally
-		// convention used in readObservedRedoRate.
-		startI := b.startIdx + 1
+		// block. SkipFirst is true only for the first block (the
+		// cold-start tally); subsequent blocks include every finite
+		// sample because MergeMysqladminData has already stripped
+		// the raw tally at the snapshot boundary.
+		startI := b.startIdx
+		if b.SkipFirst {
+			startI = b.startIdx + 1
+		}
 		endI := b.endIdx
 		if endI-startI < 1 {
 			continue
 		}
+		// Each delta covers the interval (timestamps[i-1],
+		// timestamps[i]]. The window of samples [sumStart..i]
+		// therefore covers (timestamps[sumStart-1], timestamps[i]],
+		// so actualSpan = timestamps[i] - timestamps[sumStart-1].
+		// We need sumStart >= 1 for this to be well-defined, so the
+		// first sample of the very first block (which has no prior
+		// timestamp) is consumed as boundary-only and excluded from
+		// the rolling sum; this matches the SkipFirst rule above and
+		// the per-block startIdx semantics for subsequent blocks
+		// (startIdx is the post-NaN index whose previous slot is the
+		// NaN boundary, never used as a window edge).
 		sumStart := startI
 		sumBytes := 0.0
 		for i := startI; i < endI; i++ {
-			sumBytes += deltas[i]
-			// Each delta covers the interval (timestamps[i-1],
-			// timestamps[i]]. The window starts at
-			// timestamps[sumStart-1]. Trim from the left while the
-			// span exceeds the chosen window.
+			if i == 0 {
+				// Defensive: a block that begins at the global
+				// index 0 cannot anchor actualSpan against a
+				// preceding timestamp; treat it as boundary-only.
+				sumStart = i + 1
+				continue
+			}
+			sumBytes += clampNonNegative(deltas[i])
+			// Trim from the left while removing sumStart still
+			// leaves actualSpan >= window. This produces the
+			// SMALLEST window of length >= window ending at i,
+			// which is the correct denominator for the rolling
+			// peak: any larger window would only dilute the rate.
 			for sumStart < i {
-				spanLeft := timestamps[i].Sub(timestamps[sumStart]).Seconds()
-				if spanLeft <= window {
+				spanAfterTrim := timestamps[i].Sub(timestamps[sumStart]).Seconds()
+				if spanAfterTrim < window {
 					break
 				}
-				sumBytes -= deltas[sumStart]
+				sumBytes -= clampNonNegative(deltas[sumStart])
 				sumStart++
 			}
 			actualSpan := timestamps[i].Sub(timestamps[sumStart-1]).Seconds()
-			if actualSpan <= 0 {
+			if actualSpan < window {
+				// Skip sub-window prefix spans; the contract
+				// requires a full window before a rate becomes a
+				// peak candidate.
 				continue
 			}
 			rate := sumBytes / actualSpan
@@ -394,4 +470,16 @@ func computeRollingPeak(
 	}
 	peakWindow = window
 	return peakRate, peakWindow, peakLabel
+}
+
+// clampNonNegative returns 0 for negative inputs and the value
+// otherwise. Used to absorb Innodb_os_log_written counter resets
+// (server restart mid-capture re-zeroes the counter, so the next
+// delta is a large negative number); a reset is not a write of
+// negative bytes, so it must not depress the rolling sum.
+func clampNonNegative(v float64) float64 {
+	if v < 0 {
+		return 0
+	}
+	return v
 }

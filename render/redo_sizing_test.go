@@ -1,6 +1,7 @@
 package render
 
 import (
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -129,7 +130,7 @@ func TestComputeRedoSizing_57_WellSized(t *testing.T) {
 		t.Fatalf("ConfigSource = %q", v.ConfigSource)
 	}
 	if v.ConfiguredText != "2.00 GiB" {
-		t.Fatalf("ConfiguredText = %q, want 2.0 GiB", v.ConfiguredText)
+		t.Fatalf("ConfiguredText = %q, want 2.00 GiB", v.ConfiguredText)
 	}
 	if v.UnderSized {
 		t.Fatalf("UnderSized = true, want false")
@@ -188,7 +189,7 @@ func TestComputeRedoSizing_80Plus_WellSized(t *testing.T) {
 		t.Fatalf("ConfigSource = %q, want innodb_redo_log_capacity", v.ConfigSource)
 	}
 	if v.ConfiguredText != "16.00 GiB" {
-		t.Fatalf("ConfiguredText = %q, want 16.0 GiB", v.ConfiguredText)
+		t.Fatalf("ConfiguredText = %q, want 16.00 GiB", v.ConfiguredText)
 	}
 	if v.UnderSized {
 		t.Fatalf("UnderSized = true, want false")
@@ -258,7 +259,7 @@ func TestComputeRedoSizing_RateUnavailable(t *testing.T) {
 			v.Recommended15MinText, v.Recommended1HourText)
 	}
 	if v.ConfiguredText != "2.00 GiB" {
-		t.Fatalf("ConfiguredText = %q, want 2.0 GiB", v.ConfiguredText)
+		t.Fatalf("ConfiguredText = %q, want 2.00 GiB", v.ConfiguredText)
 	}
 }
 
@@ -347,5 +348,213 @@ func TestComputeRedoSizing_WarningBoundary(t *testing.T) {
 	if !vBelow.UnderSized {
 		t.Fatalf("below: UnderSized = false, want true (coverage = %.4f)",
 			vBelow.CoverageMinutes)
+	}
+}
+
+// TestComputeRedoSizing_FullWindowRequired_BurstyPrefix verifies the
+// rolling-peak walk does NOT report a sub-window prefix burst as the
+// peak when the capture is long enough to reach a full window.
+//
+// Setup: 1800 samples at 1s steps (30 minutes total, well beyond the
+// 900s target window). The first 60 samples write 100 MiB/s (an early
+// 60-second burst); every later sample writes 1 MiB/s. The peak over
+// any 900-second window is therefore:
+//
+//	worst case window straddling the burst:
+//	  60 * 100 MiB + 840 * 1 MiB = 6840 MiB  -> 7.6 MiB/s
+//
+// The naive (pre-fix) implementation would have reported the prefix
+// burst rate of 100 MiB/s by accepting sub-window prefix spans as
+// peak candidates. The fixed implementation must report ~7.6 MiB/s.
+func TestComputeRedoSizing_FullWindowRequired_BurstyPrefix(t *testing.T) {
+	const burstSamples = 60
+	const burstRate = 100 << 20 // 100 MiB/s
+	const tailRate = 1 << 20    // 1 MiB/s
+	deltas := make([]float64, 1800)
+	for i := range deltas {
+		if i < burstSamples {
+			deltas[i] = burstRate
+		} else {
+			deltas[i] = tailRate
+		}
+	}
+	r := makeRedoReport(t, vars57(1<<30, 16), deltas, 1)
+	v := computeRedoSizing(r)
+	if v == nil {
+		t.Fatal("expected non-nil view")
+	}
+	if v.PeakWindowSeconds != 900 {
+		t.Fatalf("PeakWindowSeconds = %v, want 900 (full window)", v.PeakWindowSeconds)
+	}
+	if v.PeakWindowLabel != "15-minute" {
+		t.Fatalf("PeakWindowLabel = %q, want %q",
+			v.PeakWindowLabel, "15-minute")
+	}
+	// Worst-case window covers the burst plus 840s of tail rate:
+	// (60 * 100 + 840 * 1) MiB / 900s = 6840/900 MiB/s ≈ 7.6 MiB/s.
+	wantPeak := float64(burstSamples*burstRate+(900-burstSamples)*tailRate) / 900.0
+	if math.Abs(v.PeakRateBytesPerSec-wantPeak) > wantPeak*0.001 {
+		t.Fatalf("PeakRateBytesPerSec = %.0f B/s, want ~%.0f B/s; "+
+			"the prefix-burst rate of 100 MiB/s must NOT win",
+			v.PeakRateBytesPerSec, wantPeak)
+	}
+}
+
+// TestComputeRedoSizing_PeakRateZeroGuard verifies that a
+// degenerate-timestamp case where rateOK could be true with peakRate
+// == 0 routes to rate_unavailable rather than dividing by zero in the
+// coverage calculation.
+//
+// Setup: clamp the per-sample timestamps so every interval is zero
+// (every sample shares the same wall-clock instant). This makes the
+// rolling-window walk unable to anchor a non-zero actualSpan, so
+// peakRate stays 0 even though the deltas are positive.
+func TestComputeRedoSizing_PeakRateZeroGuard(t *testing.T) {
+	r := makeRedoReport(t, vars57(1<<30, 2), constantDeltas(30, 1<<20), 1)
+	// Collapse every timestamp to the same instant so the
+	// rolling-window walk sees zero spans everywhere.
+	if r.DBSection == nil || r.DBSection.Mysqladmin == nil {
+		t.Fatal("setup: expected mysqladmin data")
+	}
+	ts := r.DBSection.Mysqladmin.Timestamps
+	if len(ts) == 0 {
+		t.Fatal("setup: empty timestamps")
+	}
+	pinned := ts[0]
+	for i := range ts {
+		ts[i] = pinned
+	}
+	v := computeRedoSizing(r)
+	if v == nil {
+		t.Fatal("expected non-nil view")
+	}
+	if v.State != "rate_unavailable" {
+		t.Fatalf("State = %q, want rate_unavailable (peakRate must not divide by zero)",
+			v.State)
+	}
+	if v.CoverageText != "n/a" {
+		t.Fatalf("CoverageText = %q, want n/a", v.CoverageText)
+	}
+	if v.UnderSized {
+		t.Fatal("UnderSized must be false when state is not ok")
+	}
+}
+
+// TestComputeRedoSizing_NegativeDeltaClamp verifies that a negative
+// per-sample delta (a counter reset from a server restart mid-capture)
+// is clamped to 0 and does NOT depress the rolling sum.
+//
+// Setup: 60 samples at 1s steps. Most samples write 1 MiB; one sample
+// in the middle is -500 MiB (simulated counter reset). The clamped
+// peak rate must equal the unclamped 1 MiB/s rate, NOT a depressed
+// rate that subtracts the bogus negative.
+func TestComputeRedoSizing_NegativeDeltaClamp(t *testing.T) {
+	const oneMiB = 1 << 20
+	deltas := make([]float64, 60)
+	for i := range deltas {
+		deltas[i] = oneMiB
+	}
+	deltas[30] = -500 * oneMiB // simulate a counter reset
+
+	r := makeRedoReport(t, vars57(1<<30, 16), deltas, 1)
+	v := computeRedoSizing(r)
+	if v == nil {
+		t.Fatal("expected non-nil view")
+	}
+	// makeRedoReport prepends a cold-start tally at index 0, so the
+	// merged series has 61 samples covering 60 wall-clock seconds.
+	// With the clamp the negative delta contributes 0 instead of
+	// -500 MiB, giving sum = 59 * 1 MiB over 60s. WITHOUT the clamp
+	// the sum would be (59 - 500) MiB ≈ -441 MiB, an absurd
+	// negative rate that would route to no_writes/rate_unavailable
+	// or report a negative coverage. The clamp keeps the rate
+	// strictly positive and close to 1 MiB/s.
+	const samples = 60
+	const totalSeconds = float64(samples)
+	wantRate := float64((samples-1)*oneMiB) / totalSeconds
+	if math.Abs(v.PeakRateBytesPerSec-wantRate) > wantRate*0.01 {
+		t.Fatalf("PeakRateBytesPerSec = %.0f, want ~%.0f (negative delta must clamp to 0)",
+			v.PeakRateBytesPerSec, wantRate)
+	}
+	if math.Abs(v.ObservedRateBytesPerSec-wantRate) > wantRate*0.01 {
+		t.Fatalf("ObservedRateBytesPerSec = %.0f, want ~%.0f (negative delta must clamp to 0)",
+			v.ObservedRateBytesPerSec, wantRate)
+	}
+	if v.State != "ok" {
+		t.Fatalf("State = %q, want ok (clamp must keep the rate positive)",
+			v.State)
+	}
+}
+
+// TestComputeRedoSizing_MultiBlock_PostBoundaryFirstSampleIncluded
+// verifies that the first finite sample of a post-NaN block is
+// included in the rolling-window peak. model.MergeMysqladminData
+// strips the raw cold-start tally from snapshots after the first
+// (it inserts a NaN at the boundary and appends src[1:]), so the
+// first finite sample after the NaN IS a real per-interval delta.
+//
+// Setup: build a synthetic two-block series by hand (the
+// makeRedoReport helper builds only single-block reports). Block A
+// has its raw tally at index 0 followed by 60 zero samples. A NaN
+// boundary follows. Block B is 60 samples each at 1 MiB/s. A naive
+// implementation that skips the first finite sample of every block
+// would drop Block B's first 1 MiB sample, yielding 59 MiB / 60s
+// ≈ 1006 KiB/s; the correct implementation includes all 60 samples
+// for a peak of 1 MiB/s.
+func TestComputeRedoSizing_MultiBlock_PostBoundaryFirstSampleIncluded(t *testing.T) {
+	const blockA = 60
+	const blockB = 60
+	const oneMiB = 1 << 20
+	r := makeRedoReport(t, vars57(1<<30, 16), nil, 1)
+	if r.DBSection == nil {
+		t.Fatal("setup: expected DBSection")
+	}
+	// Total samples: blockA finite + 1 NaN boundary + blockB finite.
+	n := blockA + 1 + blockB
+	ts := make([]time.Time, n)
+	base := time.Date(2026, 5, 7, 12, 0, 0, 0, time.UTC)
+	for i := 0; i < n; i++ {
+		ts[i] = base.Add(time.Duration(i) * time.Second)
+	}
+	series := make([]float64, n)
+	// Block A: index 0 is the raw cold-start tally (skipped); the
+	// remaining samples are 0 (idle).
+	series[0] = 999_999_999
+	for i := 1; i < blockA; i++ {
+		series[i] = 0
+	}
+	// NaN boundary at index blockA (snapshot break).
+	series[blockA] = math.NaN()
+	// Block B: every sample is a real 1 MiB/s delta. Note that
+	// after the NaN boundary, MergeMysqladminData would have
+	// already stripped the raw tally upstream, so series[blockA+1]
+	// IS a real delta and MUST be included.
+	for i := blockA + 1; i < n; i++ {
+		series[i] = oneMiB
+	}
+	r.DBSection.Mysqladmin = &model.MysqladminData{
+		SampleCount:        n,
+		Timestamps:         ts,
+		Deltas:             map[string][]float64{"Innodb_os_log_written": series},
+		IsCounter:          map[string]bool{"Innodb_os_log_written": true},
+		SnapshotBoundaries: []int{0, blockA + 1},
+		VariableNames:      []string{"Innodb_os_log_written"},
+	}
+
+	v := computeRedoSizing(r)
+	if v == nil {
+		t.Fatal("expected non-nil view")
+	}
+	if v.State != "ok" {
+		t.Fatalf("State = %q, want ok", v.State)
+	}
+	// Block B is the longest block reaching a full peak; both
+	// blocks are 60 samples / 60 seconds long, so the window
+	// collapses to 60s and the peak is the full Block B average.
+	const wantPeak = float64(oneMiB)
+	if math.Abs(v.PeakRateBytesPerSec-wantPeak) > wantPeak*0.005 {
+		t.Fatalf("PeakRateBytesPerSec = %.0f, want %.0f "+
+			"(post-boundary first sample must be included)",
+			v.PeakRateBytesPerSec, wantPeak)
 	}
 }
