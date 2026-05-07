@@ -18,8 +18,39 @@ import (
 	"github.com/matias-sanchez/My-gather/parse"
 )
 
-const maxArchiveExtractedBytes = parse.DefaultMaxCollectionBytes
+// maxArchiveExtractedBytes is a defence-in-depth ceiling on total
+// bytes extracted from a single archive input. It is intentionally
+// generous (64 GiB) — high enough to accommodate any real-world
+// pt-stalk capture (the largest observed are in the low single-digit
+// GB range; feature 016-remove-collection-size-cap removed the parser
+// 1 GiB total cap to unblock 1.63 GB+ captures), and low enough to
+// still bound a runaway extraction (infinite-loop tar with circular
+// hard links, pathologically expanding gzip stream). The per-file
+// ceiling maxArchiveFileBytes provides the primary defence against
+// compression-ratio bombs by capping any single extracted file.
+//
+// This constant is local to the archive-input boundary; the parser
+// no longer has a total-collection bound.
+const maxArchiveExtractedBytes int64 = 64 << 30
+
 const maxArchiveFileBytes = parse.DefaultMaxFileBytes
+
+// archiveExtractedSizeError reports that an archive's total
+// extracted bytes exceeded the local archive-extraction ceiling
+// (maxArchiveExtractedBytes). It is a typed error so callers can
+// branch via errors.As; the parser's *SizeError no longer covers a
+// total-collection case.
+type archiveExtractedSizeError struct {
+	Path  string
+	Bytes int64
+	Limit int64
+}
+
+// Error implements the error interface.
+func (e *archiveExtractedSizeError) Error() string {
+	return fmt.Sprintf("archive extracted size %d bytes exceeds %d-byte limit at %s",
+		e.Bytes, e.Limit, e.Path)
+}
 
 var errUnsupportedArchive = errors.New("unsupported archive format")
 
@@ -240,6 +271,10 @@ func extractTarReader(reader *tar.Reader, archivePath, destDir string, written *
 }
 
 func extractGzipArchive(archivePath, destDir string, written *int64) error {
+	return extractGzipArchiveWithLimits(archivePath, destDir, written, maxArchiveExtractedBytes, maxArchiveFileBytes)
+}
+
+func extractGzipArchiveWithLimits(archivePath, destDir string, written *int64, maxTotal, maxFile int64) error {
 	file, err := os.Open(archivePath)
 	if err != nil {
 		return &parse.PathError{Op: "open", Path: archivePath, Err: err}
@@ -268,9 +303,19 @@ func extractGzipArchive(archivePath, destDir string, written *int64) error {
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		return fmt.Errorf("create archive parent %s: %w", filepath.Dir(target), err)
 	}
-	if err := writeExtractedFile(target, 0o600, buffered, written); err != nil {
+	if err := writeExtractedFileWithLimits(target, 0o600, buffered, written, maxTotal, maxFile); err != nil {
+		// Pass through size-bound errors unwrapped so
+		// mapInputPreparationError can route them to exitSizeBound.
+		// Both *parse.SizeError (per-file ceiling) and
+		// *archiveExtractedSizeError (total-extracted ceiling) are
+		// emitted by writeExtractedFileWithLimits and must reach the
+		// caller as their original type.
 		var sizeErr *parse.SizeError
 		if errors.As(err, &sizeErr) {
+			return err
+		}
+		var extractedSizeErr *archiveExtractedSizeError
+		if errors.As(err, &extractedSizeErr) {
 			return err
 		}
 		return newArchiveInputError(archivePath, name, err)
@@ -339,8 +384,7 @@ func writeExtractedFileWithLimits(target string, mode os.FileMode, src io.Reader
 		}
 	}
 	if *written > maxTotal {
-		return &parse.SizeError{
-			Kind:  parse.SizeErrorTotal,
+		return &archiveExtractedSizeError{
 			Path:  target,
 			Bytes: *written,
 			Limit: maxTotal,

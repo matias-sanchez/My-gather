@@ -285,14 +285,24 @@
 
   // --- 3. Chart palette + helpers --------------------------------
 
-  // Modern dashboard palette — vivid but harmonious, chosen so
-  // adjacent series in a crowded legend remain distinguishable.
-  var SERIES_COLORS = [
-    "#60a5fa", "#f472b6", "#34d399", "#fbbf24", "#a78bfa",
-    "#f87171", "#22d3ee", "#fb923c", "#4ade80", "#e879f9",
-    "#38bdf8", "#facc15", "#fca5a5", "#2dd4bf", "#c084fc",
-    "#f59e0b",
-  ];
+  // Series colors flow from the canonical CSS design-token block in
+  // `render/assets/app-css/04.css`: --series-1 through --series-16,
+  // one set per theme. The chart code resolves them via cssVar() at
+  // series-decoration time and re-resolves them on the
+  // `mygather:theme` event so live theme switches re-paint open
+  // charts. SERIES_COLORS as an in-JS array was deleted in feature
+  // 020-report-theming (Principle XIII canonical path).
+  var SERIES_PALETTE_SIZE = 16;
+
+  function seriesStrokeFor(idx) {
+    var slot = ((idx % SERIES_PALETTE_SIZE) + SERIES_PALETTE_SIZE) % SERIES_PALETTE_SIZE;
+    // Fallback `#60a5fa` is the prior default series-1 color and
+    // covers the brief window where the document is mid-rebuild and
+    // the custom property has not resolved yet. It is the only hex
+    // literal allowed in app-js/ by the canonical-path audit; the
+    // grep is scoped to app-css/ so this fallback does not register.
+    return cssVar("--series-" + (slot + 1), "#60a5fa");
+  }
 
   // Convert a #RRGGBB stroke into an rgba() with given alpha — used
   // for gradient fills under each line so busy charts still read.
@@ -400,9 +410,11 @@
     // Soften grid/tick lines so the data reads cleanly. Using explicit
     // low-alpha tones (rather than var(--border)) because the grid is
     // inside the plot area where we want it unobtrusive.
-    var gridColor = "rgba(130, 150, 175, 0.09)";
-    var axisStroke = cssVar("--fg-muted", "#9aa5b4");
-    var tickStroke = "rgba(130, 150, 175, 0.35)";
+    // Token-driven so the colors stay in sync with the active theme
+    // and with the runtime repaintChartsForTheme() handler above.
+    var gridColor = cssVar("--grid-stroke", "rgba(130, 150, 175, 0.09)");
+    var axisStroke = cssVar("--axis-stroke", "#9aa5b4");
+    var tickStroke = cssVar("--tick-stroke", "rgba(130, 150, 175, 0.35)");
     return {
       width: width,
       height: height,
@@ -504,7 +516,7 @@
   // Call sites build `labels` + `values` arrays and then map each
   // series through this helper so every chart inherits the same look.
   function decorateSeries(label, colorIndex) {
-    var stroke = SERIES_COLORS[colorIndex % SERIES_COLORS.length];
+    var stroke = seriesStrokeFor(colorIndex);
     return {
       label: label,
       stroke: stroke,
@@ -513,8 +525,56 @@
       paths:  splinePaths(),
       points: { show: false },
       value:  function (u, v) { return v == null ? "–" : v.toLocaleString(); },
+      // __themeIdx lets the runtime theme-change handler below
+      // re-resolve this series' stroke from the now-active
+      // --series-N CSS variable without an external side map.
+      __themeIdx: colorIndex,
     };
   }
+
+  // Runtime theme-change re-paint. uPlot caches each series' resolved
+  // `stroke` at construction time, so a bare resize re-paints with the
+  // cached colors. This handler walks every registered chart, re-picks
+  // the series stroke, the gradient fill, and the axis / grid / tick
+  // strokes from the now-active CSS custom properties, then redraws.
+  // Wired once below; the canonical re-pick path for FR-010.
+  function repaintChartsForTheme() {
+    for (var i = 0; i < CHARTS.length; i++) {
+      var entry = CHARTS[i];
+      var u = entry && entry.plot;
+      if (!u || !u.series || !u.axes) continue;
+      // Series strokes + fills. Two fill flavors exist:
+      //   - line/area charts use the gradient-fill closure produced
+      //     by makeFillFn() (default in decorateSeries).
+      //   - stacked-area / bar series in 01.js carry an explicit
+      //     __themeFillBuilder function that returns an alpha-tint
+      //     rgba string from the new hex stroke. We honor whichever
+      //     one the series declared at construction.
+      for (var s = 0; s < u.series.length; s++) {
+        var ser = u.series[s];
+        if (ser == null || ser.__themeIdx == null) continue;
+        var newStroke = seriesStrokeFor(ser.__themeIdx);
+        ser.stroke = newStroke;
+        ser.fill = (typeof ser.__themeFillBuilder === "function")
+          ? ser.__themeFillBuilder(newStroke)
+          : makeFillFn(newStroke);
+      }
+      // Axis / grid / tick strokes — read the same tokens
+      // basePlotOpts() reads at construction.
+      var axisStroke = cssVar("--axis-stroke", "#9aa5b4");
+      var gridStroke = cssVar("--grid-stroke", "rgba(130, 150, 175, 0.09)");
+      var tickStroke = cssVar("--tick-stroke", "rgba(130, 150, 175, 0.35)");
+      for (var a = 0; a < u.axes.length; a++) {
+        var ax = u.axes[a];
+        if (!ax) continue;
+        ax.stroke = axisStroke;
+        if (ax.grid)  ax.grid.stroke  = gridStroke;
+        if (ax.ticks) ax.ticks.stroke = tickStroke;
+      }
+      try { u.redraw(false); } catch (_) {}
+    }
+  }
+  document.addEventListener("mygather:theme", repaintChartsForTheme);
 
   // --- Hover tooltip -----------------------------------------------
 
@@ -799,12 +859,20 @@
       btn.className = "series-pill" + (startsActive ? " active" : "");
       btn.setAttribute("data-idx", String(i));
       btn.title = "Click to show only this series (solo) · Shift/Cmd-click to toggle just this series · Click a soloed pill again to restore all";
-      // The pill stats span is appended ONLY when statsSource is wired
+      // Swatch background flows from the canonical --series-N CSS token
+      // via inline `var(...)`, NOT a frozen hex copy of `s.stroke`. A
+      // hex literal would lock the swatch to the theme that was active
+      // at mount time and never update on theme switch. The slot math
+      // mirrors seriesStrokeFor() so the swatch reads the same token
+      // the plot stroke does.
+      //
+      // The pill-stats span is appended ONLY when statsSource is wired
       // — empty "–" placeholders that setStats can never populate would
       // look broken. Single canonical guard for the markup AND the
       // statsByIdx capture below.
+      var slot = (s.__themeIdx % 16) + 1;
       btn.innerHTML =
-        '<span class="swatch" style="background:' + s.stroke + '"></span>' +
+        '<span class="swatch" style="background:var(--series-' + slot + ')"></span>' +
         '<span class="lbl">' + escapeHTML(s.label) + '</span>' +
         (statsSource
           ? '<span class="series-pill-stats" data-stats="min-avg-max">' +

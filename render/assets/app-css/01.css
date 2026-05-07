@@ -179,6 +179,18 @@
   font-style: italic;
 }
 
+/* Chart caption: a short explanatory line directly above a chart that
+   states a non-obvious rendering rule (e.g. the Top CPU processes
+   chart's top-3 cap and mysqld pin). Subdued so it does not compete
+   with the chart but readable enough that users do not miss it. */
+.chart-caption {
+  margin: 0 0 8px 0;
+  padding: 0 2px;
+  color: var(--fg-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 /* uPlot theming overrides. uPlot's default legend is verbose; we hide
    it and render our own pill legend underneath. */
 .uplot { font-family: var(--mono) !important; position: relative; }
@@ -208,28 +220,25 @@
   backdrop-filter: blur(4px);
 }
 
-/* Hover tooltip — rendered inside .u-over and position:absolute. */
+/* Hover tooltip — rendered inside .u-over and position:absolute.
+   Background and text colors flow through the canonical theme tokens
+   (--tooltip-bg / --tooltip-fg) defined in 04.css. The shadow stays
+   theme-agnostic because it reads as a soft drop on every surface. */
 .chart-tooltip {
   position: absolute;
   z-index: 20;
   pointer-events: none;
   min-width: 200px;
   max-width: 420px;
-  background: rgba(14, 17, 22, 0.96);
+  background: var(--tooltip-bg);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.30);
   padding: 6px 8px;
   font-family: var(--mono);
   font-size: 11.5px;
-  color: var(--fg);
+  color: var(--tooltip-fg);
   line-height: 1.45;
-}
-@media (prefers-color-scheme: light) {
-  .chart-tooltip {
-    background: rgba(255, 255, 255, 0.97);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-  }
 }
 .chart-tooltip .tt-ts {
   font-size: 11px;

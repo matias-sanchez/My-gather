@@ -180,6 +180,54 @@ func TestConcatTopRecomputesTop3WithMysqldAlwaysIn(t *testing.T) {
 	}
 }
 
+// TestConcatTopMysqldPinnedWhenLowest locks the chart-data invariant
+// the "Top CPU processes" caption asserts: even when mysqld is the
+// lowest-CPU process in the merged stream, it must appear in
+// Top3ByAverage (the field the renderer feeds into the chart series
+// list). Phrased as the user-facing promise — "mysqld is always
+// included, even when it is not in the top 3" — so a future change
+// that drops the pin trips this test before the caption becomes a
+// lie.
+func TestConcatTopMysqldPinnedWhenLowest(t *testing.T) {
+	t.Parallel()
+	t0 := time.Date(2026, 5, 7, 10, 0, 0, 0, time.UTC)
+	t1 := t0.Add(10 * time.Second)
+
+	// Three workers dominate; mysqld is the single lowest consumer.
+	snap := &model.TopData{
+		ProcessSamples: []model.ProcessSample{
+			{Timestamp: t0, PID: 100, Command: "worker-a", CPUPercent: 99},
+			{Timestamp: t0, PID: 200, Command: "worker-b", CPUPercent: 80},
+			{Timestamp: t0, PID: 300, Command: "worker-c", CPUPercent: 70},
+			{Timestamp: t0, PID: 42, Command: "mysqld", CPUPercent: 1},
+			{Timestamp: t1, PID: 100, Command: "worker-a", CPUPercent: 97},
+			{Timestamp: t1, PID: 200, Command: "worker-b", CPUPercent: 79},
+			{Timestamp: t1, PID: 300, Command: "worker-c", CPUPercent: 68},
+			{Timestamp: t1, PID: 42, Command: "mysqld", CPUPercent: 2},
+		},
+	}
+
+	merged := concatTop([]*model.TopData{snap})
+	if merged == nil {
+		t.Fatal("concatTop returned nil for a non-empty input")
+	}
+
+	mysqldFound := false
+	for _, s := range merged.Top3ByAverage {
+		if isMysqldCommand(s.Command) {
+			mysqldFound = true
+			break
+		}
+	}
+	if !mysqldFound {
+		pids := make([]int, 0, len(merged.Top3ByAverage))
+		for _, s := range merged.Top3ByAverage {
+			pids = append(pids, s.PID)
+		}
+		t.Fatalf("Top3ByAverage missing mysqld series; got PIDs %v. The chart caption promises mysqld is always included even when it is not in the top 3 — concatTop must keep the mysqld pin.", pids)
+	}
+}
+
 func TestConcatTopMysqldAlreadyInTopThree(t *testing.T) {
 	t.Parallel()
 	t0 := time.Date(2026, 4, 22, 10, 0, 0, 0, time.UTC)
