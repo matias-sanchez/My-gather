@@ -219,14 +219,37 @@
   // (nav collapse/expand, window resize) can recompute width and call
   // chart.setSize.
   var CHARTS = [];
-  function registerChart(plot, containerEl, options) {
-    CHARTS.push({ plot: plot, el: containerEl, opts: options });
+  // registerChart adds a uPlot instance to the page-wide chart
+  // registry. The optional `data` argument is consumed by the
+  // chart-sync store (app-js/05.js) so newly-registered charts can
+  // adopt the current shared zoom window and so the windowed-stats
+  // subscriber can recompute legend Min/Max/Avg without re-reading
+  // uPlot's internal data arrays. data.timestamps + data.series are
+  // the un-bucketed source samples; data.rawSeries is supplied by
+  // stacked charts whose drawn values are cumulative — windowed
+  // stats compute against rawSeries when present.
+  function registerChart(plot, containerEl, options, data) {
+    var entry = { plot: plot, el: containerEl, opts: options, data: data || null };
+    CHARTS.push(entry);
+    // If a shared zoom window is already active when a chart mounts
+    // (e.g. a chart inside a section the user expanded after zooming
+    // a sibling), apply that window so the new chart matches without
+    // an extra interaction. The chart-sync store guards against
+    // re-broadcast by setting isBroadcasting around the call.
+    if (window.__chartSyncStore && typeof window.__chartSyncStore.applyToChart === "function") {
+      window.__chartSyncStore.applyToChart(entry);
+    }
   }
   function unregisterChart(plot) {
     for (var i = CHARTS.length - 1; i >= 0; i--) {
       if (CHARTS[i].plot === plot) CHARTS.splice(i, 1);
     }
   }
+  // chartRegistry exposes the in-place CHARTS array to the chart-sync
+  // store (defined in app-js/05.js, in the same IIFE). Returning the
+  // live array — not a copy — keeps the broadcaster O(charts) per
+  // update without re-allocating each tick.
+  function chartRegistry() { return CHARTS; }
   function resizeAllCharts() {
     for (var i = 0; i < CHARTS.length; i++) {
       var entry = CHARTS[i];
@@ -426,8 +449,24 @@
         setCursor: [updateTooltipOnCursor],
         drawAxes: [makeBoundaryDrawHook(boundaries, timestamps)],
         ready: [makeUnitBadgeHook(unit)],
+        // Broadcast x-scale changes (drag-zoom, drag-pan, programmatic
+        // setScale by other code) into the chart-sync store so every
+        // other registered chart on the page snaps to the same
+        // window. The store sets isBroadcasting around its own
+        // setScale calls so this hook short-circuits and the cycle
+        // can't recurse. See app-js/05.js for the store definition.
+        setScale: [broadcastXScaleChange],
       },
     };
+  }
+
+  function broadcastXScaleChange(u, scaleKey) {
+    if (scaleKey !== "x") return;
+    var store = window.__chartSyncStore;
+    if (!store || store.isBroadcasting) return;
+    var sx = u.scales && u.scales.x;
+    if (!sx) return;
+    store.setWindow({ min: sx.min, max: sx.max }, u);
   }
 
   // makeUnitBadgeHook returns a uPlot ready-hook that appends a small
@@ -671,18 +710,11 @@
     btn.addEventListener("click", function (ev) {
       ev.preventDefault();
       ev.stopPropagation();
-      var p = getPlot();
-      if (!p) return;
-      try {
-        // setScale to auto; pass the explicit data bounds so uPlot
-        // doesn't leave the axis in a "null" state on older builds.
-        var xs = p.data && p.data[0];
-        if (xs && xs.length) {
-          p.setScale("x", { min: xs[0], max: xs[xs.length - 1] });
-        } else {
-          p.setScale("x", { min: null, max: null });
-        }
-      } catch (_) {}
+      // Reset every registered chart, not just this one. Routing
+      // through the chart-sync store keeps the canonical zoom path
+      // single-sourced; the store walks the registry, restores each
+      // chart to its own data extent, and clears the synced window.
+      if (window.__chartSyncStore) window.__chartSyncStore.reset();
     });
     containerEl.appendChild(btn);
   }
@@ -718,11 +750,25 @@
   //     buckets are visible (e.g. stacked bars, where hiding one
   //     bucket must recompute cumulative stacks). When omitted the
   //     legend drives the existing plot via uPlot's setSeries().
+  //   - opts.statsSource: { timestamps, series } — the data each pill's
+  //     Min · Avg · Max stat is computed against. Stacked charts pass
+  //     the un-stacked raw values here; line charts pass the same data
+  //     they plotted. When omitted no stats render (kept omitted only
+  //     by callers that have no per-series numeric data, e.g. would-be
+  //     decorative-only legends).
+  //
+  // Returns { setStats(win), destroy() } so the chart-sync subscriber
+  // can recompute on every shared-store window change and the vmstat
+  // tab rebuild path can drop the legend cleanly before re-mounting.
   function mountLegend(containerEl, series, plot, opts) {
     opts = opts || {};
     var legend = document.createElement("div");
     legend.className = "series-legend";
     var pills = [];
+    // Per-pill stats element references, keyed by pill data-idx so
+    // setStats can update them in place without a full legend rebuild.
+    var statsByIdx = {};
+    var statsSource = opts.statsSource || null;
 
     function pillVisible(btn) { return btn.classList.contains("active"); }
     function visibleIdxs() {
@@ -755,7 +801,17 @@
       btn.title = "Click to show only this series (solo) · Shift/Cmd-click to toggle just this series · Click a soloed pill again to restore all";
       btn.innerHTML =
         '<span class="swatch" style="background:' + s.stroke + '"></span>' +
-        '<span class="lbl">' + escapeHTML(s.label) + '</span>';
+        '<span class="lbl">' + escapeHTML(s.label) + '</span>' +
+        '<span class="series-pill-stats" data-stats="min-avg-max">' +
+          '<span class="series-pill-stat-min">–</span>' +
+          '<span class="series-pill-stat-avg">–</span>' +
+          '<span class="series-pill-stat-max">–</span>' +
+        '</span>';
+      statsByIdx[String(i)] = {
+        min: btn.querySelector(".series-pill-stat-min"),
+        avg: btn.querySelector(".series-pill-stat-avg"),
+        max: btn.querySelector(".series-pill-stat-max"),
+      };
       btn.addEventListener("click", function (ev) {
         var idx = Number(btn.getAttribute("data-idx"));
         var additive = ev.shiftKey || ev.metaKey || ev.ctrlKey;
@@ -826,6 +882,45 @@
         }
       };
     }
+
+    // setStats(win) recomputes Min · Avg · Max for every pill against
+    // the visible x-window and writes the formatted strings into the
+    // pill stat spans. The chart-sync store calls this on every
+    // window change. When statsSource is omitted (legacy callers
+    // without per-series numeric data) it is a no-op.
+    function setStats(win) {
+      if (!statsSource || !window.__chartSyncStore) return;
+      var stats = window.__chartSyncStore.computeWindowedStats(
+        statsSource.timestamps, statsSource.series, win || { min: null, max: null });
+      // statsSource.series is indexed 0..N-1 of source series; pills
+      // are indexed 1..N (pill index 0 is the time axis, skipped on
+      // construction). Source series index i corresponds to pill idx
+      // i+1, EXCEPT for stacked charts where mountLegend was called
+      // with plotSeries already in reverse order — those callers pass
+      // statsSource pre-aligned so source[i] still corresponds to
+      // pill (i+1). Each call site is responsible for that alignment.
+      for (var i = 0; i < stats.length; i++) {
+        var pillIdx = String(i + 1);
+        var refs = statsByIdx[pillIdx];
+        if (!refs) continue;
+        var st = stats[i];
+        if (!st || st.count === 0) {
+          refs.min.textContent = "–";
+          refs.avg.textContent = "–";
+          refs.max.textContent = "–";
+        } else {
+          refs.min.textContent = formatYTick(st.min);
+          refs.avg.textContent = formatYTick(st.avg);
+          refs.max.textContent = formatYTick(st.max);
+        }
+      }
+    }
+
+    function destroy() {
+      if (legend && legend.parentNode) legend.parentNode.removeChild(legend);
+    }
+
+    return { setStats: setStats, destroy: destroy };
   }
 
   function escapeHTML(s) {

@@ -161,6 +161,126 @@ func TestFeedbackWorkerClientContract(t *testing.T) {
 	}
 }
 
+// TestChartZoomSyncContract asserts the embedded JS contains the
+// canonical chart-sync-store and windowed-stats markers from
+// specs/017-chart-zoom-sync-stats/contracts/chart-sync.md, and does
+// not retain any non-canonical reset-zoom or duplicate mountLegend
+// path.
+func TestChartZoomSyncContract(t *testing.T) {
+	app := embeddedAppJS
+	for _, want := range []string{
+		// Store identity.
+		"window.__chartSyncStore",
+		"chartSyncStore.subscribe",
+		// Public methods (called from broadcast hooks and reset path).
+		"setWindow:",
+		"reset: function",
+		"applyToChart:",
+		// Windowed-stats helper + the canonical pill marker the legend
+		// renders for each series.
+		"computeWindowedStats",
+		"series-pill-stats",
+		"setLegendStats",
+		// Boot wiring lives in app-js/04.js (initChartSync defined in
+		// 05.js); both must ship together.
+		"initChartSync()",
+		"function initChartSync()",
+		// The reset-zoom button click handler routes through the store
+		// so every chart resets, not just the one the button is on.
+		"window.__chartSyncStore.reset()",
+		// The basePlotOpts setScale broadcaster name is canonical.
+		"broadcastXScaleChange",
+		// 05.js banner comment proves the new ordered part is embedded.
+		"app-js/05.js",
+	} {
+		if !strings.Contains(app, want) {
+			t.Fatalf("embedded app JS missing chart-sync canonical marker %q", want)
+		}
+	}
+	for _, forbidden := range []string{
+		// The old per-chart reset button used to call setScale on a
+		// single plot; the new canonical path goes through the store.
+		// If anyone reintroduces a direct setScale("x" outside the
+		// store, this guard fires.
+		`getPlot().setScale("x"`,
+		// The mysqladmin per-card zoom button used to call
+		// cs.plot.setScale directly; same guard.
+		`cs.plot.setScale("x"`,
+	} {
+		if strings.Contains(app, forbidden) {
+			t.Fatalf("embedded app JS still contains non-canonical zoom-reset path %q", forbidden)
+		}
+	}
+	// mountLegend has exactly one definition.
+	if got := strings.Count(app, "function mountLegend("); got != 1 {
+		t.Fatalf("mountLegend defined %d times in embedded app JS; want exactly 1 (canonical owner)", got)
+	}
+}
+
+// TestChartSyncWindowedStatsFlow asserts the legend recomputation flow
+// is wired end-to-end in the embedded JS: the store subscriber walks
+// the registry and calls each chart's setStats with the new window,
+// and a chart that mounts post-zoom adopts the current window via
+// applyToChart on registration.
+func TestChartSyncWindowedStatsFlow(t *testing.T) {
+	app := embeddedAppJS
+	for _, want := range []string{
+		// On every store update, the subscriber pings each chart's
+		// legend handle.
+		"h.setStats(win)",
+		// On registration, a chart that mounts after a zoom adopts
+		// the current shared window without an extra interaction.
+		"window.__chartSyncStore.applyToChart",
+		// Stacked-chart stats source is the un-stacked raw values, not
+		// the cumulative `stacked[]` arrays uPlot draws.
+		"stacked charts whose drawn values are cumulative",
+	} {
+		if !strings.Contains(app, want) {
+			t.Fatalf("embedded app JS missing chart-sync flow marker %q", want)
+		}
+	}
+}
+
+// TestHLLSparklineExemptFromSync preserves the canonical opt-out: the
+// HLL sparkline must NOT call registerChart, so it is never reached by
+// the chart-sync broadcaster or the windowed-stats subscriber.
+func TestHLLSparklineExemptFromSync(t *testing.T) {
+	app := embeddedAppJS
+	idx := strings.Index(app, "function renderHLLSparkline")
+	if idx < 0 {
+		t.Fatalf("renderHLLSparkline not found in embedded app JS")
+	}
+	end := strings.Index(app[idx:], "\n  function ")
+	if end < 0 {
+		end = len(app) - idx
+	}
+	body := app[idx : idx+end]
+	if strings.Contains(body, "registerChart(") {
+		t.Fatalf("renderHLLSparkline must not call registerChart — that is the canonical opt-out from chart sync")
+	}
+}
+
+// TestEmbeddedAppJSHasIIFEClosed asserts the outer IIFE that wraps
+// the embedded JS opens exactly once (in 00.js) and closes exactly
+// once (now at the bottom of 05.js). A missing close would leave the
+// browser parser unhappy; a duplicate close would mean a part landed
+// outside the IIFE.
+func TestEmbeddedAppJSHasIIFEClosed(t *testing.T) {
+	app := embeddedAppJS
+	if strings.Count(app, "(function () {\n  \"use strict\";") != 1 {
+		t.Fatalf("expected exactly one outer IIFE opener in embedded app JS")
+	}
+	// The outer IIFE close is the only `})();` at column 0 (no leading
+	// indent). Inner IIFEs (e.g. the chart-sync store factory) close
+	// with `  })();` (indented).
+	if !strings.HasSuffix(strings.TrimRight(app, "\n"), "\n})();") {
+		t.Fatalf("expected outer IIFE close `})();` at start of last non-blank line in embedded app JS")
+	}
+	if strings.Count(app, "\n})();") != 1 {
+		t.Fatalf("expected exactly one outer (column-0) IIFE close in embedded app JS")
+	}
+}
+
 // TestResolveVersionMultiDigitSort ensures resolveVersion sorts
 // numerically (not lexicographically) so "10.4" is later than "9.0".
 func TestResolveVersionMultiDigitSort(t *testing.T) {

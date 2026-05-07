@@ -486,5 +486,10 @@
       if (!ev.target || !ev.target.closest || !ev.target.closest("main.content")) return;
       window.requestAnimationFrame(resizeAllCharts);
     }, true);
+    // The chart sync store + windowed legend stats subscriber wire up
+    // their own DOM-time hooks once initCharts has populated the
+    // CHARTS registry. The boot path calls initChartSync() (defined in
+    // app-js/05.js, last in lexical order) here so the order is
+    // explicit rather than implicit-by-load-order.
+    initChartSync();
   }
-})();

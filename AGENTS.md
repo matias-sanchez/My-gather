@@ -1,18 +1,19 @@
 <!-- SPECKIT START -->
-Active feature: **015-compliance-closure**
+Active feature: **017-chart-zoom-sync-stats**
 
 For technologies, project structure, constitution gates, data model,
 contracts, and shell commands, read the current plan:
 
-- Plan: `specs/015-compliance-closure/plan.md`
-- Spec: `specs/015-compliance-closure/spec.md`
-- Research: `specs/015-compliance-closure/research.md`
-- Contracts: `specs/015-compliance-closure/contracts/audit.md`
-- Quickstart: `specs/015-compliance-closure/quickstart.md`
-- Tasks: `specs/015-compliance-closure/tasks.md`
+- Plan: `specs/017-chart-zoom-sync-stats/plan.md`
+- Spec: `specs/017-chart-zoom-sync-stats/spec.md`
+- Research: `specs/017-chart-zoom-sync-stats/research.md`
+- Contracts: `specs/017-chart-zoom-sync-stats/contracts/chart-sync.md`
+- Quickstart: `specs/017-chart-zoom-sync-stats/quickstart.md`
+- Tasks: `specs/017-chart-zoom-sync-stats/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
+- **015-compliance-closure** - `specs/015-compliance-closure/plan.md`
 - **014-reconciliation-cleanup** - `specs/014-reconciliation-cleanup/plan.md`
 - **013-full-compliance-fixes** - `specs/013-full-compliance-fixes/plan.md`
 - **012-repo-alignment-audit** - `specs/012-repo-alignment-audit/plan.md`
