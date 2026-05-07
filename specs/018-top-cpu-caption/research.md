@@ -78,15 +78,18 @@ forbidden by Principle XIII).
 
 ## Question 4 — Caption wording
 
-**Decision**: "Showing the top 3 processes by average CPU. mysqld is
-always included, even when it is not in the top 3."
+**Decision**: "Showing the top 3 processes by average CPU. When mysqld
+is running, it is always included, even when it is not in the top 3."
 
 **Rationale**: Two short sentences, no jargon. Says explicitly
 "average CPU" because the chart-summary stats already use "avg" and
 the merge code ranks by average. Says "even when it is not in the
 top 3" rather than "regardless of rank" because the former tells the
 reader exactly what they need to know without requiring them to
-reason about ranking semantics.
+reason about ranking semantics. The "When mysqld is running" qualifier
+keeps the caption unconditionally true on hosts where mysqld is not
+running — the pin in `concatTop` only fires when a `mysqld`/`mariadbd`
+process exists in the capture.
 
 **Alternatives considered**:
 - Issue-suggested wording "Showing top 3 processes by CPU. mysqld is

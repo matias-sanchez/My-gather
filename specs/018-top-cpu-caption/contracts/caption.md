@@ -10,7 +10,7 @@ inside the `if .HasTop` branch, immediately above the
 **Markup** (exact text shipped):
 
 ```html
-<p class="chart-caption">Showing the top 3 processes by average CPU. mysqld is always included, even when it is not in the top 3.</p>
+<p class="chart-caption">Showing the top 3 processes by average CPU. When mysqld is running, it is always included, even when it is not in the top 3.</p>
 ```
 
 **Gating**: The caption MUST share the same `{{- if .HasTop }}`

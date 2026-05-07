@@ -76,7 +76,7 @@ func TestOSSubviewAnchors(t *testing.T) {
 // renders the caption becomes false advertising. This test pins both
 // halves.
 func TestOSTopChartCaption(t *testing.T) {
-	const captionText = "Showing the top 3 processes by average CPU. mysqld is always included, even when it is not in the top 3."
+	const captionText = "Showing the top 3 processes by average CPU. When mysqld is running, it is always included, even when it is not in the top 3."
 
 	withTop := renderGolden(t, model.SuffixIostat, model.SuffixTop, model.SuffixVmstat,
 		model.SuffixNetstat, model.SuffixNetstatS)

@@ -31,21 +31,21 @@ invariant must remain locked by a regression test.
 
 ## Phase 3: Implementation
 
-- [ ] T004 Add the caption `<p class="chart-caption">…</p>` in
+- [x] T004 Add the caption `<p class="chart-caption">…</p>` in
       `render/templates/os.html.tmpl`, inside the `sub-os-top`
       `<details>` body, inside the `if .HasTop` branch, immediately
       above the chart container `<div id="chart-top">`. Exact text
       per `contracts/caption.md`.
-- [ ] T005 Add a `.chart-caption` style rule in the appropriate
+- [x] T005 Add a `.chart-caption` style rule in the appropriate
       ordered CSS source part under `render/assets/app-css/` (small
       muted-text block above the chart). Skip if an existing class
       already produces the desired appearance.
-- [ ] T006 Add new regression test
+- [x] T006 Add new regression test
       `TestConcatTopMysqldPinnedWhenLowest` in `render/concat_test.go`
       that constructs a snapshot stream where `mysqld` is the
       lowest-CPU process and asserts mysqld is in
       `Top3ByAverage` after `concatTop`.
-- [ ] T007 Add new caption-presence test in `render/os_test.go`
+- [x] T007 Add new caption-presence test in `render/os_test.go`
       (or the closest existing renderer test file) that renders the
       OS section with non-empty top data and asserts the exact
       caption string appears, and renders again with `HasTop` false
@@ -53,17 +53,17 @@ invariant must remain locked by a regression test.
 
 ## Phase 4: Side-by-side Agent Contract
 
-- [ ] T008 Update `CLAUDE.md` and `AGENTS.md` to point the active
+- [x] T008 Update `CLAUDE.md` and `AGENTS.md` to point the active
       feature at `018-top-cpu-caption` and add `015-compliance-closure`
       and `016-remove-collection-size-cap` to the prior-features list
       if not already present.
 
 ## Phase 5: Validation
 
-- [ ] T009 Run `go test -count=1 ./...` and fix any failures.
-- [ ] T010 Run `scripts/hooks/pre-push-constitution-guard.sh` and fix
+- [x] T009 Run `go test -count=1 ./...` and fix any failures.
+- [x] T010 Run `scripts/hooks/pre-push-constitution-guard.sh` and fix
       any findings.
-- [ ] T011 Render a fixture report and grep for the caption string
+- [x] T011 Render a fixture report and grep for the caption string
       (per `quickstart.md`).
-- [ ] T012 Commit, push, open PR with title
+- [x] T012 Commit, push, open PR with title
       `Top CPU processes chart caption (#54)` referencing issue #54.

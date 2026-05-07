@@ -25,7 +25,7 @@ go test ./...
 go run ./cmd/my-gather-report \
   --input testdata/<some-fixture> \
   --output /tmp/report.html
-grep -F 'Showing the top 3 processes by average CPU. mysqld is always included' /tmp/report.html
+grep -F 'Showing the top 3 processes by average CPU. When mysqld is running, it is always included' /tmp/report.html
 ```
 
 The grep MUST return exactly one match for any report that has
