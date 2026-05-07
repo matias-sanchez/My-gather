@@ -35,7 +35,7 @@ const maxArchiveExtractedBytes int64 = 64 << 30
 
 const maxArchiveFileBytes = parse.DefaultMaxFileBytes
 
-// errArchiveExtractedSizeExceeded reports that an archive's total
+// archiveExtractedSizeError reports that an archive's total
 // extracted bytes exceeded the local archive-extraction ceiling
 // (maxArchiveExtractedBytes). It is a typed error so callers can
 // branch via errors.As; the parser's *SizeError no longer covers a

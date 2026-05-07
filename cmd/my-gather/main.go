@@ -221,13 +221,11 @@ func mapDiscoverError(err error, inputPath string, stderr io.Writer) int {
 	}
 	var sz *parse.SizeError
 	if errors.As(err, &sz) {
-		switch sz.Kind {
-		case parse.SizeErrorFile:
-			fmt.Fprintf(stderr, "my-gather: source file %s is %d bytes (limit %d)\n",
-				sz.Path, sz.Bytes, sz.Limit)
-		default:
-			fmt.Fprintln(stderr, sz.Error())
-		}
+		// SizeErrorFile is the only remaining kind after feature
+		// 016-remove-collection-size-cap deleted SizeErrorTotal; no
+		// fallback branch is needed (Constitution XIII).
+		fmt.Fprintf(stderr, "my-gather: source file %s is %d bytes (limit %d)\n",
+			sz.Path, sz.Bytes, sz.Limit)
 		return exitSizeBound
 	}
 	var pe *parse.PathError

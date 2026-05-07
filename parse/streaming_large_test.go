@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -24,11 +25,14 @@ import (
 //     pt-stalk capture whose total size exceeds 1.1 GiB. The
 //     historical 1 GiB total-collection refusal path is gone.
 //  2. Per-collector parsers stream their input rather than buffer
-//     entire files. We assert this by measuring peak in-process heap
-//     delta during the Discover call: if any stage slurped a whole
-//     ~190 MiB collector file (or worse, the whole >1.1 GiB
-//     collection) into memory, the delta would blow past the
-//     ceiling.
+//     entire files. We assert this by sampling runtime.MemStats from
+//     a goroutine while Discover runs and tracking the peak HeapAlloc
+//     observed during the call. If any stage slurped a whole ~190 MiB
+//     collector file (or worse, the whole >1.1 GiB collection) into
+//     memory — even transiently before GC reclaimed it — the peak
+//     delta from the pre-Discover baseline blows past the ceiling.
+//     A post-GC retained-heap check would miss that case because the
+//     transient buffer would be reclaimed before the assertion ran.
 //
 // Synthetic content design (important): each collector file is
 // padded with sparse filler lines that the iostat parser silently
@@ -91,15 +95,55 @@ func TestDiscoverStreamingLargeCollection(t *testing.T) {
 	}
 
 	// Sample heap before Discover. Force a GC so the baseline is
-	// stable.
+	// stable. Seed the peak with the baseline so the first sampler
+	// tick can never report a smaller value than the baseline.
 	runtime.GC()
 	var msBefore runtime.MemStats
 	runtime.ReadMemStats(&msBefore)
+	baseline := msBefore.HeapAlloc
+
+	var peak atomic.Uint64
+	peak.Store(baseline)
+
+	// Sample HeapAlloc every 25ms while Discover runs. We do not
+	// force GC inside the sampler — we want to observe transient
+	// allocation high-water marks, not post-GC retained heap. The
+	// sampler exits when done is closed; samplerDone is closed by
+	// the sampler so the test can wait for the final tick before
+	// reading the peak.
+	done := make(chan struct{})
+	samplerDone := make(chan struct{})
+	go func() {
+		defer close(samplerDone)
+		ticker := time.NewTicker(25 * time.Millisecond)
+		defer ticker.Stop()
+		var ms runtime.MemStats
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				runtime.ReadMemStats(&ms)
+				cur := ms.HeapAlloc
+				for {
+					prev := peak.Load()
+					if cur <= prev {
+						break
+					}
+					if peak.CompareAndSwap(prev, cur) {
+						break
+					}
+				}
+			}
+		}
+	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	c, err := parse.Discover(ctx, dir, parse.DiscoverOptions{})
+	close(done)
+	<-samplerDone
 	if err != nil {
 		var sz *parse.SizeError
 		if errors.As(err, &sz) {
@@ -114,25 +158,13 @@ func TestDiscoverStreamingLargeCollection(t *testing.T) {
 		t.Fatal("Discover returned a collection with zero snapshots")
 	}
 
-	// Sample heap after Discover. Force a GC so transient allocations
-	// from per-collector parsers are reclaimed before we measure.
-	runtime.GC()
-	var msAfter runtime.MemStats
-	runtime.ReadMemStats(&msAfter)
+	// Compute peak delta from baseline. peak is at least baseline by
+	// construction, so the subtraction never underflows.
+	delta := int64(peak.Load() - baseline)
 
-	// HeapAlloc is uint64; convert carefully to a signed delta.
-	var delta int64
-	if msAfter.HeapAlloc >= msBefore.HeapAlloc {
-		delta = int64(msAfter.HeapAlloc - msBefore.HeapAlloc)
-	} else {
-		// GC reclaimed more than we allocated — this is fine,
-		// streaming worked great.
-		delta = 0
-	}
-
-	const heapDeltaCeiling int64 = 256 << 20 // 256 MiB
+	const heapDeltaCeiling int64 = 256 << 20 // 256 MiB; matches SC-003 in spec.md.
 	if delta > heapDeltaCeiling {
-		t.Fatalf("heap delta during Discover = %d bytes (%d MiB); ceiling %d MiB. A parser stage is buffering, not streaming.",
+		t.Fatalf("peak heap delta during Discover = %d bytes (%d MiB); ceiling %d MiB. A parser stage is buffering, not streaming.",
 			delta, delta>>20, heapDeltaCeiling>>20)
 	}
 
@@ -156,7 +188,7 @@ func TestDiscoverStreamingLargeCollection(t *testing.T) {
 		t.Fatal("Discover returned a collection but no SourceFile was parsed")
 	}
 
-	t.Logf("Discover parsed %d-byte capture with heap delta %d MiB (ceiling %d MiB)",
+	t.Logf("Discover parsed %d-byte capture with peak heap delta %d MiB (ceiling %d MiB)",
 		total, delta>>20, heapDeltaCeiling>>20)
 }
 
