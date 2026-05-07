@@ -505,6 +505,11 @@
       return hh + ":" + mm + ":" + ss;
     }
 
+    // Single-series sparkline. Stroke flows from --series-1 (slot 0
+     // via seriesStrokeFor) so the sparkline tracks the active theme;
+     // __themeIdx + __themeFillBuilder let the runtime theme-change
+     // handler in app-js/00.js re-paint this chart on theme switch.
+    var sparkStroke = seriesStrokeFor(0);
     var opts = {
       width: W,
       height: H,
@@ -512,7 +517,7 @@
       cursor: {
         show: true,
         drag: { x: false, y: false },
-        points: { show: true, size: 7, stroke: "#6b8eff", fill: "#0b1220" },
+        points: { show: true, size: 7, stroke: sparkStroke, fill: cssVar("--bg", "#0b1220") },
         y: false,
       },
       legend: { show: false },
@@ -525,11 +530,13 @@
         { label: "t" },
         {
           label: "HLL",
-          stroke: "#6b8eff",
+          stroke: sparkStroke,
           width: 1.25,
-          fill:  "rgba(107, 142, 255, 0.18)",
+          fill:  hexToRgba(sparkStroke, 0.18),
           paths: splinePath || undefined,
           points: vals.length === 2 ? { show: true, size: 4 } : { show: false },
+          __themeIdx: 0,
+          __themeFillBuilder: function (s) { return hexToRgba(s, 0.18); },
         },
       ],
       hooks: {
