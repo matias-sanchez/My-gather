@@ -189,6 +189,7 @@ func buildView(r *model.Report, c *model.Collection, sigs []string) (*reportView
 	if r.DBSection != nil {
 		v.InnoDBMetrics = aggregateInnoDBMetrics(r.DBSection.InnoDBPerSnapshot)
 		v.HasInnoDB = len(v.InnoDBMetrics) > 0
+		v.RedoSizing = computeRedoSizing(r)
 		v.HasMysqladmin = r.DBSection.Mysqladmin != nil
 		v.HasProcesslist = r.DBSection.Processlist != nil
 		if v.HasProcesslist {
