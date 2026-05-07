@@ -705,3 +705,40 @@ dd.env-meter:has(.sev-crit) .env-meter-pct { color: var(--err); }
   min-width: 132px;
 }
 .feedback-success-close:hover { filter: brightness(1.1); }
+
+/* Per-series stats inside each legend pill — Min · Avg · Max for the
+   currently visible window (chart-sync store driven). The dot
+   separators are inserted via CSS pseudo-content so the JS just sets
+   the three numeric spans and stays out of presentation. */
+.series-legend .series-pill .series-pill-stats {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-left: 4px;
+  padding-left: 6px;
+  border-left: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+.series-legend .series-pill .series-pill-stat-min,
+.series-legend .series-pill .series-pill-stat-avg,
+.series-legend .series-pill .series-pill-stat-max {
+  display: inline-block;
+  min-width: 1.5ch;
+  text-align: right;
+}
+.series-legend .series-pill .series-pill-stat-avg::before {
+  content: "·";
+  margin-right: 4px;
+  color: var(--fg-dim);
+}
+.series-legend .series-pill .series-pill-stat-max::before {
+  content: "·";
+  margin-right: 4px;
+  color: var(--fg-dim);
+}
+.series-legend .series-pill:not(.active) .series-pill-stats {
+  opacity: 0.45;
+}
