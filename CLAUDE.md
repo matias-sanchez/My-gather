@@ -1,15 +1,15 @@
 <!-- SPECKIT START -->
-Active feature: **019-redo-log-sizing-panel**
+Active feature: **020-report-theming**
 
 For technologies, project structure, constitution gates, data model,
 contracts, and shell commands, read the current plan:
 
-- Plan: `specs/019-redo-log-sizing-panel/plan.md`
-- Spec: `specs/019-redo-log-sizing-panel/spec.md`
-- Research: `specs/019-redo-log-sizing-panel/research.md`
-- Contracts: `specs/019-redo-log-sizing-panel/contracts/redo-sizing-panel.md`
-- Quickstart: `specs/019-redo-log-sizing-panel/quickstart.md`
-- Tasks: `specs/019-redo-log-sizing-panel/tasks.md`
+- Plan: `specs/020-report-theming/plan.md`
+- Spec: `specs/020-report-theming/spec.md`
+- Research: `specs/020-report-theming/research.md`
+- Contracts: `specs/020-report-theming/contracts/theming.md`
+- Quickstart: `specs/020-report-theming/quickstart.md`
+- Tasks: `specs/020-report-theming/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:

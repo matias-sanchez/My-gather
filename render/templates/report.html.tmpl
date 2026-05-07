@@ -9,6 +9,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="my-gather {{.Version}}">
   <meta name="referrer" content="no-referrer">
+  {{- /* Pre-paint theme application. Runs synchronously before
+         <style> below is parsed, so :root[data-theme="..."] rules in
+         the embedded CSS apply on first paint and the user never
+         sees a flash of the wrong theme. Closed-set validation;
+         unknown / missing / storage-error values fall back to dark.
+         See specs/020-report-theming/. */ -}}
+  <script>(function(){try{var k="my-gather:theme";var v=window.localStorage&&window.localStorage.getItem(k);var ok=["dark","light","colorblind"];document.documentElement.dataset.theme=(v&&ok.indexOf(v)>=0)?v:"dark";}catch(_){document.documentElement.dataset.theme="dark";}})();</script>
   <link rel="icon" type="image/png" href="{{.LogoDataURI}}">
   <style>{{.EmbeddedCSS}}</style>
   <script type="application/json" id="report-data">{{.DataPayload}}</script>
@@ -34,6 +41,19 @@
     <span><span class="k">generated</span> <span class="v">{{.GeneratedAtDisplay}}</span></span>
     <span><span class="k">my-gather</span> <span class="v">{{.Version}}{{if .GitCommit}} · {{.GitCommit}}{{end}}</span></span>
   </div>
+  {{- /* Theme picker. See specs/020-report-theming/. The <select>'s
+         value is set by app-js/06.js once the DOM is ready, mirroring
+         the data-theme attribute the pre-paint script applied to
+         <html>. Static markup, deterministic across runs
+         (Principle IV). */}}
+  <span class="theme-picker-wrap">
+    <label class="theme-label" for="theme-picker">Theme</label>
+    <select id="theme-picker" class="theme-picker" aria-label="Report theme">
+      <option value="dark">Dark</option>
+      <option value="light">Light</option>
+      <option value="colorblind">Color-blind safe</option>
+    </select>
+  </span>
   {{- /* Report-feedback control. See specs/002-report-feedback-button/.
          Static markup, deterministic across runs (Principle IV). Dialog
          markup lives at end of <body>. */}}
