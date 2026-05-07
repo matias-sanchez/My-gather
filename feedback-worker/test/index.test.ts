@@ -92,6 +92,7 @@ function feedbackRequest(
     },
     body: JSON.stringify({
       title: "Parser feedback",
+      author: "Test Author",
       body: "Please inspect this sample.",
       image: {
         mime: "image/png",
@@ -118,6 +119,7 @@ function minimalFeedbackRequest(idempotencyKey: string): Request {
     },
     body: JSON.stringify({
       title: "Parser feedback",
+      author: "Test Author",
       body: "Please inspect this sample.",
       idempotencyKey,
       reportVersion: "v0.3.1-test",

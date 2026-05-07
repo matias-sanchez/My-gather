@@ -46,10 +46,43 @@ func TestFeedbackClientReadsCanonicalContract(t *testing.T) {
 		"LIMITS.reportVersionMaxChars",
 		"LIMITS.legacyUrlMaxChars",
 		"LIMITS.workerTimeoutMs",
+		"LIMITS.authorMaxChars",
 	}
 	for _, snippet := range wantSnippets {
 		if !strings.Contains(embeddedAppJS, snippet) {
 			t.Errorf("embedded app JS does not consume feedback contract snippet %q", snippet)
 		}
+	}
+}
+
+// TestFeedbackViewExposesAuthorMaxChars: spec 021-feedback-author-field
+// FR-009 — the Author character cap MUST be expressed exactly once
+// in the canonical contract JSON and surfaced by the Go view so the
+// rendered <input maxlength="..."> matches the worker's validation
+// limit. Asserts both that the view carries the value and that it
+// equals the parsed contract field (no hardcoded constant).
+func TestFeedbackViewExposesAuthorMaxChars(t *testing.T) {
+	v := BuildFeedbackView()
+	if v.AuthorMaxChars <= 0 {
+		t.Fatalf("FeedbackView.AuthorMaxChars must be positive, got %d", v.AuthorMaxChars)
+	}
+	if v.AuthorMaxChars != canonicalFeedbackContract.Limits.AuthorMaxChars {
+		t.Errorf("FeedbackView.AuthorMaxChars = %d, want canonical contract %d",
+			v.AuthorMaxChars, canonicalFeedbackContract.Limits.AuthorMaxChars)
+	}
+}
+
+// TestFeedbackPersistedAuthorKeyReferencedConsistently: spec
+// 021-feedback-author-field US2 — the localStorage key
+// "mygather.feedback.lastAuthor" must appear in the embedded JS
+// for both the read (loadPersistedAuthor) and the write
+// (savePersistedAuthor). A typo on either side would silently break
+// pre-fill. Counts the literal occurrences and asserts >= 2 so a
+// future code-comment mentioning the key does not over-flag.
+func TestFeedbackPersistedAuthorKeyReferencedConsistently(t *testing.T) {
+	const key = `"mygather.feedback.lastAuthor"`
+	count := strings.Count(embeddedAppJS, key)
+	if count < 2 {
+		t.Fatalf("embedded app JS must reference %s at least twice (read + write), got %d", key, count)
 	}
 }

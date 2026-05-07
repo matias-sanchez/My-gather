@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"html"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -69,11 +70,14 @@ func TestFeedbackDialogMarkupPresent(t *testing.T) {
 
 	wantSubstrings := []string{
 		`id="feedback-dialog"`,
+		// Spec 021-feedback-author-field FR-001: the Author input
+		// must be present in the dialog markup.
+		`id="feedback-field-author"`,
 		`id="feedback-field-title"`,
 		`id="feedback-field-body"`,
 		`id="feedback-field-category"`,
 		// The submit button starts disabled until the client JS
-		// validates a non-empty title.
+		// validates a non-empty title and a non-empty author.
 		`id="feedback-submit"`,
 		`disabled`,
 		// Fallback is hidden until the dialog's submit handler
@@ -111,6 +115,45 @@ func TestFeedbackDialogMarkupPresent(t *testing.T) {
 	fallbackTagEnd := strings.Index(out[fallbackIdx:], ">")
 	if fallbackTagEnd == -1 || !strings.Contains(out[fallbackIdx:fallbackIdx+fallbackTagEnd], "hidden") {
 		t.Errorf("feedback-fallback must carry the `hidden` attribute on first paint")
+	}
+
+	// Spec 021-feedback-author-field FR-001: the Author input must
+	// be marked HTML-required and carry the maxlength attribute
+	// rendered from the canonical contract value, so the browser-
+	// native length cap matches the worker's validation cap.
+	authorIdx := strings.Index(out, `id="feedback-field-author"`)
+	if authorIdx == -1 {
+		t.Fatalf("feedback-field-author id not found")
+	}
+	authorTagEnd := strings.Index(out[authorIdx:], ">")
+	if authorTagEnd == -1 {
+		t.Fatalf("feedback-field-author tag not closed")
+	}
+	authorTag := out[authorIdx : authorIdx+authorTagEnd]
+	if !strings.Contains(authorTag, "required") {
+		t.Errorf("feedback-field-author must carry the `required` attribute")
+	}
+	wantMaxlen := `maxlength="` + strconv.Itoa(render.BuildFeedbackView().AuthorMaxChars) + `"`
+	if !strings.Contains(authorTag, wantMaxlen) {
+		t.Errorf("feedback-field-author must carry %s; tag was %q", wantMaxlen, authorTag)
+	}
+}
+
+// TestFeedbackAuthorAppearsBeforeTitle: spec 021-feedback-author-field
+// FR-001 — the Author input must be positioned above the Title field
+// in document order so users see the attribution control first.
+func TestFeedbackAuthorAppearsBeforeTitle(t *testing.T) {
+	out := renderFeedbackFixture(t)
+	authorIdx := strings.Index(out, `id="feedback-field-author"`)
+	titleIdx := strings.Index(out, `id="feedback-field-title"`)
+	if authorIdx == -1 {
+		t.Fatalf("feedback-field-author id not found")
+	}
+	if titleIdx == -1 {
+		t.Fatalf("feedback-field-title id not found")
+	}
+	if authorIdx >= titleIdx {
+		t.Errorf("Author input must precede Title input (author at %d, title at %d)", authorIdx, titleIdx)
 	}
 }
 

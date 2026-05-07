@@ -14,6 +14,12 @@ export function buildIssueBody(input: BuildIssueBodyInput): string {
   const { payload, imageUrl, voiceUrl } = input;
   const parts: string[] = [];
 
+  // Spec 021-feedback-author-field: triagers need to know who
+  // reported the issue. Author is a required validated field, so
+  // this line is always present and always first.
+  parts.push(`Submitted by: ${payload.author}`);
+  parts.push("");
+
   if (payload.category) {
     parts.push(`> Category: ${payload.category}`);
     parts.push("");

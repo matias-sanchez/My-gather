@@ -17,6 +17,7 @@ export interface ValidatedVoice {
 
 export interface ValidatedPayload {
   title: string;
+  author: string;
   body: string;
   category?: Category;
   image?: ValidatedImage;
@@ -29,6 +30,8 @@ export type ValidationError =
   | "malformed_payload"
   | "title_required"
   | "title_too_long"
+  | "author_required"
+  | "author_too_long"
   | "body_too_long"
   | "category_invalid"
   | "image_bad_mime"
@@ -123,6 +126,21 @@ export function validatePayload(raw: unknown): ValidationResult {
     return fail("title_too_long", `Title exceeds ${feedbackContract.limits.titleMaxChars} characters.`);
   }
 
+  // Author (required, trimmed, length-capped). Spec
+  // 021-feedback-author-field FR-008: rejected with the same 400
+  // shape used for the existing required fields.
+  const authorRaw = raw["author"];
+  if (typeof authorRaw !== "string") {
+    return fail("author_required", "Author is required.");
+  }
+  const author = authorRaw.trim();
+  if (author.length === 0) {
+    return fail("author_required", "Author is required.");
+  }
+  if (author.length > feedbackContract.limits.authorMaxChars) {
+    return fail("author_too_long", `Author exceeds ${feedbackContract.limits.authorMaxChars} characters.`);
+  }
+
   // Body (may be empty).
   const bodyRaw = raw["body"];
   let body = "";
@@ -184,6 +202,7 @@ export function validatePayload(raw: unknown): ValidationResult {
     ok: true,
     data: {
       title,
+      author,
       body,
       category,
       image,

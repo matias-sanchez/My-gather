@@ -85,8 +85,18 @@
       setErr(""); hide(fallback); hide(hint);
       if (successEl) hide(successEl);
       form.hidden = false;
+      // Spec 021-feedback-author-field US2: pre-fill the Author
+      // field from the last successful submission. Read at open
+      // time (not boot time) because closeDialog resets the field
+      // between cycles. R6: re-evaluate the cap on each load so a
+      // stale value from a release with a higher cap is silently
+      // truncated rather than blocking the Submit gate.
+      if (authorInput.value === "") {
+        authorInput.value = loadPersistedAuthor();
+      }
       dialog.showModal();
       try { titleInput.focus(); } catch (_) {}
+      updateSubmitEnabled();
     }
     function closeDialog() {
       // Invalidate any in-flight getUserMedia permission prompt so its
@@ -108,6 +118,7 @@
         stopRecording();
       }
       clearAttachment("image"); clearAttachment("voice");
+      authorInput.value = "";
       titleInput.value = ""; bodyInput.value = ""; catSelect.value = "";
       setErr(""); hide(fallback); hide(hint);
       // Dialog dismissal ends the current logical submission. The
@@ -321,6 +332,11 @@
           // double-prepend the category block in worker submissions.
           var payload = {
             title: titleInput.value,
+            // Spec 021-feedback-author-field FR-006: Author is a
+            // dedicated required field on the worker payload, not
+            // folded into the body. The worker composes the
+            // "Submitted by:" line in feedback-worker/src/body.ts.
+            author: authorInput.value.trim(),
             body: bodyInput.value,
             idempotencyKey: idempotencyKey,
             reportVersion: reportVersion
@@ -353,6 +369,10 @@
       }).then(function (r) {
         var res = r.res, data = r.data || {};
         if (res.status === 200 && data && data.ok && data.issueUrl) {
+          // Spec 021-feedback-author-field US2 / R5: persist on
+          // definitive worker success only, so a half-typed
+          // abandoned name does not pollute the next session.
+          savePersistedAuthor(authorInput.value.trim());
           renderSuccess(data.issueUrl, data.issueNumber);
           return;
         }
@@ -438,6 +458,7 @@
       idempotencyKey = null;
       updateSubmitEnabled();
     }
+    authorInput.addEventListener("input", onFormContentChange);
     titleInput.addEventListener("input", onFormContentChange);
     bodyInput.addEventListener("input", onFormContentChange);
     catSelect.addEventListener("change", onFormContentChange);

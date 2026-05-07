@@ -605,6 +605,7 @@
     var openBtn = document.getElementById("feedback-open");
     if (!dialog || !openBtn || typeof dialog.showModal !== "function") return;
     var form = document.getElementById("feedback-form");
+    var authorInput = document.getElementById("feedback-field-author");
     var titleInput = document.getElementById("feedback-field-title");
     var bodyInput = document.getElementById("feedback-field-body");
     var catSelect = document.getElementById("feedback-field-category");
@@ -731,8 +732,34 @@
              ((Math.floor(Math.random() * 4) + 8).toString(16)) + rhex(3) + "-" + rhex(12);
     }
     function maybePrefixBody() {
+      // Spec 021-feedback-author-field: the legacy window.open
+      // GitHub-prefill fallback path mirrors the worker body
+      // composer so both submission paths produce equivalent issue
+      // bodies (Principle XIII canonical observable behaviour).
+      // Author is required by the Submit gate, so it is always
+      // present at this point.
+      var attribution = "Submitted by: " + authorInput.value.trim() + "\n\n";
       var cat = catSelect.value;
-      return cat ? "> Category: " + cat + "\n\n" + bodyInput.value : bodyInput.value;
+      var rest = cat ? "> Category: " + cat + "\n\n" + bodyInput.value : bodyInput.value;
+      return attribution + rest;
+    }
+    // localStorage helpers for the Author field. Wrapped in try/catch
+    // so a private window, quota error, or browser security policy
+    // silently degrades to "no persistence" — the field stays empty,
+    // the user types their name, the submission still succeeds (spec
+    // 021 US2 acceptance scenario 3, R4/R5/R6).
+    function loadPersistedAuthor() {
+      try {
+        var v = window.localStorage.getItem("mygather.feedback.lastAuthor") || "";
+        return v.length > LIMITS.authorMaxChars ? v.slice(0, LIMITS.authorMaxChars) : v;
+      } catch (_) {
+        return "";
+      }
+    }
+    function savePersistedAuthor(v) {
+      try {
+        if (v) window.localStorage.setItem("mygather.feedback.lastAuthor", v);
+      } catch (_) { /* persistence is best-effort */ }
     }
     function buildURL() {
       var sep = BASE_URL.indexOf("?") === -1 ? "?" : "&";
@@ -760,6 +787,12 @@
       // length there would block genuinely-valid submissions whose
       // bodies fit the Worker but bloat past the URL budget (long
       // paragraphs, code blocks, etc). Gate by the runtime path.
+      // Spec 021-feedback-author-field FR-002: Author is required.
+      // Mirrors the title trim-empty + length-cap pattern; both
+      // gates feed the same Submit-disabled outcome.
+      var authorLen = authorInput.value.trim().length;
+      if (authorLen === 0) { submitBtn.disabled = true; return; }
+      if (authorInput.value.length > LIMITS.authorMaxChars) { submitBtn.disabled = true; return; }
       var titleLen = titleInput.value.trim().length;
       if (titleLen === 0) { submitBtn.disabled = true; return; }
       if (typeof window.fetch === "function") {
