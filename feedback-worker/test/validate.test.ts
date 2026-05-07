@@ -23,6 +23,7 @@ function bigBase64(size: number): string {
 function goodPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     title: "A sensible title",
+    author: "Jane Doe",
     body: "Some body text",
     idempotencyKey: UUID,
     reportVersion: "v0.3.1-54-g29734aa",
@@ -219,5 +220,47 @@ describe("validatePayload", () => {
     const res = validatePayload(goodPayload({ reportVersion: "x".repeat(limits.reportVersionMaxChars + 1) }));
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toBe("report_version_invalid");
+  });
+
+  // Spec 021-feedback-author-field FR-008: Author is a required,
+  // trimmed, length-capped string. Missing / non-string / empty /
+  // whitespace-only values are rejected as author_required;
+  // over-cap values as author_too_long. The validated payload
+  // carries the trimmed value.
+  it("rejects missing author as author_required", () => {
+    const res = validatePayload(goodPayload({ author: undefined }));
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toBe("author_required");
+  });
+
+  it("rejects non-string author as author_required", () => {
+    const res = validatePayload(goodPayload({ author: 42 }));
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toBe("author_required");
+  });
+
+  it("rejects empty author as author_required", () => {
+    const res = validatePayload(goodPayload({ author: "" }));
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toBe("author_required");
+  });
+
+  it("rejects whitespace-only author as author_required", () => {
+    const res = validatePayload(goodPayload({ author: "   \t\n" }));
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toBe("author_required");
+  });
+
+  it("rejects author longer than the canonical cap as author_too_long", () => {
+    const res = validatePayload(goodPayload({ author: "x".repeat(limits.authorMaxChars + 1) }));
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toBe("author_too_long");
+  });
+
+  it("accepts an author at the canonical cap and trims surrounding whitespace", () => {
+    const padded = "  " + "x".repeat(limits.authorMaxChars) + "  ";
+    const res = validatePayload(goodPayload({ author: padded }));
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.data.author).toBe("x".repeat(limits.authorMaxChars));
   });
 });

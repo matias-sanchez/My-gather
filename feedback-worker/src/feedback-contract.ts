@@ -13,6 +13,7 @@ interface FeedbackContract {
     legacyUrlMaxChars: number;
     workerTimeoutMs: number;
     requestMaxBytes: number;
+    authorMaxChars: number;
   };
 }
 

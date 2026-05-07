@@ -154,6 +154,11 @@
     </p>
 
     <div class="feedback-field">
+      <label for="feedback-field-author">Author <span class="feedback-field-req">required</span></label>
+      <input id="feedback-field-author" name="author" type="text" autocomplete="name" placeholder="Your name" required maxlength="{{ .Feedback.AuthorMaxChars }}">
+    </div>
+
+    <div class="feedback-field">
       <label for="feedback-field-title">Title</label>
       <input id="feedback-field-title" name="title" type="text" autocomplete="off" placeholder="Short summary…" required>
     </div>

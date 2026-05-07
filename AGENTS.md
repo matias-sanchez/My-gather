@@ -1,15 +1,15 @@
 <!-- SPECKIT START -->
-Active feature: **016-remove-collection-size-cap**
+Active feature: **021-feedback-author-field**
 
 For technologies, project structure, constitution gates, data model,
 contracts, and shell commands, read the current plan:
 
-- Plan: `specs/016-remove-collection-size-cap/plan.md`
-- Spec: `specs/016-remove-collection-size-cap/spec.md`
-- Research: `specs/016-remove-collection-size-cap/research.md`
-- Contracts: `specs/016-remove-collection-size-cap/contracts/parse.md`
-- Quickstart: `specs/016-remove-collection-size-cap/quickstart.md`
-- Tasks: `specs/016-remove-collection-size-cap/tasks.md`
+- Plan: `specs/021-feedback-author-field/plan.md`
+- Spec: `specs/021-feedback-author-field/spec.md`
+- Research: `specs/021-feedback-author-field/research.md`
+- Contracts: `specs/021-feedback-author-field/contracts/author-field.md`
+- Quickstart: `specs/021-feedback-author-field/quickstart.md`
+- Tasks: `specs/021-feedback-author-field/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
