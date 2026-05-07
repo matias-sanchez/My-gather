@@ -330,13 +330,20 @@
           // is only for the fallback GitHub URL, where the worker
           // isn't in the loop. Sending the prefixed body here would
           // double-prepend the category block in worker submissions.
+          // Snapshot the trimmed author at payload-construction time
+          // so the value persisted on success matches the value sent
+          // in the POST. Reading authorInput.value on the success arm
+          // would race against user edits made while the request is
+          // in flight, leaving localStorage out of sync with the
+          // "Submitted by:" line on the actual GitHub issue.
+          var authorAtSubmit = authorInput.value.trim();
           var payload = {
             title: titleInput.value,
             // Spec 021-feedback-author-field FR-006: Author is a
             // dedicated required field on the worker payload, not
             // folded into the body. The worker composes the
             // "Submitted by:" line in feedback-worker/src/body.ts.
-            author: authorInput.value.trim(),
+            author: authorAtSubmit,
             body: bodyInput.value,
             idempotencyKey: idempotencyKey,
             reportVersion: reportVersion
@@ -359,8 +366,8 @@
           }).then(function (res) {
             clearTimeout(timer);
             return res.json().then(function (data) {
-              return { res: res, data: data, retryAfter: res.headers.get("Retry-After") };
-            }, function () { return { res: res, data: null, retryAfter: res.headers.get("Retry-After") }; });
+              return { res: res, data: data, retryAfter: res.headers.get("Retry-After"), authorAtSubmit: authorAtSubmit };
+            }, function () { return { res: res, data: null, retryAfter: res.headers.get("Retry-After"), authorAtSubmit: authorAtSubmit }; });
           }, function (err) {
             clearTimeout(timer);
             throw err;
@@ -372,7 +379,11 @@
           // Spec 021-feedback-author-field US2 / R5: persist on
           // definitive worker success only, so a half-typed
           // abandoned name does not pollute the next session.
-          savePersistedAuthor(authorInput.value.trim());
+          // Persist the snapshot captured at submit time (sent in
+          // the payload), not the live input — the user may have
+          // edited the field while the request was in flight, and
+          // the persisted value must match what the issue body says.
+          savePersistedAuthor(r.authorAtSubmit);
           renderSuccess(data.issueUrl, data.issueNumber);
           return;
         }

@@ -633,6 +633,14 @@
             typeof limits.reportVersionMaxChars !== "number" ||
             typeof limits.legacyUrlMaxChars !== "number" ||
             typeof limits.workerTimeoutMs !== "number") return null;
+        // Spec 021-feedback-author-field FR-009: authorMaxChars is a
+        // single-source contract limit; reject contracts that omit
+        // it or carry a non-positive integer so the Submit gate
+        // never silently degrades to "no cap" via NaN comparisons.
+        if (typeof limits.authorMaxChars !== "number" ||
+            !isFinite(limits.authorMaxChars) ||
+            Math.floor(limits.authorMaxChars) !== limits.authorMaxChars ||
+            limits.authorMaxChars <= 0) return null;
         return contract;
       } catch (_) {
         return null;

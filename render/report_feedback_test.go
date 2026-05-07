@@ -121,22 +121,56 @@ func TestFeedbackDialogMarkupPresent(t *testing.T) {
 	// be marked HTML-required and carry the maxlength attribute
 	// rendered from the canonical contract value, so the browser-
 	// native length cap matches the worker's validation cap.
-	authorIdx := strings.Index(out, `id="feedback-field-author"`)
-	if authorIdx == -1 {
-		t.Fatalf("feedback-field-author id not found")
+	// Extract the entire <input ...> opening tag (HTML attribute
+	// order is not significant, so anchor on the element start and
+	// match the whole tag rather than scanning forward from the id).
+	authorTag := extractAuthorInputTag(t, out)
+	if !feedbackAuthorRequiredRE.MatchString(authorTag) {
+		t.Errorf("feedback-field-author must carry the `required` attribute; tag was %q", authorTag)
 	}
-	authorTagEnd := strings.Index(out[authorIdx:], ">")
-	if authorTagEnd == -1 {
-		t.Fatalf("feedback-field-author tag not closed")
+	wantMaxlen := strconv.Itoa(render.BuildFeedbackView().AuthorMaxChars)
+	gotMaxlen := feedbackAuthorMaxlenRE.FindStringSubmatch(authorTag)
+	if gotMaxlen == nil {
+		t.Errorf("feedback-field-author must carry a maxlength attribute; tag was %q", authorTag)
+	} else if gotMaxlen[1] != wantMaxlen {
+		t.Errorf("feedback-field-author maxlength = %q, want %q; tag was %q", gotMaxlen[1], wantMaxlen, authorTag)
 	}
-	authorTag := out[authorIdx : authorIdx+authorTagEnd]
-	if !strings.Contains(authorTag, "required") {
-		t.Errorf("feedback-field-author must carry the `required` attribute")
+}
+
+// feedbackAuthorInputRE captures the <input ...> opening tag whose
+// id attribute is "feedback-field-author", regardless of where the
+// id sits in the attribute list. The (?s) flag lets the tag span
+// line breaks; [^>]* stops at the closing '>' before any other tag.
+var feedbackAuthorInputRE = regexp.MustCompile(
+	`(?s)<input\b[^>]*\bid="feedback-field-author"[^>]*>`,
+)
+
+// feedbackAuthorRequiredRE matches the boolean `required` attribute
+// as a standalone token (not part of an unrelated word like
+// "required-name"). HTML allows both bare `required` and
+// `required=""`/`required="required"`.
+var feedbackAuthorRequiredRE = regexp.MustCompile(
+	`\brequired(?:\s|=|>|/)`,
+)
+
+// feedbackAuthorMaxlenRE captures the maxlength integer regardless
+// of attribute position within the tag.
+var feedbackAuthorMaxlenRE = regexp.MustCompile(
+	`\bmaxlength="(\d+)"`,
+)
+
+// extractAuthorInputTag returns the full <input ...> opening tag
+// for the Author field. Uses an HTML-attribute-order-insensitive
+// regex anchored to the input element rather than scanning forward
+// from the id substring (the previous approach silently missed
+// attributes preceding `id` and broke when attribute order changed).
+func extractAuthorInputTag(t *testing.T, out string) string {
+	t.Helper()
+	tag := feedbackAuthorInputRE.FindString(out)
+	if tag == "" {
+		t.Fatalf("feedback-field-author <input> tag not found")
 	}
-	wantMaxlen := `maxlength="` + strconv.Itoa(render.BuildFeedbackView().AuthorMaxChars) + `"`
-	if !strings.Contains(authorTag, wantMaxlen) {
-		t.Errorf("feedback-field-author must carry %s; tag was %q", wantMaxlen, authorTag)
-	}
+	return tag
 }
 
 // TestFeedbackAuthorAppearsBeforeTitle: spec 021-feedback-author-field
