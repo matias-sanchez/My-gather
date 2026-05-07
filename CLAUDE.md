@@ -1,18 +1,20 @@
 <!-- SPECKIT START -->
-Active feature: **015-compliance-closure**
+Active feature: **018-top-cpu-caption**
 
 For technologies, project structure, constitution gates, data model,
 contracts, and shell commands, read the current plan:
 
-- Plan: `specs/015-compliance-closure/plan.md`
-- Spec: `specs/015-compliance-closure/spec.md`
-- Research: `specs/015-compliance-closure/research.md`
-- Contracts: `specs/015-compliance-closure/contracts/audit.md`
-- Quickstart: `specs/015-compliance-closure/quickstart.md`
-- Tasks: `specs/015-compliance-closure/tasks.md`
+- Plan: `specs/018-top-cpu-caption/plan.md`
+- Spec: `specs/018-top-cpu-caption/spec.md`
+- Research: `specs/018-top-cpu-caption/research.md`
+- Contracts: `specs/018-top-cpu-caption/contracts/caption.md`
+- Quickstart: `specs/018-top-cpu-caption/quickstart.md`
+- Tasks: `specs/018-top-cpu-caption/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:
+- **016-remove-collection-size-cap** - `specs/016-remove-collection-size-cap/plan.md`
+- **015-compliance-closure** - `specs/015-compliance-closure/plan.md`
 - **014-reconciliation-cleanup** - `specs/014-reconciliation-cleanup/plan.md`
 - **013-full-compliance-fixes** - `specs/013-full-compliance-fixes/plan.md`
 - **012-repo-alignment-audit** - `specs/012-repo-alignment-audit/plan.md`
