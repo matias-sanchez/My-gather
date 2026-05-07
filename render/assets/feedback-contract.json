@@ -10,6 +10,7 @@
     "reportVersionMaxChars": 64,
     "legacyUrlMaxChars": 7500,
     "workerTimeoutMs": 15000,
-    "requestMaxBytes": 30000000
+    "requestMaxBytes": 30000000,
+    "authorMaxChars": 80
   }
 }
