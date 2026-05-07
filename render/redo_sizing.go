@@ -131,53 +131,61 @@ func computeRedoSizing(r *model.Report) *redoSizingView {
 		rateOK = false
 	}
 
-	switch {
-	case !rateOK:
-		v.State = "rate_unavailable"
+	// Derive State exactly once via the canonical priority function.
+	// The priority order is documented in
+	// specs/019-redo-log-sizing-panel/contracts/redo-sizing-panel.md
+	// (State priority): rate_unavailable > config_missing > no_writes >
+	// ok. Routing every State assignment through this single helper
+	// (Principle XIII) prevents downstream branches from silently
+	// overwriting a higher-priority degradation state with a
+	// lower-priority one — for example, a missing
+	// Innodb_os_log_written counter MUST surface as "rate_unavailable"
+	// (the explicit unavailable message in the template) and MUST NOT
+	// be overwritten to "config_missing" when the redo configuration
+	// variables are also absent, because that would drop the operator
+	// into the generic rate-rows branch with empty placeholder text
+	// like "Peak write rate ( rolling)".
+	v.State = deriveRedoSizingState(rateOK, anyWrites, configured)
+
+	// PeakWindowSeconds and PeakWindowLabel reflect the actual rolling
+	// window the rate readers used; they are populated for every state
+	// so the panel never renders an empty window descriptor.
+	v.PeakWindowSeconds = peakWindow
+	v.PeakWindowLabel = peakLabel
+
+	switch v.State {
+	case "rate_unavailable":
 		v.ObservedRateText = "unavailable"
 		v.ObservedRatePerMinText = "unavailable"
 		v.PeakRateText = "unavailable"
 		v.CoverageText = "n/a"
 		v.Recommended15MinText = "n/a"
 		v.Recommended1HourText = "n/a"
-		if configured <= 0 {
-			v.State = "config_missing"
-		}
-		v.PeakWindowSeconds = peakWindow
-		v.PeakWindowLabel = peakLabel
 		return v
-	case !anyWrites:
-		v.State = "no_writes"
+	case "no_writes":
 		v.ObservedRateBytesPerSec = avgRate
 		v.ObservedRateText = reportutil.HumanBytes(avgRate) + "/s"
 		v.ObservedRatePerMinText = reportutil.HumanBytes(avgRate*60) + "/min"
-		v.PeakWindowSeconds = peakWindow
-		v.PeakWindowLabel = peakLabel
 		v.PeakRateBytesPerSec = 0
 		v.PeakRateText = reportutil.HumanBytes(0) + "/s"
 		v.CoverageText = "n/a"
 		v.Recommended15MinText = "n/a"
 		v.Recommended1HourText = "n/a"
-		if configured <= 0 {
-			v.State = "config_missing"
-		}
 		return v
 	}
 
-	// Rate is real and at least one write was observed.
+	// State is "config_missing" or "ok": the rate is real and at least
+	// one write was observed. Populate the rate-bearing fields once;
+	// the only difference between the two states is whether configured
+	// space is known (and therefore whether coverage and the
+	// under-sized warning can be computed).
 	v.ObservedRateBytesPerSec = avgRate
 	v.ObservedRateText = reportutil.HumanBytes(avgRate) + "/s"
 	v.ObservedRatePerMinText = reportutil.HumanBytes(avgRate*60) + "/min"
 	v.PeakRateBytesPerSec = peakRate
 	v.PeakRateText = reportutil.HumanBytes(peakRate) + "/s"
-	v.PeakWindowSeconds = peakWindow
-	v.PeakWindowLabel = peakLabel
 
-	if configured <= 0 {
-		v.State = "config_missing"
-		v.CoverageText = "n/a"
-	} else {
-		v.State = "ok"
+	if v.State == "ok" {
 		v.CoverageMinutes = configured / peakRate / 60.0
 		coverFloor := int(math.Floor(v.CoverageMinutes))
 		v.CoverageText = fmt.Sprintf("%d minutes", coverFloor)
@@ -187,6 +195,9 @@ func computeRedoSizing(r *model.Report) *redoSizingView {
 				"Current redo space holds only %d minutes of peak writes - consider raising",
 				coverFloor)
 		}
+	} else {
+		// config_missing: no configured space, so coverage is n/a.
+		v.CoverageText = "n/a"
 	}
 
 	v.Recommended15MinBytes = peakRate * redoSizingPeakWindowSeconds
@@ -195,6 +206,43 @@ func computeRedoSizing(r *model.Report) *redoSizingView {
 	v.Recommended1HourText = reportutil.HumanBytes(v.Recommended1HourBytes)
 
 	return v
+}
+
+// deriveRedoSizingState is the canonical State-derivation predicate
+// for the Redo log sizing panel. It returns one of the four documented
+// State values in priority order so the highest-impact degradation
+// surfaces in the rendered panel when multiple degradation conditions
+// hold simultaneously. The contract documents this priority order
+// explicitly (specs/019-redo-log-sizing-panel/contracts/redo-sizing-panel.md
+// — "State priority"):
+//
+//  1. "rate_unavailable" — Innodb_os_log_written absent or insufficient
+//     samples; without an observed write rate the operator cannot size
+//     the redo log regardless of whether configuration variables were
+//     captured. The template renders the explicit unavailable message
+//     for this state, which is the most useful output for the operator.
+//  2. "config_missing"  — rate observed but configured redo space
+//     unknown; the operator gets the recommendation rows but no
+//     coverage estimate.
+//  3. "no_writes"       — rate observed and configured space known
+//     (or not), but every observed delta is zero.
+//  4. "ok"              — rate observed, configured space known, at
+//     least one observed write.
+//
+// Routing every State assignment through this single function is the
+// canonical implementation per Principle XIII; downstream branches
+// must not overwrite the returned value.
+func deriveRedoSizingState(rateOK, anyWrites bool, configured float64) string {
+	switch {
+	case !rateOK:
+		return "rate_unavailable"
+	case configured <= 0:
+		return "config_missing"
+	case !anyWrites:
+		return "no_writes"
+	default:
+		return "ok"
+	}
 }
 
 // readConfiguredRedoSpace returns the configured redo log capacity in

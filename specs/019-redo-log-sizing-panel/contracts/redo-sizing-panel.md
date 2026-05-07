@@ -83,6 +83,37 @@ type redoSizingView struct {
 }
 ```
 
+## State priority
+
+`computeRedoSizing` derives `State` exactly once via the canonical
+helper `deriveRedoSizingState(rateOK, anyWrites, configured)`. When
+multiple degradation conditions hold simultaneously the helper
+returns the highest-priority state in this order so the most useful
+output for the operator always surfaces in the rendered panel
+(Principle III, Principle XIII):
+
+1. `"rate_unavailable"` — `Innodb_os_log_written` is absent or
+   insufficient samples exist to compute a rate. Without an observed
+   write rate the operator cannot size the redo log regardless of
+   whether the configuration variables were captured, so this state
+   takes priority over `config_missing`. The template renders the
+   explicit unavailable message for this state; downstream branches
+   MUST NOT overwrite it (otherwise the panel falls into the generic
+   rate rows with empty placeholder text such as
+   `"Peak write rate ( rolling)"`).
+2. `"config_missing"` — rate observed but configured redo space
+   unknown. The operator still gets the recommendation rows, just no
+   coverage estimate.
+3. `"no_writes"` — rate observed AND configured space known, but
+   every observed delta is zero.
+4. `"ok"` — rate observed, configured space known, and at least one
+   observed write.
+
+Downstream branches in `computeRedoSizing` MUST NOT reassign `State`
+after the helper returns; field population for each state is purely
+dispatch on the helper's result. This is the canonical
+State-derivation site for the panel.
+
 ## Behavioral contract
 
 1. **8.0.30+ detection**: When `innodb_redo_log_capacity` is present
