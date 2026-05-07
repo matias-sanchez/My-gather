@@ -103,31 +103,54 @@ type redoSizingView struct {
    `findings/inputs.go::counterRatePerSec` but computed locally so
    the panel does not depend on the findings package. Two
    per-sample normalisations apply before the sum:
-   - **Cold-start tally skip (first block only)**: pt-mext records
+   - **Cold-start tally skip (global-index gate)**: pt-mext records
      the cold-start counter value at index 0 of the first snapshot;
      this is not a per-interval delta and is excluded from the sum.
-     `model.MergeMysqladminData` strips the equivalent raw tally
-     from every snapshot AFTER the first by replacing it with a NaN
-     boundary slot and appending `src[1:]`, so the first finite
-     sample of every post-boundary block IS a real per-interval
-     delta and is included.
+     `SkipFirst` is set on a block iff `startIdx == 0`, i.e. iff the
+     block begins at the very first global timestamp. Any block
+     whose first finite sample lives at `startIdx > 0` — whether
+     it is the FIRST FINITE block after leading NaN padding (e.g.
+     when `Innodb_os_log_written` is absent in early snapshots and
+     appears later) or any later post-boundary block — already had
+     its raw tally stripped by `model.MergeMysqladminData` (it
+     replaces the tally with a NaN boundary slot and appends
+     `src[1:]`), so its first finite sample IS a real per-interval
+     delta and is included. Tying `SkipFirst` to global index 0,
+     not to block ordinal, is the canonical predicate (Principle
+     XIII).
    - **Negative-delta clamp**: a server restart mid-capture
      re-zeroes `Innodb_os_log_written`, producing a negative delta
      on the next sample. Negative deltas are clamped to 0 (a reset
      is not a write of negative bytes); this also defends against
      any other counter-reset scenario.
 
+   **Per-block usability gate**: a block contributes to either the
+   observed-seconds accumulator or the longest-block measurement
+   iff `redoSampleBlock.hasUsableDelta()` is true. A block is
+   unusable iff it carries zero finite samples, OR it is a
+   `SkipFirst` block (begins at global index 0) with only the
+   cold-start tally and no per-interval delta. Every other block
+   — including a single-delta post-boundary block produced when a
+   snapshot contributes exactly two raw samples
+   (`MergeMysqladminData` strips the cold-start tally and emits
+   one finite delta after the NaN boundary) — is kept, because
+   that single delta covers a real interval bounded on the left
+   by `timestamps[startIdx-1]` and contributes both bytes and
+   wall-clock seconds. This is the canonical "block carries at
+   least one usable delta" predicate (Principle XIII).
+
    **Per-block observed-seconds left bound**: each block's
    contribution to `observed_seconds` is `timestamps[endIdx-1] -
    timestamps[leftBoundIdx]`, where `leftBoundIdx` is derived by the
-   canonical `blockLeftBoundIdx` helper. For the first block the
-   left bound is `timestamps[startIdx]` because the cold-start tally
-   at `startIdx` is excluded from the sum. For every post-boundary
-   block the left bound is `timestamps[startIdx-1]` (the
-   snapshot-boundary timestamp): `model.MergeMysqladminData`'s
-   `NaN+src[1:]` append makes the first INCLUDED delta at `startIdx`
-   cover the interval `(timestamps[startIdx-1], timestamps[startIdx]]`,
-   so the observed-seconds denominator MUST include that interval to
+   canonical `blockLeftBoundIdx` helper. For a `SkipFirst` block
+   (one that begins at global index 0) the left bound is
+   `timestamps[startIdx]` because the cold-start tally at
+   `startIdx` is excluded from the sum. For every other block the
+   left bound is `timestamps[startIdx-1]` (the snapshot-boundary
+   timestamp): `model.MergeMysqladminData`'s `NaN+src[1:]` append
+   makes the first INCLUDED delta at `startIdx` cover the interval
+   `(timestamps[startIdx-1], timestamps[startIdx]]`, so the
+   observed-seconds denominator MUST include that interval to
    match the bytes counted into the numerator.
 5. **Rolling-window peak**: `PeakRateBytesPerSec` is the maximum, over
    every contiguous block of samples, of `bytes_in_window /

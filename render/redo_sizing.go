@@ -224,16 +224,43 @@ func readConfiguredRedoSpace(r *model.Report) (float64, string) {
 // peak walk treats each block independently so a single peak window
 // never spans a cross-snapshot gap.
 //
-// SkipFirst is true only for the very first block of the merged series.
-// pt-mext stores the cold-start tally at index 0 of the first snapshot,
-// which is not a real per-interval delta. model.MergeMysqladminData
-// drops this raw tally for every snapshot after the first (it inserts a
-// NaN at the boundary and appends src[1:]), so post-boundary blocks'
-// first finite samples ARE genuine deltas and must be included.
+// SkipFirst is true only for a block that begins at the very first
+// global timestamp (startIdx == 0). pt-mext stores the cold-start tally
+// at index 0 of the first snapshot, which is not a real per-interval
+// delta; that tally only ever lives at global index 0. Every other
+// block — including the first FINITE block after a leading NaN gap
+// (e.g. when Innodb_os_log_written is absent in early snapshots and
+// appears later) and every post-boundary block — has its raw tally
+// already stripped by model.MergeMysqladminData (it inserts a NaN at
+// the boundary and appends src[1:]), so its first finite sample IS a
+// genuine per-interval delta and must be included. Tying SkipFirst to
+// the global index, not to block ordinal, is the canonical predicate
+// (Principle XIII).
 type redoSampleBlock struct {
 	startIdx  int
 	endIdx    int
 	SkipFirst bool
+}
+
+// hasUsableDelta reports whether a block carries at least one
+// per-interval delta after applying the SkipFirst rule. A block with
+// zero finite samples is unusable. A SkipFirst block (startIdx == 0)
+// with only the cold-start tally is also unusable: the single sample
+// at index 0 is the raw tally, not a per-interval delta, and the
+// observed-seconds accumulator and the rolling-peak walk both skip it.
+// Every other block — including a single-delta post-boundary block —
+// has at least one usable delta covering a real interval bounded on
+// the left by timestamps[blockLeftBoundIdx(b)]. This is the canonical
+// "block carries at least one usable delta" predicate (Principle XIII).
+func (b redoSampleBlock) hasUsableDelta() bool {
+	n := b.endIdx - b.startIdx
+	if n < 1 {
+		return false
+	}
+	if b.SkipFirst && n < 2 {
+		return false
+	}
+	return true
 }
 
 // blockLeftBoundIdx returns the timestamp index that anchors the left
@@ -303,14 +330,19 @@ func readObservedRedoRate(m *model.MysqladminData) (
 
 	// Build contiguous blocks separated by NaN slots. Each block is a
 	// half-open index range [start, end) of indices i such that
-	// deltas[i] is finite. Only the FIRST block carries the raw
-	// initial tally at its start index (pt-mext writes the cold-start
-	// counter value there, the same convention used by
-	// findings.counterTotal); model.MergeMysqladminData strips that
-	// raw tally from every snapshot after the first by appending
-	// src[1:] after the NaN boundary slot, so post-boundary blocks'
-	// first finite samples are genuine per-interval deltas and MUST
-	// be included in both the average and the rolling-window peak.
+	// deltas[i] is finite. Only a block starting at global index 0
+	// carries the raw cold-start tally at its start index (pt-mext
+	// writes the cold-start counter value there for the very first
+	// snapshot, the same convention used by findings.counterTotal);
+	// model.MergeMysqladminData strips that raw tally from every
+	// snapshot after the first by appending src[1:] after the NaN
+	// boundary slot, so a block whose startIdx > 0 — whether it is
+	// the first FINITE block after leading NaN padding or any later
+	// post-boundary block — has its first finite sample as a genuine
+	// per-interval delta that MUST be included in both the average
+	// and the rolling-window peak. Tying SkipFirst to startIdx == 0
+	// rather than block ordinal is the canonical predicate
+	// (Principle XIII).
 	var blocks []redoSampleBlock
 	startIdx := -1
 	for i, d := range deltas {
@@ -319,7 +351,7 @@ func readObservedRedoRate(m *model.MysqladminData) (
 				blocks = append(blocks, redoSampleBlock{
 					startIdx:  startIdx,
 					endIdx:    i,
-					SkipFirst: len(blocks) == 0,
+					SkipFirst: startIdx == 0,
 				})
 				startIdx = -1
 			}
@@ -333,23 +365,25 @@ func readObservedRedoRate(m *model.MysqladminData) (
 		blocks = append(blocks, redoSampleBlock{
 			startIdx:  startIdx,
 			endIdx:    len(deltas),
-			SkipFirst: len(blocks) == 0,
+			SkipFirst: startIdx == 0,
 		})
 	}
 
-	// Sum totals and accumulate observed seconds across blocks. For
-	// the first block we skip its first index (the cold-start tally)
-	// but include its timestamp as the block's start boundary. For
-	// subsequent blocks we include every finite sample because
-	// MergeMysqladminData has already stripped the raw tally at the
-	// snapshot boundary. Negative deltas are clamped to 0 to absorb
-	// counter resets (server restart mid-capture re-zeroes
-	// Innodb_os_log_written, producing a negative delta on the next
-	// sample); a counter reset is not a write of negative bytes.
+	// Sum totals and accumulate observed seconds across blocks. For a
+	// SkipFirst block (one that begins at global index 0) we skip
+	// its first index (the cold-start tally) but include its
+	// timestamp as the block's start boundary. For every other block
+	// — including a single-delta post-boundary block — we include
+	// every finite sample because MergeMysqladminData has already
+	// stripped the raw tally at the snapshot boundary. Negative
+	// deltas are clamped to 0 to absorb counter resets (server
+	// restart mid-capture re-zeroes Innodb_os_log_written, producing
+	// a negative delta on the next sample); a counter reset is not a
+	// write of negative bytes.
 	var totalBytes, totalSeconds float64
 	var anyData bool
 	for _, b := range blocks {
-		if b.endIdx-b.startIdx < 2 {
+		if !b.hasUsableDelta() {
 			continue
 		}
 		anyData = true
@@ -414,7 +448,7 @@ func computeRollingPeak(
 	// target window.
 	longest := 0.0
 	for _, b := range blocks {
-		if b.endIdx-b.startIdx < 2 {
+		if !b.hasUsableDelta() {
 			continue
 		}
 		span := timestamps[b.endIdx-1].Sub(timestamps[blockLeftBoundIdx(b)]).Seconds()
@@ -435,10 +469,11 @@ func computeRollingPeak(
 
 	for _, b := range blocks {
 		// We slide a window over the per-sample deltas within this
-		// block. SkipFirst is true only for the first block (the
-		// cold-start tally); subsequent blocks include every finite
-		// sample because MergeMysqladminData has already stripped
-		// the raw tally at the snapshot boundary.
+		// block. SkipFirst is true only for a block that begins at
+		// global index 0 (the cold-start tally); every other block —
+		// including a single-delta post-boundary block — includes
+		// every finite sample because MergeMysqladminData has already
+		// stripped the raw tally at the snapshot boundary.
 		startI := b.startIdx
 		if b.SkipFirst {
 			startI = b.startIdx + 1

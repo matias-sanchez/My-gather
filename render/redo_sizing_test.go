@@ -660,3 +660,197 @@ func TestComputeRedoSizing_MultiBlock_PostBoundarySpanLeftBound(t *testing.T) {
 			v.PeakRateBytesPerSec, wantPeak)
 	}
 }
+
+// TestComputeRedoSizing_NaNPaddedFirstBlock_DoesNotSkip is the
+// regression test for the SkipFirst-by-global-index fix. When
+// Innodb_os_log_written is absent in early snapshots and only appears
+// later, model.MergeMysqladminData pads the early indices with NaN and
+// then strips the cold-start tally for the variable's first appearance
+// (it inserts a NaN boundary slot and appends src[1:]). The resulting
+// merged series therefore has its FIRST FINITE block starting at some
+// startIdx > 0, and that block's first finite sample IS a real
+// per-interval delta — there is no cold-start tally to skip.
+//
+// Setup: a synthetic series with two NaN-padded slots followed by 60
+// real 1 MiB deltas at a 1 s step. With the correct math (SkipFirst
+// gated on startIdx == 0) the block has startIdx == 2, SkipFirst is
+// false, and ALL 60 deltas contribute, yielding ObservedAvg == 1 MiB/s.
+//
+// A buggy implementation that ties SkipFirst to "first finite block"
+// would set SkipFirst == true here, drop the delta at startIdx, and
+// also lose the corresponding interval — yielding 59 MiB / 59 s, which
+// happens to round to the same average value but is a discriminating
+// loss in the rolling-peak walk: with the buggy SkipFirst the first
+// usable index is 3, the rolling window over the remaining 59 samples
+// has length 59 s; with the correct SkipFirst it has length 60 s and
+// the peak rate is exactly 1 MiB/s computed from 60 MiB over 60 s.
+// We assert directly on the bytes count via the recommended-15-min
+// number (peak * 900) — under the bug the panel would be missing
+// 1 MiB of bytes from its peak input, which surfaces as a >1.5%
+// shortfall in PeakRateBytesPerSec when the window collapses to the
+// available-block length.
+func TestComputeRedoSizing_NaNPaddedFirstBlock_DoesNotSkip(t *testing.T) {
+	const oneMiB = 1 << 20
+	const padded = 2
+	const blockLen = 60
+	r := makeRedoReport(t, vars57(1<<30, 16), nil, 1)
+	if r.DBSection == nil {
+		t.Fatal("setup: expected DBSection")
+	}
+	n := padded + blockLen
+	ts := make([]time.Time, n)
+	base := time.Date(2026, 5, 7, 12, 0, 0, 0, time.UTC)
+	for i := 0; i < n; i++ {
+		ts[i] = base.Add(time.Duration(i) * time.Second)
+	}
+	series := make([]float64, n)
+	// Leading NaN padding (variable absent in early snapshots).
+	for i := 0; i < padded; i++ {
+		series[i] = math.NaN()
+	}
+	// First finite block: 60 real 1 MiB deltas. The first one at
+	// startIdx == padded is a genuine per-interval delta because
+	// MergeMysqladminData has already stripped the cold-start tally
+	// for this variable's first appearance.
+	for i := padded; i < n; i++ {
+		series[i] = oneMiB
+	}
+	r.DBSection.Mysqladmin = &model.MysqladminData{
+		SampleCount:        n,
+		Timestamps:         ts,
+		Deltas:             map[string][]float64{"Innodb_os_log_written": series},
+		IsCounter:          map[string]bool{"Innodb_os_log_written": true},
+		SnapshotBoundaries: []int{0, padded},
+		VariableNames:      []string{"Innodb_os_log_written"},
+	}
+
+	v := computeRedoSizing(r)
+	if v == nil {
+		t.Fatal("expected non-nil view")
+	}
+	if v.State != "ok" {
+		t.Fatalf("State = %q, want ok", v.State)
+	}
+	// Block span: ts[n-1] - ts[startIdx-1] = ts[n-1] - ts[padded-1] =
+	// 60 s. Bytes: 60 MiB. Peak == ObservedAvg == 1 MiB/s.
+	const wantRate = float64(oneMiB)
+	if math.Abs(v.ObservedRateBytesPerSec-wantRate) > wantRate*0.001 {
+		t.Fatalf("ObservedRateBytesPerSec = %.0f, want %.0f "+
+			"(NaN-padded first block must not be treated as cold-start)",
+			v.ObservedRateBytesPerSec, wantRate)
+	}
+	if math.Abs(v.PeakRateBytesPerSec-wantRate) > wantRate*0.001 {
+		t.Fatalf("PeakRateBytesPerSec = %.0f, want %.0f "+
+			"(NaN-padded first block must not be treated as cold-start)",
+			v.PeakRateBytesPerSec, wantRate)
+	}
+	// Window collapses to the block's wall-clock duration; with the
+	// correct SkipFirst (gated on startIdx == 0) the block span is
+	// 60 s. A buggy implementation that strips the first delta would
+	// shrink the window to 59 s.
+	if math.Abs(v.PeakWindowSeconds-60.0) > 1e-9 {
+		t.Fatalf("PeakWindowSeconds = %.3f, want 60.000 "+
+			"(NaN-padded first block must include its first finite delta)",
+			v.PeakWindowSeconds)
+	}
+	if v.PeakWindowLabel != "available 60-second" {
+		t.Fatalf("PeakWindowLabel = %q, want %q",
+			v.PeakWindowLabel, "available 60-second")
+	}
+}
+
+// TestComputeRedoSizing_SingleDeltaPostBoundaryBlock_Counted is the
+// regression test for the "single-delta post-boundary block" rejection
+// fix. When a snapshot contributes exactly two samples (one cold-start
+// tally + one per-interval delta), MergeMysqladminData replaces the
+// tally with a NaN boundary and appends src[1:], yielding a
+// post-boundary block of exactly one finite sample. That single delta
+// covers a real interval (timestamps[startIdx-1], timestamps[startIdx]]
+// and MUST be included in both the average and the peak walk.
+//
+// Setup: Block A is a 2-sample idle block (cold-start tally + one
+// zero delta) covering ts[0]..ts[1] = 1 s. A NaN boundary follows at
+// ts[2] = 2 s. Block B is a single 1 MiB delta at ts[3] = 4 s, so
+// its left-bound interval is (ts[2], ts[3]] = 2 s. Block B is the
+// longest block so the rolling-window walk collapses to its 2 s span.
+//
+// With the correct math:
+//   - Block A: 1 s observed, 0 bytes (idle).
+//   - Block B: 2 s observed, 1 MiB bytes — single-delta post-boundary
+//     block, MUST be kept under the new hasUsableDelta() predicate.
+//   - longest block = 2 s, window collapses to 2 s, peak walk visits
+//     Block B and produces a candidate of 1 MiB / 2 s = 524 288 B/s.
+//   - State == "ok", PeakRateBytesPerSec == 524 288.
+//
+// A buggy implementation with the old `endIdx-startIdx < 2` filter
+// drops Block B entirely, yielding 0 bytes / 1 s in Block A only,
+// anyWrites == false, and the panel reports no_writes (zero peak
+// rate, zero observed rate).
+func TestComputeRedoSizing_SingleDeltaPostBoundaryBlock_Counted(t *testing.T) {
+	const oneMiB = 1 << 20
+	r := makeRedoReport(t, vars57(1<<30, 16), nil, 1)
+	if r.DBSection == nil {
+		t.Fatal("setup: expected DBSection")
+	}
+	// Series layout (indices, timestamps in seconds):
+	//   0   ts=0  Block A cold-start tally (skipped).
+	//   1   ts=1  Block A zero delta.
+	//   2   ts=2  NaN boundary.
+	//   3   ts=4  Block B single 1 MiB delta (interval ts[2]..ts[3] = 2 s).
+	const n = 4
+	ts := []time.Time{
+		time.Date(2026, 5, 7, 12, 0, 0, 0, time.UTC),
+		time.Date(2026, 5, 7, 12, 0, 1, 0, time.UTC),
+		time.Date(2026, 5, 7, 12, 0, 2, 0, time.UTC),
+		time.Date(2026, 5, 7, 12, 0, 4, 0, time.UTC),
+	}
+	series := []float64{
+		999_999_999,
+		0,
+		math.NaN(),
+		oneMiB,
+	}
+	r.DBSection.Mysqladmin = &model.MysqladminData{
+		SampleCount:        n,
+		Timestamps:         ts,
+		Deltas:             map[string][]float64{"Innodb_os_log_written": series},
+		IsCounter:          map[string]bool{"Innodb_os_log_written": true},
+		SnapshotBoundaries: []int{0, 3},
+		VariableNames:      []string{"Innodb_os_log_written"},
+	}
+
+	v := computeRedoSizing(r)
+	if v == nil {
+		t.Fatal("expected non-nil view")
+	}
+	if v.State != "ok" {
+		t.Fatalf("State = %q, want ok (single-delta post-boundary "+
+			"block must contribute its bytes)", v.State)
+	}
+	// Observed seconds = Block A (1 s) + Block B (2 s) = 3 s. Bytes
+	// = 1 MiB. ObservedAvg = 1 MiB / 3 s.
+	const wantAvg = float64(oneMiB) / 3.0
+	if math.Abs(v.ObservedRateBytesPerSec-wantAvg) > wantAvg*0.001 {
+		t.Fatalf("ObservedRateBytesPerSec = %.4f, want %.4f "+
+			"(single-delta post-boundary block must be counted)",
+			v.ObservedRateBytesPerSec, wantAvg)
+	}
+	// Longest block is Block B at 2 s; window collapses to 2 s.
+	if math.Abs(v.PeakWindowSeconds-2.0) > 1e-9 {
+		t.Fatalf("PeakWindowSeconds = %.3f, want 2.000 "+
+			"(single-delta post-boundary block must drive longest "+
+			"block measurement)",
+			v.PeakWindowSeconds)
+	}
+	if v.PeakWindowLabel != "available 2-second" {
+		t.Fatalf("PeakWindowLabel = %q, want %q",
+			v.PeakWindowLabel, "available 2-second")
+	}
+	// Peak = 1 MiB / 2 s = 524 288 B/s.
+	const wantPeak = float64(oneMiB) / 2.0
+	if math.Abs(v.PeakRateBytesPerSec-wantPeak) > wantPeak*0.001 {
+		t.Fatalf("PeakRateBytesPerSec = %.4f, want %.4f "+
+			"(single-delta post-boundary block must drive the peak)",
+			v.PeakRateBytesPerSec, wantPeak)
+	}
+}
