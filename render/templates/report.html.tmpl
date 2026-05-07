@@ -15,7 +15,7 @@
          sees a flash of the wrong theme. Closed-set validation;
          unknown / missing / storage-error values fall back to dark.
          See specs/020-report-theming/. */ -}}
-  <script>(function(){try{var k="my-gather:theme";var v=window.localStorage&&window.localStorage.getItem(k);var ok={dark:1,light:1,colorblind:1};document.documentElement.dataset.theme=(v&&ok[v])?v:"dark";}catch(_){document.documentElement.dataset.theme="dark";}})();</script>
+  <script>(function(){try{var k="my-gather:theme";var v=window.localStorage&&window.localStorage.getItem(k);var ok=["dark","light","colorblind"];document.documentElement.dataset.theme=(v&&ok.indexOf(v)>=0)?v:"dark";}catch(_){document.documentElement.dataset.theme="dark";}})();</script>
   <link rel="icon" type="image/png" href="{{.LogoDataURI}}">
   <style>{{.EmbeddedCSS}}</style>
   <script type="application/json" id="report-data">{{.DataPayload}}</script>
@@ -42,7 +42,7 @@
     <span><span class="k">my-gather</span> <span class="v">{{.Version}}{{if .GitCommit}} · {{.GitCommit}}{{end}}</span></span>
   </div>
   {{- /* Theme picker. See specs/020-report-theming/. The <select>'s
-         value is set by app-js/05.js once the DOM is ready, mirroring
+         value is set by app-js/06.js once the DOM is ready, mirroring
          the data-theme attribute the pre-paint script applied to
          <html>. Static markup, deterministic across runs
          (Principle IV). */}}

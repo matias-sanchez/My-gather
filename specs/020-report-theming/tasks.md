@@ -11,7 +11,7 @@ description: "Task list for feature 020-report-theming"
 
 - **Canonical owner/path**:
   - CSS design tokens: `render/assets/app-css/04.css` (NEW).
-  - Theme module: `render/assets/app-js/05.js` (NEW).
+  - Theme module: `render/assets/app-js/06.js` (NEW).
   - Toggle markup + pre-paint script: `render/templates/report.html.tmpl`.
   - Chart palette read: `render/assets/app-js/00.js` (modified
     `decorateSeries`).
@@ -40,7 +40,7 @@ description: "Task list for feature 020-report-theming"
 
 - [ ] **T001** Create new asset part stubs at exact paths:
   - `render/assets/app-css/04.css` (file present, single comment header).
-  - `render/assets/app-js/05.js` (file present, IIFE shell only).
+  - `render/assets/app-js/06.js` (file present, IIFE shell only).
   These exist so the embed pattern in `render/assets.go`
   (`mustConcatEmbeddedAssetParts`) picks them up; the embed directive
   `//go:embed assets/app-js/*.js assets/app-css/*.css` already includes
@@ -78,7 +78,7 @@ prevents the dark→saved flash.
   `contracts/theming.md` for `dark` and `light`. Leave `colorblind`
   with placeholder Okabe-Ito values to be locked in by T007 (US2);
   the *structure* lands here so US1 can be tested without US2.
-- [ ] **T004** [US1] In `render/assets/app-js/05.js`, write the theme
+- [ ] **T004** [US1] In `render/assets/app-js/06.js`, write the theme
   module: `KNOWN`, `STORAGE_KEY = "my-gather:theme"`, `applyTheme()`
   with `try`/`catch` storage write, `<select>` change-handler wiring,
   and `mygather:theme` `CustomEvent` dispatch on `document`.
@@ -231,7 +231,7 @@ check"; the `theming_test.go` assertions land in T013.
 
 - [ ] **T017** Run `go vet ./...` and `go test ./...` from the repo
   root. Expect green. The file-size gate in
-  `tests/coverage/file_size_test.go` checks `04.css` and `05.js` are
+  `tests/coverage/file_size_test.go` checks `04.css` and `06.js` are
   under 1000 lines each (they will be, comfortably).
 - [ ] **T018** Run the pre-push constitution guard:
   `scripts/hooks/pre-push-constitution-guard.sh`. Expect green
@@ -297,4 +297,4 @@ check"; the `theming_test.go` assertions land in T013.
   rewrites committed goldens; nothing else triggers `-update`.
 - Per Principle XV, the new asset parts are sized to stay well under
   1000 lines (`04.css` ~80 lines for tokens + ~30 for picker styling;
-  `05.js` ~60 lines).
+  `06.js` ~60 lines).

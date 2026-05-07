@@ -130,7 +130,11 @@ by inspecting the strings that the browser will execute.
 **Decision**: A native `<select id="theme-picker">` with three `<option>`
 elements (`Dark`, `Light`, `Color-blind safe`), labelled by an adjacent
 `<label class="theme-label">Theme</label>`, sits inline inside
-`header.app-header` to the right of the existing `#feedback-open` button.
+`header.app-header` to the left of the existing `#feedback-open` button
+so the primary feedback action keeps the rightmost visual slot. The
+picker therefore appears earlier in DOM source order than
+`#feedback-open`; this ordering is enforced by tests in
+`render/theming_test.go`.
 
 **Rationale**: Native select is keyboard-accessible by default, screen
 reader announces it, weighs almost nothing, and matches the
@@ -162,5 +166,5 @@ None. All product decisions were provided up-front by the user.
     `--series-N` reads use the same path.
   - `render/assets.go:38-58` — `mustConcatEmbeddedAssetParts(dir)`
     deterministically concatenates asset parts in lexical order, so
-    `04.css` and `05.js` land at the tail of their bundles without
+    `04.css` and `06.js` land at the tail of their bundles without
     code changes to the embed plumbing.

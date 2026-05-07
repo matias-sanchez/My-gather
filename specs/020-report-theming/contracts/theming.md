@@ -37,8 +37,11 @@ The toggle MUST be rendered inside `header.app-header`:
 
 - `id` is a stable identifier other code MAY rely on.
 - `class` is the CSS hook for unobtrusive header styling.
-- The `<select>` is positioned to the right of `#feedback-open` so the
-  primary action (feedback) keeps its visual weight.
+- The `<select>` is positioned to the left of `#feedback-open` so the
+  primary action (feedback) keeps the rightmost visual slot. The
+  picker `<select>` therefore appears earlier in DOM source order than
+  `#feedback-open`; tests in `render/theming_test.go` enforce this
+  ordering.
 
 ## Storage contract
 
@@ -118,7 +121,7 @@ positions 9 through 16:
 
 ## JS contract
 
-### Module surface (`render/assets/app-js/05.js`)
+### Module surface (`render/assets/app-js/06.js`)
 
 Inside the existing IIFE wrapper used by the report's app JS, the new
 module:

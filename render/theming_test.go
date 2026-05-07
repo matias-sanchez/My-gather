@@ -123,6 +123,80 @@ func TestThemingTokensPresent(t *testing.T) {
 	}
 }
 
+// TestThemingColorSchemePerTheme — every theme block sets the CSS
+// `color-scheme` property so browser-native UI (form controls,
+// scrollbars, autofill chrome) matches the report surface. Without
+// it, a user whose OS prefers a different scheme would see mismatched
+// native chrome on top of the themed page.
+func TestThemingColorSchemePerTheme(t *testing.T) {
+	css := embeddedAppCSS
+	cases := []struct {
+		selector string
+		want     string
+	}{
+		{`:root[data-theme="dark"]`, "dark"},
+		{`:root[data-theme="light"]`, "light"},
+		// colorblind uses a light surface (Okabe-Ito) so its native
+		// chrome should also be light.
+		{`:root[data-theme="colorblind"]`, "light"},
+	}
+	for _, tc := range cases {
+		block := extractThemeBlock(t, css, tc.selector)
+		if block == "" {
+			t.Fatalf("theme block %q not found in embedded CSS", tc.selector)
+		}
+		needle := "color-scheme:"
+		idx := strings.Index(block, needle)
+		if idx < 0 {
+			t.Errorf("theme %q missing required color-scheme declaration", tc.selector)
+			continue
+		}
+		rest := block[idx+len(needle):]
+		semi := strings.IndexByte(rest, ';')
+		if semi < 0 {
+			t.Errorf("theme %q color-scheme missing terminator", tc.selector)
+			continue
+		}
+		val := strings.TrimSpace(rest[:semi])
+		if !strings.Contains(val, tc.want) {
+			t.Errorf("theme %q color-scheme = %q; want value containing %q", tc.selector, val, tc.want)
+		}
+	}
+}
+
+// TestThemingLightSeriesAreDistinct — the light theme's 16 series
+// tokens MUST resolve to 16 distinct color values. Earlier drafts
+// repeated --series-1..8 in --series-9..16, which made multi-series
+// charts with 9+ lines ambiguous (Copilot review on PR #62, research
+// D5). Dark and colorblind already ship 16 distinct (or intentionally
+// cycled accessibility-set) values; the light theme must mirror that
+// distinctness for legend readability.
+func TestThemingLightSeriesAreDistinct(t *testing.T) {
+	css := embeddedAppCSS
+	block := extractThemeBlock(t, css, `:root[data-theme="light"]`)
+	if block == "" {
+		t.Fatalf("light theme block not found in embedded CSS")
+	}
+	seen := make(map[string]int, 16)
+	for slot := 1; slot <= 16; slot++ {
+		needle := "--series-" + itoa(slot) + ":"
+		idx := strings.Index(block, needle)
+		if idx < 0 {
+			t.Fatalf("--series-%d not present in light block", slot)
+		}
+		rest := block[idx+len(needle):]
+		semi := strings.IndexByte(rest, ';')
+		if semi < 0 {
+			t.Fatalf("--series-%d missing terminator in light block", slot)
+		}
+		val := strings.ToLower(strings.TrimSpace(rest[:semi]))
+		if prev, dup := seen[val]; dup {
+			t.Errorf("light --series-%d = %s duplicates --series-%d; expected 16 distinct colors", slot, val, prev)
+		}
+		seen[val] = slot
+	}
+}
+
 // TestThemingOkabeItoPalette — the colorblind theme's series tokens
 // match the published Okabe-Ito 8-color set in conventional order,
 // cycled to fill positions 9 through 16. Catches accidental edits to
@@ -346,8 +420,10 @@ func TestThemingDataThemeApplied(t *testing.T) {
 // Covers FR-007.
 func TestThemingUnknownStoredValueFallsBack(t *testing.T) {
 	out := renderForThemingTest(t)
-	// The script encodes the closed set as an object literal lookup
-	// (compact, no array indexOf cost): {dark:1,light:1,colorblind:1}.
+	// The script encodes the closed set as an array of allowed names
+	// and validates with `indexOf` so prototype properties on plain
+	// objects (e.g., "toString", "constructor") cannot pass the check:
+	//   var ok=["dark","light","colorblind"]; ok.indexOf(v) >= 0
 	// We assert the three names appear together in head.
 	headStart := strings.Index(out, "<head>")
 	headEnd := strings.Index(out, "</head>")
@@ -366,6 +442,37 @@ func TestThemingUnknownStoredValueFallsBack(t *testing.T) {
 	// script (catches accidental removal of the default).
 	if !strings.Contains(head, `:"dark"`) && !strings.Contains(head, `="dark"`) {
 		t.Errorf("pre-paint script missing dark fallback")
+	}
+}
+
+// TestThemingPrePaintValidatorIsPrototypeSafe — regression guard for
+// the inline pre-paint script's closed-set validator. A plain-object
+// lookup (e.g. `var ok={dark:1,...}; ok[v]`) would let inherited
+// prototype keys such as "toString", "constructor", or "__proto__"
+// pass the truthiness check and propagate as `data-theme`. The
+// canonical form uses an array literal validated with `indexOf`,
+// which only matches own elements and cannot be polluted via the
+// prototype chain. Asserts both that the safe form is present and
+// that the unsafe object-lookup form is absent.
+func TestThemingPrePaintValidatorIsPrototypeSafe(t *testing.T) {
+	out := renderForThemingTest(t)
+	headStart := strings.Index(out, "<head>")
+	headEnd := strings.Index(out, "</head>")
+	if headStart < 0 || headEnd < 0 || headEnd < headStart {
+		t.Fatalf("rendered HTML has no <head>...</head> block")
+	}
+	head := out[headStart:headEnd]
+	if !strings.Contains(head, `["dark","light","colorblind"]`) {
+		t.Errorf("pre-paint script missing the canonical array-literal closed set [\"dark\",\"light\",\"colorblind\"]")
+	}
+	if !strings.Contains(head, `.indexOf(v)`) {
+		t.Errorf("pre-paint script missing array.indexOf(v) validation form")
+	}
+	// The old unsafe form `{dark:1,light:1,colorblind:1}` MUST NOT
+	// reappear; it would let prototype keys (toString, constructor,
+	// __proto__) pass the truthiness check.
+	if strings.Contains(head, "{dark:1") || strings.Contains(head, "ok[v]") {
+		t.Errorf("pre-paint script regressed to prototype-unsafe object lookup; use array.indexOf instead")
 	}
 }
 

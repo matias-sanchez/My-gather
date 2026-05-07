@@ -90,7 +90,7 @@ The `TestTheming*` tests assert:
 
 - `render/assets/app-css/04.css` — token block for all three themes,
   toggle styling.
-- `render/assets/app-js/05.js` — theme-picker module: reads/writes
+- `render/assets/app-js/06.js` — theme-picker module: reads/writes
   localStorage, dispatches `mygather:theme`, wires the `<select>`.
 - `render/assets/app-js/00.js` — `decorateSeries()` reads
   `--series-N` via `cssVar()`. Listens for `mygather:theme` and
@@ -110,5 +110,5 @@ The `TestTheming*` tests assert:
   and the `SERIES_COLORS` JS array are deleted in the same change.
   Reviewers verify with `git grep`.
 - **Principle XV (1000-line cap)**: new tokens land in `04.css` (new
-  file) and new theme JS in `05.js` (new file). No existing asset part
+  file) and new theme JS in `06.js` (new file). No existing asset part
   grows past 1000 lines.

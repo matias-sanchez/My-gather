@@ -32,6 +32,17 @@
 /* Default = dark theme tokens. */
 :root,
 :root[data-theme="dark"] {
+  /*
+   * Tell the browser to render native UI (form controls, scrollbars,
+   * autofill chrome, the `<select>` itself) in its dark scheme so it
+   * matches the report surface. Without this, an OS set to "light"
+   * would draw light scrollbars and a light `<select>` chrome on top
+   * of our dark page — and vice versa for the light/colorblind themes
+   * below. Single canonical owner of theme-sensitive state remains
+   * the [data-theme] attribute (Principle XIII).
+   */
+  color-scheme: dark;
+
   --bg: #0e1116;
   --bg-elev: #151a22;
   --bg-elev-2: #1c222c;
@@ -73,6 +84,8 @@
 }
 
 :root[data-theme="light"] {
+  color-scheme: light;
+
   --bg: #f8f9fb;
   --bg-elev: #ffffff;
   --bg-elev-2: #f2f4f8;
@@ -95,6 +108,14 @@
   --grid-stroke: rgba(70, 90, 115, 0.10);
   --tick-stroke: rgba(70, 90, 115, 0.30);
 
+  /*
+   * Series 1-8: Tableau-10-derived primary set, well-tested for light
+   * surfaces. Series 9-16: 8 additional distinct hues (darker /
+   * complementary picks) so multi-series charts with 9+ series stay
+   * legible on a white background. All 16 values are distinct, mirroring
+   * the dark and colorblind themes' 16-slot palettes (research D5:
+   * legend readability for 9+ series).
+   */
   --series-1:  #1f77b4;
   --series-2:  #d62728;
   --series-3:  #2ca02c;
@@ -103,14 +124,14 @@
   --series-6:  #e377c2;
   --series-7:  #17becf;
   --series-8:  #8c564b;
-  --series-9:  #1f77b4;
-  --series-10: #d62728;
-  --series-11: #2ca02c;
-  --series-12: #9467bd;
-  --series-13: #ff7f0e;
-  --series-14: #e377c2;
-  --series-15: #17becf;
-  --series-16: #8c564b;
+  --series-9:  #393b79;
+  --series-10: #7f0e0e;
+  --series-11: #006d2c;
+  --series-12: #54278f;
+  --series-13: #a63603;
+  --series-14: #ad494a;
+  --series-15: #084594;
+  --series-16: #5b3a29;
 }
 
 /*
@@ -123,6 +144,9 @@
  * positions 9 through 16.
  */
 :root[data-theme="colorblind"] {
+  /* Colorblind theme uses a light surface — see comment block above. */
+  color-scheme: light;
+
   --bg: #f8f9fb;
   --bg-elev: #ffffff;
   --bg-elev-2: #f2f4f8;

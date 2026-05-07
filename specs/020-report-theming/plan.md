@@ -17,7 +17,7 @@ time via the existing `cssVar()` helper. The legacy
 
 ## Technical Context
 
-**Language/Version**: Go 1.26.2 (rendering pipeline + tests), HTML, CSS,
+**Language/Version**: Go 1.26 (rendering pipeline + tests), HTML, CSS,
 JavaScript (vanilla, no framework — embedded inside the binary).
 **Primary Dependencies**: Go standard library only. No new third-party
 dependencies. Existing `uPlot` chart library (already bundled) consumes the
@@ -63,14 +63,14 @@ parts under `render/assets/app-js/`, the top-level template
 | XII. Pinned Go Version | PASS | No Go version change. |
 | XIII. Canonical Code Path | PASS | The `prefers-color-scheme` block and the `SERIES_COLORS` JS array are the prior canonical paths for "light variant" and "series colors". Both are **deleted** in this change. The new design-token block and `cssVar('--series-N')` call are the single canonical replacements. No fallback, shim, or feature flag is left behind. |
 | XIV. English-Only | PASS | All artifacts in English. |
-| XV. Bounded Source Size | PASS | New tokens land in a new asset part `render/assets/app-css/04.css` to keep `00.css` under 1000 lines. New theme JS lands in a new asset part `render/assets/app-js/05.js`. The toggle markup is a small addition to `report.html.tmpl`. The `tests/coverage/file_size_test.go` gate continues to pass. |
+| XV. Bounded Source Size | PASS | New tokens land in a new asset part `render/assets/app-css/04.css` to keep `00.css` under 1000 lines. New theme JS lands in a new asset part `render/assets/app-js/06.js`. The toggle markup is a small addition to `report.html.tmpl`. The `tests/coverage/file_size_test.go` gate continues to pass. |
 
 **Canonical Path Audit (Principle XIII)**:
 - **Canonical owner/path for touched behaviour**:
   - Design tokens: a new `:root` + `[data-theme="..."]` token block lives
     in `render/assets/app-css/04.css`. This is the **single** place that
     defines theme-sensitive color values.
-  - Theme application: a new module in `render/assets/app-js/05.js`
+  - Theme application: a new module in `render/assets/app-js/06.js`
     reads/writes `localStorage` and toggles `data-theme` on `<html>`.
   - Pre-paint application: a small inline `<script>` block in the
     `<head>` of `report.html.tmpl` (between `<meta>` and `<style>`)
@@ -149,7 +149,7 @@ render/
 │       ├── 02.js
 │       ├── 03.js
 │       ├── 04.js
-│       └── 05.js    # NEW: theme module — reads localStorage, exposes
+│       └── 06.js    # NEW: theme module — reads localStorage, exposes
 │                    #      apply(name), wires the <select>, dispatches
 │                    #      a 'mygather:theme' event so charts can re-pick
 ├── templates/
@@ -162,7 +162,7 @@ render/
 ```
 
 **Structure Decision**: One canonical token block in CSS (`04.css`), one
-canonical theme JS module (`05.js`), one inline pre-paint script
+canonical theme JS module (`06.js`), one inline pre-paint script
 (`report.html.tmpl`), one new `<select>` (`report.html.tmpl`). No
 parallel paths. The 1000-line cap is honoured by adding new asset
 parts rather than growing existing ones; the embed-and-concat
