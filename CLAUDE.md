@@ -1,15 +1,15 @@
 <!-- SPECKIT START -->
-Active feature: **020-report-theming**
+Active feature: **017-chart-zoom-sync-stats**
 
 For technologies, project structure, constitution gates, data model,
 contracts, and shell commands, read the current plan:
 
-- Plan: `specs/020-report-theming/plan.md`
-- Spec: `specs/020-report-theming/spec.md`
-- Research: `specs/020-report-theming/research.md`
-- Contracts: `specs/020-report-theming/contracts/theming.md`
-- Quickstart: `specs/020-report-theming/quickstart.md`
-- Tasks: `specs/020-report-theming/tasks.md`
+- Plan: `specs/017-chart-zoom-sync-stats/plan.md`
+- Spec: `specs/017-chart-zoom-sync-stats/spec.md`
+- Research: `specs/017-chart-zoom-sync-stats/research.md`
+- Contracts: `specs/017-chart-zoom-sync-stats/contracts/chart-sync.md`
+- Quickstart: `specs/017-chart-zoom-sync-stats/quickstart.md`
+- Tasks: `specs/017-chart-zoom-sync-stats/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:

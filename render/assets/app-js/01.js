@@ -12,8 +12,17 @@
     var values = [data.timestamps.slice()].concat(data.series.map(function (s) { return s.values; }));
     var opts = basePlotOpts(width, 320, series, unit, data.snapshotBoundaries, data.timestamps);
     var plot = new uPlot(opts, values, el);
-    registerChart(plot, el, opts);
-    mountLegend(el, series, plot);
+    // Register with the data payload so the chart-sync store can
+    // recompute windowed stats and apply the current shared zoom
+    // window if one is active when this chart mounts.
+    registerChart(plot, el, opts, {
+      timestamps: data.timestamps,
+      series: data.series,
+    });
+    var legendHandle = mountLegend(el, series, plot, {
+      statsSource: { timestamps: data.timestamps, series: data.series },
+    });
+    plot.__legendHandle = legendHandle;
     return plot;
   }
 
@@ -186,8 +195,21 @@
     var opts = basePlotOpts(w, 320, plotSeries, unit, data.snapshotBoundaries, data.timestamps);
     var plot = new uPlot(opts, plotData, el);
     plot.__rawData = plotRawByIdx; // consumed by updateTooltipOnCursor
-    registerChart(plot, el, opts);
-    mountLegend(el, plotSeries, plot, {
+    // Stats are computed against the un-stacked, un-bucketed RAW values
+    // (data.series), not the cumulative `stacked[]` arrays uPlot
+    // draws — and not the bucketed `series` either, whose values array
+    // is shorter than `data.timestamps`. The pill order matches the
+    // REVERSE of `data.series`, so build an aligned source array in
+    // the same reverse order using the raw timeline.
+    var statsSeries = [];
+    for (var sk = data.series.length - 1; sk >= 0; sk--) {
+      statsSeries.push({ label: data.series[sk].label, values: data.series[sk].values });
+    }
+    registerChart(plot, el, opts, {
+      timestamps: data.timestamps,
+      series: statsSeries,
+    });
+    var legendHandle = mountLegend(el, plotSeries, plot, {
       initialVisible: function (idx) {
         return !hiddenLabels.has(plotSeries[idx].label);
       },
@@ -199,7 +221,9 @@
         }
         if (typeof onRebuild === "function") onRebuild();
       },
+      statsSource: { timestamps: data.timestamps, series: statsSeries },
     });
+    plot.__legendHandle = legendHandle;
     return plot;
   }
 
@@ -389,8 +413,19 @@
       var w = measureChartWidth(el);
       var opts = basePlotOpts(w, 320, series, unit, data.snapshotBoundaries, data.timestamps);
       plot = new uPlot(opts, values, el);
-      registerChart(plot, el, opts);
-      mountLegend(el, series, plot);
+      // statsSource carries one entry per visible series in the same
+      // order as the legend pills (1..N), excluding the time axis.
+      var iostatStatsSeries = labels.map(function (lbl, i) {
+        return { label: lbl, values: rows[i] };
+      });
+      registerChart(plot, el, opts, {
+        timestamps: data.timestamps,
+        series: iostatStatsSeries,
+      });
+      var iostatLegendHandle = mountLegend(el, series, plot, {
+        statsSource: { timestamps: data.timestamps, series: iostatStatsSeries },
+      });
+      plot.__legendHandle = iostatLegendHandle;
       legendEl = el.nextSibling;
     }
     draw();
@@ -569,8 +604,21 @@
       var opts = basePlotOpts(w, 320, plotSeries, dim.unit || "threads", data.snapshotBoundaries, data.timestamps);
       plot = new uPlot(opts, plotData, el);
       plot.__rawData = plotRawByIdx; // consumed by updateTooltipOnCursor
-      registerChart(plot, el, opts);
-      mountLegend(el, plotSeries, plot, {
+      // Stats are computed against the un-stacked, un-bucketed RAW values
+      // (seriesData), not the cumulative `stacked[]` arrays uPlot draws.
+      // The pill order matches the REVERSE of `seriesData`, so build an
+      // aligned source array in the same reverse order. Mirrors the
+      // activity stacked path above (renderProcesslist's "activity" dim
+      // calls buildLineChart which already wires statsSource).
+      var statsSeries = [];
+      for (var sk = seriesData.length - 1; sk >= 0; sk--) {
+        statsSeries.push({ label: seriesData[sk].label, values: seriesData[sk].values });
+      }
+      registerChart(plot, el, opts, {
+        timestamps: data.timestamps,
+        series: statsSeries,
+      });
+      plot.__legendHandle = mountLegend(el, plotSeries, plot, {
         // Pill is active ⇔ bucket is NOT hidden in the current dim.
         initialVisible: function (idx) {
           var label = plotSeries[idx].label;
@@ -589,6 +637,7 @@
           hiddenByDim.set(dims[currentIdx].label, next);
           draw();
         },
+        statsSource: { timestamps: data.timestamps, series: statsSeries },
       });
       legendEl = el.nextSibling;
     }

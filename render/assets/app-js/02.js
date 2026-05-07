@@ -459,10 +459,11 @@
       btnZoom.setAttribute("aria-label", "Reset zoom");
       btnZoom.addEventListener("click", function (ev) {
         ev.stopPropagation();
-        var cs = charts.get(id);
-        if (cs && cs.plot) {
-          cs.plot.setScale("x", { min: null, max: null });
-        }
+        // Reset every registered chart through the shared sync store
+        // so the per-card reset button stays consistent with the
+        // global ⛶ button (and so this card's siblings, including
+        // other mysqladmin cards, also unzoom).
+        if (window.__chartSyncStore) window.__chartSyncStore.reset();
       });
 
       var btnDup = document.createElement("button");
@@ -664,8 +665,25 @@
       var opts = basePlotOpts(width, 340, series, "Δ / sample", data.snapshotBoundaries, data.timestamps);
       cs.plotEl.innerHTML = "";
       cs.plot = new uPlot(opts, values, cs.plotEl);
-      registerChart(cs.plot, cs.plotEl, opts);
-      mountLegend(cs.plotEl, series, cs.plot);
+      // Build the stats-source aligned with the legend pills (one entry
+      // per picked counter in the same order). Use the truncated values
+      // arrays passed to uPlot so windowed-stats agree with what the
+      // chart actually plots.
+      var pickedSeries = [];
+      var pickedTimestamps = truncatedTimestamps;
+      for (var pi = 0; pi < picks.length; pi++) {
+        var deltaArr2 = data.deltas[picks[pi]];
+        if (!deltaArr2) continue;
+        pickedSeries.push({ label: picks[pi], values: deltaArr2.slice(tStart) });
+      }
+      registerChart(cs.plot, cs.plotEl, opts, {
+        timestamps: pickedTimestamps,
+        series: pickedSeries,
+      });
+      var maLegendHandle = mountLegend(cs.plotEl, series, cs.plot, {
+        statsSource: { timestamps: pickedTimestamps, series: pickedSeries },
+      });
+      cs.plot.__legendHandle = maLegendHandle;
       mountResetZoomButton(cs.plotEl, function () { return cs.plot; });
       updateCardCount(cs);
     }
