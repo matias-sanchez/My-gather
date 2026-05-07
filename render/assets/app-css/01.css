@@ -179,6 +179,18 @@
   font-style: italic;
 }
 
+/* Chart caption: a short explanatory line directly above a chart that
+   states a non-obvious rendering rule (e.g. the Top CPU processes
+   chart's top-3 cap and mysqld pin). Subdued so it does not compete
+   with the chart but readable enough that users do not miss it. */
+.chart-caption {
+  margin: 0 0 8px 0;
+  padding: 0 2px;
+  color: var(--fg-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 /* uPlot theming overrides. uPlot's default legend is verbose; we hide
    it and render our own pill legend underneath. */
 .uplot { font-family: var(--mono) !important; position: relative; }

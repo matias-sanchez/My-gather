@@ -67,8 +67,16 @@ type reportView struct {
 	VariableSnapshots []variableSnapshotView
 
 	// DB section payload
-	HasInnoDB           bool
-	InnoDBMetrics       []innoDBMetricView
+	HasInnoDB     bool
+	InnoDBMetrics []innoDBMetricView
+	// RedoSizing carries the Redo log sizing panel payload rendered
+	// under the InnoDB Status subsection. A nil value means the panel
+	// is not rendered at all (no DBSection on the report); a non-nil
+	// value with State == "config_missing", "rate_unavailable", or
+	// "no_writes" means the panel renders with the corresponding
+	// placeholder content. See render/redo_sizing.go for the canonical
+	// computation and specs/019-redo-log-sizing-panel for the contract.
+	RedoSizing          *redoSizingView
 	HasMysqladmin       bool
 	MysqladminVariables []string
 	MysqladminCount     int
