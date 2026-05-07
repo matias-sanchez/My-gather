@@ -562,6 +562,36 @@ func TestThemingHLLSparklineSubscribesToThemeEvent(t *testing.T) {
 	}
 }
 
+// TestThemingLegendSwatchUsesCssVar — legend pill swatches MUST set
+// their background via the canonical --series-N CSS custom property,
+// not via a frozen hex copy of the series stroke. A hex literal would
+// lock the swatch to whatever palette was active at mount time and
+// leave it stale on theme switch (Codex P2 finding on PR #62), because
+// repaintChartsForTheme() walks chart series + axis tokens but does
+// not touch DOM nodes outside the uPlot canvas. The CSS-variable
+// route lets the browser re-resolve the swatch automatically when the
+// [data-theme] attribute on <html> flips.
+//
+// Asserts both that the canonical form is present and that the old
+// `style="background:" + s.stroke` form is gone (Principle XIII:
+// single source of truth for the swatch color).
+func TestThemingLegendSwatchUsesCssVar(t *testing.T) {
+	js := embeddedAppJS
+	body := extractFunctionBody(t, js, "mountLegend")
+	if body == "" {
+		t.Fatalf("mountLegend not found in embedded app JS")
+	}
+	if !strings.Contains(body, `background:var(--series-`) {
+		t.Errorf("mountLegend body does not set swatch background via var(--series-N); swatch will not re-paint on theme switch")
+	}
+	// The pre-fix form baked the hex into the inline style attribute.
+	// Reintroducing it would silently undo the CSS-variable re-resolution.
+	if strings.Contains(body, `background:' + s.stroke`) ||
+		strings.Contains(body, `background:" + s.stroke`) {
+		t.Fatalf("mountLegend body still concatenates s.stroke into the swatch background; that locks the swatch to the mount-time palette and breaks theme switching")
+	}
+}
+
 // extractFunctionBody returns the substring of src that lies inside
 // the brace-balanced body of the named JavaScript function. It uses
 // a simple character-by-character brace counter that ignores braces

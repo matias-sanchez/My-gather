@@ -813,8 +813,15 @@
       btn.className = "series-pill" + (startsActive ? " active" : "");
       btn.setAttribute("data-idx", String(i));
       btn.title = "Click to show only this series (solo) · Shift/Cmd-click to toggle just this series · Click a soloed pill again to restore all";
+      // Swatch background flows from the canonical --series-N CSS token
+      // via inline `var(...)`, NOT a frozen hex copy of `s.stroke`. A
+      // hex literal would lock the swatch to the theme that was active
+      // at mount time and never update on theme switch (Codex P2 finding
+      // on PR #62). The slot math mirrors seriesStrokeFor() so the
+      // swatch reads the same token the plot stroke does.
+      var slot = (s.__themeIdx % 16) + 1;
       btn.innerHTML =
-        '<span class="swatch" style="background:' + s.stroke + '"></span>' +
+        '<span class="swatch" style="background:var(--series-' + slot + ')"></span>' +
         '<span class="lbl">' + escapeHTML(s.label) + '</span>';
       btn.addEventListener("click", function (ev) {
         var idx = Number(btn.getAttribute("data-idx"));
