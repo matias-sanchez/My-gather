@@ -241,6 +241,44 @@ func TestChartSyncWindowedStatsFlow(t *testing.T) {
 	}
 }
 
+// TestProcesslistStackedDimensionLegendStats is a regression guard for
+// PR #59 review finding (P1): the non-activity stacked dimensions
+// inside renderProcesslist (State / User / Host / Command / db) used to
+// call registerChart with no `data` payload and mountLegend with no
+// `statsSource`, silently violating spec 017 FR-007 (windowed Min/Avg/
+// Max pills on every synced chart). The fix wires both, mirroring the
+// activity stacked path in buildStackedChart. This test asserts the
+// canonical wiring inside the renderProcesslist body so a future drift
+// is caught at build time.
+func TestProcesslistStackedDimensionLegendStats(t *testing.T) {
+	app := embeddedAppJS
+	idx := strings.Index(app, "function renderProcesslist")
+	if idx < 0 {
+		t.Fatalf("renderProcesslist not found in embedded app JS")
+	}
+	end := strings.Index(app[idx:], "\n  function ")
+	if end < 0 {
+		end = len(app) - idx
+	}
+	body := app[idx : idx+end]
+	for _, want := range []string{
+		// statsSource must be passed to mountLegend so the legend pills
+		// recompute Min/Avg/Max on every store window change.
+		"statsSource: { timestamps: data.timestamps, series: statsSeries }",
+		// The stacked-dimension chart must capture the legend handle on
+		// the plot so initChartSync's first-pass and the post-zoom
+		// applyToChart can find it.
+		"plot.__legendHandle = mountLegend(",
+		// registerChart must receive a non-nil 4th-arg `data` payload so
+		// applyToChart can adopt a pre-existing zoom window.
+		"registerChart(plot, el, opts, {",
+	} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("renderProcesslist body missing canonical chart-sync wiring %q (PR #59 P1 regression)", want)
+		}
+	}
+}
+
 // TestHLLSparklineExemptFromSync preserves the canonical opt-out: the
 // HLL sparkline must NOT call registerChart, so it is never reached by
 // the chart-sync broadcaster or the windowed-stats subscriber.

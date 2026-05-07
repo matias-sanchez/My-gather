@@ -588,8 +588,21 @@
       var opts = basePlotOpts(w, 320, plotSeries, dim.unit || "threads", data.snapshotBoundaries, data.timestamps);
       plot = new uPlot(opts, plotData, el);
       plot.__rawData = plotRawByIdx; // consumed by updateTooltipOnCursor
-      registerChart(plot, el, opts);
-      mountLegend(el, plotSeries, plot, {
+      // Stats are computed against the un-stacked, un-bucketed RAW values
+      // (seriesData), not the cumulative `stacked[]` arrays uPlot draws.
+      // The pill order matches the REVERSE of `seriesData`, so build an
+      // aligned source array in the same reverse order. Mirrors the
+      // activity stacked path above (renderProcesslist's "activity" dim
+      // calls buildLineChart which already wires statsSource).
+      var statsSeries = [];
+      for (var sk = seriesData.length - 1; sk >= 0; sk--) {
+        statsSeries.push({ label: seriesData[sk].label, values: seriesData[sk].values });
+      }
+      registerChart(plot, el, opts, {
+        timestamps: data.timestamps,
+        series: statsSeries,
+      });
+      plot.__legendHandle = mountLegend(el, plotSeries, plot, {
         // Pill is active ⇔ bucket is NOT hidden in the current dim.
         initialVisible: function (idx) {
           var label = plotSeries[idx].label;
@@ -608,6 +621,7 @@
           hiddenByDim.set(dims[currentIdx].label, next);
           draw();
         },
+        statsSource: { timestamps: data.timestamps, series: statsSeries },
       });
       legendEl = el.nextSibling;
     }

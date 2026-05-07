@@ -111,7 +111,7 @@
     var subscribers = [];
     var api;
 
-    function broadcast() {
+    function broadcast(sourcePlot) {
       generation++;
       api.isBroadcasting = true;
       try {
@@ -119,6 +119,11 @@
         for (var i = 0; i < entries.length; i++) {
           var entry = entries[i];
           if (!entry || !entry.plot) continue;
+          // Honour the contract (specs/017-chart-zoom-sync-stats/contracts/chart-sync.md
+          // §1 setWindow): skip the source plot — uPlot's own scale on
+          // it already reflects the user's drag, and re-applying the
+          // window via setScale on the source is redundant work.
+          if (entry.plot === sourcePlot) continue;
           if (!entry.el || !entry.el.isConnected) continue;
           try {
             entry.plot.setScale("x", { min: win.min, max: win.max });
@@ -147,7 +152,26 @@
       api.isBroadcasting = false;
       if (typeof entry.setLegendStats === "function") {
         try { entry.setLegendStats(win); } catch (_) { /* ignore */ }
+        return;
       }
+      // applyToChart is invoked synchronously from registerChart, but
+      // each chart-builder calls registerChart BEFORE mountLegend, so
+      // entry.setLegendStats and plot.__legendHandle are not yet
+      // assigned at this point. Defer one microtask so the synchronous
+      // mountLegend call has had a chance to attach the handle, then
+      // adopt the resolver onto the entry (mirroring the cache pattern
+      // in initChartSync's subscriber). Without this, a chart that
+      // mounts post-zoom (e.g. user expands a collapsed <details> after
+      // zooming a sibling) keeps its legend at full-extent stats until
+      // the next user interaction.
+      Promise.resolve().then(function () {
+        if (win.min == null && win.max == null) return;
+        var handle = entry.plot && entry.plot.__legendHandle;
+        if (handle && typeof handle.setStats === "function") {
+          entry.setLegendStats = handle.setStats;
+          try { handle.setStats(win); } catch (_) { /* ignore */ }
+        }
+      });
     }
 
     api = {
@@ -162,13 +186,11 @@
         // trigger a redundant pass through every other chart.
         if (nMin === win.min && nMax === win.max) return;
         win = { min: nMin, max: nMax };
-        // sourcePlot is informational — uPlot's own scale on the
-        // source already reflects the user's drag, so we don't need
-        // to setScale it back. The registry walk skips no entry,
-        // but uPlot tolerates setScale to the value the scale is
-        // already at and fires no further hooks under our
-        // isBroadcasting guard.
-        broadcast();
+        // Per the contract, the registry walk skips the source plot —
+        // uPlot's own scale on it already reflects the user's drag, so
+        // re-applying the window to it would be redundant work and
+        // makes the contract/impl drift the reviewer flagged.
+        broadcast(sourcePlot);
       },
       reset: function () {
         // Restore each chart to its own data extent so charts with
