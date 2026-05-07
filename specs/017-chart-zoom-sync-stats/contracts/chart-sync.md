@@ -109,13 +109,16 @@ Returned object:
 - `destroy()` — remove the legend node and unsubscribe (used by the vmstat tab
   rebuild path).
 
-The legend pill HTML adds one element:
+The legend pill HTML adds one element, but ONLY when `statsSource` is
+provided:
 
 ```html
-<span class="stats" data-stats="min·avg·max">…</span>
+<span class="series-pill-stats" data-stats="min-avg-max">…</span>
 ```
 
-When `count === 0` for a series, the element renders `–`.
+When `count === 0` for a series, the element renders `–`. When the
+caller omits `statsSource` the element is not appended at all (no empty
+"–" placeholder is rendered, so non-numeric legends get a clean pill).
 
 ## 4. Reset-zoom button contract
 
