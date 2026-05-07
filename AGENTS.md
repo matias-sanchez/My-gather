@@ -1,15 +1,15 @@
 <!-- SPECKIT START -->
-Active feature: **021-feedback-author-field**
+Active feature: **019-redo-log-sizing-panel**
 
 For technologies, project structure, constitution gates, data model,
 contracts, and shell commands, read the current plan:
 
-- Plan: `specs/021-feedback-author-field/plan.md`
-- Spec: `specs/021-feedback-author-field/spec.md`
-- Research: `specs/021-feedback-author-field/research.md`
-- Contracts: `specs/021-feedback-author-field/contracts/author-field.md`
-- Quickstart: `specs/021-feedback-author-field/quickstart.md`
-- Tasks: `specs/021-feedback-author-field/tasks.md`
+- Plan: `specs/019-redo-log-sizing-panel/plan.md`
+- Spec: `specs/019-redo-log-sizing-panel/spec.md`
+- Research: `specs/019-redo-log-sizing-panel/research.md`
+- Contracts: `specs/019-redo-log-sizing-panel/contracts/redo-sizing-panel.md`
+- Quickstart: `specs/019-redo-log-sizing-panel/quickstart.md`
+- Tasks: `specs/019-redo-log-sizing-panel/tasks.md`
 - Constitution: `.specify/memory/constitution.md`
 
 Prior features:

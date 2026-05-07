@@ -173,6 +173,37 @@
     {{- else }}
     <p class="banner missing">Data not available — no <code>-innodbstatus1</code> files were present in this collection.</p>
     {{- end }}
+    {{- if .RedoSizing }}
+    {{- with .RedoSizing }}
+    <div class="redo-sizing callout{{if .UnderSized}} sev-warn{{end}}">
+      <p class="k">Redo log sizing</p>
+      {{- if eq .State "config_missing" }}
+      <p class="v">unavailable</p>
+      <p class="sub">Redo configuration variables not present in this capture.</p>
+      {{- else }}
+      <p class="v">{{.ConfiguredText}}</p>
+      <p class="sub">configured redo space — source: <code>{{.ConfigSource}}</code></p>
+      {{- end }}
+      {{- if eq .State "rate_unavailable" }}
+      <p class="stats">Observed write rate: unavailable (no <code>Innodb_os_log_written</code> samples)</p>
+      {{- else if eq .State "no_writes" }}
+      <p class="stats">Observed average write rate: <span>{{.ObservedRateText}}</span> · <span>{{.ObservedRatePerMinText}}</span></p>
+      <p class="stats">No observed redo writes during the capture — coverage and recommendations are not applicable.</p>
+      {{- else }}
+      <p class="stats">Observed average write rate: <span>{{.ObservedRateText}}</span> · <span>{{.ObservedRatePerMinText}}</span></p>
+      <p class="stats">Peak write rate ({{.PeakWindowLabel}} rolling): <span>{{.PeakRateText}}</span></p>
+      {{- if eq .State "ok" }}
+      <p class="stats">Coverage at peak: <span>{{.CoverageText}}</span></p>
+      <p class="stats">Recommended for 15 minutes of peak: <span>{{.Recommended15MinText}}</span> · Recommended for 1 hour of peak: <span>{{.Recommended1HourText}}</span></p>
+      {{- end }}
+      {{- end }}
+      {{- if .UnderSized }}
+      <p class="warn">{{.WarningLine}}</p>
+      {{- end }}
+      <p class="sub">Methodology: {{.KBReference}}</p>
+    </div>
+    {{- end }}
+    {{- end }}
   </div>
 </details>
 
