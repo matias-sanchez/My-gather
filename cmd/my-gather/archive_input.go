@@ -18,8 +18,39 @@ import (
 	"github.com/matias-sanchez/My-gather/parse"
 )
 
-const maxArchiveExtractedBytes = parse.DefaultMaxCollectionBytes
+// maxArchiveExtractedBytes is a defence-in-depth ceiling on total
+// bytes extracted from a single archive input. It is intentionally
+// generous (64 GiB) — high enough to accommodate any real-world
+// pt-stalk capture (the largest observed are in the low single-digit
+// GB range; feature 016-remove-collection-size-cap removed the parser
+// 1 GiB total cap to unblock 1.63 GB+ captures), and low enough to
+// still bound a runaway extraction (infinite-loop tar with circular
+// hard links, pathologically expanding gzip stream). The per-file
+// ceiling maxArchiveFileBytes provides the primary defence against
+// compression-ratio bombs by capping any single extracted file.
+//
+// This constant is local to the archive-input boundary; the parser
+// no longer has a total-collection bound.
+const maxArchiveExtractedBytes int64 = 64 << 30
+
 const maxArchiveFileBytes = parse.DefaultMaxFileBytes
+
+// errArchiveExtractedSizeExceeded reports that an archive's total
+// extracted bytes exceeded the local archive-extraction ceiling
+// (maxArchiveExtractedBytes). It is a typed error so callers can
+// branch via errors.As; the parser's *SizeError no longer covers a
+// total-collection case.
+type archiveExtractedSizeError struct {
+	Path  string
+	Bytes int64
+	Limit int64
+}
+
+// Error implements the error interface.
+func (e *archiveExtractedSizeError) Error() string {
+	return fmt.Sprintf("archive extracted size %d bytes exceeds %d-byte limit at %s",
+		e.Bytes, e.Limit, e.Path)
+}
 
 var errUnsupportedArchive = errors.New("unsupported archive format")
 
@@ -339,8 +370,7 @@ func writeExtractedFileWithLimits(target string, mode os.FileMode, src io.Reader
 		}
 	}
 	if *written > maxTotal {
-		return &parse.SizeError{
-			Kind:  parse.SizeErrorTotal,
+		return &archiveExtractedSizeError{
 			Path:  target,
 			Bytes: *written,
 			Limit: maxTotal,

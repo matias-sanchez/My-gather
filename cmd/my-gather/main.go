@@ -204,6 +204,11 @@ func mapInputPreparationError(err error, inputPath string, stderr io.Writer) int
 		fmt.Fprintf(stderr, "my-gather: %s is not a single pt-stalk collection: %v\n", inputPath, multiple)
 		return exitNotAPtStalkDir
 	}
+	var oversize *archiveExtractedSizeError
+	if errors.As(err, &oversize) {
+		fmt.Fprintf(stderr, "my-gather: %s: %v\n", inputPath, oversize)
+		return exitSizeBound
+	}
 	return mapDiscoverError(err, inputPath, stderr)
 }
 
@@ -217,9 +222,6 @@ func mapDiscoverError(err error, inputPath string, stderr io.Writer) int {
 	var sz *parse.SizeError
 	if errors.As(err, &sz) {
 		switch sz.Kind {
-		case parse.SizeErrorTotal:
-			fmt.Fprintf(stderr, "my-gather: collection size %d bytes exceeds %d-byte limit at %s\n",
-				sz.Bytes, sz.Limit, sz.Path)
 		case parse.SizeErrorFile:
 			fmt.Fprintf(stderr, "my-gather: source file %s is %d bytes (limit %d)\n",
 				sz.Path, sz.Bytes, sz.Limit)
