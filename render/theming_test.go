@@ -524,6 +524,115 @@ func TestThemingServerOutputDeterministic(t *testing.T) {
 	}
 }
 
+// TestThemingHLLSparklineSubscribesToThemeEvent — the InnoDB HLL
+// sparkline canonically opts OUT of registerChart() because it must
+// not participate in chart-zoom-sync. That means the global
+// repaintChartsForTheme() walker in app-js/00.js never sees it, and a
+// dark→light/colorblind switch would otherwise leave the sparkline on
+// stale colors until a full page reload. The canonical re-pick path
+// for this one chart is a self-contained
+// document.addEventListener("mygather:theme", ...) inside the
+// renderHLLSparkline body. This test fails if a future revert removes
+// either the listener or the registerChart exemption.
+func TestThemingHLLSparklineSubscribesToThemeEvent(t *testing.T) {
+	js := embeddedAppJS
+	body := extractFunctionBody(t, js, "renderHLLSparkline")
+	if body == "" {
+		t.Fatalf("renderHLLSparkline not found in embedded app JS")
+	}
+	// (a) The listener must be wired inside the function body so
+	// theme switches re-pick the stroke + fill + cursor colors.
+	if !strings.Contains(body, `addEventListener("mygather:theme"`) &&
+		!strings.Contains(body, `addEventListener('mygather:theme'`) {
+		t.Errorf("renderHLLSparkline body missing addEventListener(\"mygather:theme\", ...) — chart will not re-paint on theme switch (Codex P2 finding on PR #62)")
+	}
+	// (b) The function MUST NOT call registerChart(...) — that would
+	// pull the sparkline into chart-zoom-sync and into the global
+	// repaintChartsForTheme() walker. The canonical exemption is the
+	// "Do NOT registerChart" comment near the end of the function;
+	// this assertion encodes the contract test-side.
+	for _, line := range strings.Split(body, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "*") || strings.HasPrefix(trimmed, "/*") {
+			continue
+		}
+		if strings.Contains(trimmed, "registerChart(") {
+			t.Fatalf("renderHLLSparkline body now calls registerChart — breaks the chart-zoom-sync exemption that PR #59 documented; the canonical re-pick path is the local mygather:theme listener, not the global registry")
+		}
+	}
+}
+
+// extractFunctionBody returns the substring of src that lies inside
+// the brace-balanced body of the named JavaScript function. It uses
+// a simple character-by-character brace counter that ignores braces
+// inside string literals (single, double, backtick) and inside
+// // and /* ... */ comments. The result is the body without the
+// surrounding `{` and `}`. Returns "" if the function header is not
+// found or its body is unbalanced.
+func extractFunctionBody(t *testing.T, src, fnName string) string {
+	t.Helper()
+	header := "function " + fnName + "("
+	hdr := strings.Index(src, header)
+	if hdr < 0 {
+		return ""
+	}
+	open := strings.IndexByte(src[hdr:], '{')
+	if open < 0 {
+		return ""
+	}
+	start := hdr + open + 1
+	depth := 1
+	i := start
+	for i < len(src) {
+		c := src[i]
+		switch c {
+		case '/':
+			if i+1 < len(src) && src[i+1] == '/' {
+				// Line comment — skip to end of line.
+				j := strings.IndexByte(src[i:], '\n')
+				if j < 0 {
+					return ""
+				}
+				i += j + 1
+				continue
+			}
+			if i+1 < len(src) && src[i+1] == '*' {
+				// Block comment — skip past */.
+				j := strings.Index(src[i+2:], "*/")
+				if j < 0 {
+					return ""
+				}
+				i += 2 + j + 2
+				continue
+			}
+		case '"', '\'', '`':
+			quote := c
+			i++
+			for i < len(src) {
+				if src[i] == '\\' {
+					i += 2
+					continue
+				}
+				if src[i] == quote {
+					i++
+					break
+				}
+				i++
+			}
+			continue
+		case '{':
+			depth++
+		case '}':
+			depth--
+			if depth == 0 {
+				return src[start:i]
+			}
+		}
+		i++
+	}
+	return ""
+}
+
 // renderForThemingTest renders a minimal report so theming tests can
 // inspect the HTML the user will actually receive. Uses a fixed
 // timestamp so re-runs match.

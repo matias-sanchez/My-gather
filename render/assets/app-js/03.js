@@ -506,9 +506,11 @@
     }
 
     // Single-series sparkline. Stroke flows from --series-1 (slot 0
-     // via seriesStrokeFor) so the sparkline tracks the active theme;
-     // __themeIdx + __themeFillBuilder let the runtime theme-change
-     // handler in app-js/00.js re-paint this chart on theme switch.
+    // via seriesStrokeFor) so the sparkline tracks the active theme.
+    // The chart canonically opts OUT of registerChart() (see end-of-
+    // function comment) so it is not seen by repaintChartsForTheme()
+    // in app-js/00.js. A self-contained `mygather:theme` listener
+    // below is the canonical re-pick path for this one chart.
     var sparkStroke = seriesStrokeFor(0);
     var opts = {
       width: W,
@@ -535,8 +537,6 @@
           fill:  hexToRgba(sparkStroke, 0.18),
           paths: splinePath || undefined,
           points: vals.length === 2 ? { show: true, size: 4 } : { show: false },
-          __themeIdx: 0,
-          __themeFillBuilder: function (s) { return hexToRgba(s, 0.18); },
         },
       ],
       hooks: {
@@ -569,6 +569,26 @@
     var plot = new uPlot(opts, [xs, vals.map(function (v) { return +v; })], el);
     // Hide tooltip when leaving the sparkline entirely.
     el.addEventListener("mouseleave", function () { tip.style.display = "none"; });
+    // Live theme switch — canonical re-pick path for this chart.
+    // The HLL sparkline opts out of registerChart() (it must not
+    // participate in chart-zoom-sync), so repaintChartsForTheme() in
+    // app-js/00.js never sees it. Subscribe directly to mygather:theme
+    // and re-resolve stroke / fill / cursor + bg from the now-active
+    // CSS custom properties, then redraw. The isConnected guard makes
+    // a stale plot (post re-render of the container) a no-op.
+    document.addEventListener("mygather:theme", function () {
+      if (!el.isConnected) return;
+      var s = plot.series && plot.series[1];
+      if (!s) return;
+      var newStroke = seriesStrokeFor(0);
+      s.stroke = newStroke;
+      s.fill = hexToRgba(newStroke, 0.18);
+      if (plot.cursor && plot.cursor.points) {
+        plot.cursor.points.stroke = newStroke;
+        plot.cursor.points.fill = cssVar("--bg", "#0b1220");
+      }
+      try { plot.redraw(false); } catch (_) {}
+    });
     // Resize to follow its .callout container (page zoom, grid reflow).
     if (typeof ResizeObserver !== "undefined") {
       var ro = new ResizeObserver(function () {
