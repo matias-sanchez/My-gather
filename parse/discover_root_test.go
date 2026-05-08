@@ -264,3 +264,73 @@ func TestFindPtStalkRoot_DoesNotRecurseIntoRoot(t *testing.T) {
 
 // Compile-time assertion that the WalkDirFunc signature is honored.
 var _ fs.WalkDirFunc = func(path string, d fs.DirEntry, err error) error { return nil }
+
+// TestFindPtStalkRoot_EntryCapCountsFiles guards against a regression
+// where the entry counter only fired on directory entries. Trees with
+// few directories but many files would silently bypass MaxEntries
+// otherwise (PR #64 codex/copilot finding round 1).
+func TestFindPtStalkRoot_EntryCapCountsFiles(t *testing.T) {
+	tmp := t.TempDir()
+	flat := filepath.Join(tmp, "flat")
+	if err := os.MkdirAll(flat, 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	// Drop 50 unrelated files into a single directory. With
+	// MaxEntries = 5 the walker must short-circuit before it can
+	// observe all of them.
+	for i := 0; i < 50; i++ {
+		name := filepath.Join(flat, "file_"+string(rune('a'+i%26))+"_"+itoa(i))
+		if err := os.WriteFile(name, []byte("x"), 0o600); err != nil {
+			t.Fatalf("write %s: %v", name, err)
+		}
+	}
+	// Tight cap proves the counter fires for files; the walker
+	// returns ErrNotAPtStalkDir because the synthetic directory
+	// contains no pt-stalk-shaped file - the assertion that matters
+	// is that the call returns *promptly* and does not visit every
+	// entry.
+	_, err := FindPtStalkRoot(context.Background(), tmp, FindPtStalkRootOptions{MaxEntries: 5})
+	if !errors.Is(err, ErrNotAPtStalkDir) {
+		t.Fatalf("want ErrNotAPtStalkDir under tight entry cap, got %v", err)
+	}
+}
+
+// itoa formats a non-negative int into base-10 digits without
+// pulling in strconv (already imported elsewhere in the package, but
+// kept local for test isolation against future refactors).
+func itoa(n int) string {
+	if n == 0 {
+		return "0"
+	}
+	var buf [20]byte
+	i := len(buf)
+	for n > 0 {
+		i--
+		buf[i] = byte('0' + n%10)
+		n /= 10
+	}
+	return string(buf[i:])
+}
+
+// TestMultiplePtStalkRootsError_ErrorSortsExternalConstruction
+// verifies that Error() defensively sorts an externally-constructed
+// Roots slice so the doc-comment claim of byte-deterministic output
+// holds even when the type is built outside FindPtStalkRoot
+// (PR #64 copilot finding round 1).
+func TestMultiplePtStalkRootsError_ErrorSortsExternalConstruction(t *testing.T) {
+	mpe := &MultiplePtStalkRootsError{Roots: []string{"/z/host", "/a/host", "/m/host"}}
+	msg := mpe.Error()
+	if !strings.Contains(msg, "/a/host") || !strings.Contains(msg, "/z/host") {
+		t.Fatalf("missing roots: %s", msg)
+	}
+	idxA := strings.Index(msg, "/a/host")
+	idxM := strings.Index(msg, "/m/host")
+	idxZ := strings.Index(msg, "/z/host")
+	if !(idxA < idxM && idxM < idxZ) {
+		t.Fatalf("Error() did not produce lexical order:\n%s", msg)
+	}
+	// e.Roots itself must not be mutated.
+	if mpe.Roots[0] != "/z/host" {
+		t.Fatalf("Error() mutated caller's Roots slice: %v", mpe.Roots)
+	}
+}

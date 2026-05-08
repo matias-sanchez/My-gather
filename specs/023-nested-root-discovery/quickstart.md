@@ -89,16 +89,16 @@ multi-host-case/
 my-gather multi-host-case -o report.html
 ```
 
-Stderr (deterministic, lexically ordered):
+Stderr (deterministic, lexically ordered; root paths are absolute):
 
 ```text
-my-gather: multiple pt-stalk roots found in multi-host-case:
-  multi-host-case/host-A/tmp/pt/collected/host-A
-  multi-host-case/host-B/tmp/pt/collected/host-B
+my-gather: /abs/path/to/multi-host-case contains multiple pt-stalk collections:
+  /abs/path/to/multi-host-case/host-A/tmp/pt/collected/host-A
+  /abs/path/to/multi-host-case/host-B/tmp/pt/collected/host-B
 re-run pointing at one of these paths
 ```
 
-Exit code: non-zero. No output file is written.
+Exit code: 4 (`exitNotAPtStalkDir`). No output file is written.
 
 ### Folder with no pt-stalk capture anywhere
 

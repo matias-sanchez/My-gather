@@ -59,12 +59,17 @@ type MultiplePtStalkRootsError struct {
 
 // Error renders a multi-line, human-readable message naming every
 // discovered root. The output is byte-deterministic across invocations
-// against the same set of roots (the Roots slice is sorted before
-// formatting), satisfying the project's deterministic-output gate.
+// against the same set of roots: a sorted copy of e.Roots is used for
+// formatting so external callers that construct this error directly
+// still get deterministic output even if they pass an unsorted slice.
+// e.Roots itself is not mutated.
 func (e *MultiplePtStalkRootsError) Error() string {
+	roots := make([]string, len(e.Roots))
+	copy(roots, e.Roots)
+	sort.Strings(roots)
 	var b strings.Builder
-	fmt.Fprintf(&b, "multiple pt-stalk roots found (%d):\n", len(e.Roots))
-	for _, r := range e.Roots {
+	fmt.Fprintf(&b, "multiple pt-stalk roots found (%d):\n", len(roots))
+	for _, r := range roots {
 		fmt.Fprintf(&b, "  %s\n", r)
 	}
 	b.WriteString("re-run pointing at one of these paths")
@@ -164,14 +169,20 @@ func FindPtStalkRoot(ctx context.Context, rootDir string, opts FindPtStalkRootOp
 		if entry == nil {
 			return nil
 		}
-		if !entry.IsDir() {
-			return nil
-		}
 
+		// Count every entry the walker visits - directories and files
+		// alike - so the cap protects against pathological trees that
+		// have few directories but many files. Bumping only on
+		// directories would leave a high-fanout single directory able
+		// to bypass the cap entirely.
 		entries++
 		if entries > maxEntries {
 			// Stop the walk; outcome is computed from what we have.
 			return fs.SkipAll
+		}
+
+		if !entry.IsDir() {
+			return nil
 		}
 
 		// Compute depth relative to absRoot. depth==0 is absRoot
