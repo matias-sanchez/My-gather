@@ -201,8 +201,11 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 			return nil, err
 		}
 		if entry.IsDir() {
-			// Sub-directories (e.g., "samples/") are not walked in v1;
-			// the supported collectors live at the root of a pt-stalk dump.
+			// Discover is single-root by design: it parses the pt-stalk
+			// collectors that live directly in absRoot. Locating the
+			// pt-stalk root inside a wider directory tree is the job of
+			// FindPtStalkRoot (see parse/discover_root.go); callers
+			// route there before invoking Discover.
 			continue
 		}
 		fi, err := entry.Info()

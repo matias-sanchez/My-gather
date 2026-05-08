@@ -10,9 +10,15 @@ my-gather [flags] <input>
 ```
 
 - `<input>` — **Required positional argument.** Path to a pt-stalk
-  output directory or supported archive file (`.zip`, `.tar`,
-  `.tar.gz`, `.tgz`, `.gz`). Relative paths are resolved against the
-  CWD before any further processing.
+  output directory (or to a directory that contains one in a
+  subdirectory; subdirectories are searched up to 8 levels) or to a
+  supported archive file (`.zip`, `.tar`, `.tar.gz`, `.tgz`, `.gz`).
+  Relative paths are resolved against the CWD before any further
+  processing. The directory-input subdirectory search uses the
+  canonical `parse.FindPtStalkRoot` walker; see
+  `specs/023-nested-root-discovery/contracts/discovery.md` for the
+  full directory-discovery contract (depth bound, hidden-dir skip,
+  symlink handling, multi-root and zero-root error shapes).
 
 Exactly one positional argument is accepted. Zero positional arguments
 or two or more positional arguments is a usage error (exit code 2).
@@ -41,7 +47,7 @@ an explicit flag.
 | `0` | Success. HTML file written. | Empty on success (unless `-v`); parser diagnostics mirrored as they occur. |
 | `2` | Usage error (missing positional, unknown flag, bad flag value). | One line describing the usage error + usage summary. |
 | `3` | Input path does not exist, is unreadable, is neither a directory nor supported archive, or archive extraction is unsafe. | One line naming the path and the condition. |
-| `4` | Input is not recognised as a single pt-stalk collection (no timestamped collectors and no `pt-summary.out`, or an archive contains multiple candidate roots). | One line. |
+| `4` | Input is not recognised as a single pt-stalk collection (no timestamped collectors and no `pt-summary.out` anywhere within the searched depth, or the input contains multiple candidate roots). For multi-root inputs, the message lists every discovered root in lexical order. | One line for the zero-root case; a multi-line block for the multi-root case (one header line, one line per root, one trailer line). |
 | `5` | Input size bound exceeded (> 1 GB total or > 200 MB for any single source file). | One line naming the violated bound and the offending path. |
 | `6` | Output path already exists and `--overwrite` was not set. | One line naming the output path. |
 | `7` | Output path resolves to a location inside the input directory tree (would violate read-only-inputs principle). | One line naming both the input path and the offending output path. |

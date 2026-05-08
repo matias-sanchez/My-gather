@@ -12,7 +12,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/matias-sanchez/My-gather/parse"
@@ -28,14 +27,6 @@ type preparedInput struct {
 	tempDir   string
 	isArchive bool
 	cleanup   func()
-}
-
-type multiplePtStalkRootsError struct {
-	roots []string
-}
-
-func (e *multiplePtStalkRootsError) Error() string {
-	return fmt.Sprintf("archive contains multiple pt-stalk collections: %s", strings.Join(e.roots, ", "))
 }
 
 type unsafeArchivePathError struct {
@@ -81,7 +72,24 @@ func prepareInput(ctx context.Context, inputPath string) (*preparedInput, error)
 		return nil, &parse.PathError{Op: "stat", Path: inputPath, Err: err}
 	}
 	if info.IsDir() {
-		return &preparedInput{parseDir: inputPath, cleanup: func() {}}, nil
+		// Top-level fast path: if the input directory itself is a
+		// pt-stalk root, use it as-is with no walk overhead. This
+		// preserves byte-identical behaviour for the existing
+		// already-a-root invocation. Otherwise, descend via the
+		// canonical parse.FindPtStalkRoot to support nested layouts
+		// (e.g. case-folder/host/tmp/pt/collected/host/).
+		ok, lookErr := parse.LooksLikePtStalkRoot(inputPath)
+		if lookErr != nil {
+			return nil, lookErr
+		}
+		if ok {
+			return &preparedInput{parseDir: inputPath, cleanup: func() {}}, nil
+		}
+		root, err := parse.FindPtStalkRoot(ctx, inputPath, parse.FindPtStalkRootOptions{})
+		if err != nil {
+			return nil, err
+		}
+		return &preparedInput{parseDir: root, cleanup: func() {}}, nil
 	}
 	if !info.Mode().IsRegular() {
 		return nil, &parse.PathError{Op: "stat", Path: inputPath, Err: errors.New("not a directory or regular archive file")}
@@ -100,7 +108,7 @@ func prepareInput(ctx context.Context, inputPath string) (*preparedInput, error)
 		cleanup()
 		return nil, err
 	}
-	root, err := findExtractedPtStalkRoot(ctx, tempDir)
+	root, err := parse.FindPtStalkRoot(ctx, tempDir, parse.FindPtStalkRootOptions{})
 	if err != nil {
 		cleanup()
 		return nil, err
@@ -352,36 +360,3 @@ func writeExtractedFileWithLimits(target string, mode os.FileMode, src io.Reader
 	return nil
 }
 
-func findExtractedPtStalkRoot(ctx context.Context, tempDir string) (string, error) {
-	var roots []string
-	err := filepath.WalkDir(tempDir, func(path string, entry os.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-		if !entry.IsDir() {
-			return nil
-		}
-		ok, err := parse.LooksLikePtStalkRoot(path)
-		if err != nil {
-			return err
-		}
-		if ok {
-			roots = append(roots, path)
-		}
-		return nil
-	})
-	if err != nil {
-		return "", err
-	}
-	if len(roots) == 0 {
-		return "", parse.ErrNotAPtStalkDir
-	}
-	sort.Strings(roots)
-	if len(roots) > 1 {
-		return "", &multiplePtStalkRootsError{roots: roots}
-	}
-	return roots[0], nil
-}

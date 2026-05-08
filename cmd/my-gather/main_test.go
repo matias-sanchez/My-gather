@@ -254,7 +254,7 @@ func TestRunRejectsArchiveWithNoPtStalkRoot(t *testing.T) {
 	if code != exitNotAPtStalkDir {
 		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitNotAPtStalkDir, stderr.String())
 	}
-	if !strings.Contains(stderr.String(), "not recognised as a pt-stalk output directory") {
+	if !strings.Contains(stderr.String(), "no pt-stalk collection was found in its subdirectories") {
 		t.Fatalf("stderr = %q, want no-root pt-stalk message", stderr.String())
 	}
 }
@@ -460,5 +460,140 @@ func writeTruncatedGzip(t *testing.T, path string) {
 	}
 	if err := os.WriteFile(path, data[:len(data)-4], 0o600); err != nil {
 		t.Fatalf("write truncated gzip: %v", err)
+	}
+}
+
+// copyFixtureDir copies the testdata/example2 fixture into destDir so
+// destDir satisfies parse.LooksLikePtStalkRoot. Used by the directory-
+// input end-to-end tests below.
+func copyFixtureDir(t *testing.T, destDir string) {
+	t.Helper()
+	if err := os.MkdirAll(destDir, 0o755); err != nil {
+		t.Fatalf("mkdir %s: %v", destDir, err)
+	}
+	walkFixture(t, func(srcPath, rel string, info os.FileInfo) {
+		if info.IsDir() {
+			return
+		}
+		dst := filepath.Join(destDir, rel)
+		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+			t.Fatalf("mkdir %s: %v", filepath.Dir(dst), err)
+		}
+		out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+		if err != nil {
+			t.Fatalf("create %s: %v", dst, err)
+		}
+		copyFileToWriter(t, srcPath, out)
+		if err := out.Close(); err != nil {
+			t.Fatalf("close %s: %v", dst, err)
+		}
+	})
+}
+
+func TestCLIDirInputNestedSingle(t *testing.T) {
+	root := t.TempDir()
+	tmp := filepath.Join(root, "input")
+	// 6 directories below the input root - mirrors the dominant
+	// real-world layout (case-folder/host/tmp/pt/collected/host/).
+	deep := filepath.Join(tmp, "case", "host", "tmp", "pt", "collected", "host")
+	copyFixtureDir(t, deep)
+	outPath := filepath.Join(root, "report.html")
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--overwrite", "-o", outPath, tmp}, &stdout, &stderr)
+	if code != exitOK {
+		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitOK, stderr.String())
+	}
+	if st, err := os.Stat(outPath); err != nil || st.Size() == 0 {
+		t.Fatalf("output stat = (%v, %v), want non-empty report", st, err)
+	}
+}
+
+func TestCLIDirInputMultipleRoots(t *testing.T) {
+	root := t.TempDir()
+	tmp := filepath.Join(root, "input")
+	hostA := filepath.Join(tmp, "alpha", "host")
+	hostB := filepath.Join(tmp, "beta", "host")
+	for _, host := range []string{hostA, hostB} {
+		if err := os.MkdirAll(host, 0o755); err != nil {
+			t.Fatalf("mkdir %s: %v", host, err)
+		}
+		// Minimal pt-stalk signal; we only need the recognition rule
+		// to fire, not a full collection.
+		if err := os.WriteFile(filepath.Join(host, "2026_05_08_12_00_00-mysqladmin"), []byte("Uptime: 1\n"), 0o644); err != nil {
+			t.Fatalf("write pt-stalk fixture: %v", err)
+		}
+	}
+	outPath := filepath.Join(root, "report.html")
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--overwrite", "-o", outPath, tmp}, &stdout, &stderr)
+	if code != exitNotAPtStalkDir {
+		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitNotAPtStalkDir, stderr.String())
+	}
+	if _, err := os.Stat(outPath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("output file unexpectedly created: stat err = %v", err)
+	}
+	stderrText := stderr.String()
+	if !strings.Contains(stderrText, "multiple pt-stalk collections") {
+		t.Fatalf("stderr = %q, want multi-root message", stderrText)
+	}
+	wantA, _ := filepath.Abs(hostA)
+	wantB, _ := filepath.Abs(hostB)
+	idxA := strings.Index(stderrText, wantA)
+	idxB := strings.Index(stderrText, wantB)
+	if idxA < 0 || idxB < 0 {
+		t.Fatalf("stderr missing one root path:\n%s\nwantA=%s wantB=%s", stderrText, wantA, wantB)
+	}
+	if idxA > idxB {
+		t.Fatalf("roots not in lexical order in stderr:\n%s", stderrText)
+	}
+}
+
+func TestCLIDirInputNoRoot(t *testing.T) {
+	root := t.TempDir()
+	tmp := filepath.Join(root, "input")
+	// Populate the directory with unrelated files at multiple depths
+	// so the walk has something to do but finds no pt-stalk root.
+	if err := os.MkdirAll(filepath.Join(tmp, "docs", "notes"), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tmp, "README.md"), []byte("x"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	outPath := filepath.Join(root, "report.html")
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--overwrite", "-o", outPath, tmp}, &stdout, &stderr)
+	if code != exitNotAPtStalkDir {
+		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitNotAPtStalkDir, stderr.String())
+	}
+	if _, err := os.Stat(outPath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("output file unexpectedly created: stat err = %v", err)
+	}
+	stderrText := stderr.String()
+	if !strings.Contains(stderrText, "subdirectories") {
+		t.Fatalf("stderr = %q, want message mentioning subdirectories were searched", stderrText)
+	}
+	if !strings.Contains(stderrText, "depth 8") {
+		t.Fatalf("stderr = %q, want depth-limit number in message", stderrText)
+	}
+}
+
+func TestCLIDirInputTopLevelFastPathUnchanged(t *testing.T) {
+	tmp := t.TempDir()
+	// Input directory IS the pt-stalk root (existing supported
+	// layout); the auto-descent path must not run.
+	inputDir := filepath.Join(tmp, "input")
+	copyFixtureDir(t, inputDir)
+	outPath := filepath.Join(tmp, "report.html")
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--overwrite", "-o", outPath, inputDir}, &stdout, &stderr)
+	if code != exitOK {
+		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitOK, stderr.String())
+	}
+	if st, err := os.Stat(outPath); err != nil || st.Size() == 0 {
+		t.Fatalf("output stat = (%v, %v), want non-empty report", st, err)
 	}
 }
