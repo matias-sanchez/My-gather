@@ -14,15 +14,21 @@ the new canonical discovery function exchanges with its callers.
 
 Configuration for the canonical walker.
 
-| Field         | Type    | Default                          | Notes                                                                                |
-|---------------|---------|----------------------------------|--------------------------------------------------------------------------------------|
-| `MaxDepth`    | `int`   | `parse.DefaultMaxRootSearchDepth` (= 8) | Hard cap on subdirectory depth below the input root. Depth 0 = input root itself.   |
-| `MaxEntries`  | `int`   | `parse.DefaultMaxRootSearchEntries` (= 100000) | Belt-and-braces guard against pathological trees. The walk stops after this many directory entries are visited and returns whatever roots it has. |
+| Field           | Type   | Default                                        | Notes                                                                                                                          |
+|-----------------|--------|------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `MaxDepth`      | `int`  | `parse.DefaultMaxRootSearchDepth` (= 8)        | Hard cap on subdirectory depth below the input root. Depth 0 = input root itself. Pass `parse.UnlimitedRootSearchDepth` to disable the cap. |
+| `MaxEntries`    | `int`  | `parse.DefaultMaxRootSearchEntries` (= 100000) | Belt-and-braces guard against pathological trees. The walk stops after this many directory entries are visited and returns whatever roots it has. |
+| `IncludeHidden` | `bool` | `false`                                        | When false, the walker skips subdirectories whose name starts with `.` (the directory-input default - real case folders contain `.git`, `.cache`, etc. that never hold pt-stalk captures). When true, hidden subdirectories are descended (the archive-input default, preserving the pre-feature `findExtractedPtStalkRoot` behaviour). |
 
-A zero value on either field means "use the default". A negative
-value is an error returned synchronously from `FindPtStalkRoot` (the
-shape of `parse.Discover`'s existing zero/negative-bound rule, kept
-for symmetry).
+A zero value on `MaxDepth` or `MaxEntries` means "use the default". A
+negative value is an error returned synchronously from
+`FindPtStalkRoot` (the shape of `parse.Discover`'s existing
+zero/negative-bound rule, kept for symmetry). The
+`UnlimitedRootSearchDepth` constant (`math.MaxInt32`) is the explicit
+opt-out for the depth bound; archive inputs pass it together with
+`IncludeHidden: true` so that customer archives whose pt-stalk root
+nests deeper than 8 levels or sits under a hidden-named subdirectory
+remain accepted.
 
 The struct is intentionally extensible: future fields (e.g., a
 custom diagnostic sink) can be added without breaking callers.

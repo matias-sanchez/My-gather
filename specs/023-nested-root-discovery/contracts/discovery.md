@@ -50,11 +50,22 @@ func FindPtStalkRoot(ctx context.Context, rootDir string, opts FindPtStalkRootOp
 // FindPtStalkRootOptions configures FindPtStalkRoot.
 //
 // A zero MaxDepth or MaxEntries means "use the package default";
-// negative values cause FindPtStalkRoot to return an error.
+// negative values cause FindPtStalkRoot to return an error. Pass
+// UnlimitedRootSearchDepth to disable the depth bound. IncludeHidden
+// (default false) descends into hidden-named subdirectories; the
+// archive-input call site sets it to true to preserve the unbounded
+// pre-feature findExtractedPtStalkRoot behaviour.
 type FindPtStalkRootOptions struct {
-    MaxDepth   int
-    MaxEntries int
+    MaxDepth      int
+    MaxEntries    int
+    IncludeHidden bool
 }
+```
+
+```go
+// UnlimitedRootSearchDepth is a sentinel callers can pass via
+// FindPtStalkRootOptions.MaxDepth to disable the depth bound.
+const UnlimitedRootSearchDepth = math.MaxInt32
 ```
 
 ```go
@@ -77,8 +88,24 @@ func (e *MultiplePtStalkRootsError) Error() string
 const (
     DefaultMaxRootSearchDepth   = 8
     DefaultMaxRootSearchEntries = 100000
+    UnlimitedRootSearchDepth    = math.MaxInt32
 )
 ```
+
+### Caller-side defaults
+
+| Caller                                      | `MaxDepth`                        | `IncludeHidden` |
+|---------------------------------------------|-----------------------------------|-----------------|
+| `cmd/my-gather/archive_input.go::prepareInput` directory branch | default (= 8)                     | `false`         |
+| `cmd/my-gather/archive_input.go::prepareInput` archive branch   | `parse.UnlimitedRootSearchDepth` | `true`          |
+
+The split exists because the directory-input path defends against
+user-typed accidental misdirection, while the archive-input path
+preserves the unbounded-walk behaviour of the pre-feature
+`findExtractedPtStalkRoot` helper that the canonical walker
+replaced. The bytes-extracted cap on archive input
+(`maxArchiveExtractedBytes` = 1 GiB) and the per-walk
+`MaxEntries` cap still bound resource use.
 
 ### Invariants
 

@@ -253,6 +253,65 @@ func TestMultiplePtStalkRootsError_MessageFormat(t *testing.T) {
 	}
 }
 
+// TestFindPtStalkRoot_IncludeHiddenFindsRootUnderDotDir guards the
+// Codex round-5 regression: archive inputs route through the canonical
+// walker and must preserve the pre-feature unbounded-walk behaviour
+// of findExtractedPtStalkRoot. With opts.IncludeHidden=true a pt-stalk
+// root nested under a hidden-named subdirectory (e.g. .cache/pt/...)
+// is still discovered, matching the original archive-walker semantics.
+// The directory-input default (IncludeHidden=false) keeps the
+// hidden-dir filter so user-typed paths do not get dragged into
+// .git, .cache, and similar metadata trees.
+func TestFindPtStalkRoot_IncludeHiddenFindsRootUnderDotDir(t *testing.T) {
+	tmp := t.TempDir()
+	hidden := filepath.Join(tmp, ".cache", "pt", "host")
+	makePtStalkSnapshot(t, hidden)
+
+	// Default options skip the hidden subtree (existing behaviour).
+	if _, err := FindPtStalkRoot(context.Background(), tmp, FindPtStalkRootOptions{}); !errors.Is(err, ErrNotAPtStalkDir) {
+		t.Fatalf("default opts: want ErrNotAPtStalkDir, got %v", err)
+	}
+
+	// IncludeHidden=true descends into the hidden subtree and finds
+	// the root.
+	got, err := FindPtStalkRoot(context.Background(), tmp, FindPtStalkRootOptions{IncludeHidden: true})
+	if err != nil {
+		t.Fatalf("IncludeHidden=true: %v", err)
+	}
+	want := resolvedAbs(t, hidden)
+	if got != want {
+		t.Fatalf("root mismatch:\n got=%s\nwant=%s", got, want)
+	}
+}
+
+// TestFindPtStalkRoot_UnlimitedDepthFindsDeepRoot guards the Codex
+// round-5 regression: archive inputs that previously walked the full
+// extracted tree must still find a pt-stalk root nested deeper than
+// DefaultMaxRootSearchDepth (8 levels). Passing
+// MaxDepth=UnlimitedRootSearchDepth removes the depth cap.
+func TestFindPtStalkRoot_UnlimitedDepthFindsDeepRoot(t *testing.T) {
+	tmp := t.TempDir()
+	// 12 directories below tmp; default cap (8) misses this.
+	parts := []string{tmp, "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"}
+	deep := filepath.Join(parts...)
+	makePtStalkSnapshot(t, deep)
+
+	// Default cap rejects.
+	if _, err := FindPtStalkRoot(context.Background(), tmp, FindPtStalkRootOptions{}); !errors.Is(err, ErrNotAPtStalkDir) {
+		t.Fatalf("default opts: want ErrNotAPtStalkDir, got %v", err)
+	}
+
+	// Unlimited depth finds it.
+	got, err := FindPtStalkRoot(context.Background(), tmp, FindPtStalkRootOptions{MaxDepth: UnlimitedRootSearchDepth})
+	if err != nil {
+		t.Fatalf("MaxDepth=UnlimitedRootSearchDepth: %v", err)
+	}
+	want := resolvedAbs(t, deep)
+	if got != want {
+		t.Fatalf("root mismatch:\n got=%s\nwant=%s", got, want)
+	}
+}
+
 // TestFindPtStalkRoot_RootIsSymlinkedDir guards the Codex round-4
 // regression: when rootDir is itself a symlink to a real pt-stalk
 // directory, filepath.WalkDir uses Lstat on the root and reports it

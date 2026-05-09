@@ -104,13 +104,14 @@ func prepareInput(ctx context.Context, inputPath string) (*preparedInput, error)
 	}
 	if info.IsDir() {
 		// Route directory inputs through the canonical
-		// parse.FindPtStalkRoot. The walker has its own top-level
-		// fast-path: when inputPath itself satisfies
-		// LooksLikePtStalkRoot it returns immediately with no
-		// subdirectory traversal, so there is zero overhead for the
-		// existing already-a-root invocation. Calling
-		// LooksLikePtStalkRoot here too would be a duplicate path
-		// (Principle XIII) -- the canonical owner is the walker.
+		// parse.FindPtStalkRoot with default options
+		// (DefaultMaxRootSearchDepth = 8, hidden directories skipped).
+		// The walker tests rootDir itself against LooksLikePtStalkRoot
+		// before descending so the existing already-a-root invocation
+		// returns the input directly, and adding any pre-check here
+		// would be a duplicate path (Principle XIII). The depth and
+		// hidden-dir bounds are appropriate for user-typed paths
+		// where bounding accidental misdirection matters.
 		root, err := parse.FindPtStalkRoot(ctx, inputPath, parse.FindPtStalkRootOptions{})
 		if err != nil {
 			return nil, err
@@ -134,7 +135,19 @@ func prepareInput(ctx context.Context, inputPath string) (*preparedInput, error)
 		cleanup()
 		return nil, err
 	}
-	root, err := parse.FindPtStalkRoot(ctx, tempDir, parse.FindPtStalkRootOptions{})
+	// Archive inputs walk the extraction tempDir with the depth bound
+	// disabled and hidden directories included. The pre-feature
+	// findExtractedPtStalkRoot helper had neither cap, so a customer
+	// archive whose pt-stalk root nested deeper than 8 levels (e.g.
+	// zip-of-zip layouts) or extracted under a hidden-named top-level
+	// directory worked then and must keep working now (Codex round-5
+	// finding). The total-bytes cap on extraction
+	// (maxArchiveExtractedBytes = 1 GiB) and the entry cap inside
+	// FindPtStalkRoot still bound resource use.
+	root, err := parse.FindPtStalkRoot(ctx, tempDir, parse.FindPtStalkRootOptions{
+		MaxDepth:      parse.UnlimitedRootSearchDepth,
+		IncludeHidden: true,
+	})
 	if err != nil {
 		cleanup()
 		return nil, err

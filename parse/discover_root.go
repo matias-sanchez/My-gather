@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -20,6 +21,16 @@ import (
 // operator typically points at; an 8-level cap leaves 2 levels of
 // headroom while still preventing pathological walks.
 const DefaultMaxRootSearchDepth = 8
+
+// UnlimitedRootSearchDepth is a sentinel value callers can pass via
+// FindPtStalkRootOptions.MaxDepth to disable the depth bound entirely.
+// The archive-input call site uses it together with IncludeHidden=true
+// to preserve the unbounded-walk behaviour of the pre-feature
+// findExtractedPtStalkRoot helper, which never imposed a depth cap or
+// hidden-directory filter on extracted archive contents. Directory
+// inputs continue to use DefaultMaxRootSearchDepth so a misdirected
+// invocation cannot drag the walk on indefinitely.
+const UnlimitedRootSearchDepth = math.MaxInt32
 
 // DefaultMaxRootSearchEntries is the default total-entry cap applied
 // by FindPtStalkRoot as a belt-and-braces guard against pathological
@@ -55,6 +66,19 @@ type FindPtStalkRootOptions struct {
 	// DefaultMaxRootSearchEntries"; negative values cause
 	// FindPtStalkRoot to return an error synchronously.
 	MaxEntries int
+
+	// IncludeHidden controls whether subdirectories whose name starts
+	// with "." are descended into. The default (false) skips them,
+	// which is correct for directory inputs: real-world case folders
+	// contain .git, .cache, and similar metadata directories that
+	// never hold pt-stalk captures, and excluding them keeps the walk
+	// fast. The archive-input call site sets this to true to preserve
+	// the unbounded-walk behaviour of the pre-feature
+	// findExtractedPtStalkRoot helper, which had no such filter and
+	// would therefore find a pt-stalk root even if the archive happened
+	// to extract its contents under a hidden-named top-level
+	// directory.
+	IncludeHidden bool
 }
 
 // MultiplePtStalkRootsError indicates that FindPtStalkRoot discovered
@@ -224,9 +248,11 @@ func FindPtStalkRoot(ctx context.Context, rootDir string, opts FindPtStalkRootOp
 		}
 
 		// Hidden-dir skip applies to descendants only; the input root
-		// itself is whatever the caller passed.
+		// itself is whatever the caller passed. The filter is bypassed
+		// when opts.IncludeHidden is true (used by the archive-input
+		// call site to preserve unbounded-walk behaviour).
 		name := entry.Name()
-		if depth > 0 && strings.HasPrefix(name, ".") {
+		if depth > 0 && !opts.IncludeHidden && strings.HasPrefix(name, ".") {
 			return fs.SkipDir
 		}
 

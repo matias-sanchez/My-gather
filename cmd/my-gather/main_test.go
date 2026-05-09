@@ -674,3 +674,49 @@ func TestCLIDirInputTopLevelFastPathUnchanged(t *testing.T) {
 		t.Fatalf("output stat = (%v, %v), want non-empty report", st, err)
 	}
 }
+
+// TestRunAcceptsZipArchiveWithDeeplyNestedRoot guards the Codex
+// round-5 regression for archive inputs: a zip whose pt-stalk root is
+// nested deeper than the directory-input default depth cap (8) must
+// still be accepted, because the pre-feature findExtractedPtStalkRoot
+// helper had no depth cap and the archive call site now passes
+// MaxDepth=parse.UnlimitedRootSearchDepth + IncludeHidden=true to
+// preserve that.
+func TestRunAcceptsZipArchiveWithDeeplyNestedRoot(t *testing.T) {
+	dir := t.TempDir()
+	archivePath := filepath.Join(dir, "deep.zip")
+	// 10 levels deep, beyond the directory-input default cap of 8.
+	deepPrefix := "a/b/c/d/e/f/g/h/i/j/pt-stalk"
+	writeZipFixture(t, archivePath, deepPrefix)
+	outPath := filepath.Join(dir, "report.html")
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--overwrite", "-o", outPath, archivePath}, &stdout, &stderr)
+	if code != exitOK {
+		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitOK, stderr.String())
+	}
+	if st, err := os.Stat(outPath); err != nil || st.Size() == 0 {
+		t.Fatalf("output stat = (%v, %v), want non-empty report", st, err)
+	}
+}
+
+// TestRunAcceptsZipArchiveWithRootUnderHiddenDir guards the same
+// regression for archives whose pt-stalk root sits beneath a
+// hidden-named subdirectory: directory inputs prune those paths, but
+// archive inputs (per the pre-feature findExtractedPtStalkRoot
+// behaviour) must continue to descend into them.
+func TestRunAcceptsZipArchiveWithRootUnderHiddenDir(t *testing.T) {
+	dir := t.TempDir()
+	archivePath := filepath.Join(dir, "hidden.zip")
+	writeZipFixture(t, archivePath, ".cache/pt-stalk")
+	outPath := filepath.Join(dir, "report.html")
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--overwrite", "-o", outPath, archivePath}, &stdout, &stderr)
+	if code != exitOK {
+		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitOK, stderr.String())
+	}
+	if st, err := os.Stat(outPath); err != nil || st.Size() == 0 {
+		t.Fatalf("output stat = (%v, %v), want non-empty report", st, err)
+	}
+}
