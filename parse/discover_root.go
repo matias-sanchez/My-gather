@@ -26,6 +26,17 @@ const DefaultMaxRootSearchDepth = 8
 // directory trees. It is set well above any real-world capture corpus
 // observed; if the cap is ever exceeded, the walk stops and the
 // outcome is computed from the entries visited so far.
+//
+// The cap is checked once per WalkDir callback, so the actual entry
+// count when the walk stops can exceed the limit by up to one full
+// directory listing. WalkDir reads each directory's entries in one
+// shot via os.ReadDir before invoking the callback for any of them,
+// so a single high-fanout directory at any depth is fully enumerated
+// before the cap can fire. For the pt-stalk capture corpus the
+// per-directory entry count is small (snapshots x collectors) and
+// this looseness is irrelevant; for inputs that point at unrelated
+// trees with millions of files in one directory the cap will not
+// short-circuit the os.ReadDir cost itself.
 const DefaultMaxRootSearchEntries = 100000
 
 // FindPtStalkRootOptions configures FindPtStalkRoot. The zero value is
@@ -49,11 +60,15 @@ type FindPtStalkRootOptions struct {
 // MultiplePtStalkRootsError indicates that FindPtStalkRoot discovered
 // more than one directory satisfying LooksLikePtStalkRoot in the
 // bounded subtree of the input. Callers branch on this type via
-// errors.As; the Roots field is sorted lexically and contains at
-// least two entries.
+// errors.As. When produced by FindPtStalkRoot, Roots is sorted
+// lexically and len(Roots) is at least 2; Error() defensively sorts
+// any externally-constructed Roots slice so its rendering remains
+// byte-deterministic regardless of how the value was built.
 type MultiplePtStalkRootsError struct {
 	// Roots holds the absolute paths of every discovered pt-stalk
-	// root, sorted lexically. len(Roots) is always at least 2.
+	// root. When produced by FindPtStalkRoot, the slice is sorted
+	// lexically and len(Roots) >= 2. Externally-constructed values
+	// are accepted as-is; Error() sorts a local copy at format time.
 	Roots []string
 }
 

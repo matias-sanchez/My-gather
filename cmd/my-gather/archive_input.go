@@ -72,19 +72,14 @@ func prepareInput(ctx context.Context, inputPath string) (*preparedInput, error)
 		return nil, &parse.PathError{Op: "stat", Path: inputPath, Err: err}
 	}
 	if info.IsDir() {
-		// Top-level fast path: if the input directory itself is a
-		// pt-stalk root, use it as-is with no walk overhead. This
-		// preserves byte-identical behaviour for the existing
-		// already-a-root invocation. Otherwise, descend via the
-		// canonical parse.FindPtStalkRoot to support nested layouts
-		// (e.g. case-folder/host/tmp/pt/collected/host/).
-		ok, lookErr := parse.LooksLikePtStalkRoot(inputPath)
-		if lookErr != nil {
-			return nil, lookErr
-		}
-		if ok {
-			return &preparedInput{parseDir: inputPath, cleanup: func() {}}, nil
-		}
+		// Route directory inputs through the canonical
+		// parse.FindPtStalkRoot. The walker has its own top-level
+		// fast-path: when inputPath itself satisfies
+		// LooksLikePtStalkRoot it returns immediately with no
+		// subdirectory traversal, so there is zero overhead for the
+		// existing already-a-root invocation. Calling
+		// LooksLikePtStalkRoot here too would be a duplicate path
+		// (Principle XIII) -- the canonical owner is the walker.
 		root, err := parse.FindPtStalkRoot(ctx, inputPath, parse.FindPtStalkRootOptions{})
 		if err != nil {
 			return nil, err
@@ -359,4 +354,3 @@ func writeExtractedFileWithLimits(target string, mode os.FileMode, src io.Reader
 	}
 	return nil
 }
-
