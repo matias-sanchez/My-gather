@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"html"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -69,11 +70,14 @@ func TestFeedbackDialogMarkupPresent(t *testing.T) {
 
 	wantSubstrings := []string{
 		`id="feedback-dialog"`,
+		// Spec 021-feedback-author-field FR-001: the Author input
+		// must be present in the dialog markup.
+		`id="feedback-field-author"`,
 		`id="feedback-field-title"`,
 		`id="feedback-field-body"`,
 		`id="feedback-field-category"`,
 		// The submit button starts disabled until the client JS
-		// validates a non-empty title.
+		// validates a non-empty title and a non-empty author.
 		`id="feedback-submit"`,
 		`disabled`,
 		// Fallback is hidden until the dialog's submit handler
@@ -111,6 +115,79 @@ func TestFeedbackDialogMarkupPresent(t *testing.T) {
 	fallbackTagEnd := strings.Index(out[fallbackIdx:], ">")
 	if fallbackTagEnd == -1 || !strings.Contains(out[fallbackIdx:fallbackIdx+fallbackTagEnd], "hidden") {
 		t.Errorf("feedback-fallback must carry the `hidden` attribute on first paint")
+	}
+
+	// Spec 021-feedback-author-field FR-001: the Author input must
+	// be marked HTML-required and carry the maxlength attribute
+	// rendered from the canonical contract value, so the browser-
+	// native length cap matches the worker's validation cap.
+	// Extract the entire <input ...> opening tag (HTML attribute
+	// order is not significant, so anchor on the element start and
+	// match the whole tag rather than scanning forward from the id).
+	authorTag := extractAuthorInputTag(t, out)
+	if !feedbackAuthorRequiredRE.MatchString(authorTag) {
+		t.Errorf("feedback-field-author must carry the `required` attribute; tag was %q", authorTag)
+	}
+	wantMaxlen := strconv.Itoa(render.BuildFeedbackView().AuthorMaxChars)
+	gotMaxlen := feedbackAuthorMaxlenRE.FindStringSubmatch(authorTag)
+	if gotMaxlen == nil {
+		t.Errorf("feedback-field-author must carry a maxlength attribute; tag was %q", authorTag)
+	} else if gotMaxlen[1] != wantMaxlen {
+		t.Errorf("feedback-field-author maxlength = %q, want %q; tag was %q", gotMaxlen[1], wantMaxlen, authorTag)
+	}
+}
+
+// feedbackAuthorInputRE captures the <input ...> opening tag whose
+// id attribute is "feedback-field-author", regardless of where the
+// id sits in the attribute list. The (?s) flag lets the tag span
+// line breaks; [^>]* stops at the closing '>' before any other tag.
+var feedbackAuthorInputRE = regexp.MustCompile(
+	`(?s)<input\b[^>]*\bid="feedback-field-author"[^>]*>`,
+)
+
+// feedbackAuthorRequiredRE matches the boolean `required` attribute
+// as a standalone token (not part of an unrelated word like
+// "required-name"). HTML allows both bare `required` and
+// `required=""`/`required="required"`.
+var feedbackAuthorRequiredRE = regexp.MustCompile(
+	`\brequired(?:\s|=|>|/)`,
+)
+
+// feedbackAuthorMaxlenRE captures the maxlength integer regardless
+// of attribute position within the tag.
+var feedbackAuthorMaxlenRE = regexp.MustCompile(
+	`\bmaxlength="(\d+)"`,
+)
+
+// extractAuthorInputTag returns the full <input ...> opening tag
+// for the Author field. Uses an HTML-attribute-order-insensitive
+// regex anchored to the input element rather than scanning forward
+// from the id substring (the previous approach silently missed
+// attributes preceding `id` and broke when attribute order changed).
+func extractAuthorInputTag(t *testing.T, out string) string {
+	t.Helper()
+	tag := feedbackAuthorInputRE.FindString(out)
+	if tag == "" {
+		t.Fatalf("feedback-field-author <input> tag not found")
+	}
+	return tag
+}
+
+// TestFeedbackAuthorAppearsBeforeTitle: spec 021-feedback-author-field
+// FR-001 — the Author input must be positioned above the Title field
+// in document order so users see the attribution control first.
+func TestFeedbackAuthorAppearsBeforeTitle(t *testing.T) {
+	out := renderFeedbackFixture(t)
+	authorIdx := strings.Index(out, `id="feedback-field-author"`)
+	titleIdx := strings.Index(out, `id="feedback-field-title"`)
+	if authorIdx == -1 {
+		t.Fatalf("feedback-field-author id not found")
+	}
+	if titleIdx == -1 {
+		t.Fatalf("feedback-field-title id not found")
+	}
+	if authorIdx >= titleIdx {
+		t.Errorf("Author input must precede Title input (author at %d, title at %d)", authorIdx, titleIdx)
 	}
 }
 

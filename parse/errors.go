@@ -16,26 +16,24 @@ import (
 // Callers branch on this sentinel via errors.Is.
 var ErrNotAPtStalkDir = errors.New("parse: not a pt-stalk directory")
 
-// SizeErrorKind distinguishes the two ways a collection can violate
-// the supported size bounds (spec FR-025).
+// SizeErrorKind distinguishes the ways an individual source file can
+// violate the supported size bound (spec FR-025). The historical
+// total-collection variant was removed by feature
+// 016-remove-collection-size-cap; only the per-file variant remains.
 type SizeErrorKind int
 
 const (
-	// SizeErrorTotal: the sum of file sizes under the input root
-	// exceeds DiscoverOptions.MaxCollectionBytes.
-	SizeErrorTotal SizeErrorKind = iota + 1
-
 	// SizeErrorFile: at least one individual source file exceeds
 	// DiscoverOptions.MaxFileBytes.
-	SizeErrorFile
+	SizeErrorFile SizeErrorKind = iota + 1
 )
 
-// SizeError reports that Discover refused to proceed because the
-// input exceeds configured size bounds. Callers branch via
-// errors.As.
+// SizeError reports that Discover refused to proceed because an
+// individual source file exceeds the per-file size bound. Callers
+// branch via errors.As.
 type SizeError struct {
 	Kind  SizeErrorKind
-	Path  string // root path for SizeErrorTotal; offending file path for SizeErrorFile
+	Path  string // offending file path
 	Bytes int64  // observed size
 	Limit int64  // configured bound
 }
@@ -43,9 +41,6 @@ type SizeError struct {
 // Error implements the error interface.
 func (e *SizeError) Error() string {
 	switch e.Kind {
-	case SizeErrorTotal:
-		return fmt.Sprintf("parse: collection size %d bytes exceeds limit %d bytes at %s",
-			e.Bytes, e.Limit, e.Path)
 	case SizeErrorFile:
 		return fmt.Sprintf("parse: file size %d bytes exceeds per-file limit %d bytes at %s",
 			e.Bytes, e.Limit, e.Path)

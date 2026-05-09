@@ -47,12 +47,13 @@ func newLineScanner(r io.Reader) *bufio.Scanner {
 	return s
 }
 
-// DefaultMaxCollectionBytes is the default upper bound on total
-// collection size (spec FR-025). 1 GB.
-const DefaultMaxCollectionBytes int64 = 1 << 30
-
 // DefaultMaxFileBytes is the default upper bound on any individual
 // source-file size (spec FR-025). 200 MB.
+//
+// There is no total-collection bound: feature
+// 016-remove-collection-size-cap deleted that refusal path so real
+// pt-stalk captures larger than 1 GiB can be parsed. Per-file
+// streaming via the shared newLineScanner keeps memory bounded.
 const DefaultMaxFileBytes int64 = 200 << 20
 
 // DiagnosticSink receives parser diagnostics as they are recorded.
@@ -64,17 +65,14 @@ type DiagnosticSink interface {
 }
 
 // DiscoverOptions are optional knobs for Discover. The zero value is
-// valid and applies DefaultMaxCollectionBytes and DefaultMaxFileBytes.
+// valid and applies DefaultMaxFileBytes.
 type DiscoverOptions struct {
 	// Sink receives parser diagnostics synchronously as they are
 	// recorded. May be nil.
 	Sink DiagnosticSink
 
-	// MaxCollectionBytes overrides DefaultMaxCollectionBytes. Zero
-	// means use the default. Negative values are rejected.
-	MaxCollectionBytes int64
-
-	// MaxFileBytes overrides DefaultMaxFileBytes.
+	// MaxFileBytes overrides DefaultMaxFileBytes. Zero means use the
+	// default. Negative values are rejected.
 	MaxFileBytes int64
 }
 
@@ -135,8 +133,11 @@ func isPtStalkRootSignal(name string) bool {
 //
 //   - If rootDir does not exist, is unreadable, or is not a directory,
 //     returns a wrapped *PathError.
-//   - If the total collection or any individual file exceeds the
-//     configured size bounds, returns a wrapped *SizeError.
+//   - If any individual source file exceeds DiscoverOptions.MaxFileBytes
+//     (default DefaultMaxFileBytes), returns a wrapped *SizeError of
+//     kind SizeErrorFile. There is no total-collection size bound;
+//     feature 016-remove-collection-size-cap removed it so real
+//     captures larger than 1 GiB are parsed.
 //   - If rootDir contains zero timestamped pt-stalk files AND no
 //     pt-summary.out / pt-mysql-summary.out, returns
 //     ErrNotAPtStalkDir.
@@ -157,12 +158,8 @@ func isPtStalkRootSignal(name string) bool {
 // parsing (populating each SourceFile.Parsed) is wired in by per-
 // story parser implementations in tasks T051, T060, and T074.
 func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model.Collection, error) {
-	if opts.MaxCollectionBytes < 0 || opts.MaxFileBytes < 0 {
-		return nil, errors.New("parse: DiscoverOptions size bounds must be non-negative")
-	}
-	maxCollection := opts.MaxCollectionBytes
-	if maxCollection == 0 {
-		maxCollection = DefaultMaxCollectionBytes
+	if opts.MaxFileBytes < 0 {
+		return nil, errors.New("parse: DiscoverOptions.MaxFileBytes must be non-negative")
 	}
 	maxFile := opts.MaxFileBytes
 	if maxFile == 0 {
@@ -181,9 +178,11 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 		return nil, &PathError{Op: "stat", Path: absRoot, Err: errors.New("not a directory")}
 	}
 
-	// First pass: enumerate top-level entries; compute total size;
-	// enforce per-file size bound on individual source files; identify
-	// timestamped snapshot files vs summary files.
+	// First pass: enumerate top-level entries; compute total size for
+	// the model.Collection.PtStalkSize field; enforce per-file size
+	// bound on individual source files; identify timestamped snapshot
+	// files vs summary files. There is no total-collection refusal
+	// threshold — feature 016-remove-collection-size-cap removed it.
 	entries, err := os.ReadDir(absRoot)
 	if err != nil {
 		return nil, &PathError{Op: "readdir", Path: absRoot, Err: err}
@@ -268,15 +267,6 @@ func Discover(ctx context.Context, rootDir string, opts DiscoverOptions) (*model
 		// pt-stalk convention we have seen, but some customer dumps
 		// include one. Harmless to ignore.
 		_ = name
-	}
-
-	if totalBytes > maxCollection {
-		return nil, &SizeError{
-			Kind:  SizeErrorTotal,
-			Path:  absRoot,
-			Bytes: totalBytes,
-			Limit: maxCollection,
-		}
 	}
 
 	if len(snapshotMatches) == 0 && !summaryPresent {

@@ -151,30 +151,9 @@ MemFree:        11000000 kB
 	}
 }
 
-// TestSizeBoundTotalExceeded — FR-025: collection total exceeds limit.
-func TestSizeBoundTotalExceeded(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "2026_04_21_16_52_11-iostat")
-	// 200 KB file, limit 100 KB.
-	data := make([]byte, 200*1024)
-	if err := os.WriteFile(path, data, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	_, err := parse.Discover(context.Background(), dir, parse.DiscoverOptions{
-		MaxCollectionBytes: 100 * 1024,
-		MaxFileBytes:       1024 * 1024, // allow big single files
-	})
-	var sz *parse.SizeError
-	if !errors.As(err, &sz) {
-		t.Fatalf("expected *SizeError, got %v", err)
-	}
-	if sz.Kind != parse.SizeErrorTotal {
-		t.Errorf("Kind = %v, want SizeErrorTotal", sz.Kind)
-	}
-}
-
 // TestSizeBoundFileExceeded — FR-025: one file exceeds the per-file
-// bound.
+// bound. The historical total-collection bound was removed by feature
+// 016-remove-collection-size-cap; only the per-file bound remains.
 func TestSizeBoundFileExceeded(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "2026_04_21_16_52_11-iostat")
@@ -183,8 +162,7 @@ func TestSizeBoundFileExceeded(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, err := parse.Discover(context.Background(), dir, parse.DiscoverOptions{
-		MaxCollectionBytes: 1024 * 1024,
-		MaxFileBytes:       100 * 1024,
+		MaxFileBytes: 100 * 1024,
 	})
 	var sz *parse.SizeError
 	if !errors.As(err, &sz) {

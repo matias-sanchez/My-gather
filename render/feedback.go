@@ -32,6 +32,13 @@ type FeedbackView struct {
 	// to the browser. The client JS reads validation limits from this
 	// value instead of keeping duplicate constants.
 	ContractJSON string
+
+	// AuthorMaxChars is the maximum length, in characters, of the
+	// required Author display name in the dialog. Mirrored from the
+	// canonical feedback contract so the rendered <input
+	// maxlength="..."> attribute matches the worker's validation
+	// limit (single source of truth, Principle XIII).
+	AuthorMaxChars int
 }
 
 //go:embed assets/feedback-contract.json
@@ -50,6 +57,7 @@ type feedbackContract struct {
 		LegacyURLMaxChars     int `json:"legacyUrlMaxChars"`
 		WorkerTimeoutMS       int `json:"workerTimeoutMs"`
 		RequestMaxBytes       int `json:"requestMaxBytes"`
+		AuthorMaxChars        int `json:"authorMaxChars"`
 	} `json:"limits"`
 }
 
@@ -67,7 +75,8 @@ func loadFeedbackContract() (feedbackContract, string) {
 	if limits.TitleMaxChars <= 0 || limits.BodyMaxBytes <= 0 ||
 		limits.ImageMaxBytes <= 0 || limits.VoiceMaxBytes <= 0 ||
 		limits.ReportVersionMaxChars <= 0 || limits.LegacyURLMaxChars <= 0 ||
-		limits.WorkerTimeoutMS <= 0 || limits.RequestMaxBytes <= 0 {
+		limits.WorkerTimeoutMS <= 0 || limits.RequestMaxBytes <= 0 ||
+		limits.AuthorMaxChars <= 0 {
 		panic("render/assets/feedback-contract.json: feedback limits must be positive")
 	}
 
@@ -86,7 +95,8 @@ func BuildFeedbackView() FeedbackView {
 	cats := make([]string, len(canonicalFeedbackContract.Categories))
 	copy(cats, canonicalFeedbackContract.Categories)
 	return FeedbackView{
-		Categories:   cats,
-		ContractJSON: canonicalFeedbackContractJSON,
+		Categories:     cats,
+		ContractJSON:   canonicalFeedbackContractJSON,
+		AuthorMaxChars: canonicalFeedbackContract.Limits.AuthorMaxChars,
 	}
 }

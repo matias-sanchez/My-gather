@@ -85,8 +85,18 @@
       setErr(""); hide(fallback); hide(hint);
       if (successEl) hide(successEl);
       form.hidden = false;
+      // Spec 021-feedback-author-field US2: pre-fill the Author
+      // field from the last successful submission. Read at open
+      // time (not boot time) because closeDialog resets the field
+      // between cycles. R6: re-evaluate the cap on each load so a
+      // stale value from a release with a higher cap is silently
+      // truncated rather than blocking the Submit gate.
+      if (authorInput.value === "") {
+        authorInput.value = loadPersistedAuthor();
+      }
       dialog.showModal();
       try { titleInput.focus(); } catch (_) {}
+      updateSubmitEnabled();
     }
     function closeDialog() {
       // Invalidate any in-flight getUserMedia permission prompt so its
@@ -108,6 +118,7 @@
         stopRecording();
       }
       clearAttachment("image"); clearAttachment("voice");
+      authorInput.value = "";
       titleInput.value = ""; bodyInput.value = ""; catSelect.value = "";
       setErr(""); hide(fallback); hide(hint);
       // Dialog dismissal ends the current logical submission. The
@@ -319,8 +330,20 @@
           // is only for the fallback GitHub URL, where the worker
           // isn't in the loop. Sending the prefixed body here would
           // double-prepend the category block in worker submissions.
+          // Snapshot the trimmed author at payload-construction time
+          // so the value persisted on success matches the value sent
+          // in the POST. Reading authorInput.value on the success arm
+          // would race against user edits made while the request is
+          // in flight, leaving localStorage out of sync with the
+          // "Submitted by:" line on the actual GitHub issue.
+          var authorAtSubmit = authorInput.value.trim();
           var payload = {
             title: titleInput.value,
+            // Spec 021-feedback-author-field FR-006: Author is a
+            // dedicated required field on the worker payload, not
+            // folded into the body. The worker composes the
+            // "Submitted by:" line in feedback-worker/src/body.ts.
+            author: authorAtSubmit,
             body: bodyInput.value,
             idempotencyKey: idempotencyKey,
             reportVersion: reportVersion
@@ -343,8 +366,8 @@
           }).then(function (res) {
             clearTimeout(timer);
             return res.json().then(function (data) {
-              return { res: res, data: data, retryAfter: res.headers.get("Retry-After") };
-            }, function () { return { res: res, data: null, retryAfter: res.headers.get("Retry-After") }; });
+              return { res: res, data: data, retryAfter: res.headers.get("Retry-After"), authorAtSubmit: authorAtSubmit };
+            }, function () { return { res: res, data: null, retryAfter: res.headers.get("Retry-After"), authorAtSubmit: authorAtSubmit }; });
           }, function (err) {
             clearTimeout(timer);
             throw err;
@@ -353,6 +376,14 @@
       }).then(function (r) {
         var res = r.res, data = r.data || {};
         if (res.status === 200 && data && data.ok && data.issueUrl) {
+          // Spec 021-feedback-author-field US2 / R5: persist on
+          // definitive worker success only, so a half-typed
+          // abandoned name does not pollute the next session.
+          // Persist the snapshot captured at submit time (sent in
+          // the payload), not the live input — the user may have
+          // edited the field while the request was in flight, and
+          // the persisted value must match what the issue body says.
+          savePersistedAuthor(r.authorAtSubmit);
           renderSuccess(data.issueUrl, data.issueNumber);
           return;
         }
@@ -438,6 +469,7 @@
       idempotencyKey = null;
       updateSubmitEnabled();
     }
+    authorInput.addEventListener("input", onFormContentChange);
     titleInput.addEventListener("input", onFormContentChange);
     bodyInput.addEventListener("input", onFormContentChange);
     catSelect.addEventListener("change", onFormContentChange);
@@ -486,5 +518,10 @@
       if (!ev.target || !ev.target.closest || !ev.target.closest("main.content")) return;
       window.requestAnimationFrame(resizeAllCharts);
     }, true);
+    // The chart sync store + windowed legend stats subscriber wire up
+    // their own DOM-time hooks once initCharts has populated the
+    // CHARTS registry. The boot path calls initChartSync() (defined in
+    // app-js/05.js, last in lexical order) here so the order is
+    // explicit rather than implicit-by-load-order.
+    initChartSync();
   }
-})();
