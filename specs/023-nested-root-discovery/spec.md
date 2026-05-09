@@ -131,10 +131,14 @@ tree at all," not "the tool only looks at the top level").
   unrelated subdirectories (e.g., a downloads folder) MUST not cause the
   search to take more than a few seconds. The depth cap and a total
   scanned-entry cap together bound the worst case.
-- **Top-level fast path unchanged**: When the input directory IS the
-  pt-stalk root, the existing parse path MUST run with no extra walk
-  overhead. Discovery only descends if the top-level signal check returns
-  false.
+- **Top-level recognition + ambiguity check**: When the input
+  directory IS itself a pt-stalk root, the walker still descends into
+  its subtree to check for additional pt-stalk roots that would make
+  the input ambiguous. The single-root case (input is a clean
+  pt-stalk root with no nested pt-stalk-shaped subtrees) returns
+  exactly the input's absolute path. The ambiguous case (input is a
+  pt-stalk root AND a nested subtree is also a pt-stalk root) returns
+  the multi-root error.
 - **Archive-extracted layout**: Archive inputs already discover nested
   roots via the same logic. After this feature, both directory and
   archive inputs MUST converge on a single shared discovery
@@ -148,8 +152,12 @@ tree at all," not "the tool only looks at the top level").
   pt-stalk capture in a subdirectory and produce a report from that
   subdirectory's contents.
 - **FR-002**: When the input directory itself is recognized as a pt-stalk
-  root (top-level signal present), the tool MUST use it directly without
-  walking subdirectories.
+  root, the tool MUST report it as the parse root unless additional
+  pt-stalk roots are found in the bounded subtree below; if any are
+  found, the multi-root error fires (FR-005). The walker MUST descend
+  into the recognised root's subtree to make this ambiguity check
+  honest, mirroring the pre-feature `findExtractedPtStalkRoot`
+  behaviour for archive inputs.
 - **FR-003**: When the input directory is not itself a pt-stalk root, the
   tool MUST search its subdirectories for pt-stalk roots, using the same
   recognition rule used today for the top-level fast path and for archive

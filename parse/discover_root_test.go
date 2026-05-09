@@ -241,24 +241,36 @@ func TestMultiplePtStalkRootsError_MessageFormat(t *testing.T) {
 	}
 }
 
-// guard against future regressions where the walker accidentally
-// recurses into the body of a recognised root and counts a
-// pt-stalk-shaped child as a second root.
-func TestFindPtStalkRoot_DoesNotRecurseIntoRoot(t *testing.T) {
+// TestFindPtStalkRoot_RootPlusNestedRootSurfacesAmbiguity guards the
+// Codex round-3 regression: a tree where the input root itself is a
+// pt-stalk root AND another distinct pt-stalk root exists below it
+// must surface as a multi-root error rather than silently parsing
+// only the top-level root. The previous unconditional top-level
+// fast-path swallowed this ambiguity.
+func TestFindPtStalkRoot_RootPlusNestedRootSurfacesAmbiguity(t *testing.T) {
 	tmp := t.TempDir()
-	host := filepath.Join(tmp, "host")
-	makePtStalkSnapshot(t, host)
-	// Create a subdirectory inside the root that itself satisfies the
-	// recognition rule. A correct walker prunes here.
-	makePtStalkSnapshot(t, filepath.Join(host, "samples"))
+	// rootDir itself is a pt-stalk root (loose snapshot file at top).
+	makePtStalkSnapshot(t, tmp)
+	// And a second, distinct pt-stalk root lives in a nested subdir.
+	nested := filepath.Join(tmp, "nested", "host")
+	makePtStalkSnapshot(t, nested)
 
-	got, err := FindPtStalkRoot(context.Background(), tmp, FindPtStalkRootOptions{})
-	if err != nil {
-		t.Fatalf("walker double-counted: %v", err)
+	_, err := FindPtStalkRoot(context.Background(), tmp, FindPtStalkRootOptions{})
+	var mpe *MultiplePtStalkRootsError
+	if !errors.As(err, &mpe) {
+		t.Fatalf("want *MultiplePtStalkRootsError, got %T: %v", err, err)
 	}
-	wantAbs, _ := filepath.Abs(host)
-	if got != wantAbs {
-		t.Fatalf("root mismatch:\n got=%s\nwant=%s", got, wantAbs)
+	if len(mpe.Roots) != 2 {
+		t.Fatalf("want 2 roots, got %d: %v", len(mpe.Roots), mpe.Roots)
+	}
+	wantTop, _ := filepath.Abs(tmp)
+	wantNested, _ := filepath.Abs(nested)
+	// sort.StringsAreSorted already verified by the existing
+	// TestFindPtStalkRoot_NestedMultiple test; here we check
+	// membership.
+	gotSet := map[string]bool{mpe.Roots[0]: true, mpe.Roots[1]: true}
+	if !gotSet[wantTop] || !gotSet[wantNested] {
+		t.Fatalf("missing root in:\n%v\nwant %s and %s", mpe.Roots, wantTop, wantNested)
 	}
 }
 

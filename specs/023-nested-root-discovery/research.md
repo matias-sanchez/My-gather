@@ -76,34 +76,53 @@ entry.
   modern equivalent and is faster because it does not stat each
   entry up front.
 
-## Decision 3: Top-level fast path stays in `prepareInput`
+## Decision 3: Always walk; the recognition rule fires on every directory including the root
 
-**Decision**: `cmd/my-gather/archive_input.go::prepareInput` for
-directory inputs first calls `parse.LooksLikePtStalkRoot`. If true,
-return the input as-is. If false, call `parse.FindPtStalkRoot` to
-walk subdirectories. The top-level fast path runs no walk at all.
+**Decision**: `parse.FindPtStalkRoot` always walks the bounded subtree
+of `rootDir`. The recognition predicate (`LooksLikePtStalkRoot`) is
+applied to every visited directory including `rootDir` itself, and the
+walk does NOT stop after finding a match. The single-root, multi-root,
+and zero-root outcomes are all computed from the full set of matches
+across the subtree. `prepareInput` calls `FindPtStalkRoot` directly
+for both directory and archive inputs without any pre-check.
 
 **Rationale**:
 
-- Principle IV (Deterministic Output): the existing already-a-root
-  case must remain bit-identical. Adding even a one-level walk for
-  inputs that are already roots would risk a failure in a corner
-  where the root contains a subdirectory that itself looks like a
-  pt-stalk root - the walker would now report multi-root for an
-  input that today succeeds.
-- Performance: zero walk overhead for the established workflow.
+- Multi-root ambiguity must be honest. An earlier design used an
+  unconditional top-level fast path: if `rootDir` itself satisfied
+  `LooksLikePtStalkRoot`, the walker returned immediately without
+  descending. That swallowed ambiguity in a real scenario flagged by
+  Codex during round-3 review of PR #64: an archive that extracts
+  loose snapshot files at its root AND contains a separate nested
+  pt-stalk capture below would be silently parsed as the top-level
+  root only, dropping the nested data without surfacing the conflict.
+  The original archive-only walker (`findExtractedPtStalkRoot`,
+  removed in this feature) did NOT have a fast path and correctly
+  surfaced multi-root in that scenario; the round-3 fix restores that
+  behaviour for both call sites.
+- Walking into a recognised root is safe in practice. Real pt-stalk
+  captures do not contain subdirectories that themselves satisfy
+  `LooksLikePtStalkRoot` (the recognition rule looks for timestamped
+  files at the immediate directory level, and pt-stalk's own
+  `samples/` subdir does not contain such files). Synthetic inputs
+  that put pt-stalk-shaped files inside a recognised root will now
+  correctly surface as multi-root, which is the more honest outcome
+  given that the tool cannot semantically distinguish content from a
+  separate capture.
 
 **Alternatives considered**:
 
-- Always walk, even when the top is a root. Rejected per the
-  determinism risk above.
-- Move the top-level signal check inside `FindPtStalkRoot` so
-  callers do not need to remember the order. Rejected because the
-  behaviour we want at the top level (return immediately) and the
-  behaviour we want for nested input (walk and require exactly one
-  root) are different enough that combining them inside one
-  function would create branching that is harder to reason about
-  than the two-line check at the call site.
+- Top-level fast path that stops the walk early when `rootDir`
+  matches. Rejected: silently swallows the multi-root ambiguity
+  described above (Codex round-3 finding).
+- Match `rootDir` only, never descend. Rejected: it would prevent
+  the entire feature - nested captures one or more directories below
+  the input would not be found.
+- Match every directory but `SkipDir` after each match (the
+  pre-round-3 behaviour). Rejected: it accepts a recognised root
+  while pruning the subtree, so a sibling root in that pruned subtree
+  is missed and the multi-root case is not detected. The same Codex
+  finding applies.
 
 ## Decision 4: Depth cap = 8, entry cap = 100000
 

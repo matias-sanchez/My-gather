@@ -218,11 +218,13 @@ decisions:
   followed because `WalkDir` does not follow them by default.
   Per-entry read errors propagate to the walk function's `walkErr`
   argument and are swallowed (return nil) so the walk continues.
-- Top-level fast path: `prepareInput` calls `LooksLikePtStalkRoot`
-  first; if true, it returns the input as-is with no walk overhead.
-  Only when the top-level signal is absent does it call
-  `FindPtStalkRoot`. This preserves byte-identical behaviour for the
-  existing-already-a-root case (Principle IV regression check).
+- No early return: `FindPtStalkRoot` always walks the bounded
+  subtree of `rootDir`. The recognition predicate fires on every
+  visited directory including `rootDir` itself, and the walk does
+  not stop after a match. This is what makes the multi-root
+  ambiguity surface in the case where the input is itself a
+  pt-stalk root AND has a nested second root below (Codex round-3
+  regression on PR #64).
 - Error type: `parse.MultiplePtStalkRootsError` is an exported
   struct with a `Roots []string` field (sorted lexically) and an
   `Error()` method that formats them on multiple lines with a final

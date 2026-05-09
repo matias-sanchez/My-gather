@@ -149,21 +149,20 @@ func FindPtStalkRoot(ctx context.Context, rootDir string, opts FindPtStalkRootOp
 		return "", &PathError{Op: "stat", Path: absRoot, Err: errors.New("not a directory")}
 	}
 
-	// Top-level fast path: if rootDir itself is a pt-stalk root, do
-	// not walk subdirectories at all. This preserves byte-identical
-	// behaviour for the existing already-a-root invocation and avoids
-	// the corner where a root contains a subdirectory that itself
-	// looks like a pt-stalk root - which would otherwise produce a
-	// spurious multi-root error.
-	if ok, err := LooksLikePtStalkRoot(absRoot); err != nil {
-		return "", err
-	} else if ok {
-		return absRoot, nil
-	}
-
 	var roots []string
 	entries := 0
 
+	// Walk every directory in the bounded subtree, including absRoot
+	// itself. Both absRoot and any subdirectory that satisfies
+	// LooksLikePtStalkRoot is appended to roots; the walker MUST keep
+	// descending into a recognised root's children so a sibling or
+	// cousin root in the same subtree is not missed (Codex round-3
+	// finding: a pt-stalk root that lives directly at the input AND
+	// has another nested root below must surface as a multi-root
+	// ambiguity, not silently parse the top-level alone). Real
+	// pt-stalk captures do not contain subdirectories that themselves
+	// satisfy LooksLikePtStalkRoot, so this descent does not produce
+	// false positives in practice.
 	walkErr := filepath.WalkDir(absRoot, func(path string, entry fs.DirEntry, walkErr error) error {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -201,8 +200,7 @@ func FindPtStalkRoot(ctx context.Context, rootDir string, opts FindPtStalkRootOp
 		}
 
 		// Compute depth relative to absRoot. depth==0 is absRoot
-		// itself; the fast path above already handled that case, but
-		// keep the check in case of unusual layouts.
+		// itself.
 		rel, err := filepath.Rel(absRoot, path)
 		if err != nil {
 			return nil
@@ -219,20 +217,18 @@ func FindPtStalkRoot(ctx context.Context, rootDir string, opts FindPtStalkRootOp
 			return fs.SkipDir
 		}
 
-		// Recognise this directory as a pt-stalk root.
-		if depth > 0 {
-			ok, err := LooksLikePtStalkRoot(path)
-			if err != nil {
-				// A read error on this directory is treated like a
-				// per-subdir failure: prune and continue.
-				return fs.SkipDir
-			}
-			if ok {
-				roots = append(roots, path)
-				// Do not descend into a recognised root - its
-				// children are pt-stalk content, not nested roots.
-				return fs.SkipDir
-			}
+		// Recognise this directory as a pt-stalk root, including
+		// absRoot itself. The walker keeps descending into a
+		// recognised root so that any other roots in the same subtree
+		// are also collected and the multi-root ambiguity surfaces.
+		ok, err := LooksLikePtStalkRoot(path)
+		if err != nil {
+			// A read error on this directory is treated like a
+			// per-subdir failure: prune and continue.
+			return fs.SkipDir
+		}
+		if ok {
+			roots = append(roots, path)
 		}
 
 		// Depth cap: do not descend past maxDepth.
