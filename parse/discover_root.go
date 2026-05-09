@@ -137,9 +137,22 @@ func FindPtStalkRoot(ctx context.Context, rootDir string, opts FindPtStalkRootOp
 		maxEntries = DefaultMaxRootSearchEntries
 	}
 
-	absRoot, err := filepath.Abs(rootDir)
+	absInput, err := filepath.Abs(rootDir)
 	if err != nil {
 		return "", &PathError{Op: "abs", Path: rootDir, Err: err}
+	}
+	// Resolve the root symlink before handing the path to WalkDir.
+	// WalkDir uses Lstat on its root, which means a symlinked-dir
+	// input presents to the callback as IsDir()==false and falls
+	// through to ErrNotAPtStalkDir even though parse.Discover
+	// (which follows symlinks via os.Stat) would have accepted it.
+	// Resolving here keeps directory-input behaviour symmetric with
+	// the pre-feature path and with archive inputs (whose tempDir
+	// is never a symlink). EvalSymlinks is a no-op for paths that
+	// are not symlinks.
+	absRoot, err := filepath.EvalSymlinks(absInput)
+	if err != nil {
+		return "", &PathError{Op: "evalsymlinks", Path: absInput, Err: err}
 	}
 	info, err := os.Stat(absRoot)
 	if err != nil {

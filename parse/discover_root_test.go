@@ -26,6 +26,24 @@ func makePtStalkSnapshot(t *testing.T, dir string) {
 	}
 }
 
+// resolvedAbs returns the absolute, symlink-resolved form of p, which
+// is the shape FindPtStalkRoot returns. On macOS, t.TempDir() lives
+// under /var/folders, which is itself a symlink to /private/var/...,
+// so test expectations must run through EvalSymlinks too or paths
+// will not compare equal even when logically identical.
+func resolvedAbs(t *testing.T, p string) string {
+	t.Helper()
+	abs, err := filepath.Abs(p)
+	if err != nil {
+		t.Fatalf("abs %s: %v", p, err)
+	}
+	resolved, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		t.Fatalf("evalsymlinks %s: %v", abs, err)
+	}
+	return resolved
+}
+
 func TestFindPtStalkRoot_TopLevel(t *testing.T) {
 	tmp := t.TempDir()
 	makePtStalkSnapshot(t, tmp)
@@ -34,10 +52,7 @@ func TestFindPtStalkRoot_TopLevel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	want, err := filepath.Abs(tmp)
-	if err != nil {
-		t.Fatalf("abs %s: %v", tmp, err)
-	}
+	want := resolvedAbs(t, tmp)
 	if got != want {
 		t.Fatalf("root mismatch:\n got=%s\nwant=%s", got, want)
 	}
@@ -53,10 +68,7 @@ func TestFindPtStalkRoot_NestedSingle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	want, err := filepath.Abs(deep)
-	if err != nil {
-		t.Fatalf("abs %s: %v", deep, err)
-	}
+	want := resolvedAbs(t, deep)
 	if got != want {
 		t.Fatalf("root mismatch:\n got=%s\nwant=%s", got, want)
 	}
@@ -141,7 +153,7 @@ func TestFindPtStalkRoot_PermDeniedTolerated(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unreadable subdir aborted walk: %v", err)
 	}
-	wantAbs, _ := filepath.Abs(readable)
+	wantAbs := resolvedAbs(t, readable)
 	if got != wantAbs {
 		t.Fatalf("root mismatch:\n got=%s\nwant=%s", got, wantAbs)
 	}
@@ -165,8 +177,8 @@ func TestFindPtStalkRoot_NestedMultiple(t *testing.T) {
 	if !sort.StringsAreSorted(mpe.Roots) {
 		t.Fatalf("roots are not lexically sorted: %v", mpe.Roots)
 	}
-	wantA, _ := filepath.Abs(hostA)
-	wantB, _ := filepath.Abs(hostB)
+	wantA := resolvedAbs(t, hostA)
+	wantB := resolvedAbs(t, hostB)
 	if mpe.Roots[0] != wantA || mpe.Roots[1] != wantB {
 		t.Fatalf("roots mismatch:\n got=%v\nwant=[%s %s]", mpe.Roots, wantA, wantB)
 	}
@@ -241,6 +253,39 @@ func TestMultiplePtStalkRootsError_MessageFormat(t *testing.T) {
 	}
 }
 
+// TestFindPtStalkRoot_RootIsSymlinkedDir guards the Codex round-4
+// regression: when rootDir is itself a symlink to a real pt-stalk
+// directory, filepath.WalkDir uses Lstat on the root and reports it
+// as a non-directory entry, so the callback's early return on
+// non-directories would silently skip recognition. The fix resolves
+// the root via filepath.EvalSymlinks before walking, restoring
+// pre-feature behaviour where parse.Discover (which uses os.Stat)
+// transparently followed root symlinks.
+func TestFindPtStalkRoot_RootIsSymlinkedDir(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("symlinks require admin or developer mode on Windows")
+	}
+	// Real pt-stalk capture lives outside the input tree.
+	real := t.TempDir()
+	makePtStalkSnapshot(t, real)
+
+	// Input the operator passes is a symlink to it.
+	parent := t.TempDir()
+	link := filepath.Join(parent, "capture-symlink")
+	if err := os.Symlink(real, link); err != nil {
+		t.Skipf("symlink not supported in this environment: %v", err)
+	}
+
+	got, err := FindPtStalkRoot(context.Background(), link, FindPtStalkRootOptions{})
+	if err != nil {
+		t.Fatalf("symlinked root rejected: %v", err)
+	}
+	want := resolvedAbs(t, real)
+	if got != want {
+		t.Fatalf("root mismatch:\n got=%s\nwant=%s", got, want)
+	}
+}
+
 // TestFindPtStalkRoot_RootPlusNestedRootSurfacesAmbiguity guards the
 // Codex round-3 regression: a tree where the input root itself is a
 // pt-stalk root AND another distinct pt-stalk root exists below it
@@ -263,8 +308,8 @@ func TestFindPtStalkRoot_RootPlusNestedRootSurfacesAmbiguity(t *testing.T) {
 	if len(mpe.Roots) != 2 {
 		t.Fatalf("want 2 roots, got %d: %v", len(mpe.Roots), mpe.Roots)
 	}
-	wantTop, _ := filepath.Abs(tmp)
-	wantNested, _ := filepath.Abs(nested)
+	wantTop := resolvedAbs(t, tmp)
+	wantNested := resolvedAbs(t, nested)
 	// sort.StringsAreSorted already verified by the existing
 	// TestFindPtStalkRoot_NestedMultiple test; here we check
 	// membership.
