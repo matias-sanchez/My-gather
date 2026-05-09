@@ -142,7 +142,7 @@ func prepareInput(ctx context.Context, inputPath string) (*preparedInput, error)
 	// zip-of-zip layouts) or extracted under a hidden-named top-level
 	// directory worked then and must keep working now (Codex round-5
 	// finding). The total-bytes cap on extraction
-	// (maxArchiveExtractedBytes = 1 GiB) and the entry cap inside
+	// (maxArchiveExtractedBytes = 64 GiB) and the entry cap inside
 	// FindPtStalkRoot still bound resource use.
 	root, err := parse.FindPtStalkRoot(ctx, tempDir, parse.FindPtStalkRootOptions{
 		MaxDepth:      parse.UnlimitedRootSearchDepth,

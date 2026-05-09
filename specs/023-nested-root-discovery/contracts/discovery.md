@@ -63,12 +63,6 @@ type FindPtStalkRootOptions struct {
 ```
 
 ```go
-// UnlimitedRootSearchDepth is a sentinel callers can pass via
-// FindPtStalkRootOptions.MaxDepth to disable the depth bound.
-const UnlimitedRootSearchDepth = math.MaxInt32
-```
-
-```go
 // MultiplePtStalkRootsError indicates that FindPtStalkRoot
 // discovered more than one directory satisfying
 // LooksLikePtStalkRoot in the bounded subtree of the input.
@@ -104,7 +98,7 @@ user-typed accidental misdirection, while the archive-input path
 preserves the unbounded-walk behaviour of the pre-feature
 `findExtractedPtStalkRoot` helper that the canonical walker
 replaced. The bytes-extracted cap on archive input
-(`maxArchiveExtractedBytes` = 1 GiB) and the per-walk
+(`maxArchiveExtractedBytes` = 64 GiB) and the per-walk
 `MaxEntries` cap still bound resource use.
 
 ### Invariants
