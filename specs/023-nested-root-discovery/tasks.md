@@ -132,28 +132,25 @@ output file.
 
 - [X] T008 [P] [US1] In `parse/discover_root.go` implement the
   walker body of `parse.FindPtStalkRoot` so it (a) absolutises
-  rootDir, (b) calls `parse.LooksLikePtStalkRoot` on rootDir
-  itself - if true, returns the absolute rootDir, (c) uses
-  `filepath.WalkDir` with a closure that increments an entry
-  counter, computes depth from the relative path, returns
-  `filepath.SkipDir` for hidden dirs (`name[0] == '.'`) and for
-  any directory at or beyond `MaxDepth`, swallows non-nil
-  `walkErr` returns by returning nil, and calls
-  `parse.LooksLikePtStalkRoot` on every visited directory and
-  appends matches to a slice. The function MUST NOT recurse into
-  a matching root (i.e. when a match is recorded, return
-  `filepath.SkipDir` for that node so a parent-of-root that also
-  matches is not double-counted). Return `parse.ErrNotAPtStalkDir`
-  when the slice is empty, the single match when length is 1, or
-  a `*parse.MultiplePtStalkRootsError` (with `Roots` sorted
+  rootDir, (b) calls `parse.LooksLikePtStalkRoot` on every visited
+  directory including rootDir itself, (c) uses `filepath.WalkDir`
+  with a closure that increments an entry counter, computes depth
+  from the relative path, returns `fs.SkipDir` for hidden dirs
+  (`name[0] == '.'`) and for any directory at or beyond `MaxDepth`,
+  tolerates non-root `walkErr` values by pruning unreadable
+  directories with `fs.SkipDir` (or returning nil for non-directory
+  entries), and appends matching directories to a slice. The
+  function MUST keep walking after a match so an input that is
+  itself a pt-stalk root and also contains a nested pt-stalk root
+  surfaces as a multi-root ambiguity. Return `parse.ErrNotAPtStalkDir`
+  when the slice is empty, the single match when length is 1, or a
+  `*parse.MultiplePtStalkRootsError` (with `Roots` sorted
   lexically) when length is >= 2. Stop the walk when the entry
   counter reaches `MaxEntries` and report the result based on what
   was found.
 - [X] T009 [US1] Update `cmd/my-gather/archive_input.go`:
-  rewrite the `prepareInput` directory branch so that it first
-  calls `parse.LooksLikePtStalkRoot(inputPath)`. If true, return
-  the input path unchanged (the existing fast path). If false,
-  call `parse.FindPtStalkRoot(ctx, inputPath, parse.FindPtStalkRootOptions{})`
+  rewrite the `prepareInput` directory branch so that it calls
+  `parse.FindPtStalkRoot(ctx, inputPath, parse.FindPtStalkRootOptions{})`
   using the existing `ctx` parameter on `prepareInput` (no
   signature change needed) and place the returned root in the
   `parseDir` field of the returned `*preparedInput`.

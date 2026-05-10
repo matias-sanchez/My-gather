@@ -18,7 +18,7 @@ and produces a useful HTML report.
 for the case it is most needed for. Removing the cap is the single change
 that unblocks every large-capture user.
 
-**Independent Test**: Run `my-gather <largeCaptureDir> -o /tmp/r.html` against
+**Independent Test**: Run `my-gather -o /tmp/r.html <largeCaptureDir>` against
 a >1.1 GiB synthetic or real capture and verify the binary exits 0 with the
 report generated.
 

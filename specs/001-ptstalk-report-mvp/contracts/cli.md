@@ -34,8 +34,9 @@ or two or more positional arguments is a usage error (exit code 2).
 | `--help` | `-h` | boolean | `false` | Print usage and exit 0. |
 
 Flag parsing uses Go's `flag` package. Long flags use `--name`; short
-flags are the letters shown above. Unknown flags are a usage error
-(exit code 2).
+flags are the letters shown above. Flags must appear before `<input>`;
+tokens after the first positional argument are treated as additional
+positionals. Unknown flags are a usage error (exit code 2).
 
 No environment-variable fallbacks. No config file. Any future knob is
 an explicit flag.
@@ -140,8 +141,9 @@ USAGE
   my-gather [flags] <input>
 
 ARGUMENTS
-  <input>    Path to a pt-stalk output directory or supported archive
-             (.zip, .tar, .tar.gz, .tgz, .gz).
+  <input>    Path to a pt-stalk output directory (or a directory that
+             contains one, searched up to 8 levels) or a supported
+             archive (.zip, .tar, .tar.gz, .tgz, .gz).
 
 FLAGS
   -o, --out <path>    Output HTML file path (default: ./report.html).
@@ -151,14 +153,14 @@ FLAGS
   -h, --help          Print this help and exit.
 
 EXIT CODES
-  0  success
-  2  usage error
-  3  input path missing or unreadable
-  4  input is not a pt-stalk directory
-  5  input exceeds supported size bounds (1 GB total / 200 MB per file)
-  6  output path exists (use --overwrite to replace)
-  7  output path resolves inside input directory (refusing to write)
-  70 internal error (please report)
+  0   success
+  2   usage error
+  3   input path missing or unreadable
+  4   input is not a pt-stalk directory
+  5   input exceeds supported size bounds (1 GB total / 200 MB per file)
+  6   output path exists (use --overwrite to replace)
+  7   output path resolves inside input directory (refusing to write)
+  70  internal error (please report)
 ```
 
 Help output goes to stdout, never stderr.

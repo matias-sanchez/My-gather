@@ -26,10 +26,13 @@ my-pt-collection/
 ```
 
 ```bash
-my-gather my-pt-collection -o report.html
+my-gather -o report.html my-pt-collection
 ```
 
-Behaviour: bit-identical to today. No subdirectory walk runs.
+Behaviour: bit-identical to today for clean single-root inputs. The
+canonical discovery walker still checks the bounded subtree so a
+synthetic root-plus-nested-root ambiguity is reported instead of
+silently selecting the top-level root.
 
 ### Layout 2: Capture nested in a single subdirectory
 
@@ -41,7 +44,7 @@ case-folder/
 ```
 
 ```bash
-my-gather case-folder -o report.html
+my-gather -o report.html case-folder
 ```
 
 Behaviour after this feature: the tool walks the input tree, finds
@@ -64,7 +67,7 @@ case-folder/
 ```
 
 ```bash
-my-gather case-folder -o report.html
+my-gather -o report.html case-folder
 ```
 
 Behaviour after this feature: the tool walks 6 levels in to find the
@@ -86,7 +89,7 @@ multi-host-case/
 ```
 
 ```bash
-my-gather multi-host-case -o report.html
+my-gather -o report.html multi-host-case
 ```
 
 Stderr (deterministic, lexically ordered; root paths are absolute):
@@ -103,7 +106,7 @@ Exit code: 4 (`exitNotAPtStalkDir`). No output file is written.
 ### Folder with no pt-stalk capture anywhere
 
 ```bash
-my-gather random-folder -o report.html
+my-gather -o report.html random-folder
 ```
 
 Stderr:
@@ -128,7 +131,7 @@ For a real-world spot check against the operator's local capture
 corpus, the fastest example is:
 
 ```bash
-my-gather "/Users/matias/Documents/Incidents/CS0061420" -o /tmp/c61420.html
+my-gather -o /tmp/c61420.html "/Users/matias/Documents/Incidents/CS0061420"
 ```
 
 (`CS0061420` has the deepest layout in the corpus: 7 directories
@@ -138,7 +141,7 @@ case has multiple host folders, so the expected outcome is the
 report. To get a successful report, point at one host:)
 
 ```bash
-my-gather "/Users/matias/Documents/Incidents/CS0061420/DBCLTIFT01PDC_logs" -o /tmp/c61420-host1.html
+my-gather -o /tmp/c61420-host1.html "/Users/matias/Documents/Incidents/CS0061420/DBCLTIFT01PDC_logs"
 ```
 
 ## Operator-facing release-note line
