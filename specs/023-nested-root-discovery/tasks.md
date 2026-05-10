@@ -134,16 +134,16 @@ output file.
   walker body of `parse.FindPtStalkRoot` so it (a) absolutises
   rootDir, (b) calls `parse.LooksLikePtStalkRoot` on every visited
   directory including rootDir itself, (c) uses `filepath.WalkDir`
-  with a closure that increments an entry
-  counter, computes depth from the relative path, returns
-  `filepath.SkipDir` for hidden dirs (`name[0] == '.'`) and for
-  any directory at or beyond `MaxDepth`, swallows non-nil
-  `walkErr` returns by returning nil, and calls
-  appends matching directories to a slice. The function MUST keep
-  walking after a match so an input that is itself a pt-stalk root
-  and also contains a nested pt-stalk root surfaces as a multi-root
-  ambiguity. Return `parse.ErrNotAPtStalkDir` when the slice is
-  empty, the single match when length is 1, or a
+  with a closure that increments an entry counter, computes depth
+  from the relative path, returns `fs.SkipDir` for hidden dirs
+  (`name[0] == '.'`) and for any directory at or beyond `MaxDepth`,
+  tolerates non-root `walkErr` values by pruning unreadable
+  directories with `fs.SkipDir` (or returning nil for non-directory
+  entries), and appends matching directories to a slice. The
+  function MUST keep walking after a match so an input that is
+  itself a pt-stalk root and also contains a nested pt-stalk root
+  surfaces as a multi-root ambiguity. Return `parse.ErrNotAPtStalkDir`
+  when the slice is empty, the single match when length is 1, or a
   `*parse.MultiplePtStalkRootsError` (with `Roots` sorted
   lexically) when length is >= 2. Stop the walk when the entry
   counter reaches `MaxEntries` and report the result based on what
