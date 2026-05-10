@@ -675,6 +675,68 @@ func TestCLIDirInputTopLevelFastPathUnchanged(t *testing.T) {
 	}
 }
 
+// TestRunArchiveNoRootDropsDepthPhrase guards the Codex round-6 P3
+// finding: archive inputs walk with MaxDepth=UnlimitedRootSearchDepth,
+// so the CLI's no-root diagnostic must NOT claim "searched up to
+// depth 8" for archives. The depth phrase is dropped in that case.
+func TestRunArchiveNoRootDropsDepthPhrase(t *testing.T) {
+	dir := t.TempDir()
+	archivePath := filepath.Join(dir, "unrelated.zip")
+	file, err := os.Create(archivePath)
+	if err != nil {
+		t.Fatalf("create archive: %v", err)
+	}
+	zw := zip.NewWriter(file)
+	entry, err := zw.Create("notes/readme.txt")
+	if err != nil {
+		t.Fatalf("create zip entry: %v", err)
+	}
+	if _, err := entry.Write([]byte("not a pt-stalk collection")); err != nil {
+		t.Fatalf("write zip entry: %v", err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatalf("close zip: %v", err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatalf("close archive: %v", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--overwrite", "-o", filepath.Join(dir, "report.html"), archivePath}, &stdout, &stderr)
+	if code != exitNotAPtStalkDir {
+		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitNotAPtStalkDir, stderr.String())
+	}
+	out := stderr.String()
+	if !strings.Contains(out, "no pt-stalk collection was found in its subdirectories") {
+		t.Fatalf("stderr missing subdirectories phrase: %q", out)
+	}
+	if strings.Contains(out, "depth") {
+		t.Fatalf("archive no-root message must not mention depth (it ran unbounded): %q", out)
+	}
+}
+
+// TestRunDirInputNoRootIncludesDepthPhrase guards the symmetric
+// directory-input case: the depth phrase IS rendered there because
+// the walker did apply DefaultMaxRootSearchDepth.
+func TestRunDirInputNoRootIncludesDepthPhrase(t *testing.T) {
+	root := t.TempDir()
+	tmp := filepath.Join(root, "input")
+	if err := os.MkdirAll(filepath.Join(tmp, "docs"), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	outPath := filepath.Join(root, "report.html")
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--overwrite", "-o", outPath, tmp}, &stdout, &stderr)
+	if code != exitNotAPtStalkDir {
+		t.Fatalf("run exit = %d, want %d\nstderr:\n%s", code, exitNotAPtStalkDir, stderr.String())
+	}
+	out := stderr.String()
+	if !strings.Contains(out, "depth 8") {
+		t.Fatalf("dir no-root message must include depth 8: %q", out)
+	}
+}
+
 // TestRunAcceptsZipArchiveWithDeeplyNestedRoot guards the Codex
 // round-5 regression for archive inputs: a zip whose pt-stalk root is
 // nested deeper than the directory-input default depth cap (8) must

@@ -213,6 +213,39 @@ func TestFindPtStalkRoot_NoRoot(t *testing.T) {
 	if !errors.Is(err, ErrNotAPtStalkDir) {
 		t.Fatalf("want ErrNotAPtStalkDir, got %v", err)
 	}
+	// errors.As must extract the typed wrapper carrying the effective
+	// depth used (default = 8), so the CLI can render an accurate
+	// "searched up to depth N" hint (Codex round-6 P3 finding).
+	var nape *NotAPtStalkDirError
+	if !errors.As(err, &nape) {
+		t.Fatalf("want *NotAPtStalkDirError, got %T", err)
+	}
+	if nape.MaxDepth != DefaultMaxRootSearchDepth {
+		t.Fatalf("MaxDepth = %d, want %d", nape.MaxDepth, DefaultMaxRootSearchDepth)
+	}
+}
+
+// TestFindPtStalkRoot_NoRootPropagatesUnlimitedDepth checks that the
+// archive call site's MaxDepth=UnlimitedRootSearchDepth is reflected
+// in the typed error so the CLI can drop the depth phrase rather than
+// lying about a depth-8 search.
+func TestFindPtStalkRoot_NoRootPropagatesUnlimitedDepth(t *testing.T) {
+	tmp := t.TempDir()
+	if err := os.WriteFile(filepath.Join(tmp, "unrelated.txt"), []byte("x"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	_, err := FindPtStalkRoot(context.Background(), tmp, FindPtStalkRootOptions{
+		MaxDepth:      UnlimitedRootSearchDepth,
+		IncludeHidden: true,
+	})
+	var nape *NotAPtStalkDirError
+	if !errors.As(err, &nape) {
+		t.Fatalf("want *NotAPtStalkDirError, got %T: %v", err, err)
+	}
+	if nape.MaxDepth != UnlimitedRootSearchDepth {
+		t.Fatalf("MaxDepth = %d, want UnlimitedRootSearchDepth (%d)", nape.MaxDepth, UnlimitedRootSearchDepth)
+	}
 }
 
 func TestFindPtStalkRoot_RejectsNegativeOptions(t *testing.T) {

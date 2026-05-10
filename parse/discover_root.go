@@ -81,6 +81,36 @@ type FindPtStalkRootOptions struct {
 	IncludeHidden bool
 }
 
+// NotAPtStalkDirError is the typed form of the zero-roots outcome from
+// FindPtStalkRoot. It carries the effective MaxDepth the walker used,
+// so the CLI can render the "searched up to depth N" hint accurately
+// (the directory-input call site uses DefaultMaxRootSearchDepth = 8;
+// the archive-input call site uses UnlimitedRootSearchDepth and the
+// rendered text drops the depth phrase). Callers that only need to
+// branch on the condition continue to use
+// `errors.Is(err, ErrNotAPtStalkDir)` because Unwrap returns the
+// sentinel.
+type NotAPtStalkDirError struct {
+	// MaxDepth is the effective depth ceiling the walker applied
+	// (either the caller's opts.MaxDepth or
+	// DefaultMaxRootSearchDepth when the caller passed zero). When
+	// MaxDepth equals UnlimitedRootSearchDepth, the search was
+	// effectively unbounded.
+	MaxDepth int
+}
+
+// Error implements the error interface. The text is intentionally
+// brief; the CLI builds the user-facing wording from the structured
+// fields rather than parsing this string.
+func (e *NotAPtStalkDirError) Error() string {
+	return ErrNotAPtStalkDir.Error()
+}
+
+// Unwrap returns ErrNotAPtStalkDir so existing
+// errors.Is(err, ErrNotAPtStalkDir) call sites keep working
+// unchanged.
+func (e *NotAPtStalkDirError) Unwrap() error { return ErrNotAPtStalkDir }
+
 // MultiplePtStalkRootsError indicates that FindPtStalkRoot discovered
 // more than one directory satisfying LooksLikePtStalkRoot in the
 // bounded subtree of the input. Callers branch on this type via
@@ -289,7 +319,10 @@ func FindPtStalkRoot(ctx context.Context, rootDir string, opts FindPtStalkRootOp
 
 	switch len(roots) {
 	case 0:
-		return "", ErrNotAPtStalkDir
+		// Wrap the sentinel in NotAPtStalkDirError so the CLI can
+		// render the depth-aware diagnostic; errors.Is still matches
+		// ErrNotAPtStalkDir via Unwrap.
+		return "", &NotAPtStalkDirError{MaxDepth: maxDepth}
 	case 1:
 		return roots[0], nil
 	default:

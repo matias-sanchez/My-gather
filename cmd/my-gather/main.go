@@ -220,9 +220,28 @@ func mapInputPreparationError(err error, inputPath string, stderr io.Writer) int
 // exit code and writes a one-line explanation to stderr.
 func mapDiscoverError(err error, inputPath string, stderr io.Writer) int {
 	if errors.Is(err, parse.ErrNotAPtStalkDir) {
-		fmt.Fprintf(stderr,
-			"my-gather: %s is not a pt-stalk output directory and no pt-stalk collection was found in its subdirectories (searched up to depth %d)\n",
-			inputPath, parse.DefaultMaxRootSearchDepth)
+		// Prefer the typed NotAPtStalkDirError when available so the
+		// "searched up to depth N" hint reflects the depth the walker
+		// actually used (directory inputs use the default 8; archive
+		// inputs run with UnlimitedRootSearchDepth and the depth
+		// phrase is dropped because it would be misleading).
+		var nape *parse.NotAPtStalkDirError
+		switch {
+		case errors.As(err, &nape) && nape.MaxDepth >= parse.UnlimitedRootSearchDepth:
+			fmt.Fprintf(stderr,
+				"my-gather: %s is not a pt-stalk output directory and no pt-stalk collection was found in its subdirectories\n",
+				inputPath)
+		case errors.As(err, &nape):
+			fmt.Fprintf(stderr,
+				"my-gather: %s is not a pt-stalk output directory and no pt-stalk collection was found in its subdirectories (searched up to depth %d)\n",
+				inputPath, nape.MaxDepth)
+		default:
+			// Bare sentinel from a non-FindPtStalkRoot caller (e.g.
+			// parse.Discover called directly on a known-root path).
+			fmt.Fprintf(stderr,
+				"my-gather: %s is not a pt-stalk output directory\n",
+				inputPath)
+		}
 		return exitNotAPtStalkDir
 	}
 	var sz *parse.SizeError
