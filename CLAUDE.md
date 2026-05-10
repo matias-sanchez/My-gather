@@ -1,18 +1,15 @@
 <!-- SPECKIT START -->
-Active feature: **023-nested-root-discovery**
+Active feature: **none**
 
-For technologies, project structure, constitution gates, data model,
-contracts, and shell commands, read the current plan:
-
-- Plan: `specs/023-nested-root-discovery/plan.md`
-- Spec: `specs/023-nested-root-discovery/spec.md`
-- Research: `specs/023-nested-root-discovery/research.md`
-- Contracts: `specs/023-nested-root-discovery/contracts/discovery.md`
-- Quickstart: `specs/023-nested-root-discovery/quickstart.md`
-- Tasks: `specs/023-nested-root-discovery/tasks.md`
-- Constitution: `.specify/memory/constitution.md`
+No active feature. The latest shipped feature is **023-nested-root-discovery**
+(`specs/023-nested-root-discovery`).
+`.specify/feature.json` may point at the latest shipped feature for
+script/reference purposes, but do not run `/speckit-*` workflows on
+`main` until a new feature branch is created and all active-feature
+signals are updated together.
 
 Prior features:
+- **023-nested-root-discovery** - `specs/023-nested-root-discovery/plan.md`
 - **015-compliance-closure** - `specs/015-compliance-closure/plan.md`
 - **014-reconciliation-cleanup** - `specs/014-reconciliation-cleanup/plan.md`
 - **013-full-compliance-fixes** - `specs/013-full-compliance-fixes/plan.md`

@@ -121,12 +121,16 @@ replaced. The bytes-extracted cap on archive input
 ### Directory input
 
 ```text
-my-gather <directory> [-o <output>]
+my-gather [flags] <directory>
 ```
 
 - If `<directory>` is itself recognised as a pt-stalk root (top-level
-  signal present), it is parsed directly. No subdirectory walk runs.
-  Behaviour is bit-identical to today.
+  signal present) and no other pt-stalk root is found in its bounded
+  subtree, it is parsed directly. Behaviour is bit-identical to today
+  for clean single-root inputs. The canonical walker still checks
+  descendants so an input that is itself a root and also contains a
+  nested root surfaces the same multi-root ambiguity as any other
+  multi-root tree.
 - Otherwise, the CLI walks subdirectories of `<directory>` up to a
   depth of 8, skipping hidden subdirectories (`.git`, `.cache`, etc.)
   and not following symlinks. The walk stops after the first 100000

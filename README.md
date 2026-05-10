@@ -59,7 +59,7 @@ make build
 Point at any pt-stalk output directory:
 
 ```bash
-my-gather /path/to/pt-stalk-output -o /tmp/report.html
+my-gather -o /tmp/report.html /path/to/pt-stalk-output
 open /tmp/report.html           # macOS
 xdg-open /tmp/report.html       # Linux
 ```
@@ -67,7 +67,7 @@ xdg-open /tmp/report.html       # Linux
 Or try it against the bundled anonymised fixture:
 
 ```bash
-my-gather testdata/example2 -o /tmp/report.html --overwrite
+my-gather --overwrite -o /tmp/report.html testdata/example2
 open /tmp/report.html
 ```
 
