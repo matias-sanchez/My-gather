@@ -12,7 +12,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/matias-sanchez/My-gather/parse"
@@ -61,14 +60,6 @@ type preparedInput struct {
 	cleanup   func()
 }
 
-type multiplePtStalkRootsError struct {
-	roots []string
-}
-
-func (e *multiplePtStalkRootsError) Error() string {
-	return fmt.Sprintf("archive contains multiple pt-stalk collections: %s", strings.Join(e.roots, ", "))
-}
-
 type unsafeArchivePathError struct {
 	entry string
 }
@@ -112,7 +103,20 @@ func prepareInput(ctx context.Context, inputPath string) (*preparedInput, error)
 		return nil, &parse.PathError{Op: "stat", Path: inputPath, Err: err}
 	}
 	if info.IsDir() {
-		return &preparedInput{parseDir: inputPath, cleanup: func() {}}, nil
+		// Route directory inputs through the canonical
+		// parse.FindPtStalkRoot with default options
+		// (DefaultMaxRootSearchDepth = 8, hidden directories skipped).
+		// The walker tests rootDir itself against LooksLikePtStalkRoot
+		// before descending so the existing already-a-root invocation
+		// returns the input directly, and adding any pre-check here
+		// would be a duplicate path (Principle XIII). The depth and
+		// hidden-dir bounds are appropriate for user-typed paths
+		// where bounding accidental misdirection matters.
+		root, err := parse.FindPtStalkRoot(ctx, inputPath, parse.FindPtStalkRootOptions{})
+		if err != nil {
+			return nil, err
+		}
+		return &preparedInput{parseDir: root, cleanup: func() {}}, nil
 	}
 	if !info.Mode().IsRegular() {
 		return nil, &parse.PathError{Op: "stat", Path: inputPath, Err: errors.New("not a directory or regular archive file")}
@@ -131,7 +135,19 @@ func prepareInput(ctx context.Context, inputPath string) (*preparedInput, error)
 		cleanup()
 		return nil, err
 	}
-	root, err := findExtractedPtStalkRoot(ctx, tempDir)
+	// Archive inputs walk the extraction tempDir with the depth bound
+	// disabled and hidden directories included. The pre-feature
+	// findExtractedPtStalkRoot helper had neither cap, so a customer
+	// archive whose pt-stalk root nested deeper than 8 levels (e.g.
+	// zip-of-zip layouts) or extracted under a hidden-named top-level
+	// directory worked then and must keep working now (Codex round-5
+	// finding). The total-bytes cap on extraction
+	// (maxArchiveExtractedBytes = 64 GiB) and the entry cap inside
+	// FindPtStalkRoot still bound resource use.
+	root, err := parse.FindPtStalkRoot(ctx, tempDir, parse.FindPtStalkRootOptions{
+		MaxDepth:      parse.UnlimitedRootSearchDepth,
+		IncludeHidden: true,
+	})
 	if err != nil {
 		cleanup()
 		return nil, err
@@ -394,38 +410,4 @@ func writeExtractedFileWithLimits(target string, mode os.FileMode, src io.Reader
 		return fmt.Errorf("write extracted file %s: %w", target, err)
 	}
 	return nil
-}
-
-func findExtractedPtStalkRoot(ctx context.Context, tempDir string) (string, error) {
-	var roots []string
-	err := filepath.WalkDir(tempDir, func(path string, entry os.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-		if !entry.IsDir() {
-			return nil
-		}
-		ok, err := parse.LooksLikePtStalkRoot(path)
-		if err != nil {
-			return err
-		}
-		if ok {
-			roots = append(roots, path)
-		}
-		return nil
-	})
-	if err != nil {
-		return "", err
-	}
-	if len(roots) == 0 {
-		return "", parse.ErrNotAPtStalkDir
-	}
-	sort.Strings(roots)
-	if len(roots) > 1 {
-		return "", &multiplePtStalkRootsError{roots: roots}
-	}
-	return roots[0], nil
 }

@@ -199,9 +199,13 @@ func mapInputPreparationError(err error, inputPath string, stderr io.Writer) int
 		fmt.Fprintf(stderr, "my-gather: invalid archive input: %v\n", archiveInput)
 		return exitInputPath
 	}
-	var multiple *multiplePtStalkRootsError
+	var multiple *parse.MultiplePtStalkRootsError
 	if errors.As(err, &multiple) {
-		fmt.Fprintf(stderr, "my-gather: %s is not a single pt-stalk collection: %v\n", inputPath, multiple)
+		fmt.Fprintf(stderr, "my-gather: %s contains multiple pt-stalk collections:\n", inputPath)
+		for _, root := range multiple.Roots {
+			fmt.Fprintf(stderr, "  %s\n", root)
+		}
+		fmt.Fprintln(stderr, "re-run pointing at one of these paths")
 		return exitNotAPtStalkDir
 	}
 	var oversize *archiveExtractedSizeError
@@ -216,7 +220,28 @@ func mapInputPreparationError(err error, inputPath string, stderr io.Writer) int
 // exit code and writes a one-line explanation to stderr.
 func mapDiscoverError(err error, inputPath string, stderr io.Writer) int {
 	if errors.Is(err, parse.ErrNotAPtStalkDir) {
-		fmt.Fprintf(stderr, "my-gather: %s is not recognised as a pt-stalk output directory\n", inputPath)
+		// Prefer the typed NotAPtStalkDirError when available so the
+		// "searched up to depth N" hint reflects the depth the walker
+		// actually used (directory inputs use the default 8; archive
+		// inputs run with UnlimitedRootSearchDepth and the depth
+		// phrase is dropped because it would be misleading).
+		var nape *parse.NotAPtStalkDirError
+		switch {
+		case errors.As(err, &nape) && nape.MaxDepth >= parse.UnlimitedRootSearchDepth:
+			fmt.Fprintf(stderr,
+				"my-gather: %s is not a pt-stalk output directory and no pt-stalk collection was found in its subdirectories\n",
+				inputPath)
+		case errors.As(err, &nape):
+			fmt.Fprintf(stderr,
+				"my-gather: %s is not a pt-stalk output directory and no pt-stalk collection was found in its subdirectories (searched up to depth %d)\n",
+				inputPath, nape.MaxDepth)
+		default:
+			// Bare sentinel from a non-FindPtStalkRoot caller (e.g.
+			// parse.Discover called directly on a known-root path).
+			fmt.Fprintf(stderr,
+				"my-gather: %s is not a pt-stalk output directory\n",
+				inputPath)
+		}
 		return exitNotAPtStalkDir
 	}
 	var sz *parse.SizeError
@@ -357,8 +382,9 @@ USAGE
   my-gather [flags] <input>
 
 ARGUMENTS
-  <input>    Path to a pt-stalk output directory or supported archive
-             (.zip, .tar, .tar.gz, .tgz, .gz).
+  <input>    Path to a pt-stalk output directory (or a directory that
+             contains one, searched up to 8 levels) or a supported
+             archive (.zip, .tar, .tar.gz, .tgz, .gz).
 
 FLAGS
   -o, --out <path>    Output HTML file path (default: ./report.html).
